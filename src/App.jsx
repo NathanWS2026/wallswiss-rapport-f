@@ -799,8 +799,10 @@ function ReportPreview({ data, onClose, onUpdateData }) {
       onclone: (doc) => {
         const el = doc.getElementById('report-printable');
         if (el) {
-          // Rend le conteneur visible dans le clone utilisé par html2canvas
-          el.style.display = 'block';
+          // Réinitialise le positionnement caché pour le clone PDF
+          el.style.position = 'static';
+          el.style.left = 'auto';
+          el.style.top = 'auto';
           // Convertit les textareas en divs pour un affichage propre dans le PDF
           doc.querySelectorAll('#report-printable textarea').forEach((textarea) => {
             const div = doc.createElement('div');
@@ -904,8 +906,8 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         ))}
       </div>
 
-      {/* VERSION IMPRIMABLE (Cachée sur l'écran, générée par html2pdf) */}
-      <div id="report-printable" style={{ display: "none" }}>
+      {/* VERSION IMPRIMABLE (Cachée hors écran pour html2pdf) */}
+      <div id="report-printable" style={{ position: "absolute", left: "-9999px", top: 0 }}>
         {slides.map((SlideComponent, index) => (
           <div key={index} style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", pageBreakAfter: "always", breakAfter: "page" }}>
             {/* Format forcé en 1280x720 pour assurer le ratio 16:9 régulier de la librairie PDF */}

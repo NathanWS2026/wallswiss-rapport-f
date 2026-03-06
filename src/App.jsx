@@ -61,8 +61,8 @@ const accentBar = () => (
 
 const logoCorner = () => (
   <div style={{ position: "absolute", top: 48, right: 56, display: "flex", alignItems: "center", gap: 8, zIndex: 10 }}>
-    <div style={{ background: C.primary, padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px", boxShadow: "0 2px 10px rgba(0,0,0,0.15)" }}>
-      <img src={LOGO_URL} alt="WallSwiss" style={{ height: "44px" }} />
+    <div style={{ background: C.primary, width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px", boxShadow: "0 2px 10px rgba(0,0,0,0.15)" }}>
+      <img src={LOGO_URL} alt="WallSwiss" style={{ height: "24px", objectFit: "contain" }} crossOrigin="anonymous" />
     </div>
   </div>
 );
@@ -90,7 +90,7 @@ const EditableText = ({ value, onChange, editMode, style }) => {
       />
     );
   }
-  return <p style={{ ...style, whiteSpace: "pre-wrap", textAlign: "left" }}>{value}</p>;
+  return <p style={{ ...style, whiteSpace: "pre-wrap", textAlign: "justify" }}>{value}</p>;
 };
 
 // Slide 1 — Cover
@@ -100,7 +100,7 @@ function SlideCover({ data }) {
     <div style={{ ...slideBase, background: C.white, display: "flex" }}>
       <div style={{ width: "35%", height: "100%", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "40px 30px" }}>
         <div style={{ background: C.primary, padding: "14px 20px", display: "inline-flex", borderRadius: "2px", alignSelf: "flex-start" }}>
-          <img src={LOGO_URL} alt="WallSwiss" style={{ height: "30px" }} />
+          <img src={LOGO_URL} alt="WallSwiss" style={{ height: "30px" }} crossOrigin="anonymous" />
         </div>
         <div>
           <div style={{ width: 40, height: 3, background: C.gold, marginBottom: 16 }} />
@@ -226,7 +226,7 @@ function SlideAbout({ data, editMode, onTextChange }) {
           </div>
         </div>
         <div style={{ width: "35%", height: "100%", borderRadius: "4px", overflow: "hidden" }}>
-          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_15_uri_ifs3A2F2FM2FZZBVIKww_AjRDCaKNkRtfABGR-02n7Jd8caaieOpDwE.jpg" alt="Equipe WallSwiss" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_15_uri_ifs3A2F2FM2FZZBVIKww_AjRDCaKNkRtfABGR-02n7Jd8caaieOpDwE.jpg" alt="Equipe WallSwiss" style={{ width: "100%", height: "100%", objectFit: "cover" }} crossOrigin="anonymous" />
         </div>
       </div>
       {footer(fullName)}
@@ -338,7 +338,7 @@ function SlideSwissquote({ data, editMode, onTextChange }) {
         <ReportTitle title="Pourquoi Swissquote est une banque fiable" subtitle="PARTENAIRE BANCAIRE" />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 14, maxWidth: 720 }}>
           {points.map((p, i) => (
-            <div key={i} style={{ background: C.lightGray, padding: "14px 20px", fontSize: 12.5, lineHeight: 1.7, color: C.darkGray, borderLeft: `3px solid ${C.gold}` }}>
+            <div key={i} style={{ background: C.lightGray, padding: "14px 20px", fontSize: 12.5, lineHeight: 1.7, color: C.darkGray, borderLeft: `3px solid ${C.gold}`, textAlign: "justify" }}>
               {p}
             </div>
           ))}
@@ -378,7 +378,7 @@ function SlideAdvantages({ data }) {
               <div style={{ color: C.primary, fontSize: 18, marginTop: -4 }}>•</div>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: C.darkGray }}>{a.title}</div>
-                <div style={{ fontSize: 10, color: C.gray, lineHeight: 1.4, marginTop: 2 }}>{a.desc}</div>
+                <div style={{ fontSize: 10, color: C.gray, lineHeight: 1.4, marginTop: 2, textAlign: "justify" }}>{a.desc}</div>
               </div>
             </div>
           ))}
@@ -398,7 +398,7 @@ function SlideDivider({ data, number, title }) {
       <div style={{ width: "35%", background: `linear-gradient(150deg, ${C.primary} 0%, ${C.primaryDark} 100%)`, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ position: "absolute", right: -35, width: 70, height: 70, background: C.lightGray, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, transform: "rotate(45deg)" }}>
           <div style={{ width: 56, height: 56, background: C.primary, border: `2px solid ${C.gold}`, transform: "rotate(-45deg)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.1)" }}>
-            <img src={LOGO_URL} alt="WallSwiss" style={{ height: 26 }} />
+            <img src={LOGO_URL} alt="WallSwiss" style={{ height: 26 }} crossOrigin="anonymous" />
           </div>
         </div>
       </div>
@@ -419,7 +419,7 @@ function SlideDivider({ data, number, title }) {
 
         <div style={{ display: "flex", gap: 16 }}>
           <div style={{ width: 3, background: C.gold, flexShrink: 0 }} />
-          <div style={{ fontFamily: "'Montserrat', sans-serif", fontStyle: "italic", color: C.darkGray, fontSize: 12, maxWidth: 450, lineHeight: 1.7 }}>
+          <div style={{ fontFamily: "'Montserrat', sans-serif", fontStyle: "italic", color: C.darkGray, fontSize: 12, maxWidth: 450, lineHeight: 1.7, textAlign: "justify" }}>
             « L'investissement est un voyage à long terme. La clé est de rester concentré sur sa destination finale et de s'entourer des meilleurs partenaires. »
           </div>
         </div>
@@ -538,10 +538,10 @@ function SlideProjections({ data }) {
         <ReportTitle title="Vos objectifs sur le" highlight="compte titre" subtitle="SIMULATION FINANCIÈRE" />
         <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 32, alignItems: "center" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", paddingRight: 20 }}>
-            <p style={{ fontSize: 13, lineHeight: 1.6, color: C.darkGray, margin: "0 0 16px", textAlign: "left" }}>
+            <p style={{ fontSize: 13, lineHeight: 1.6, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }}>
               Ici, nous vous conseillons d'optimiser votre trésorerie actuelle avec un compte titre chez <strong>SwissQuote</strong> sur la solution de placement avec un dépôt initial de <strong>CHF {fmt(montant)}.-</strong>
             </p>
-            <p style={{ fontSize: 13, color: C.gray, margin: "0 0 32px", textAlign: "left" }}>
+            <p style={{ fontSize: 13, color: C.gray, margin: "0 0 32px", textAlign: "justify" }}>
               Nous appliquons des frais de souscription de {frais}% du montant investi soit {fmt(montant * frais / 100)}.-
             </p>
             
@@ -552,9 +552,9 @@ function SlideProjections({ data }) {
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: C.primaryDark }} /> Optimiste</div>
             </div>
 
-            {/* Line chart SVG */}
+            {/* Line chart SVG (xmlns required for html2canvas to render it) */}
             <div style={{ width: "100%", height: 220 }}>
-              <svg width="100%" height="100%" viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
                 {/* Y Axis Grid */}
                 {[0, 0.25, 0.5, 0.75, 1].map(pct => {
                   const y = padT + h - (pct * h);
@@ -704,16 +704,16 @@ function SlideApp({ data }) {
       <div style={{ padding: "48px 56px", height: "100%", boxSizing: "border-box", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "center" }}>
         <div>
           <ReportTitle title="Votre application de suivi" highlight="SwissQuote" subtitle="CENTRALISEZ L'ENSEMBLE DE VOS FINANCES EN UN SEUL ENDROIT" />
-          <p style={{ fontSize: 12, lineHeight: 1.8, color: C.darkGray, margin: "0 0 12px" }}>
+          <p style={{ fontSize: 12, lineHeight: 1.8, color: C.darkGray, margin: "0 0 12px", textAlign: "justify" }}>
             Effectuez des opérations de trading, d'investissement et bancaires en <strong>toute sécurité</strong> et à des <strong>tarifs avantageux</strong>, grâce au principal acteur suisse de la banque en ligne.
           </p>
-          <p style={{ fontSize: 12, lineHeight: 1.8, color: C.darkGray, margin: 0 }}>
+          <p style={{ fontSize: 12, lineHeight: 1.8, color: C.darkGray, margin: 0, textAlign: "justify" }}>
             Nos plateformes intuitives vous invitent à explorer un monde riche en opportunités. Et accédez à une <strong>vaste gamme</strong> d'informations et de programmes de formation.
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative", height: "100%" }}>
-          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_10_width_799.webp" alt="Swissquote App Desktop" style={{ width: "85%", objectFit: "contain", borderRadius: "6px", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", zIndex: 1 }} />
-          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_9_width_400.webp" alt="Swissquote App Mobile" style={{ width: "32%", objectFit: "contain", position: "absolute", bottom: "10%", right: "5%", borderRadius: "10px", boxShadow: "0 15px 40px rgba(0,0,0,0.3)", zIndex: 2 }} />
+          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_10_width_799.webp" alt="Swissquote App Desktop" style={{ width: "85%", objectFit: "contain", borderRadius: "6px", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", zIndex: 1 }} crossOrigin="anonymous" />
+          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_9_width_400.webp" alt="Swissquote App Mobile" style={{ width: "32%", objectFit: "contain", position: "absolute", bottom: "10%", right: "5%", borderRadius: "10px", boxShadow: "0 15px 40px rgba(0,0,0,0.3)", zIndex: 2 }} crossOrigin="anonymous" />
         </div>
       </div>
       {footer(fullName)}
@@ -729,7 +729,7 @@ function SlideContact({ data, editMode, onTextChange }) {
       
       {/* Décoration filigrane géante centrée */}
       <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", opacity: 0.03, pointerEvents: "none", zIndex: 1 }}>
-         <img src={LOGO_URL} alt="" style={{ width: "800px", filter: "invert(1)" }} />
+         <img src={LOGO_URL} alt="" style={{ width: "800px", filter: "invert(1)" }} crossOrigin="anonymous" />
       </div>
 
       <div style={{ zIndex: 2, display: "flex", width: "100%", padding: "0 80px", gap: "80px", alignItems: "center" }}>
@@ -787,42 +787,6 @@ function ReportPreview({ data, onClose, onUpdateData }) {
     onUpdateData({ ...data, texts: { ...data.texts, [key]: value } });
   };
 
-  // --- PDF LOGIC (Inspirée du CRM) ---
-  const getPdfOptions = (filename) => ({
-    margin: 0,
-    filename,
-    image: { type: 'jpeg', quality: 0.98 },
-    pagebreak: { mode: ['css', 'legacy'] },
-    html2canvas: { 
-      scale: 2, 
-      useCORS: true, 
-      scrollY: 0,
-      windowWidth: 1280, // Force la largeur pour éviter les coupures
-      onclone: (doc) => {
-        const el = doc.getElementById('report-printable');
-        if (el) {
-          // Réinitialise le positionnement caché pour le clone PDF
-          el.style.position = 'static';
-          el.style.left = 'auto';
-          el.style.top = 'auto';
-          // Convertit les textareas en divs pour un affichage propre dans le PDF
-          doc.querySelectorAll('#report-printable textarea').forEach((textarea) => {
-            const div = doc.createElement('div');
-            // Récupère les styles de base du textarea
-            div.style.cssText = window.getComputedStyle(textarea).cssText;
-            div.style.height = 'auto';
-            div.style.whiteSpace = 'pre-wrap';
-            div.style.border = 'none';
-            div.style.background = 'transparent';
-            div.innerText = textarea.value;
-            textarea.parentNode.replaceChild(div, textarea);
-          });
-        }
-      }
-    },
-    jsPDF: { unit: 'px', format: [1280, 720], orientation: 'landscape' } // Format exact 16:9
-  });
-
   const requireHtml2Pdf = async () => {
     if (window.html2pdf) return window.html2pdf;
     return new Promise((resolve, reject) => {
@@ -835,35 +799,66 @@ function ReportPreview({ data, onClose, onUpdateData }) {
   };
 
   const handleDownloadPDF = async () => {
-    const element = document.getElementById('report-printable');
-    if (!element) return;
-    
     setIsPdfLoading(true);
 
-    // Astuce vitale : ramener l'élément dans la zone visible avant la capture
-    const prevLeft = element.style.left;
-    element.style.left = '0px';
-    element.style.zIndex = '-100'; // Reste invisible à l'utilisateur car derrière la modale
-    
-    // Petit délai pour laisser le navigateur faire le rendu visuel
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // On laisse 500ms au navigateur pour insérer le conteneur dans le DOM visuel et charger les images
+    setTimeout(async () => {
+      const element = document.getElementById('report-printable');
+      if (!element) {
+        setIsPdfLoading(false);
+        return;
+      }
 
-    try {
-      const html2pdf = await requireHtml2Pdf();
-      await html2pdf()
-        .set(getPdfOptions(`Rapport_${data.nom || 'Client'}.pdf`))
-        .from(element)
-        .save();
-    } catch(e) {
-      console.error("Erreur PDF:", e);
-      alert("Erreur de chargement du moteur PDF.");
-    } finally {
-      // Remettre l'élément hors écran
-      element.style.left = prevLeft;
-      setIsPdfLoading(false);
-    }
+      // Convertir temporairement les textareas en divs pour le PDF
+      const textareas = element.querySelectorAll('textarea');
+      const replacements = [];
+      textareas.forEach((textarea) => {
+        const div = document.createElement('div');
+        div.style.cssText = window.getComputedStyle(textarea).cssText;
+        div.style.height = 'auto';
+        div.style.whiteSpace = 'pre-wrap';
+        div.style.border = 'none';
+        div.style.background = 'transparent';
+        div.style.resize = 'none';
+        div.style.textAlign = 'justify'; // Assure l'alignement justifié dans l'export
+        div.innerText = textarea.value;
+        textarea.parentNode.insertBefore(div, textarea);
+        textarea.style.display = 'none';
+        replacements.push({ textarea, div });
+      });
+
+      try {
+        const html2pdf = await requireHtml2Pdf();
+        await html2pdf()
+          .set({
+            margin: 0,
+            filename: `Rapport_${data.nom || 'Client'}.pdf`,
+            image: { type: 'jpeg', quality: 1 },
+            pagebreak: { mode: ['css', 'legacy'] }, // Laisse le moteur couper aux limites naturelles
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              // allowTaint doit être faux ou absent pour que JsPDF puisse utiliser toDataURL des images !
+              scrollY: 0,
+              scrollX: 0,
+              windowWidth: 1280
+            },
+            jsPDF: { unit: 'px', format: [1280, 720], orientation: 'landscape' }
+          })
+          .from(element)
+          .save();
+      } catch(e) {
+        console.error("Erreur PDF:", e);
+        alert("Erreur de chargement du moteur PDF.");
+      } finally {
+        replacements.forEach(({ textarea, div }) => {
+          textarea.style.display = '';
+          div.remove();
+        });
+        setIsPdfLoading(false);
+      }
+    }, 500); // 500ms de répit vital pour le moteur de rendu
   };
-  // --- END PDF LOGIC ---
 
   const slides = [
     <SlideCover data={data} />,
@@ -919,15 +914,28 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         ))}
       </div>
 
-      {/* VERSION IMPRIMABLE (Cachée hors écran pour html2pdf) */}
-      <div id="report-printable" style={{ position: "absolute", left: "-9999px", top: 0 }}>
-        {slides.map((SlideComponent, index) => (
-          <div key={index} style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", pageBreakAfter: "always", breakAfter: "page", backgroundColor: "#FFFFFF" }}>
-            {/* Format forcé en 1280x720 pour assurer le ratio 16:9 régulier de la librairie PDF */}
-            {SlideComponent}
+      {/* OVERLAY DE CHARGEMENT & IMPRESSION (Visible au clic, règle totalement le souci de page blanche) */}
+      {isPdfLoading && (
+        <div style={{ position: "fixed", inset: 0, background: C.white, zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 16 }}>
+            Génération du rapport en cours...
           </div>
-        ))}
-      </div>
+          <div style={{ fontSize: 13, color: C.gray, fontWeight: 500, fontFamily: "'Montserrat', sans-serif" }}>
+            Veuillez patienter, le document est en préparation.
+          </div>
+          
+          {/* Conteneur d'impression : parfaitement dans le DOM normal mais caché "derrière" l'overlay textuel */}
+          <div style={{ position: "absolute", top: 0, left: 0, zIndex: -1 }}>
+            <div id="report-printable" style={{ width: "1280px", background: C.white }}>
+              {slides.map((SlideComponent, index) => (
+                <div key={index} style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF" }}>
+                  {SlideComponent}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1209,7 +1217,7 @@ export default function WallSwissApp() {
         <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ background: C.primaryDark, padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px" }}>
-              <img src={LOGO_URL} alt="WallSwiss" style={{ height: "16px" }} />
+              <img src={LOGO_URL} alt="WallSwiss" style={{ height: "16px" }} crossOrigin="anonymous" />
             </div>
             <div>
               <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.white, fontSize: 18, fontWeight: 700, letterSpacing: "0.06em" }}>WALLSWISS</div>

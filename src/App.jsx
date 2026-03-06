@@ -784,10 +784,75 @@ function SlideContact({ data, editMode, onTextChange }) {
 function ReportPreview({ data, onClose, onUpdateData }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [editMode, setEditMode] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
 
   const handleTextChange = (key, value) => {
     onUpdateData({ ...data, texts: { ...data.texts, [key]: value } });
   };
+
+  // --- PDF LOGIC (Inspirée du CRM) ---
+  const getPdfOptions = (filename) => ({
+    margin: 0,
+    filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    pagebreak: { mode: ['css', 'legacy'] },
+    html2canvas: { 
+      scale: 2, 
+      useCORS: true, 
+      scrollY: 0,
+      onclone: (doc) => {
+        const el = doc.getElementById('report-printable');
+        if (el) {
+          // Rend le conteneur visible dans le clone utilisé par html2canvas
+          el.style.display = 'block';
+          // Convertit les textareas en divs pour un affichage propre dans le PDF
+          doc.querySelectorAll('#report-printable textarea').forEach((textarea) => {
+            const div = doc.createElement('div');
+            // Récupère les styles de base du textarea
+            div.style.cssText = window.getComputedStyle(textarea).cssText;
+            div.style.height = 'auto';
+            div.style.whiteSpace = 'pre-wrap';
+            div.style.border = 'none';
+            div.style.background = 'transparent';
+            div.innerText = textarea.value;
+            textarea.parentNode.replaceChild(div, textarea);
+          });
+        }
+      }
+    },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } // Format paysage
+  });
+
+  const requireHtml2Pdf = async () => {
+    if (window.html2pdf) return window.html2pdf;
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.onload = () => resolve(window.html2pdf);
+      script.onerror = reject;
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleDownloadPDF = async () => {
+    const element = document.getElementById('report-printable');
+    if (!element) return;
+    
+    setIsPdfLoading(true);
+    try {
+      const html2pdf = await requireHtml2Pdf();
+      await html2pdf()
+        .set(getPdfOptions(`Rapport_${data.nom || 'Client'}.pdf`))
+        .from(element)
+        .save();
+    } catch(e) {
+      console.error("Erreur PDF:", e);
+      alert("Erreur de chargement du moteur PDF.");
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+  // --- END PDF LOGIC ---
 
   const slides = [
     <SlideCover data={data} />,
@@ -813,8 +878,8 @@ function ReportPreview({ data, onClose, onUpdateData }) {
       <div className="no-print" style={{ background: C.black, padding: "10px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <span style={{ color: C.white, fontSize: 12, fontWeight: 600, letterSpacing: "0.06em" }}>APERCU — {data.prenom} {(data.nom||"").toUpperCase()}</span>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <button onClick={() => window.print()} style={{ background: C.white, color: C.black, border: "none", padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "2px" }}>
-            🖨️ IMPRIMER / PDF
+          <button onClick={handleDownloadPDF} disabled={isPdfLoading} style={{ background: C.white, color: C.black, border: "none", padding: "6px 12px", cursor: isPdfLoading ? "wait" : "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "2px", opacity: isPdfLoading ? 0.7 : 1, transition: "0.2s" }}>
+            {isPdfLoading ? "⏳ GÉNÉRATION EN COURS..." : "📥 TÉLÉCHARGER PDF"}
           </button>
           <button onClick={() => setEditMode(!editMode)} style={{ background: editMode ? C.gold : "transparent", border: `1px solid ${C.gold}`, color: editMode ? C.white : C.gold, padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "2px", transition: "0.2s" }}>
             {editMode ? "✓ TERMINER L'ÉDITION" : "✎ ÉDITER LES TEXTES"}
@@ -843,10 +908,11 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         ))}
       </div>
 
-      {/* VERSION IMPRIMABLE (Cachée sur l'écran, visible à l'impression) */}
-      <div className="print-only">
+      {/* VERSION IMPRIMABLE (Cachée sur l'écran, générée par html2pdf) */}
+      <div id="report-printable" style={{ display: "none" }}>
         {slides.map((SlideComponent, index) => (
-          <div key={index} style={{ width: "100vw", height: "56.25vw", maxHeight: "100vh", position: "relative", overflow: "hidden", pageBreakAfter: "always", breakAfter: "page" }}>
+          <div key={index} style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", pageBreakAfter: "always", breakAfter: "page" }}>
+            {/* Format forcé en 1280x720 pour assurer le ratio 16:9 régulier de la librairie PDF */}
             {SlideComponent}
           </div>
         ))}
@@ -854,7 +920,6 @@ function ReportPreview({ data, onClose, onUpdateData }) {
     </div>
   );
 }
-
 
 // ────────────────────── FORM / MAIN APP ──────────────────────
 

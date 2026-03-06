@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 
 const C = {
   primary: "#692102",
@@ -824,22 +824,13 @@ function ReportPreview({ data, onClose, onUpdateData }) {
   const handleDownloadPDF = async () => {
     setIsPdfLoading(true);
 
-    // Astuce ultime globale pour les images : on les convertit TOUTES en Base64 AVANT de lancer la capture
     const element = document.getElementById('report-printable');
     if (!element) {
         setIsPdfLoading(false);
         return;
     }
 
-    const images = element.querySelectorAll('img.pdf-image');
-    for (let img of images) {
-        if (img.src && !img.src.startsWith('data:')) {
-            const base64 = await getBase64Image(img.src);
-            img.src = base64;
-        }
-    }
-
-    // On laisse le temps au DOM d'appliquer les nouvelles sources Base64
+    // On laisse le temps au DOM de s'afficher
     setTimeout(async () => {
       
       // Convertir temporairement les textareas en divs pour le PDF
@@ -1235,7 +1226,7 @@ export default function WallSwissApp() {
   };
 
   return (
-    <div style={{ fontFamily: "'Montserrat', sans-serif", background: C.lightGray, minHeight: "100vh", color: C.black, width: "100vw", maxWidth: "100%", margin: 0, padding: 0 }}>
+    <div style={{ fontFamily: "'Montserrat', sans-serif", background: C.lightGray, minHeight: "100vh", color: C.black, width: "100vw", maxWidth: "100%", margin: 0, padding: 0, overflowX: "hidden" }}>
       <style>{`
         body { margin: 0; padding: 0; overflow-x: hidden; }
         input:focus, select:focus { border-color: ${C.primary} !important; }
@@ -1285,7 +1276,7 @@ export default function WallSwissApp() {
               <button style={S.btnP} onClick={()=>{setPage("create");resetForm();}}>+ Créer un rapport</button>
             </div>
           ) : (
-            <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+            <div style={{ width: "100%" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
                 <div>
                   <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Mes rapports</h2>
@@ -1312,7 +1303,7 @@ export default function WallSwissApp() {
         )}
 
         {page === "create" && (
-          <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+          <div style={{ width: "100%" }}>
             <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: "0 0 4px" }}>Nouveau rapport</h2>
             <p style={{ color: C.gray, fontSize: 13, marginBottom: 24 }}>Remplissez les informations pour générer un rapport personnalisé.</p>
             <div style={{ display: "flex", gap: 0, marginBottom: 28, background: C.white, border: `1px solid ${C.mediumGray}`, padding: 4 }}>

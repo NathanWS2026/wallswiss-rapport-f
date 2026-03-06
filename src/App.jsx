@@ -13,6 +13,7 @@ const C = {
 };
 
 const LOGO_URL = "https://wallswiss.ch/wp-content/uploads/2026/03/logo-blanc-sans-texte.png";
+const APP_VERSION = "v1.2.0";
 
 const fontLink = document.createElement("link");
 fontLink.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap";
@@ -36,6 +37,23 @@ function computeProjections(data) {
 }
 
 function fmt(n) { return Number(n).toLocaleString("fr-CH"); }
+
+// Fonction magique pour convertir une URL d'image en Base64 
+// C'est la solution ultime pour éviter les bugs d'images manquantes dans les PDF
+const getBase64Image = async (url) => {
+  try {
+    const response = await fetch(url, { mode: 'cors' });
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    console.warn("Erreur de conversion Base64 pour l'image:", url, e);
+    return url; // Retourne l'URL d'origine en cas d'échec (pour éviter un plantage)
+  }
+};
 
 // ────────────────────── SLIDE COMPONENTS ──────────────────────
 
@@ -62,7 +80,7 @@ const accentBar = () => (
 const logoCorner = () => (
   <div style={{ position: "absolute", top: 48, right: 56, zIndex: 10 }}>
     <div style={{ background: C.primary, width: "48px", height: "48px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px", boxShadow: "0 2px 10px rgba(0,0,0,0.15)" }}>
-      <img src={LOGO_URL} alt="WallSwiss" style={{ width: "26px", height: "26px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
+      <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ width: "26px", height: "26px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
     </div>
   </div>
 );
@@ -102,7 +120,7 @@ function SlideCover({ data }) {
     <div style={{ ...slideBase, background: C.white, display: "flex" }}>
       <div style={{ width: "35%", height: "100%", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "40px 30px" }}>
         <div style={{ background: C.primary, width: "64px", height: "64px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px" }}>
-          <img src={LOGO_URL} alt="WallSwiss" style={{ width: "36px", height: "36px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
+          <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ width: "36px", height: "36px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
         </div>
         <div>
           <div style={{ width: 40, height: 3, background: C.gold, marginBottom: 16 }} />
@@ -173,7 +191,10 @@ function SlidePhilosophy({ data, editMode, onTextChange }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   return (
     <div style={{ ...slideBase, display: "flex", alignItems: "stretch" }}>
-      <div style={{ width: "35%", background: `url("https://wallswiss.ch/wp-content/uploads/2026/03/660942a0ceb2ea252752e568_section-bg-scaled.jpg") center/cover`, position: "relative" }} />
+      <div style={{ width: "35%", position: "relative", overflow: "hidden" }}>
+         {/* Remplacement du background-image par une vraie balise img pour faciliter la conversion Base64 */}
+         <img src="https://wallswiss.ch/wp-content/uploads/2026/03/660942a0ceb2ea252752e568_section-bg-scaled.jpg" alt="Fond" className="pdf-image" style={{ width: "100%", height: "100%", objectFit: "cover" }} crossOrigin="anonymous" />
+      </div>
       <div style={{ flex: 1, padding: "36px 56px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         {logoCorner()}
         <ReportTitle title="Qui sommes-nous ?" />
@@ -228,7 +249,7 @@ function SlideAbout({ data, editMode, onTextChange }) {
           </div>
         </div>
         <div style={{ width: "35%", height: "100%", borderRadius: "4px", overflow: "hidden" }}>
-          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_15_uri_ifs3A2F2FM2FZZBVIKww_AjRDCaKNkRtfABGR-02n7Jd8caaieOpDwE.jpg" alt="Equipe WallSwiss" style={{ width: "100%", height: "100%", objectFit: "cover" }} crossOrigin="anonymous" />
+          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_15_uri_ifs3A2F2FM2FZZBVIKww_AjRDCaKNkRtfABGR-02n7Jd8caaieOpDwE.jpg" alt="Equipe WallSwiss" className="pdf-image" style={{ width: "100%", height: "100%", objectFit: "cover" }} crossOrigin="anonymous" />
         </div>
       </div>
       {footer(fullName)}
@@ -400,7 +421,7 @@ function SlideDivider({ data, number, title }) {
       <div style={{ width: "35%", background: `linear-gradient(150deg, ${C.primary} 0%, ${C.primaryDark} 100%)`, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ position: "absolute", right: -35, width: 70, height: 70, background: C.lightGray, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, transform: "rotate(45deg)" }}>
           <div style={{ width: 56, height: 56, background: C.primary, border: `2px solid ${C.gold}`, transform: "rotate(-45deg)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.1)" }}>
-            <img src={LOGO_URL} alt="WallSwiss" style={{ height: 26 }} crossOrigin="anonymous" />
+            <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ height: 26 }} crossOrigin="anonymous" />
           </div>
         </div>
       </div>
@@ -714,8 +735,8 @@ function SlideApp({ data }) {
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative", height: "100%" }}>
-          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_10_width_799.webp" alt="Swissquote App Desktop" style={{ width: "85%", objectFit: "contain", borderRadius: "6px", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", zIndex: 1 }} crossOrigin="anonymous" />
-          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_9_width_400.webp" alt="Swissquote App Mobile" style={{ width: "32%", objectFit: "contain", position: "absolute", bottom: "10%", right: "5%", borderRadius: "10px", boxShadow: "0 15px 40px rgba(0,0,0,0.3)", zIndex: 2 }} crossOrigin="anonymous" />
+          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_10_width_799.webp" alt="Swissquote App Desktop" className="pdf-image" style={{ width: "85%", objectFit: "contain", borderRadius: "6px", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", zIndex: 1 }} crossOrigin="anonymous" />
+          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_9_width_400.webp" alt="Swissquote App Mobile" className="pdf-image" style={{ width: "32%", objectFit: "contain", position: "absolute", bottom: "10%", right: "5%", borderRadius: "10px", boxShadow: "0 15px 40px rgba(0,0,0,0.3)", zIndex: 2 }} crossOrigin="anonymous" />
         </div>
       </div>
       {footer(fullName)}
@@ -731,7 +752,7 @@ function SlideContact({ data, editMode, onTextChange }) {
       
       {/* Décoration filigrane géante centrée */}
       <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", opacity: 0.03, pointerEvents: "none", zIndex: 1 }}>
-         <img src={LOGO_URL} alt="" style={{ width: "800px", filter: "invert(1)" }} crossOrigin="anonymous" />
+         <img src={LOGO_URL} alt="" className="pdf-image" style={{ width: "800px", filter: "invert(1)" }} crossOrigin="anonymous" />
       </div>
 
       <div style={{ zIndex: 2, display: "flex", width: "100%", padding: "0 80px", gap: "80px", alignItems: "center" }}>
@@ -803,14 +824,24 @@ function ReportPreview({ data, onClose, onUpdateData }) {
   const handleDownloadPDF = async () => {
     setIsPdfLoading(true);
 
-    // On laisse 800ms au navigateur pour insérer le conteneur dans le DOM visuel et charger les images
-    setTimeout(async () => {
-      const element = document.getElementById('report-printable');
-      if (!element) {
+    // Astuce ultime globale pour les images : on les convertit TOUTES en Base64 AVANT de lancer la capture
+    const element = document.getElementById('report-printable');
+    if (!element) {
         setIsPdfLoading(false);
         return;
-      }
+    }
 
+    const images = element.querySelectorAll('img.pdf-image');
+    for (let img of images) {
+        if (img.src && !img.src.startsWith('data:')) {
+            const base64 = await getBase64Image(img.src);
+            img.src = base64;
+        }
+    }
+
+    // On laisse le temps au DOM d'appliquer les nouvelles sources Base64
+    setTimeout(async () => {
+      
       // Convertir temporairement les textareas en divs pour le PDF
       const textareas = element.querySelectorAll('textarea');
       const replacements = [];
@@ -822,7 +853,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         div.style.border = 'none';
         div.style.background = 'transparent';
         div.style.resize = 'none';
-        div.style.textAlign = 'justify'; // Assure l'alignement justifié dans l'export
+        div.style.textAlign = 'justify'; 
         div.innerText = textarea.value;
         textarea.parentNode.insertBefore(div, textarea);
         textarea.style.display = 'none';
@@ -843,9 +874,8 @@ function ReportPreview({ data, onClose, onUpdateData }) {
               scrollY: 0,
               scrollX: 0,
               windowWidth: 1280,
-              letterRendering: true // Améliore la précision de la typographie
+              letterRendering: true
             },
-            // L'unité 'pt' (points) est CRUCIALE ici : elle force un rendu 1:1 parfait avec votre écran
             jsPDF: { unit: 'pt', format: [1280, 720], orientation: 'landscape' }
           })
           .from(element)
@@ -860,7 +890,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         });
         setIsPdfLoading(false);
       }
-    }, 500); // 500ms de répit vital pour le moteur de rendu
+    }, 500); 
   };
 
   const slides = [
@@ -1205,8 +1235,9 @@ export default function WallSwissApp() {
   };
 
   return (
-    <div style={{ fontFamily: "'Montserrat', sans-serif", background: C.lightGray, minHeight: "100vh", color: C.black }}>
+    <div style={{ fontFamily: "'Montserrat', sans-serif", background: C.lightGray, minHeight: "100vh", color: C.black, width: "100vw", maxWidth: "100%", margin: 0, padding: 0 }}>
       <style>{`
+        body { margin: 0; padding: 0; overflow-x: hidden; }
         input:focus, select:focus { border-color: ${C.primary} !important; }
         ::placeholder { color: #B0ADA6; }
         button:hover { opacity: 0.9; }
@@ -1223,8 +1254,8 @@ export default function WallSwissApp() {
         }
       `}</style>
 
-      <header style={{ background: C.primary, position: "sticky", top: 0, zIndex: 100 }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px" }}>
+      <header style={{ background: C.primary, position: "sticky", top: 0, zIndex: 100, width: "100%" }}>
+        <div style={{ width: "100%", padding: "14px 40px", display: "flex", alignItems: "center", justifyContent: "space-between", boxSizing: "border-box" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ background: C.primaryDark, padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px" }}>
               <img src={LOGO_URL} alt="WallSwiss" style={{ height: "16px" }} crossOrigin="anonymous" />
@@ -1244,17 +1275,17 @@ export default function WallSwissApp() {
         </div>
       </header>
 
-      <main style={{ maxWidth: 1200, margin: "0 auto", padding: "28px" }}>
+      <main style={{ width: "100%", padding: "40px", boxSizing: "border-box" }}>
         {page === "dashboard" && (
           reports.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "80px 40px" }}>
+            <div style={{ textAlign: "center", padding: "120px 40px" }}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ marginBottom: 16, opacity: 0.2 }}><rect x="3" y="3" width="18" height="18" stroke={C.primary} strokeWidth="1.5"/><line x1="7" y1="8" x2="17" y2="8" stroke={C.primary} strokeWidth="1"/><line x1="7" y1="12" x2="14" y2="12" stroke={C.primary} strokeWidth="1"/><line x1="7" y1="16" x2="11" y2="16" stroke={C.primary} strokeWidth="1"/></svg>
               <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.primary, marginBottom: 8 }}>Aucun rapport créé</div>
               <p style={{ color: C.gray, fontSize: 13, marginBottom: 24, maxWidth: 380, margin: "0 auto 24px" }}>Commencez par créer votre premier rapport financier personnalisé.</p>
               <button style={S.btnP} onClick={()=>{setPage("create");resetForm();}}>+ Créer un rapport</button>
             </div>
           ) : (
-            <div>
+            <div style={{ maxWidth: 1400, margin: "0 auto" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
                 <div>
                   <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Mes rapports</h2>
@@ -1262,7 +1293,7 @@ export default function WallSwissApp() {
                 </div>
                 <button style={S.btnP} onClick={()=>{setPage("create");resetForm();}}>+ Nouveau rapport</button>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: 16 }}>
                 {reports.map((r,i) => (
                   <div key={i} style={{ ...S.card, cursor: "pointer", position: "relative", overflow: "hidden" }} onClick={()=>setPreview(r)}>
                     <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: C.primary }} />
@@ -1281,7 +1312,7 @@ export default function WallSwissApp() {
         )}
 
         {page === "create" && (
-          <div>
+          <div style={{ maxWidth: 1000, margin: "0 auto" }}>
             <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: "0 0 4px" }}>Nouveau rapport</h2>
             <p style={{ color: C.gray, fontSize: 13, marginBottom: 24 }}>Remplissez les informations pour générer un rapport personnalisé.</p>
             <div style={{ display: "flex", gap: 0, marginBottom: 28, background: C.white, border: `1px solid ${C.mediumGray}`, padding: 4 }}>
@@ -1299,6 +1330,11 @@ export default function WallSwissApp() {
           </div>
         )}
       </main>
+
+      {/* Mention de version en bas de page */}
+      <div style={{ padding: "20px", textAlign: "center", fontSize: "10px", color: C.gray, marginTop: "auto" }}>
+        WallSwiss Rapport Generator - {APP_VERSION}
+      </div>
 
       {preview && <ReportPreview data={preview} onClose={()=>setPreview(null)} onUpdateData={handlePreviewUpdate} />}
     </div>

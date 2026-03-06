@@ -60,9 +60,9 @@ const accentBar = () => (
 );
 
 const logoCorner = () => (
-  <div style={{ position: "absolute", top: 48, right: 56, display: "flex", alignItems: "center", gap: 8, zIndex: 10 }}>
-    <div style={{ background: C.primary, width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px", boxShadow: "0 2px 10px rgba(0,0,0,0.15)" }}>
-      <img src={LOGO_URL} alt="WallSwiss" style={{ height: "24px", objectFit: "contain" }} crossOrigin="anonymous" />
+  <div style={{ position: "absolute", top: 48, right: 56, zIndex: 10 }}>
+    <div style={{ background: C.primary, width: "48px", height: "48px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px", boxShadow: "0 2px 10px rgba(0,0,0,0.15)" }}>
+      <img src={LOGO_URL} alt="WallSwiss" style={{ width: "26px", height: "26px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
     </div>
   </div>
 );
@@ -96,16 +96,18 @@ const EditableText = ({ value, onChange, editMode, style }) => {
 // Slide 1 — Cover
 function SlideCover({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const dateObj = data.dateRapport ? new Date(data.dateRapport) : new Date();
+  const formattedDate = dateObj.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
   return (
     <div style={{ ...slideBase, background: C.white, display: "flex" }}>
       <div style={{ width: "35%", height: "100%", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "40px 30px" }}>
-        <div style={{ background: C.primary, padding: "14px 20px", display: "inline-flex", borderRadius: "2px", alignSelf: "flex-start" }}>
-          <img src={LOGO_URL} alt="WallSwiss" style={{ height: "30px" }} crossOrigin="anonymous" />
+        <div style={{ background: C.primary, width: "64px", height: "64px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px" }}>
+          <img src={LOGO_URL} alt="WallSwiss" style={{ width: "36px", height: "36px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
         </div>
         <div>
           <div style={{ width: 40, height: 3, background: C.gold, marginBottom: 16 }} />
           <div style={{ color: C.primary, fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" }}>Analyse Patrimoniale</div>
-          <div style={{ color: C.gray, fontSize: 10, marginTop: 8 }}>{new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          <div style={{ color: C.gray, fontSize: 10, marginTop: 8 }}>{formattedDate}</div>
         </div>
       </div>
       <div style={{ width: "65%", height: "100%", background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryDark} 100%)`, position: "relative", padding: "60px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
@@ -552,9 +554,9 @@ function SlideProjections({ data }) {
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: C.primaryDark }} /> Optimiste</div>
             </div>
 
-            {/* Line chart SVG (xmlns required for html2canvas to render it) */}
-            <div style={{ width: "100%", height: 220 }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
+            {/* Line chart SVG (Dimensions fixes pour garantir la capture PDF) */}
+            <div style={{ width: 400, height: 220 }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width={400} height={220} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
                 {/* Y Axis Grid */}
                 {[0, 0.25, 0.5, 0.75, 1].map(pct => {
                   const y = padT + h - (pct * h);
@@ -801,7 +803,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
   const handleDownloadPDF = async () => {
     setIsPdfLoading(true);
 
-    // On laisse 500ms au navigateur pour insérer le conteneur dans le DOM visuel et charger les images
+    // On laisse 800ms au navigateur pour insérer le conteneur dans le DOM visuel et charger les images
     setTimeout(async () => {
       const element = document.getElementById('report-printable');
       if (!element) {
@@ -834,16 +836,17 @@ function ReportPreview({ data, onClose, onUpdateData }) {
             margin: 0,
             filename: `Rapport_${data.nom || 'Client'}.pdf`,
             image: { type: 'jpeg', quality: 1 },
-            pagebreak: { mode: ['css', 'legacy'] }, // Laisse le moteur couper aux limites naturelles
+            pagebreak: { mode: ['css'], before: '.pdf-slide' },
             html2canvas: {
               scale: 2,
               useCORS: true,
-              // allowTaint doit être faux ou absent pour que JsPDF puisse utiliser toDataURL des images !
               scrollY: 0,
               scrollX: 0,
-              windowWidth: 1280
+              windowWidth: 1280,
+              letterRendering: true // Améliore la précision de la typographie
             },
-            jsPDF: { unit: 'px', format: [1280, 720], orientation: 'landscape' }
+            // L'unité 'pt' (points) est CRUCIALE ici : elle force un rendu 1:1 parfait avec votre écran
+            jsPDF: { unit: 'pt', format: [1280, 720], orientation: 'landscape' }
           })
           .from(element)
           .save();
@@ -914,24 +917,28 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         ))}
       </div>
 
-      {/* OVERLAY DE CHARGEMENT & IMPRESSION (Visible au clic, règle totalement le souci de page blanche) */}
+      {/* OVERLAY DE CHARGEMENT & IMPRESSION */}
       {isPdfLoading && (
-        <div style={{ position: "fixed", inset: 0, background: C.white, zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 16 }}>
-            Génération du rapport en cours...
-          </div>
-          <div style={{ fontSize: 13, color: C.gray, fontWeight: 500, fontFamily: "'Montserrat', sans-serif" }}>
-            Veuillez patienter, le document est en préparation.
-          </div>
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999, overflow: "hidden", background: C.white }}>
           
-          {/* Conteneur d'impression : parfaitement dans le DOM normal mais caché "derrière" l'overlay textuel */}
-          <div style={{ position: "absolute", top: 0, left: 0, zIndex: -1 }}>
+          {/* Le conteneur figé à 1280px de large absolu pour empêcher le navigateur de tordre la grille CSS */}
+          <div style={{ position: "absolute", top: 0, left: 0, width: "1280px", opacity: 0.01 }}>
             <div id="report-printable" style={{ width: "1280px", background: C.white }}>
               {slides.map((SlideComponent, index) => (
-                <div key={index} style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF" }}>
+                <div key={index} className="pdf-slide" style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF" }}>
                   {SlideComponent}
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* L'écran de chargement par-dessus */}
+          <div style={{ position: "absolute", inset: 0, background: C.white, zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 16 }}>
+              Génération du rapport en cours...
+            </div>
+            <div style={{ fontSize: 13, color: C.gray, fontWeight: 500, fontFamily: "'Montserrat', sans-serif" }}>
+              Veuillez patienter pendant la capture haute définition...
             </div>
           </div>
         </div>
@@ -974,6 +981,7 @@ export default function WallSwissApp() {
   const [reports, setReports] = useState([{
     id: 1,
     templateId: "swissquote",
+    dateRapport: new Date().toISOString().split('T')[0],
     nom: "MULLER", prenom: "Thomas", age: "42", profession: "Directeur Marketing", nationalite: "Suisse", statut: "Marié(e)", revenus: "145000",
     capaciteEpargne: "3000", fortuneGlobale: "650000", profilRisque: "Dynamique", horizonPlacement: "Long terme (> 8 ans)",
     objectifs: ["Préparer la retraite", "Financer un projet immobilier", "Améliorer la fiscalité des placements"], objectifCustom: "",
@@ -987,6 +995,7 @@ export default function WallSwissApp() {
   
   const [form, setForm] = useState({
     templateId: "swissquote",
+    dateRapport: new Date().toISOString().split('T')[0],
     nom: "", prenom: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "",
     capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)",
     objectifs: [], objectifCustom: "",
@@ -1002,7 +1011,7 @@ export default function WallSwissApp() {
   const toggleObj = (o) => setForm(p => ({ ...p, objectifs: p.objectifs.includes(o) ? p.objectifs.filter(x => x !== o) : [...p.objectifs, o] }));
   const addCustomObj = () => { if (form.objectifCustom.trim()) { setForm(p => ({ ...p, objectifs: [...p.objectifs, p.objectifCustom.trim()], objectifCustom: "" })); } };
   const handleSave = () => { setReports(p => [...p, { ...form, id: Date.now() }]); setPreview(form); setPage("dashboard"); setStep(0); };
-  const resetForm = () => setForm({ templateId: "swissquote", nom: "", prenom: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", conseiller: "Louis Borne", titreConseiller: "Planificatrice financière", telephone: "+41.76.231.92.75", email: "l.borne@wallswiss.ch", texts: initialTexts });
+  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", conseiller: "Louis Borne", titreConseiller: "Planificatrice financière", telephone: "+41.76.231.92.75", email: "l.borne@wallswiss.ch", texts: initialTexts });
 
   const handlePreviewUpdate = (newData) => {
     setPreview(newData);
@@ -1048,9 +1057,10 @@ export default function WallSwissApp() {
               <div style={S.fg}><label style={S.label}>Nom</label><input style={S.input} value={form.nom} onChange={e=>u("nom",e.target.value)} placeholder="EVEQUE"/></div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div style={S.fg}><label style={S.label}>Date du rapport</label><input style={S.input} type="date" value={form.dateRapport || ""} onChange={e=>u("dateRapport",e.target.value)}/></div>
               <div style={S.fg}><label style={S.label}>Âge</label><input style={S.input} type="number" value={form.age} onChange={e=>u("age",e.target.value)} placeholder="58"/></div>
-              <div style={S.fg}><label style={S.label}>Nationalité</label><input style={S.input} value={form.nationalite} onChange={e=>u("nationalite",e.target.value)}/></div>
             </div>
+            <div style={S.fg}><label style={S.label}>Nationalité</label><input style={S.input} value={form.nationalite} onChange={e=>u("nationalite",e.target.value)}/></div>
           </div>
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Situation Financière</div>

@@ -110,7 +110,7 @@ function SlideCover({ data }) {
       <div style={{ width: "65%", height: "100%", background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryDark} 100%)`, position: "relative", padding: "60px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 6, background: C.gold }} />
         <div style={{ position: "absolute", top: 0, right: 0, width: "45%", height: "100%", background: "rgba(255,255,255,0.03)" }} />
-        <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.white, fontSize: "clamp(36px, 5vw, 64px)", fontWeight: 700, lineHeight: 1.1, position: "relative", zIndex: 2 }}>
+        <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.white, fontSize: 56, fontWeight: 700, lineHeight: 1.1, position: "relative", zIndex: 2 }}>
           Rapport<br /><em style={{ color: C.gold, fontStyle: "italic" }}>Financier</em>
         </div>
         <div style={{ marginTop: 40, borderLeft: `2px solid rgba(255,255,255,0.2)`, paddingLeft: 20, position: "relative", zIndex: 2 }}>
@@ -407,10 +407,10 @@ function SlideDivider({ data, number, title }) {
         <div style={{ color: C.gray, fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 12 }}>
           La stratégie recommandée
         </div>
-        <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.primary, fontSize: "clamp(36px, 4vw, 48px)", fontWeight: 700, lineHeight: 1.1 }}>
+        <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.primary, fontSize: 42, fontWeight: 700, lineHeight: 1.1 }}>
           Solution d'investissement
         </div>
-        <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.gold, fontSize: "clamp(36px, 4vw, 48px)", fontStyle: "italic", marginBottom: 32 }}>
+        <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.gold, fontSize: 42, fontStyle: "italic", marginBottom: 32 }}>
           {title}
         </div>
 
@@ -724,32 +724,27 @@ function SlideApp({ data }) {
 function SlideContact({ data, editMode, onTextChange }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   return (
-    <div style={{ ...slideBase, background: C.white, display: "flex" }}>
-      {/* Panneau gauche */}
-      <div style={{ width: "45%", background: C.lightGray, padding: "60px", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative", overflow: "hidden" }}>
-        <div style={{ background: C.primary, padding: "14px 20px", display: "inline-flex", borderRadius: "2px", alignSelf: "flex-start", position: "relative", zIndex: 2, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
-          <img src={LOGO_URL} alt="WallSwiss" style={{ height: "24px" }} />
-        </div>
+    <div style={{ ...slideBase, background: C.white, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      
+      {/* Décoration filigrane géante centrée */}
+      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", opacity: 0.03, pointerEvents: "none", zIndex: 1 }}>
+         <img src={LOGO_URL} alt="" style={{ width: "800px", filter: "invert(1)" }} />
+      </div>
+
+      <div style={{ zIndex: 2, display: "flex", width: "100%", padding: "0 80px", gap: "80px", alignItems: "center" }}>
         
-        <div style={{ position: "relative", zIndex: 2 }}>
+        {/* Panneau gauche */}
+        <div style={{ flex: 1 }}>
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 12 }}>SYNTHÈSE & CONTACT</div>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: "clamp(32px, 4vw, 46px)", fontWeight: 700, color: C.primary, lineHeight: 1.1, marginBottom: 24 }}>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 42, fontWeight: 700, color: C.primary, lineHeight: 1.1, marginBottom: 24 }}>
             Prêt à concrétiser<br/><em style={{ color: C.gold }}>vos projets ?</em>
           </div>
           <div style={{ width: 40, height: 3, background: C.gold, marginBottom: 24 }} />
-          <EditableText editMode={editMode} value={data.texts?.contactDesc} onChange={v => onTextChange("contactDesc", v)} style={{ fontSize: 13, lineHeight: 1.8, color: C.darkGray, margin: 0, maxWidth: "90%" }} />
+          <EditableText editMode={editMode} value={data.texts?.contactDesc} onChange={v => onTextChange("contactDesc", v)} style={{ fontSize: 13, lineHeight: 1.8, color: C.darkGray, margin: 0, maxWidth: 450 }} />
         </div>
-        
-        {/* Décoration filigrane */}
-        <div style={{ position: "absolute", bottom: "-10%", right: "-10%", opacity: 0.04, transform: "scale(1.5)", pointerEvents: "none", zIndex: 1 }}>
-           <img src={LOGO_URL} alt="" style={{ height: "250px", filter: "invert(1)" }} />
-        </div>
-      </div>
 
-      {/* Panneau droit - Contact card */}
-      <div style={{ flex: 1, padding: "60px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative", background: C.white }}>
-        {accentBar()}
-        <div style={{ border: `1px solid ${C.mediumGray}`, padding: "48px", position: "relative", background: C.white }}>
+        {/* Panneau droit - Contact card */}
+        <div style={{ width: 400, border: `1px solid ${C.mediumGray}`, padding: "48px", position: "relative", background: C.white, boxShadow: "0 10px 40px rgba(0,0,0,0.05)" }}>
           <div style={{ position: "absolute", top: -10, left: 32, background: C.white, padding: "0 16px", color: C.gold, fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>
             VOTRE INTERLOCUTEUR DÉDIÉ
           </div>
@@ -773,6 +768,7 @@ function SlideContact({ data, editMode, onTextChange }) {
           </div>
         </div>
       </div>
+      
       {footer(fullName)}
     </div>
   );

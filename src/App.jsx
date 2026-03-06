@@ -46,6 +46,7 @@ const slideBase = {
   overflow: "hidden",
   fontFamily: "'Montserrat', sans-serif",
   background: C.white,
+  textAlign: "left",
 };
 
 const footer = (name) => (
@@ -67,7 +68,7 @@ const logoCorner = () => (
 );
 
 const ReportTitle = ({ title, highlight, subtitle, color = C.primary }) => (
-  <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: "16px", marginBottom: "28px", fontFamily: "'Montserrat', sans-serif" }}>
+  <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: "16px", marginBottom: "20px", fontFamily: "'Montserrat', sans-serif", textAlign: "left" }}>
     {subtitle && (
       <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 6 }}>
         {subtitle}
@@ -85,11 +86,11 @@ const EditableText = ({ value, onChange, editMode, style }) => {
       <textarea
         value={value}
         onChange={e => onChange(e.target.value)}
-        style={{ ...style, width: "100%", background: "rgba(105,33,2,0.03)", border: `1px dashed ${C.gold}`, borderRadius: "2px", padding: "6px", outline: "none", resize: "vertical", fontFamily: "'Montserrat', sans-serif", display: "block", boxSizing: "border-box" }}
+        style={{ ...style, width: "100%", background: "rgba(105,33,2,0.03)", border: `1px dashed ${C.gold}`, borderRadius: "2px", padding: "6px", outline: "none", resize: "vertical", fontFamily: "'Montserrat', sans-serif", display: "block", boxSizing: "border-box", textAlign: "left" }}
       />
     );
   }
-  return <p style={{ ...style, whiteSpace: "pre-wrap" }}>{value}</p>;
+  return <p style={{ ...style, whiteSpace: "pre-wrap", textAlign: "left" }}>{value}</p>;
 };
 
 // Slide 1 — Cover
@@ -171,7 +172,7 @@ function SlidePhilosophy({ data, editMode, onTextChange }) {
   return (
     <div style={{ ...slideBase, display: "flex", alignItems: "stretch" }}>
       <div style={{ width: "35%", background: `url("https://wallswiss.ch/wp-content/uploads/2026/03/660942a0ceb2ea252752e568_section-bg-scaled.jpg") center/cover`, position: "relative" }} />
-      <div style={{ flex: 1, padding: "48px 56px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+      <div style={{ flex: 1, padding: "36px 56px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         {logoCorner()}
         <ReportTitle title="Qui sommes-nous ?" />
         
@@ -240,9 +241,9 @@ function SlideSituation({ data }) {
     <div style={slideBase}>
       {accentBar()}
       {logoCorner()}
-      <div style={{ padding: "48px 56px 24px 56px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "36px 56px 20px 56px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Résumé de" highlight="votre situation personnelle" subtitle="ANALYSE PATRIMONIALE" />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, flex: 1, minHeight: 0, marginTop: -8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, flex: 1, minHeight: 0, marginTop: -4 }}>
           
           {/* Colonne Gauche */}
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -369,9 +370,9 @@ function SlideAdvantages({ data }) {
   return (
     <div style={slideBase}>
       {logoCorner()}
-      <div style={{ padding: "48px 56px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "36px 56px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Avantages WallSwiss BY Swissquote" highlight="pour l'investissement" subtitle="CONDITIONS EXCLUSIVES" />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 24px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 24px" }}>
           {avantages.map((a, i) => (
             <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
               <div style={{ color: C.primary, fontSize: 18, marginTop: -4 }}>•</div>
@@ -533,7 +534,7 @@ function SlideProjections({ data }) {
     <div style={slideBase}>
       {accentBar()}
       {logoCorner()}
-      <div style={{ padding: "48px 56px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "36px 56px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Vos objectifs sur le" highlight="compte titre" subtitle="SIMULATION FINANCIÈRE" />
         <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 32, alignItems: "center" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", paddingRight: 20 }}>
@@ -796,6 +797,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
       scale: 2, 
       useCORS: true, 
       scrollY: 0,
+      windowWidth: 1280, // Force la largeur pour éviter les coupures
       onclone: (doc) => {
         const el = doc.getElementById('report-printable');
         if (el) {
@@ -818,7 +820,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         }
       }
     },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } // Format paysage
+    jsPDF: { unit: 'px', format: [1280, 720], orientation: 'landscape' } // Format exact 16:9
   });
 
   const requireHtml2Pdf = async () => {
@@ -837,6 +839,15 @@ function ReportPreview({ data, onClose, onUpdateData }) {
     if (!element) return;
     
     setIsPdfLoading(true);
+
+    // Astuce vitale : ramener l'élément dans la zone visible avant la capture
+    const prevLeft = element.style.left;
+    element.style.left = '0px';
+    element.style.zIndex = '-100'; // Reste invisible à l'utilisateur car derrière la modale
+    
+    // Petit délai pour laisser le navigateur faire le rendu visuel
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     try {
       const html2pdf = await requireHtml2Pdf();
       await html2pdf()
@@ -847,6 +858,8 @@ function ReportPreview({ data, onClose, onUpdateData }) {
       console.error("Erreur PDF:", e);
       alert("Erreur de chargement du moteur PDF.");
     } finally {
+      // Remettre l'élément hors écran
+      element.style.left = prevLeft;
       setIsPdfLoading(false);
     }
   };
@@ -909,7 +922,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
       {/* VERSION IMPRIMABLE (Cachée hors écran pour html2pdf) */}
       <div id="report-printable" style={{ position: "absolute", left: "-9999px", top: 0 }}>
         {slides.map((SlideComponent, index) => (
-          <div key={index} style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", pageBreakAfter: "always", breakAfter: "page" }}>
+          <div key={index} style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", pageBreakAfter: "always", breakAfter: "page", backgroundColor: "#FFFFFF" }}>
             {/* Format forcé en 1280x720 pour assurer le ratio 16:9 régulier de la librairie PDF */}
             {SlideComponent}
           </div>
@@ -934,11 +947,6 @@ const S = {
 };
 
 export default function WallSwissApp() {
-  const [page, setPage] = useState("dashboard");
-  const [step, setStep] = useState(0);
-  const [reports, setReports] = useState([]);
-  const [preview, setPreview] = useState(null);
-  
   const initialTexts = {
     philosophyP1: "Une approche unique et indépendante\nContrairement aux grandes institutions notre cabinet indépendant vous propose des solutions dans votre intérêt unique.",
     philosophyP2: "Notre démarche, très rigoureuse, est conduite en étroite collaboration avec vous.",
@@ -953,6 +961,22 @@ export default function WallSwissApp() {
     contactDesc: "Gérer son patrimoine nécessite une approche personnalisée et stratégique. En optimisant sa fiscalité, en sécurisant son épargne et en faisant des choix d'investissement éclairés, il est possible de construire un patrimoine pérenne et adapté à vos projets de vie."
   };
 
+  const [page, setPage] = useState("dashboard");
+  const [step, setStep] = useState(0);
+  const [reports, setReports] = useState([{
+    id: 1,
+    templateId: "swissquote",
+    nom: "MULLER", prenom: "Thomas", age: "42", profession: "Directeur Marketing", nationalite: "Suisse", statut: "Marié(e)", revenus: "145000",
+    capaciteEpargne: "3000", fortuneGlobale: "650000", profilRisque: "Dynamique", horizonPlacement: "Long terme (> 8 ans)",
+    objectifs: ["Préparer la retraite", "Financer un projet immobilier", "Améliorer la fiscalité des placements"], objectifCustom: "",
+    montantInvestissement: "200000", fraisSouscription: "2.5",
+    tauxPessimiste: "4", tauxRealiste: "7", tauxOptimiste: "10",
+    conseiller: "Louis Borne", titreConseiller: "Planificatrice financière",
+    telephone: "+41.76.231.92.75", email: "l.borne@wallswiss.ch",
+    texts: initialTexts
+  }]);
+  const [preview, setPreview] = useState(null);
+  
   const [form, setForm] = useState({
     templateId: "swissquote",
     nom: "", prenom: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "",

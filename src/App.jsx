@@ -540,7 +540,7 @@ function SlideProjections({ data }) {
   const frais = Number(data.fraisSouscription || 3);
 
   // SVG Chart variables
-  const svgW = 400; const svgH = 220;
+  const svgW = 400; const svgH = 190;
   const padL = 45; const padR = 15; const padT = 10; const padB = 25;
   const w = svgW - padL - padR; const h = svgH - padT - padB;
   const maxVal = rows[rows.length-1].optimiste;
@@ -576,8 +576,8 @@ function SlideProjections({ data }) {
             </div>
 
             {/* Line chart SVG (Dimensions fixes pour garantir la capture PDF) */}
-            <div style={{ width: 400, height: 200, marginBottom: 10 }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width={400} height={200} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
+            <div style={{ width: 400, height: 190, marginBottom: 10 }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width={400} height={190} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
                 {/* Y Axis Grid */}
                 {[0, 0.25, 0.5, 0.75, 1].map(pct => {
                   const y = padT + h - (pct * h);
@@ -878,7 +878,8 @@ function ReportPreview({ data, onClose, onUpdateData }) {
               windowWidth: 1280,
               letterRendering: true
             },
-            jsPDF: { unit: 'pt', format: [1280, 720], orientation: 'landscape' }
+            // Format infaillible en pouces (inches) correspondant au ratio exact 16:9 de 1280x720px
+            jsPDF: { unit: 'in', format: [13.3333, 7.5], orientation: 'landscape' }
           })
           .from(element)
           .save();

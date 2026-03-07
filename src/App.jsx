@@ -853,8 +853,8 @@ function ReportPreview({ data, onClose, onUpdateData }) {
             margin: 0,
             filename: `Rapport_${data.nom || 'Client'}.pdf`,
             image: { type: 'jpeg', quality: 1 },
-            // On active le saut de page CSS pour forcer la coupure exacte
-            pagebreak: { mode: 'css' },
+            // On empêche les coupures au milieu des slides, et on retire le "always" problématique
+            pagebreak: { mode: 'css', avoid: '.pdf-slide' },
             html2canvas: {
               scale: 2,
               useCORS: true,
@@ -863,8 +863,8 @@ function ReportPreview({ data, onClose, onUpdateData }) {
               windowWidth: 1280,
               letterRendering: true
             },
-            // Unité 'px' stricte : le Canvas 1280x720 remplira 100% de la page PDF 1280x720
-            jsPDF: { unit: 'px', format: [1280, 720], orientation: 'landscape' }
+            // Ajout du hotfix px_scaling pour un respect strict des 1280x720 sans décalage
+            jsPDF: { unit: 'px', format: [1280, 720], orientation: 'landscape', hotfixes: ["px_scaling"] }
           })
           .from(element)
           .save();
@@ -951,9 +951,11 @@ function ReportPreview({ data, onClose, onUpdateData }) {
 
       {/* CONTENEUR D'IMPRESSION (Invisible mais monté) */}
       <div style={{ position: "fixed", top: 0, left: 0, width: "1280px", opacity: 0.001, zIndex: -1000, pointerEvents: "none" }}>
-        <div id="report-printable" style={{ width: "1280px", background: C.white, margin: 0, padding: 0 }}>
+        {/* Ajout d'un flex column pour tuer les marges et espaces fantômes entre les divs */}
+        <div id="report-printable" style={{ width: "1280px", background: C.white, margin: 0, padding: 0, display: "flex", flexDirection: "column" }}>
           {printSlides.map((SlideComponent, index) => (
-            <div key={index} className="pdf-slide" style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF", margin: 0, padding: 0, boxSizing: "border-box", pageBreakAfter: index < printSlides.length - 1 ? "always" : "auto" }}>
+            // Remplacement de pageBreakAfter par pageBreakInside: "avoid" pour supprimer la page blanche
+            <div key={index} className="pdf-slide" style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF", margin: 0, padding: 0, boxSizing: "border-box", pageBreakInside: "avoid" }}>
               {SlideComponent}
               <div style={{ position: "absolute", bottom: 0, right: 40, height: 40, display: "flex", alignItems: "center", zIndex: 10 }}>
                 <span style={{ color: C.white, fontSize: 11, fontWeight: 700 }}>{index + 1}</span>

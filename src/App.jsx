@@ -12,7 +12,8 @@ const C = {
   darkGray: "#374151",
 };
 
-const LOGO_URL = "https://wallswiss.ch/wp-content/uploads/2026/03/logo-blanc-sans-texte.png";
+// Lien mis à jour pour pointer vers le fichier local dans le dossier "public"
+const LOGO_URL = "/logo blanc sans texte.png";
 const APP_VERSION = "v1.2.2";
 
 const fontLink = document.createElement("link");
@@ -39,8 +40,6 @@ function computeProjections(data) {
 function fmt(n) { return Number(n).toLocaleString("fr-CH"); }
 
 // --- SOLUTION ULTIME CORS POUR VERCEL ---
-// Cette fonction va télécharger l'image et la transformer en texte (Base64).
-// Ainsi, html2canvas n'a plus à interroger le serveur externe au moment du rendu.
 const getBase64Image = async (url) => {
   try {
     const response = await fetch(url, { mode: 'cors' });
@@ -53,7 +52,6 @@ const getBase64Image = async (url) => {
     });
   } catch (error) {
     console.error("Erreur CORS lors de la récupération de l'image :", url, error);
-    // En cas d'échec (CORS très strict), on renvoie l'URL d'origine pour éviter un crash
     return url; 
   }
 };
@@ -83,7 +81,7 @@ const accentBar = () => (
 const logoCorner = () => (
   <div style={{ position: "absolute", top: 48, right: 56, zIndex: 10 }}>
     <div style={{ background: C.primary, width: "48px", height: "48px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px", boxShadow: "0 2px 10px rgba(0,0,0,0.15)" }}>
-      <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ width: "26px", height: "26px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
+      <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ width: "26px", height: "26px", objectFit: "contain", display: "block" }} />
     </div>
   </div>
 );
@@ -123,7 +121,7 @@ function SlideCover({ data }) {
     <div style={{ ...slideBase, background: C.white, display: "flex" }}>
       <div style={{ width: "35%", height: "100%", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "40px 30px" }}>
         <div style={{ background: C.primary, width: "64px", height: "64px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px" }}>
-          <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ width: "36px", height: "36px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
+          <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ width: "36px", height: "36px", objectFit: "contain", display: "block" }} />
         </div>
         <div>
           <div style={{ width: 40, height: 3, background: C.gold, marginBottom: 16 }} />
@@ -423,7 +421,7 @@ function SlideDivider({ data, number, title }) {
       <div style={{ width: "35%", background: `linear-gradient(150deg, ${C.primary} 0%, ${C.primaryDark} 100%)`, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ position: "absolute", right: -35, width: 70, height: 70, background: C.lightGray, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, transform: "rotate(45deg)" }}>
           <div style={{ width: 56, height: 56, background: C.primary, border: `2px solid ${C.gold}`, transform: "rotate(-45deg)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.1)" }}>
-            <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ height: 26 }} crossOrigin="anonymous" />
+            <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ height: 26 }} />
           </div>
         </div>
       </div>
@@ -754,7 +752,7 @@ function SlideContact({ data, editMode, onTextChange }) {
       
       {/* Décoration filigrane géante centrée */}
       <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", opacity: 0.03, pointerEvents: "none", zIndex: 1 }}>
-         <img src={LOGO_URL} alt="" className="pdf-image" style={{ width: "800px", filter: "invert(1)" }} crossOrigin="anonymous" />
+         <img src={LOGO_URL} alt="" className="pdf-image" style={{ width: "800px", filter: "invert(1)" }} />
       </div>
 
       <div style={{ zIndex: 2, display: "flex", width: "100%", padding: "0 80px", gap: "80px", alignItems: "center" }}>
@@ -1258,7 +1256,7 @@ export default function WallSwissApp() {
         <div style={{ width: "100%", padding: "14px 40px", display: "flex", alignItems: "center", justifyContent: "space-between", boxSizing: "border-box" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ background: C.primaryDark, padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px" }}>
-              <img src={LOGO_URL} alt="WallSwiss" style={{ height: "16px" }} crossOrigin="anonymous" />
+              <img src={LOGO_URL} alt="WallSwiss" style={{ height: "16px" }} />
             </div>
             <div>
               <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.white, fontSize: 18, fontWeight: 700, letterSpacing: "0.06em" }}>WALLSWISS</div>

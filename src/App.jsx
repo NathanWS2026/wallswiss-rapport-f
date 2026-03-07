@@ -13,7 +13,7 @@ const C = {
 };
 
 const LOGO_URL = "https://wallswiss.ch/wp-content/uploads/2026/03/logo-blanc-sans-texte.png";
-const APP_VERSION = "v1.2.0";
+const APP_VERSION = "v1.2.1";
 
 const fontLink = document.createElement("link");
 fontLink.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap";
@@ -37,23 +37,6 @@ function computeProjections(data) {
 }
 
 function fmt(n) { return Number(n).toLocaleString("fr-CH"); }
-
-// Fonction magique pour convertir une URL d'image en Base64 
-// C'est la solution ultime pour éviter les bugs d'images manquantes dans les PDF
-const getBase64Image = async (url) => {
-  try {
-    const response = await fetch(url, { mode: 'cors' });
-    const blob = await response.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.readAsDataURL(blob);
-    });
-  } catch (e) {
-    console.warn("Erreur de conversion Base64 pour l'image:", url, e);
-    return url; // Retourne l'URL d'origine en cas d'échec (pour éviter un plantage)
-  }
-};
 
 // ────────────────────── SLIDE COMPONENTS ──────────────────────
 
@@ -192,7 +175,7 @@ function SlidePhilosophy({ data, editMode, onTextChange }) {
   return (
     <div style={{ ...slideBase, display: "flex", alignItems: "stretch" }}>
       <div style={{ width: "35%", position: "relative", overflow: "hidden" }}>
-         {/* Remplacement du background-image par une vraie balise img pour faciliter la conversion Base64 */}
+         {/* Remplacement du background-image par une vraie balise img pour faciliter la conversion */}
          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/660942a0ceb2ea252752e568_section-bg-scaled.jpg" alt="Fond" className="pdf-image" style={{ width: "100%", height: "100%", objectFit: "cover" }} crossOrigin="anonymous" />
       </div>
       <div style={{ flex: 1, padding: "36px 56px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center" }}>
@@ -824,16 +807,14 @@ function ReportPreview({ data, onClose, onUpdateData }) {
   const handleDownloadPDF = async () => {
     setIsPdfLoading(true);
 
-    // Suppression de l'appel à getBase64Image qui peut causer un blocage silencieux 
-    // si des problèmes de réseau ou de CORS persistent malgré la configuration serveur.
-    const element = document.getElementById('report-printable');
-    if (!element) {
+    // Un court délai suffit désormais car le DOM contenant les images
+    // est DÉJÀ chargé en arrière-plan depuis l'ouverture de la modale.
+    setTimeout(async () => {
+      const element = document.getElementById('report-printable');
+      if (!element) {
         setIsPdfLoading(false);
         return;
-    }
-
-    // On laisse le temps au DOM de s'afficher correctement (sans conversion bloquante)
-    setTimeout(async () => {
+      }
       
       // Convertir temporairement les textareas en divs pour le PDF
       const textareas = element.querySelectorAll('textarea');
@@ -883,7 +864,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         });
         setIsPdfLoading(false);
       }
-    }, 500); 
+    }, 150); 
   };
 
   const slides = [
@@ -940,29 +921,25 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         ))}
       </div>
 
-      {/* OVERLAY DE CHARGEMENT & IMPRESSION */}
-      {isPdfLoading && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 9999, overflow: "hidden", background: C.white }}>
-          
-          {/* Le conteneur figé à 1280px de large absolu pour empêcher le navigateur de tordre la grille CSS */}
-          <div style={{ position: "absolute", top: 0, left: 0, width: "1280px", opacity: 0.01 }}>
-            <div id="report-printable" style={{ width: "1280px", background: C.white }}>
-              {slides.map((SlideComponent, index) => (
-                <div key={index} className="pdf-slide" style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF" }}>
-                  {SlideComponent}
-                </div>
-              ))}
+      {/* CONTENEUR D'IMPRESSION (Toujours monté pour forcer le navigateur à précharger les images AVANT de cliquer) */}
+      <div style={{ position: "fixed", top: 0, left: 0, width: "1280px", opacity: 0.001, zIndex: -1000, pointerEvents: "none" }}>
+        <div id="report-printable" style={{ width: "1280px", background: C.white }}>
+          {slides.map((SlideComponent, index) => (
+            <div key={index} className="pdf-slide" style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF" }}>
+              {SlideComponent}
             </div>
-          </div>
+          ))}
+        </div>
+      </div>
 
-          {/* L'écran de chargement par-dessus */}
-          <div style={{ position: "absolute", inset: 0, background: C.white, zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 16 }}>
-              Génération du rapport en cours...
-            </div>
-            <div style={{ fontSize: 13, color: C.gray, fontWeight: 500, fontFamily: "'Montserrat', sans-serif" }}>
-              Veuillez patienter pendant la capture haute définition...
-            </div>
+      {/* OVERLAY DE CHARGEMENT VISUEL */}
+      {isPdfLoading && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(255,255,255,0.95)", zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 16 }}>
+            Génération du rapport en cours...
+          </div>
+          <div style={{ fontSize: 13, color: C.gray, fontWeight: 500, fontFamily: "'Montserrat', sans-serif" }}>
+            Veuillez patienter pendant la capture haute définition...
           </div>
         </div>
       )}
@@ -1230,9 +1207,7 @@ export default function WallSwissApp() {
   return (
     <div style={{ fontFamily: "'Montserrat', sans-serif", background: C.lightGray, minHeight: "100vh", color: C.black, width: "100vw", maxWidth: "100%", margin: 0, padding: 0, overflowX: "hidden" }}>
       <style>{`
-        /* Reset strict des marges du body pour le plein écran */
-        html, body, #root { margin: 0 !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; overflow-x: hidden !important; }
-        
+        body { margin: 0; padding: 0; overflow-x: hidden; }
         input:focus, select:focus { border-color: ${C.primary} !important; }
         ::placeholder { color: #B0ADA6; }
         button:hover { opacity: 0.9; }
@@ -1270,7 +1245,7 @@ export default function WallSwissApp() {
         </div>
       </header>
 
-      <main style={{ width: "100%", padding: "40px", boxSizing: "border-box", margin: 0, maxWidth: "none" }}>
+      <main style={{ width: "100%", padding: "40px", boxSizing: "border-box" }}>
         {page === "dashboard" && (
           reports.length === 0 ? (
             <div style={{ textAlign: "center", padding: "120px 40px" }}>
@@ -1280,7 +1255,7 @@ export default function WallSwissApp() {
               <button style={S.btnP} onClick={()=>{setPage("create");resetForm();}}>+ Créer un rapport</button>
             </div>
           ) : (
-            <div style={{ width: "100%", maxWidth: "none" }}>
+            <div style={{ width: "100%" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
                 <div>
                   <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Mes rapports</h2>
@@ -1307,7 +1282,7 @@ export default function WallSwissApp() {
         )}
 
         {page === "create" && (
-          <div style={{ width: "100%", maxWidth: "none" }}>
+          <div style={{ width: "100%" }}>
             <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: "0 0 4px" }}>Nouveau rapport</h2>
             <p style={{ color: C.gray, fontSize: 13, marginBottom: 24 }}>Remplissez les informations pour générer un rapport personnalisé.</p>
             <div style={{ display: "flex", gap: 0, marginBottom: 28, background: C.white, border: `1px solid ${C.mediumGray}`, padding: 4 }}>

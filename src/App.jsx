@@ -846,24 +846,6 @@ function ReportPreview({ data, onClose, onUpdateData }) {
     await Promise.all(imagePromises);
 
     setTimeout(async () => {
-      // Convertir temporairement les textareas en divs pour le PDF
-      const textareas = element.querySelectorAll('textarea');
-      const replacements = [];
-      textareas.forEach((textarea) => {
-        const div = document.createElement('div');
-        div.style.cssText = window.getComputedStyle(textarea).cssText;
-        div.style.height = 'auto';
-        div.style.whiteSpace = 'pre-wrap';
-        div.style.border = 'none';
-        div.style.background = 'transparent';
-        div.style.resize = 'none';
-        div.style.textAlign = 'justify'; 
-        div.innerText = textarea.value;
-        textarea.parentNode.insertBefore(div, textarea);
-        textarea.style.display = 'none';
-        replacements.push({ textarea, div });
-      });
-
       try {
         const html2pdf = await requireHtml2Pdf();
         await html2pdf()
@@ -871,7 +853,8 @@ function ReportPreview({ data, onClose, onUpdateData }) {
             margin: 0,
             filename: `Rapport_${data.nom || 'Client'}.pdf`,
             image: { type: 'jpeg', quality: 1 },
-            // On supprime pagebreak : html2pdf coupera naturellement tous les 720px sans créer de page blanche
+            // On active le saut de page CSS pour forcer la coupure exacte
+            pagebreak: { mode: 'css' },
             html2canvas: {
               scale: 2,
               useCORS: true,
@@ -887,12 +870,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
           .save();
       } catch(e) {
         console.error("Erreur PDF:", e);
-        //alert("Erreur de chargement du moteur PDF.");
       } finally {
-        replacements.forEach(({ textarea, div }) => {
-          textarea.style.display = '';
-          div.remove();
-        });
         setIsPdfLoading(false);
       }
     }, 500); 
@@ -914,6 +892,25 @@ function ReportPreview({ data, onClose, onUpdateData }) {
     <SlideComparatif data={data} />,
     <SlideApp data={data} />,
     <SlideContact data={data} editMode={editMode} onTextChange={handleTextChange} />,
+  ];
+
+  // Variante des slides FORCÉE sans mode édition pour un rendu impression parfait
+  const printSlides = [
+    <SlideCover data={data} />,
+    <SlideTOC data={data} />,
+    <SlidePhilosophy data={data} editMode={false} />,
+    <SlideAbout data={data} editMode={false} />,
+    <SlideSituation data={data} />,
+    <SlideSwissquote data={data} editMode={false} />,
+    <SlideAdvantages data={data} />,
+    <SlideDivider data={data} number={8} title="Compte Titre" />,
+    <SlideCompteTitre data={data} editMode={false} />,
+    <SlideFund data={data} />,
+    <SlideProjections data={data} />,
+    <SlideTarifs data={data} />,
+    <SlideComparatif data={data} />,
+    <SlideApp data={data} />,
+    <SlideContact data={data} editMode={false} />,
   ];
 
   return (
@@ -955,8 +952,8 @@ function ReportPreview({ data, onClose, onUpdateData }) {
       {/* CONTENEUR D'IMPRESSION (Invisible mais monté) */}
       <div style={{ position: "fixed", top: 0, left: 0, width: "1280px", opacity: 0.001, zIndex: -1000, pointerEvents: "none" }}>
         <div id="report-printable" style={{ width: "1280px", background: C.white, margin: 0, padding: 0 }}>
-          {slides.map((SlideComponent, index) => (
-            <div key={index} className="pdf-slide" style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF", margin: 0, padding: 0, boxSizing: "border-box" }}>
+          {printSlides.map((SlideComponent, index) => (
+            <div key={index} className="pdf-slide" style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF", margin: 0, padding: 0, boxSizing: "border-box", pageBreakAfter: index < printSlides.length - 1 ? "always" : "auto" }}>
               {SlideComponent}
               <div style={{ position: "absolute", bottom: 0, right: 40, height: 40, display: "flex", alignItems: "center", zIndex: 10 }}>
                 <span style={{ color: C.white, fontSize: 11, fontWeight: 700 }}>{index + 1}</span>

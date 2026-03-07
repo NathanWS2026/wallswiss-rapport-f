@@ -13,7 +13,7 @@ const C = {
 };
 
 const LOGO_URL = "https://wallswiss.ch/wp-content/uploads/2026/03/logo-blanc-sans-texte.png";
-const APP_VERSION = "v1.2.1";
+const APP_VERSION = "v1.2.2";
 
 const fontLink = document.createElement("link");
 fontLink.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap";
@@ -37,6 +37,26 @@ function computeProjections(data) {
 }
 
 function fmt(n) { return Number(n).toLocaleString("fr-CH"); }
+
+// --- SOLUTION ULTIME CORS POUR VERCEL ---
+// Cette fonction va télécharger l'image et la transformer en texte (Base64).
+// Ainsi, html2canvas n'a plus à interroger le serveur externe au moment du rendu.
+const getBase64Image = async (url) => {
+  try {
+    const response = await fetch(url, { mode: 'cors' });
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error("Erreur CORS lors de la récupération de l'image :", url, error);
+    // En cas d'échec (CORS très strict), on renvoie l'URL d'origine pour éviter un crash
+    return url; 
+  }
+};
 
 // ────────────────────── SLIDE COMPONENTS ──────────────────────
 
@@ -175,7 +195,6 @@ function SlidePhilosophy({ data, editMode, onTextChange }) {
   return (
     <div style={{ ...slideBase, display: "flex", alignItems: "stretch" }}>
       <div style={{ width: "35%", position: "relative", overflow: "hidden" }}>
-         {/* Remplacement du background-image par une vraie balise img pour faciliter la conversion */}
          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/660942a0ceb2ea252752e568_section-bg-scaled.jpg" alt="Fond" className="pdf-image" style={{ width: "100%", height: "100%", objectFit: "cover" }} crossOrigin="anonymous" />
       </div>
       <div style={{ flex: 1, padding: "36px 56px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center" }}>
@@ -807,15 +826,26 @@ function ReportPreview({ data, onClose, onUpdateData }) {
   const handleDownloadPDF = async () => {
     setIsPdfLoading(true);
 
-    // Un court délai suffit désormais car le DOM contenant les images
-    // est DÉJÀ chargé en arrière-plan depuis l'ouverture de la modale.
-    setTimeout(async () => {
-      const element = document.getElementById('report-printable');
-      if (!element) {
+    const element = document.getElementById('report-printable');
+    if (!element) {
         setIsPdfLoading(false);
         return;
-      }
-      
+    }
+
+    // Nous convertissons les images en Base64 AVANT la capture pour s'assurer
+    // que le navigateur les injecte correctement dans le PDF sans blocage CORS.
+    const images = element.querySelectorAll('img.pdf-image');
+    const imagePromises = Array.from(images).map(async (img) => {
+        if (img.src && !img.src.startsWith('data:')) {
+            const base64 = await getBase64Image(img.src);
+            img.src = base64;
+        }
+    });
+
+    // On attend que TOUTES les images soient converties
+    await Promise.all(imagePromises);
+
+    setTimeout(async () => {
       // Convertir temporairement les textareas en divs pour le PDF
       const textareas = element.querySelectorAll('textarea');
       const replacements = [];
@@ -864,7 +894,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         });
         setIsPdfLoading(false);
       }
-    }, 150); 
+    }, 500); 
   };
 
   const slides = [
@@ -921,7 +951,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         ))}
       </div>
 
-      {/* CONTENEUR D'IMPRESSION (Toujours monté pour forcer le navigateur à précharger les images AVANT de cliquer) */}
+      {/* CONTENEUR D'IMPRESSION (Invisible mais monté) */}
       <div style={{ position: "fixed", top: 0, left: 0, width: "1280px", opacity: 0.001, zIndex: -1000, pointerEvents: "none" }}>
         <div id="report-printable" style={{ width: "1280px", background: C.white }}>
           {slides.map((SlideComponent, index) => (

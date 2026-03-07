@@ -195,23 +195,23 @@ function SlidePhilosophy({ data, editMode, onTextChange }) {
       <div style={{ width: "35%", position: "relative", overflow: "hidden" }}>
          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/660942a0ceb2ea252752e568_section-bg-scaled.jpg" alt="Fond" className="pdf-image" style={{ width: "100%", height: "100%", objectFit: "cover" }} crossOrigin="anonymous" />
       </div>
-      <div style={{ flex: 1, padding: "36px 56px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+      <div style={{ flex: 1, padding: "36px 56px 48px 56px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         {logoCorner()}
         <ReportTitle title="Qui sommes-nous ?" />
         
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 20, color: C.primaryDark, textTransform: "uppercase", marginBottom: 4 }}>NOTRE PHILOSOPHIE.</div>
-          <div style={{ fontSize: 13, color: C.gold, marginBottom: 16 }}>Votre cabinet de planification financière à Genève.</div>
-          <EditableText editMode={editMode} value={data.texts?.philosophyP1} onChange={v => onTextChange("philosophyP1", v)} style={{ fontSize: 11.5, lineHeight: 1.6, color: C.darkGray, margin: "0 0 12px" }} />
-          <EditableText editMode={editMode} value={data.texts?.philosophyP2} onChange={v => onTextChange("philosophyP2", v)} style={{ fontSize: 11.5, lineHeight: 1.6, color: C.darkGray, margin: "0 0 12px" }} />
-          <EditableText editMode={editMode} value={data.texts?.philosophyP3} onChange={v => onTextChange("philosophyP3", v)} style={{ fontSize: 11.5, lineHeight: 1.6, color: C.darkGray, margin: 0 }} />
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.primaryDark, textTransform: "uppercase", marginBottom: 4 }}>NOTRE PHILOSOPHIE.</div>
+          <div style={{ fontSize: 12, color: C.gold, marginBottom: 12 }}>Votre cabinet de planification financière à Genève.</div>
+          <EditableText editMode={editMode} value={data.texts?.philosophyP1} onChange={v => onTextChange("philosophyP1", v)} style={{ fontSize: 11, lineHeight: 1.5, color: C.darkGray, margin: "0 0 8px" }} />
+          <EditableText editMode={editMode} value={data.texts?.philosophyP2} onChange={v => onTextChange("philosophyP2", v)} style={{ fontSize: 11, lineHeight: 1.5, color: C.darkGray, margin: "0 0 8px" }} />
+          <EditableText editMode={editMode} value={data.texts?.philosophyP3} onChange={v => onTextChange("philosophyP3", v)} style={{ fontSize: 11, lineHeight: 1.5, color: C.darkGray, margin: 0 }} />
         </div>
 
         <div>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 20, color: C.primaryDark, textTransform: "uppercase", marginBottom: 4 }}>NOTRE MISSION</div>
-          <div style={{ fontSize: 13, color: C.gold, marginBottom: 16 }}>Vos projets financiers avec expertise et transparence</div>
-          <EditableText editMode={editMode} value={data.texts?.missionP1} onChange={v => onTextChange("missionP1", v)} style={{ fontSize: 11.5, lineHeight: 1.6, color: C.darkGray, margin: "0 0 12px" }} />
-          <EditableText editMode={editMode} value={data.texts?.missionP2} onChange={v => onTextChange("missionP2", v)} style={{ fontSize: 11.5, lineHeight: 1.6, color: C.darkGray, margin: 0 }} />
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.primaryDark, textTransform: "uppercase", marginBottom: 4 }}>NOTRE MISSION</div>
+          <div style={{ fontSize: 12, color: C.gold, marginBottom: 12 }}>Vos projets financiers avec expertise et transparence</div>
+          <EditableText editMode={editMode} value={data.texts?.missionP1} onChange={v => onTextChange("missionP1", v)} style={{ fontSize: 11, lineHeight: 1.5, color: C.darkGray, margin: "0 0 8px" }} />
+          <EditableText editMode={editMode} value={data.texts?.missionP2} onChange={v => onTextChange("missionP2", v)} style={{ fontSize: 11, lineHeight: 1.5, color: C.darkGray, margin: 0 }} />
         </div>
       </div>
       {footer(fullName)}
@@ -234,16 +234,16 @@ function SlideAbout({ data, editMode, onTextChange }) {
     <div style={slideBase}>
       {accentBar()}
       {logoCorner()}
-      <div style={{ padding: "48px 56px", height: "100%", boxSizing: "border-box", display: "flex", gap: "40px" }}>
+      <div style={{ padding: "48px 56px 48px 56px", height: "100%", boxSizing: "border-box", display: "flex", gap: "40px" }}>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <ReportTitle title="Notre cabinet" highlight="en chiffres" subtitle="QUI SOMMES-NOUS ?" />
-          <div style={{ color: C.gray, fontSize: 13, marginBottom: 16 }}>Votre cabinet de planification financière à Genève.</div>
-          <EditableText editMode={editMode} value={data.texts?.aboutDesc} onChange={v => onTextChange("aboutDesc", v)} style={{ fontSize: 12, lineHeight: 1.7, color: C.darkGray, marginBottom: 32 }} />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+          <div style={{ color: C.gray, fontSize: 13, marginBottom: 12 }}>Votre cabinet de planification financière à Genève.</div>
+          <EditableText editMode={editMode} value={data.texts?.aboutDesc} onChange={v => onTextChange("aboutDesc", v)} style={{ fontSize: 11.5, lineHeight: 1.6, color: C.darkGray, marginBottom: 24 }} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
             {stats.map((s, i) => (
-              <div key={i} style={{ background: C.primary, padding: "16px 12px", textAlign: "center" }}>
-                <div style={{ color: C.white, fontSize: 18, fontWeight: 800 }}>{s.val}</div>
-                <div style={{ color: C.gold, fontSize: 9, fontWeight: 600, letterSpacing: "0.1em", marginTop: 4 }}>{s.label}</div>
+              <div key={i} style={{ background: C.primary, padding: "12px 8px", textAlign: "center" }}>
+                <div style={{ color: C.white, fontSize: 16, fontWeight: 800 }}>{s.val}</div>
+                <div style={{ color: C.gold, fontSize: 8.5, fontWeight: 600, letterSpacing: "0.1em", marginTop: 4 }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -488,38 +488,38 @@ function SlideFund({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   return (
     <div style={slideBase}>
-      <div style={{ padding: "24px 40px 48px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-        <div style={{ border: `2px solid ${C.gold}`, padding: "16px 24px", boxSizing: "border-box", background: C.white }}>
+      <div style={{ padding: "20px 40px 44px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <div style={{ border: `2px solid ${C.gold}`, padding: "12px 20px", boxSizing: "border-box", background: C.white, maxHeight: "100%", overflow: "hidden" }}>
           <div style={{ textAlign: "center", marginBottom: 4 }}>
-            <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 22, fontWeight: 700, color: C.primary }}>NS (CH) FUNDS — Swiss Excellence DPM CHF</div>
-            <div style={{ fontSize: 11, color: C.gray, marginTop: 2 }}>Fonds actions suisses — Synthèse institutionnelle</div>
+            <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 20, fontWeight: 700, color: C.primary }}>NS (CH) FUNDS — Swiss Excellence DPM CHF</div>
+            <div style={{ fontSize: 10, color: C.gray, marginTop: 2 }}>Fonds actions suisses — Synthèse institutionnelle</div>
           </div>
-          <div style={{ width: "100%", height: 1, background: C.gold, margin: "8px 0 12px 0" }} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 36px", fontSize: 11 }}>
+          <div style={{ width: "100%", height: 1, background: C.gold, margin: "6px 0 10px 0" }} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px", fontSize: 10 }}>
             <div>
-              <div style={{ fontWeight: 700, color: C.gold, marginBottom: 4, fontSize: 12 }}>Positionnement</div>
+              <div style={{ fontWeight: 700, color: C.gold, marginBottom: 2, fontSize: 11 }}>Positionnement</div>
               {["Fonds actions 100% Suisse", "Devise : CHF", "Benchmark : SLI Swiss Leader Index TR", "Objectif : Surperformance du marché suisse"].map((t,i) => (
                 <div key={i} style={{ display: "flex", gap: 6, marginBottom: 2 }}><span style={{ color: C.gold }}>—</span><span>{t}</span></div>
               ))}
-              <div style={{ fontWeight: 700, color: C.gold, marginTop: 8, marginBottom: 4, fontSize: 12 }}>Performance</div>
+              <div style={{ fontWeight: 700, color: C.gold, marginTop: 6, marginBottom: 2, fontSize: 11 }}>Performance</div>
               {["Performance annualisée : 4,5%", "YTD 2025 : +8,40%", "Benchmark : +7,99%"].map((t,i) => (
                 <div key={i} style={{ display: "flex", gap: 6, marginBottom: 2 }}><span style={{ color: C.gold }}>—</span><span>{t}</span></div>
               ))}
-              <div style={{ fontWeight: 700, color: C.gold, marginTop: 8, marginBottom: 4, fontSize: 12 }}>Structure de frais</div>
+              <div style={{ fontWeight: 700, color: C.gold, marginTop: 6, marginBottom: 2, fontSize: 11 }}>Structure de frais</div>
               {["Management fee : 1,50%", "Performance fee : 10%"].map((t,i) => (
                 <div key={i} style={{ display: "flex", gap: 6, marginBottom: 2 }}><span style={{ color: C.gold }}>—</span><span>{t}</span></div>
               ))}
             </div>
             <div>
-              <div style={{ fontWeight: 700, color: C.gold, marginBottom: 4, fontSize: 12 }}>Profil de risque</div>
+              <div style={{ fontWeight: 700, color: C.gold, marginBottom: 2, fontSize: 11 }}>Profil de risque</div>
               {["Volatilité annualisée : 13,2%", "Sharpe ratio : 0,26", "Beta : 0,99", "Corrélation indice : 0,99"].map((t,i) => (
                 <div key={i} style={{ display: "flex", gap: 6, marginBottom: 2 }}><span style={{ color: C.gold }}>—</span><span>{t}</span></div>
               ))}
-              <div style={{ fontWeight: 700, color: C.gold, marginTop: 8, marginBottom: 4, fontSize: 12 }}>Principales positions</div>
+              <div style={{ fontWeight: 700, color: C.gold, marginTop: 6, marginBottom: 2, fontSize: 11 }}>Principales positions</div>
               {["Roche — 6,86%", "Novartis — 6,59%", "Nestlé — 5,89%", "UBS — 5,51%"].map((t,i) => (
                 <div key={i} style={{ display: "flex", gap: 6, marginBottom: 2 }}><span style={{ color: C.gold }}>—</span><span>{t}</span></div>
               ))}
-              <div style={{ fontWeight: 700, color: C.gold, marginTop: 8, marginBottom: 4, fontSize: 12 }}>Lecture stratégique WallSwiss</div>
+              <div style={{ fontWeight: 700, color: C.gold, marginTop: 6, marginBottom: 2, fontSize: 11 }}>Lecture stratégique WallSwiss</div>
               {["Exposition domestique CHF", "Qualité suisse défensive", "ESG intégré", "Complément idéal d'une allocation internationale USD"].map((t,i) => (
                 <div key={i} style={{ display: "flex", gap: 6, marginBottom: 2 }}><span style={{ color: C.primary, fontWeight: 700 }}>&#10003;</span><span>{t}</span></div>
               ))}
@@ -557,27 +557,27 @@ function SlideProjections({ data }) {
     <div style={slideBase}>
       {accentBar()}
       {logoCorner()}
-      <div style={{ padding: "36px 56px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "36px 56px 48px 56px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Vos objectifs sur le" highlight="compte titre" subtitle="SIMULATION FINANCIÈRE" />
-        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 32, alignItems: "center" }}>
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 32, alignItems: "center", minHeight: 0 }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", paddingRight: 20 }}>
-            <p style={{ fontSize: 13, lineHeight: 1.6, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }}>
+            <p style={{ fontSize: 12.5, lineHeight: 1.5, color: C.darkGray, margin: "0 0 12px", textAlign: "justify" }}>
               Ici, nous vous conseillons d'optimiser votre trésorerie actuelle avec un compte titre chez <strong>SwissQuote</strong> sur la solution de placement avec un dépôt initial de <strong>CHF {fmt(montant)}.-</strong>
             </p>
-            <p style={{ fontSize: 13, color: C.gray, margin: "0 0 32px", textAlign: "justify" }}>
+            <p style={{ fontSize: 12.5, color: C.gray, margin: "0 0 24px", textAlign: "justify" }}>
               Nous appliquons des frais de souscription de {frais}% du montant investi soit {fmt(montant * frais / 100)}.-
             </p>
             
             {/* Legend */}
-            <div style={{ display: "flex", gap: 16, marginBottom: 16, alignSelf: "center", fontSize: 11, fontWeight: 600 }}>
+            <div style={{ display: "flex", gap: 16, marginBottom: 12, alignSelf: "center", fontSize: 11, fontWeight: 600 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: "#9CA3AF" }} /> Pessimiste</div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: C.gold }} /> Réaliste</div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: C.primaryDark }} /> Optimiste</div>
             </div>
 
             {/* Line chart SVG (Dimensions fixes pour garantir la capture PDF) */}
-            <div style={{ width: 400, height: 220 }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width={400} height={220} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
+            <div style={{ width: 400, height: 200, marginBottom: 10 }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width={400} height={200} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
                 {/* Y Axis Grid */}
                 {[0, 0.25, 0.5, 0.75, 1].map(pct => {
                   const y = padT + h - (pct * h);

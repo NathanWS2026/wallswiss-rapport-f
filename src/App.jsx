@@ -14,7 +14,7 @@ const C = {
 
 // Lien mis à jour pour pointer vers le fichier local dans le dossier "public"
 const LOGO_URL = "/logo blanc sans texte.png";
-const APP_VERSION = "v1.2.4";
+const APP_VERSION = "v1.2.6";
 
 const fontLink = document.createElement("link");
 fontLink.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap";
@@ -866,29 +866,32 @@ function ReportPreview({ data, onClose, onUpdateData }) {
 
       try {
         const html2pdf = await requireHtml2Pdf();
+        
+        // CORRECTION 2 : Empêcher le décalage induit par le scroll du navigateur
+        window.scrollTo(0, 0);
+        
         await html2pdf()
           .set({
             margin: 0,
             filename: `Rapport_${data.nom || 'Client'}.pdf`,
             image: { type: 'jpeg', quality: 1 },
-            // On supprime pagebreak : html2pdf coupera naturellement tous les 720px sans créer de page blanche
             html2canvas: {
               scale: 2,
               useCORS: true,
               scrollY: 0,
               scrollX: 0,
+              x: 0, // Force l'origine X pour éviter la coupe à gauche
+              y: 0, // Force l'origine Y
               windowWidth: 1280,
-              windowHeight: 720, // <-- Forcer la hauteur de la fenêtre de capture
-              letterRendering: true
+              logging: false
             },
-            // Unité 'px' stricte avec le correctif natif "px_scaling" pour ignorer le zoom Windows/Mac
-            jsPDF: { unit: 'px', format: [1280, 720], orientation: 'landscape', hotfixes: ["px_scaling"] }
+            // Retour aux pouces infaillibles (16:9)
+            jsPDF: { unit: 'in', format: [13.3333, 7.5], orientation: 'landscape' }
           })
           .from(element)
           .save();
       } catch(e) {
         console.error("Erreur PDF:", e);
-        //alert("Erreur de chargement du moteur PDF.");
       } finally {
         replacements.forEach(({ textarea, div }) => {
           textarea.style.display = '';
@@ -935,14 +938,19 @@ function ReportPreview({ data, onClose, onUpdateData }) {
       </div>
       {/* Slide area */}
       <div className="no-print" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 60px", position: "relative", minHeight: 0 }}>
-        <button onClick={() => setCurrentSlide(s => Math.max(0, s - 1))} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: currentSlide === 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", color: currentSlide === 0 ? "rgba(255,255,255,0.2)" : C.white, border: "none", width: 40, height: 40, cursor: currentSlide === 0 ? "default" : "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>&#8249;</button>
-        <div style={{ width: "100%", maxWidth: 960, boxShadow: "0 8px 40px rgba(0,0,0,0.5)", position: "relative" }}>
-          {slides[currentSlide]}
-          <div style={{ position: "absolute", bottom: 0, right: 32, height: 40, display: "flex", alignItems: "center", zIndex: 10 }}>
-            <span style={{ color: C.white, fontSize: 11, fontWeight: 700 }}>{currentSlide + 1}</span>
+        <button onClick={() => setCurrentSlide(s => Math.max(0, s - 1))} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: currentSlide === 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", color: currentSlide === 0 ? "rgba(255,255,255,0.2)" : C.white, border: "none", width: 40, height: 40, cursor: currentSlide === 0 ? "default" : "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>&#8249;</button>
+        
+        {/* CORRECTION 3 : L'aperçu affiche la slide de 1280x720 réduite proportionnellement (scale) à 960x540 */}
+        <div style={{ width: 960, height: 540, position: "relative", boxShadow: "0 8px 40px rgba(0,0,0,0.5)", overflow: "hidden", backgroundColor: C.white }}>
+          <div style={{ width: 1280, height: 720, transform: "scale(0.75)", transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}>
+            {slides[currentSlide]}
+            <div style={{ position: "absolute", bottom: 0, right: 40, height: 40, display: "flex", alignItems: "center", zIndex: 20 }}>
+              <span style={{ color: C.white, fontSize: 11, fontWeight: 700 }}>{currentSlide + 1}</span>
+            </div>
           </div>
         </div>
-        <button onClick={() => setCurrentSlide(s => Math.min(slides.length - 1, s + 1))} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: currentSlide === slides.length - 1 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", color: currentSlide === slides.length - 1 ? "rgba(255,255,255,0.2)" : C.white, border: "none", width: 40, height: 40, cursor: currentSlide === slides.length - 1 ? "default" : "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>&#8250;</button>
+
+        <button onClick={() => setCurrentSlide(s => Math.min(slides.length - 1, s + 1))} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: currentSlide === slides.length - 1 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", color: currentSlide === slides.length - 1 ? "rgba(255,255,255,0.2)" : C.white, border: "none", width: 40, height: 40, cursor: currentSlide === slides.length - 1 ? "default" : "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>&#8250;</button>
       </div>
       {/* Thumbnails */}
       <div className="no-print" style={{ background: C.black, padding: "8px 24px", display: "flex", gap: 4, overflowX: "auto", flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
@@ -953,12 +961,15 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         ))}
       </div>
 
-      {/* CONTENEUR D'IMPRESSION (Blindage absolu contre le CSS global de Vercel) */}
-      <div style={{ position: "fixed", top: 0, left: 0, width: "1280px", minWidth: "1280px", maxWidth: "none", opacity: 0.001, zIndex: -1000, pointerEvents: "none" }}>
-        <div id="report-printable" style={{ width: "1280px", minWidth: "1280px", maxWidth: "none", background: C.white, margin: 0, padding: 0 }}>
+      {/* CONTENEUR D'IMPRESSION - Positionnement absolu propre en 0,0 */}
+      <div style={{ position: "fixed", top: 0, left: 0, width: "1280px", height: "720px", zIndex: -1000, opacity: 0.001, pointerEvents: "none", overflow: "hidden" }}>
+        <div id="report-printable" style={{ width: "1280px", position: "absolute", top: 0, left: 0, margin: 0, padding: 0, background: C.white }}>
           {slides.map((SlideComponent, index) => (
-            <div key={index} className="pdf-slide" style={{ width: "1280px", minWidth: "1280px", maxWidth: "none", height: "720px", minHeight: "720px", maxHeight: "none", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF", margin: 0, padding: 0, boxSizing: "border-box" }}>
+            <div key={index} className="pdf-slide" style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF", margin: 0, padding: 0, boxSizing: "border-box" }}>
               {SlideComponent}
+              <div style={{ position: "absolute", bottom: 0, right: 40, height: 40, display: "flex", alignItems: "center", zIndex: 20 }}>
+                <span style={{ color: C.white, fontSize: 11, fontWeight: 700 }}>{index + 1}</span>
+              </div>
             </div>
           ))}
         </div>

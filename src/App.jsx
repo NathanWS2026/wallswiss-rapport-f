@@ -14,7 +14,7 @@ const C = {
 
 // Lien mis à jour pour pointer vers le fichier local dans le dossier "public"
 const LOGO_URL = "/logo blanc sans texte.png";
-const APP_VERSION = "v1.2.6";
+const APP_VERSION = "v1.2.7";
 
 const fontLink = document.createElement("link");
 fontLink.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap";
@@ -885,6 +885,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
               windowWidth: 1280,
               logging: false
             },
+            pagebreak: { mode: ['css', 'legacy'] }, // On s'assure que la logique de saut de page n'ajoute pas de page vide
             // Précision accrue sur la largeur (13.33334) pour éviter le débordement horizontal
             jsPDF: { unit: 'in', format: [13.33334, 7.5], orientation: 'landscape' }
           })
@@ -963,9 +964,9 @@ function ReportPreview({ data, onClose, onUpdateData }) {
 
       {/* CONTENEUR D'IMPRESSION - Flexbox + Hauteur stricte pour empêcher la page blanche "fantôme" */}
       <div style={{ position: "fixed", top: 0, left: 0, zIndex: -1000, opacity: 0.001, pointerEvents: "none" }}>
-        <div id="report-printable" style={{ width: "1280px", height: `${slides.length * 720}px`, display: "flex", flexDirection: "column", background: C.white, overflow: "hidden" }}>
+        <div id="report-printable" style={{ width: "1280px", height: `${slides.length * 720}px`, display: "block", background: C.white, overflow: "hidden" }}>
           {slides.map((SlideComponent, index) => (
-            <div key={index} className="pdf-slide" style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF", margin: 0, padding: 0, boxSizing: "border-box", flexShrink: 0 }}>
+            <div key={index} className="pdf-slide" style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF", margin: 0, padding: 0, boxSizing: "border-box" }}>
               {SlideComponent}
               <div style={{ position: "absolute", bottom: 0, right: 40, height: 40, display: "flex", alignItems: "center", zIndex: 20 }}>
                 <span style={{ color: C.white, fontSize: 11, fontWeight: 700 }}>{index + 1}</span>

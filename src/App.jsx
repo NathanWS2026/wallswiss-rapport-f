@@ -878,10 +878,11 @@ function ReportPreview({ data, onClose, onUpdateData }) {
               scrollY: 0,
               scrollX: 0,
               windowWidth: 1280,
+              windowHeight: 720, // <-- Forcer la hauteur de la fenêtre de capture
               letterRendering: true
             },
-            // Unité 'px' stricte : le Canvas 1280x720 remplira 100% de la page PDF 1280x720
-            jsPDF: { unit: 'px', format: [1280, 720], orientation: 'landscape' }
+            // Unité 'px' stricte avec le correctif natif "px_scaling" pour ignorer le zoom Windows/Mac
+            jsPDF: { unit: 'px', format: [1280, 720], orientation: 'landscape', hotfixes: ["px_scaling"] }
           })
           .from(element)
           .save();
@@ -952,11 +953,11 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         ))}
       </div>
 
-      {/* CONTENEUR D'IMPRESSION (Invisible mais monté) */}
-      <div style={{ position: "fixed", top: 0, left: 0, width: "1280px", opacity: 0.001, zIndex: -1000, pointerEvents: "none" }}>
-        <div id="report-printable" style={{ width: "1280px", background: C.white, margin: 0, padding: 0 }}>
+      {/* CONTENEUR D'IMPRESSION (Blindage absolu contre le CSS global de Vercel) */}
+      <div style={{ position: "fixed", top: 0, left: 0, width: "1280px", minWidth: "1280px", maxWidth: "none", opacity: 0.001, zIndex: -1000, pointerEvents: "none" }}>
+        <div id="report-printable" style={{ width: "1280px", minWidth: "1280px", maxWidth: "none", background: C.white, margin: 0, padding: 0 }}>
           {slides.map((SlideComponent, index) => (
-            <div key={index} className="pdf-slide" style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF", margin: 0, padding: 0, boxSizing: "border-box" }}>
+            <div key={index} className="pdf-slide" style={{ width: "1280px", minWidth: "1280px", maxWidth: "none", height: "720px", minHeight: "720px", maxHeight: "none", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF", margin: 0, padding: 0, boxSizing: "border-box" }}>
               {SlideComponent}
             </div>
           ))}

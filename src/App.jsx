@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 const C = {
   primary: "#692102",
@@ -12,9 +12,7 @@ const C = {
   darkGray: "#374151",
 };
 
-// Lien mis à jour pour pointer vers le fichier local dans le dossier "public"
-const LOGO_URL = "/logo blanc sans texte.png";
-const APP_VERSION = "v1.2.4";
+const LOGO_URL = "https://wallswiss.ch/wp-content/uploads/2026/03/logo-blanc-sans-texte.png";
 
 const fontLink = document.createElement("link");
 fontLink.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap";
@@ -39,23 +37,6 @@ function computeProjections(data) {
 
 function fmt(n) { return Number(n).toLocaleString("fr-CH"); }
 
-// --- SOLUTION ULTIME CORS POUR VERCEL ---
-const getBase64Image = async (url) => {
-  try {
-    const response = await fetch(url, { mode: 'cors' });
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  } catch (error) {
-    console.error("Erreur CORS lors de la récupération de l'image :", url, error);
-    return url; 
-  }
-};
-
 // ────────────────────── SLIDE COMPONENTS ──────────────────────
 
 const slideBase = {
@@ -69,8 +50,8 @@ const slideBase = {
 };
 
 const footer = (name) => (
-  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 40, background: C.primary, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px" }}>
-    <span style={{ color: C.white, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em" }}>À L'ATTENTION DE {name}</span>
+  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 42, background: C.primary, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px" }}>
+    <span style={{ color: C.white, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em" }}>A L'ATTENTION DE {name}</span>
   </div>
 );
 
@@ -79,21 +60,21 @@ const accentBar = () => (
 );
 
 const logoCorner = () => (
-  <div style={{ position: "absolute", top: 48, right: 64, zIndex: 10 }}>
-    <div style={{ background: C.primary, width: "52px", height: "52px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px", boxShadow: "0 4px 15px rgba(0,0,0,0.15)" }}>
-      <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ width: "28px", height: "28px", objectFit: "contain", display: "block" }} />
+  <div style={{ position: "absolute", top: 48, right: 56, display: "flex", alignItems: "center", gap: 8, zIndex: 10 }}>
+    <div style={{ background: C.primary, width: 56, height: 56, minWidth: 56, minHeight: 56, flexShrink: 0, boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px", boxShadow: "0 2px 10px rgba(0,0,0,0.15)" }}>
+      <img src={LOGO_URL} alt="WallSwiss" style={{ width: "32px", height: "32px", objectFit: "contain" }} crossOrigin="anonymous" />
     </div>
   </div>
 );
 
 const ReportTitle = ({ title, highlight, subtitle, color = C.primary }) => (
-  <div style={{ borderLeft: `5px solid ${C.gold}`, paddingLeft: "24px", marginBottom: "36px", fontFamily: "'Montserrat', sans-serif", textAlign: "left" }}>
+  <div style={{ borderLeft: `5px solid ${C.gold}`, paddingLeft: "20px", marginBottom: "28px", fontFamily: "'Montserrat', sans-serif", textAlign: "left" }}>
     {subtitle && (
-      <div style={{ fontSize: 11, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 10 }}>
+      <div style={{ fontSize: 11, color: C.gold, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 8 }}>
         {subtitle}
       </div>
     )}
-    <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 34, fontWeight: 700, color: color, margin: 0, lineHeight: 1.15 }}>
+    <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: color, margin: 0, lineHeight: 1.15 }}>
       {title} {highlight && <em style={{ color: C.gold }}>{highlight}</em>}
     </div>
   </div>
@@ -105,7 +86,7 @@ const EditableText = ({ value, onChange, editMode, style }) => {
       <textarea
         value={value}
         onChange={e => onChange(e.target.value)}
-        style={{ ...style, width: "100%", background: "rgba(105,33,2,0.03)", border: `1px dashed ${C.gold}`, borderRadius: "0px", padding: "6px", outline: "none", resize: "vertical", fontFamily: "'Montserrat', sans-serif", display: "block", boxSizing: "border-box", textAlign: "left" }}
+        style={{ ...style, width: "100%", background: "rgba(105,33,2,0.03)", border: `1px dashed ${C.gold}`, borderRadius: "2px", padding: "8px", outline: "none", resize: "vertical", fontFamily: "'Montserrat', sans-serif", display: "block", boxSizing: "border-box", textAlign: "left" }}
       />
     );
   }
@@ -119,12 +100,12 @@ function SlideCover({ data }) {
   const formattedDate = dateObj.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
   return (
     <div style={{ ...slideBase, background: C.white, display: "flex" }}>
-      <div style={{ width: "35%", height: "100%", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "48px 40px" }}>
-        <div style={{ background: C.primary, width: "72px", height: "72px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px" }}>
-          <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ width: "40px", height: "40px", objectFit: "contain", display: "block" }} />
+      <div style={{ width: "35%", height: "100%", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "50px 40px" }}>
+        <div style={{ background: C.primary, width: 80, height: 80, minHeight: 80, minWidth: 80, flexShrink: 0, boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px", alignSelf: "flex-start" }}>
+          <img src={LOGO_URL} alt="WallSwiss" style={{ width: "48px", height: "48px", objectFit: "contain" }} crossOrigin="anonymous" />
         </div>
         <div>
-          <div style={{ width: 48, height: 4, background: C.gold, marginBottom: 20 }} />
+          <div style={{ width: 60, height: 4, background: C.gold, marginBottom: 20 }} />
           <div style={{ color: C.primary, fontSize: 13, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" }}>Analyse Patrimoniale</div>
           <div style={{ color: C.gray, fontSize: 12, marginTop: 10 }}>{formattedDate}</div>
         </div>
@@ -132,10 +113,10 @@ function SlideCover({ data }) {
       <div style={{ width: "65%", height: "100%", background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryDark} 100%)`, position: "relative", padding: "80px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 8, background: C.gold }} />
         <div style={{ position: "absolute", top: 0, right: 0, width: "45%", height: "100%", background: "rgba(255,255,255,0.03)" }} />
-        <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.white, fontSize: 64, fontWeight: 700, lineHeight: 1.1, position: "relative", zIndex: 2 }}>
+        <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.white, fontSize: 68, fontWeight: 700, lineHeight: 1.1, position: "relative", zIndex: 2 }}>
           Rapport<br /><em style={{ color: C.gold, fontStyle: "italic" }}>Financier</em>
         </div>
-        <div style={{ marginTop: 48, borderLeft: `3px solid rgba(255,255,255,0.2)`, paddingLeft: 24, position: "relative", zIndex: 2 }}>
+        <div style={{ marginTop: 50, borderLeft: `3px solid rgba(255,255,255,0.2)`, paddingLeft: 24, position: "relative", zIndex: 2 }}>
           <div style={{ color: C.white, fontSize: 22, fontWeight: 600 }}>{data.conseiller || "Louis Borne"}</div>
           <div style={{ color: C.gold, fontSize: 14, fontWeight: 500, marginTop: 6 }}>{data.titreConseiller || "Planificatrice financière"}</div>
         </div>
@@ -154,7 +135,7 @@ function SlideTOC({ data }) {
     { title: "Résumé de votre situation personnelle", page: 5 },
     { title: "Pourquoi Swissquote est une banque fiable", page: 6 },
     { title: "Avantages WallSwiss BY Swissquote", page: 7 },
-    { title: "Solution — Compte Titre", page: 9 }, // Corrigé car divider est 8
+    { title: "Solution — Compte Titre", page: 8 },
     { title: "Fonds NS (CH) Swiss Excellence DPM", page: 10 },
     { title: "Projections financières", page: 11 },
     { title: "Avantages tarifaires WS Premium", page: 12 },
@@ -166,16 +147,16 @@ function SlideTOC({ data }) {
     <div style={slideBase}>
       {accentBar()}
       {logoCorner()}
-      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "60px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Table des matières" subtitle="STRUCTURE DE VOTRE PRÉSENTATION" />
-        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 80, rowGap: 24, alignContent: "center", maxWidth: 1000, margin: "0" }}>
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 80, rowGap: 24, alignContent: "center", maxWidth: 1000 }}>
           {items.map((item, i) => (
             <div key={i} style={{ display: "flex", alignItems: "flex-end", width: "100%", paddingBottom: 6 }}>
-              <span style={{ color: C.darkGray, fontSize: 15, fontWeight: 600, paddingBottom: 2 }}>
+              <span style={{ color: C.darkGray, fontSize: 16, fontWeight: 600, paddingBottom: 2 }}>
                 {item.title}
               </span>
               <div style={{ flex: 1, borderBottom: `2px dotted ${C.mediumGray}`, margin: "0 16px", position: "relative", top: -8 }} />
-              <span style={{ color: C.primary, fontSize: 16, fontWeight: 700, flexShrink: 0, paddingBottom: 2 }}>
+              <span style={{ color: C.primary, fontSize: 18, fontWeight: 700, flexShrink: 0, paddingBottom: 2 }}>
                 {String(item.page).padStart(2, '0')}
               </span>
             </div>
@@ -187,31 +168,29 @@ function SlideTOC({ data }) {
   );
 }
 
-// Slide 3 — Philosophie (Nouveau "Qui sommes-nous")
+// Slide 3 — Philosophie
 function SlidePhilosophy({ data, editMode, onTextChange }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   return (
     <div style={{ ...slideBase, display: "flex", alignItems: "stretch" }}>
-      <div style={{ width: "35%", position: "relative", overflow: "hidden" }}>
-         <img src="https://wallswiss.ch/wp-content/uploads/2026/03/660942a0ceb2ea252752e568_section-bg-scaled.jpg" alt="Fond" className="pdf-image" style={{ width: "100%", height: "100%", objectFit: "cover" }} crossOrigin="anonymous" />
-      </div>
-      <div style={{ flex: 1, padding: "56px 80px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+      <div style={{ width: "35%", background: `url("https://wallswiss.ch/wp-content/uploads/2026/03/660942a0ceb2ea252752e568_section-bg-scaled.jpg") center/cover`, position: "relative" }} />
+      <div style={{ flex: 1, padding: "40px 70px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         {logoCorner()}
         <ReportTitle title="Qui sommes-nous ?" />
         
         <div style={{ marginBottom: 32 }}>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 22, color: C.primaryDark, textTransform: "uppercase", marginBottom: 6 }}>NOTRE PHILOSOPHIE.</div>
-          <div style={{ fontSize: 14, color: C.gold, marginBottom: 16, fontWeight: 500 }}>Votre cabinet de planification financière à Genève.</div>
-          <EditableText editMode={editMode} value={data.texts?.philosophyP1} onChange={v => onTextChange("philosophyP1", v)} style={{ fontSize: 13, lineHeight: 1.7, color: C.darkGray, margin: "0 0 12px" }} />
-          <EditableText editMode={editMode} value={data.texts?.philosophyP2} onChange={v => onTextChange("philosophyP2", v)} style={{ fontSize: 13, lineHeight: 1.7, color: C.darkGray, margin: "0 0 12px" }} />
-          <EditableText editMode={editMode} value={data.texts?.philosophyP3} onChange={v => onTextChange("philosophyP3", v)} style={{ fontSize: 13, lineHeight: 1.7, color: C.darkGray, margin: 0 }} />
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.primaryDark, textTransform: "uppercase", marginBottom: 6 }}>NOTRE PHILOSOPHIE.</div>
+          <div style={{ fontSize: 14, color: C.gold, marginBottom: 18 }}>Votre cabinet de planification financière à Genève.</div>
+          <EditableText editMode={editMode} value={data.texts?.philosophyP1} onChange={v => onTextChange("philosophyP1", v)} style={{ fontSize: 14, lineHeight: 1.7, color: C.darkGray, margin: "0 0 16px" }} />
+          <EditableText editMode={editMode} value={data.texts?.philosophyP2} onChange={v => onTextChange("philosophyP2", v)} style={{ fontSize: 14, lineHeight: 1.7, color: C.darkGray, margin: "0 0 16px" }} />
+          <EditableText editMode={editMode} value={data.texts?.philosophyP3} onChange={v => onTextChange("philosophyP3", v)} style={{ fontSize: 14, lineHeight: 1.7, color: C.darkGray, margin: 0 }} />
         </div>
 
         <div>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 22, color: C.primaryDark, textTransform: "uppercase", marginBottom: 6 }}>NOTRE MISSION</div>
-          <div style={{ fontSize: 14, color: C.gold, marginBottom: 16, fontWeight: 500 }}>Vos projets financiers avec expertise et transparence</div>
-          <EditableText editMode={editMode} value={data.texts?.missionP1} onChange={v => onTextChange("missionP1", v)} style={{ fontSize: 13, lineHeight: 1.7, color: C.darkGray, margin: "0 0 12px" }} />
-          <EditableText editMode={editMode} value={data.texts?.missionP2} onChange={v => onTextChange("missionP2", v)} style={{ fontSize: 13, lineHeight: 1.7, color: C.darkGray, margin: 0 }} />
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.primaryDark, textTransform: "uppercase", marginBottom: 6 }}>NOTRE MISSION</div>
+          <div style={{ fontSize: 14, color: C.gold, marginBottom: 18 }}>Vos projets financiers avec expertise et transparence</div>
+          <EditableText editMode={editMode} value={data.texts?.missionP1} onChange={v => onTextChange("missionP1", v)} style={{ fontSize: 14, lineHeight: 1.7, color: C.darkGray, margin: "0 0 16px" }} />
+          <EditableText editMode={editMode} value={data.texts?.missionP2} onChange={v => onTextChange("missionP2", v)} style={{ fontSize: 14, lineHeight: 1.7, color: C.darkGray, margin: 0 }} />
         </div>
       </div>
       {footer(fullName)}
@@ -234,22 +213,22 @@ function SlideAbout({ data, editMode, onTextChange }) {
     <div style={slideBase}>
       {accentBar()}
       {logoCorner()}
-      <div style={{ padding: "56px 64px 56px 80px", height: "100%", boxSizing: "border-box", display: "flex", gap: "64px" }}>
-        <div style={{ flex: 1.2, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+      <div style={{ padding: "60px 80px", height: "100%", boxSizing: "border-box", display: "flex", gap: "60px" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <ReportTitle title="Notre cabinet" highlight="en chiffres" subtitle="QUI SOMMES-NOUS ?" />
-          <div style={{ color: C.gray, fontSize: 14, marginBottom: 16, fontWeight: 500 }}>Votre cabinet de planification financière à Genève.</div>
-          <EditableText editMode={editMode} value={data.texts?.aboutDesc} onChange={v => onTextChange("aboutDesc", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, marginBottom: 40 }} />
+          <div style={{ color: C.gray, fontSize: 15, marginBottom: 20 }}>Votre cabinet de planification financière à Genève.</div>
+          <EditableText editMode={editMode} value={data.texts?.aboutDesc} onChange={v => onTextChange("aboutDesc", v)} style={{ fontSize: 14.5, lineHeight: 1.8, color: C.darkGray, marginBottom: 40 }} />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
             {stats.map((s, i) => (
-              <div key={i} style={{ background: C.primary, padding: "20px 12px", textAlign: "center", borderRadius: "0px", boxShadow: "0 4px 12px rgba(105,33,2,0.15)" }}>
-                <div style={{ color: C.white, fontSize: 22, fontWeight: 800 }}>{s.val}</div>
+              <div key={i} style={{ background: C.primary, padding: "24px 16px", textAlign: "center" }}>
+                <div style={{ color: C.white, fontSize: 24, fontWeight: 800 }}>{s.val}</div>
                 <div style={{ color: C.gold, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", marginTop: 6 }}>{s.label}</div>
               </div>
             ))}
           </div>
         </div>
-        <div style={{ flex: 1, height: "100%", borderRadius: "0px", overflow: "hidden", boxShadow: "0 8px 30px rgba(0,0,0,0.1)" }}>
-          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_15_uri_ifs3A2F2FM2FZZBVIKww_AjRDCaKNkRtfABGR-02n7Jd8caaieOpDwE.jpg" alt="Equipe WallSwiss" className="pdf-image" style={{ width: "100%", height: "100%", objectFit: "cover" }} crossOrigin="anonymous" />
+        <div style={{ width: "35%", height: "100%", borderRadius: "4px", overflow: "hidden" }}>
+          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_15_uri_ifs3A2F2FM2FZZBVIKww_AjRDCaKNkRtfABGR-02n7Jd8caaieOpDwE.jpg" alt="Equipe WallSwiss" style={{ width: "100%", height: "100%", objectFit: "cover" }} crossOrigin="anonymous" />
         </div>
       </div>
       {footer(fullName)}
@@ -264,23 +243,21 @@ function SlideSituation({ data }) {
     <div style={slideBase}>
       {accentBar()}
       {logoCorner()}
-      <div style={{ padding: "48px 80px 80px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "50px 80px 30px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Résumé de" highlight="votre situation personnelle" subtitle="ANALYSE PATRIMONIALE" />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, flex: 1, minHeight: 0, marginTop: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, flex: 1, minHeight: 0, marginTop: -8 }}>
           
-          {/* Colonne Gauche */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 24, justifyContent: "flex-start" }}>
-            {/* Block Identité */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div>
-              <div style={{ background: C.primary, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Civilité & Statut</div>
-              <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
+              <div style={{ background: C.primary, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Civilité & Statut</div>
+              <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px" }}>
                 {[
                   ["Âge", `${data.age || "-"} ans`],
                   ["Profession", data.profession || "À renseigner"],
                   ["Nationalité", data.nationalite || "À renseigner"],
                   ["Statut civil", data.statut || "À renseigner"],
                 ].map(([k, v], i, arr) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < arr.length - 1 ? `1px solid ${C.lightGray}` : "none", fontSize: 12.5 }}>
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < arr.length - 1 ? `1px solid ${C.lightGray}` : "none", fontSize: 13 }}>
                     <span style={{ color: C.gray, fontWeight: 500 }}>{k}</span>
                     <span style={{ fontWeight: 700, color: C.primary }}>{v}</span>
                   </div>
@@ -288,16 +265,15 @@ function SlideSituation({ data }) {
               </div>
             </div>
             
-            {/* Block Financier */}
             <div>
-              <div style={{ background: C.primary, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Données Financières</div>
-              <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
+              <div style={{ background: C.primary, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Données Financières</div>
+              <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px" }}>
                 {[
                   ["Revenus annuels bruts", data.revenus ? `CHF ${fmt(data.revenus)}.-` : "À renseigner"],
                   ["Capacité d'épargne / mois", data.capaciteEpargne ? `CHF ${fmt(data.capaciteEpargne)}.-` : "À renseigner"],
                   ["Fortune globale estimée", data.fortuneGlobale ? `CHF ${fmt(data.fortuneGlobale)}.-` : "À renseigner"],
                 ].map(([k, v], i, arr) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < arr.length - 1 ? `1px solid ${C.lightGray}` : "none", fontSize: 12.5 }}>
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < arr.length - 1 ? `1px solid ${C.lightGray}` : "none", fontSize: 13 }}>
                     <span style={{ color: C.gray, fontWeight: 500 }}>{k}</span>
                     <span style={{ fontWeight: 700, color: C.primary }}>{v}</span>
                   </div>
@@ -306,30 +282,27 @@ function SlideSituation({ data }) {
             </div>
           </div>
 
-          {/* Colonne Droite */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 24, justifyContent: "flex-start" }}>
-            {/* Block Objectifs */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div>
-              <div style={{ background: C.gold, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Vos objectifs prioritaires</div>
-              <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "16px 20px", background: C.white, borderRadius: "0px", minHeight: "120px" }}>
+              <div style={{ background: C.gold, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Vos objectifs prioritaires</div>
+              <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "12px 20px", minHeight: "140px" }}>
                 {(data.objectifs && data.objectifs.length > 0 ? data.objectifs : ["Aucun objectif spécifique renseigné"]).map((obj, i) => (
                   <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "6px 0" }}>
-                    <div style={{ width: 6, height: 6, background: C.gold, marginTop: 6, flexShrink: 0, borderRadius: "0px" }} />
-                    <span style={{ fontSize: 12.5, color: C.darkGray, lineHeight: 1.5, fontWeight: 500 }}>{obj}</span>
+                    <div style={{ width: 6, height: 6, background: C.gold, marginTop: 7, flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.5, fontWeight: 500 }}>{obj}</span>
                   </div>
                 ))}
               </div>
             </div>
             
-            {/* Block Profil */}
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ background: C.gold, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Profil d'investisseur</div>
-              <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
+            <div>
+              <div style={{ background: C.gold, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Profil d'investisseur</div>
+              <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px" }}>
                 {[
                   ["Horizon de placement", data.horizonPlacement || "Moyen / Long terme"],
                   ["Tolérance au risque", data.profilRisque || "Équilibré"],
                 ].map(([k, v], i, arr) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < arr.length - 1 ? `1px solid ${C.lightGray}` : "none", fontSize: 12.5 }}>
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < arr.length - 1 ? `1px solid ${C.lightGray}` : "none", fontSize: 13 }}>
                     <span style={{ color: C.gray, fontWeight: 500 }}>{k}</span>
                     <span style={{ fontWeight: 700, color: C.primary }}>{v}</span>
                   </div>
@@ -357,15 +330,15 @@ function SlideSwissquote({ data, editMode, onTextChange }) {
   return (
     <div style={slideBase}>
       {logoCorner()}
-      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "60px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Pourquoi Swissquote est une banque fiable" subtitle="PARTENAIRE BANCAIRE" />
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 20, maxWidth: 860 }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 18, maxWidth: 850 }}>
           {points.map((p, i) => (
-            <div key={i} style={{ background: C.lightGray, padding: "20px 28px", fontSize: 14, lineHeight: 1.7, color: C.darkGray, borderLeft: `4px solid ${C.gold}`, textAlign: "justify", borderRadius: "0px" }}>
+            <div key={i} style={{ background: C.lightGray, padding: "18px 28px", fontSize: 15, lineHeight: 1.7, color: C.darkGray, borderLeft: `4px solid ${C.gold}`, textAlign: "justify" }}>
               {p}
             </div>
           ))}
-          <div style={{ background: "rgba(105,33,2,0.04)", padding: "20px 28px", fontSize: 14, lineHeight: 1.7, borderLeft: `4px solid ${C.primary}`, borderRadius: "0px", marginTop: 12 }}>
+          <div style={{ background: C.lightGray, padding: "18px 28px", fontSize: 15, lineHeight: 1.7, borderLeft: `4px solid ${C.primary}` }}>
             <EditableText editMode={editMode} value={data.texts?.swissquoteIntro} onChange={v => onTextChange("swissquoteIntro", v)} style={{ color: C.primary, fontWeight: 700, margin: 0 }} />
           </div>
         </div>
@@ -379,29 +352,29 @@ function SlideSwissquote({ data, editMode, onTextChange }) {
 function SlideAdvantages({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   const avantages = [
-    { title: "Sécurité & réglementation suisses", desc: "Banque suisse régulée par la FINMA, avec garantie des dépôts jusqu'à 100'000 CHF. Bilan consolidé à 80 Mds CHF : et ratios Bâle III de Swissquote, bien qu'ils aient fluctué, sont historiquement restés élevés, démontrant une capitalisation qui excède les exigences réglementaires." },
+    { title: "Sécurité & réglementation suisses", desc: "Banque suisse régulée par la FINMA, avec garantie des dépôts jusqu'à 100'000 CHF. Bilan consolidé à 80 Mds CHF : et ratios Bâle III de Swissquote démontrant une capitalisation qui excède les exigences." },
     { title: "Univers d'investissement le plus large", desc: "Accès à plus de 3 millions de produits (actions, ETF, fonds, obligations, dérivés, forex/CFD, crypto, etc.)." },
     { title: "Heures étendues & Swiss DOTS", desc: "Trading sur Swiss DOTS de 08:00 à 22:00, conditions forfaitaires chez certains émetteurs, accès à SIX et aux marchés US/UE." },
-    { title: "ETF compétitifs", desc: "Plus de 9'000 ETF disponibles." },
+    { title: "ETF compétitifs", desc: "Plus de 9'000 ETF disponibles avec des frais réduits." },
     { title: "Tarification optimisée", desc: "Tarifs négociés sur une sélection de valeurs clés pour des portefeuilles essentiels." },
     { title: "Crypto de niveau bancaire", desc: "Achat/vente, staking, garde institutionnelle et échange crypto propriétaire (SQX) opérés par une banque suisse." },
-    { title: "Thématiques & produits structurés", desc: "Themes Trading, transactions thématiques en 1 clic et offre/partenariats d'AMCs pour professionnels/institutionnels." },
+    { title: "Thématiques & produits structurés", desc: "Themes Trading, transactions thématiques en 1 clic et offre d'AMCs pour professionnels." },
     { title: "Plateformes & outils", desc: "Application multi-actifs (titres & crypto), interface intuitive, centre de formation (cours, webinars, e-books)." },
-    { title: "Support multilingue & équipe dédiée", desc: "Assistance client dédiée, équipe institutionnelle dédiée." },
-    { title: "Change compétitif", desc: "Conditions de change très compétitives." },
+    { title: "Support multilingue & équipe dédiée", desc: "Assistance client dédiée et équipe institutionnelle pour un suivi personnalisé." },
+    { title: "Change compétitif", desc: "Conditions de change très compétitives par rapport aux banques traditionnelles." },
   ];
   return (
     <div style={slideBase}>
       {logoCorner()}
-      <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "50px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Avantages WallSwiss BY Swissquote" highlight="pour l'investissement" subtitle="CONDITIONS EXCLUSIVES" />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 40px", flex: 1, alignContent: "center" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 40px" }}>
           {avantages.map((a, i) => (
-            <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-              <div style={{ color: C.primary, fontSize: 20, marginTop: -4 }}>•</div>
+            <div key={i} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+              <div style={{ color: C.primary, fontSize: 22, marginTop: -6 }}>•</div>
               <div>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: C.darkGray }}>{a.title}</div>
-                <div style={{ fontSize: 11.5, color: C.gray, lineHeight: 1.5, marginTop: 4, textAlign: "justify" }}>{a.desc}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: C.darkGray }}>{a.title}</div>
+                <div style={{ fontSize: 12, color: C.gray, lineHeight: 1.5, marginTop: 4, textAlign: "justify" }}>{a.desc}</div>
               </div>
             </div>
           ))}
@@ -413,36 +386,34 @@ function SlideAdvantages({ data }) {
 }
 
 // Slide 8 — Section divider
-function SlideDivider({ data, number, title }) {
+function SlideDivider({ data, title }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   return (
     <div style={{ ...slideBase, background: C.lightGray, display: "flex" }}>
-      {/* Panneau gauche avec losange décoratif */}
       <div style={{ width: "35%", background: `linear-gradient(150deg, ${C.primary} 0%, ${C.primaryDark} 100%)`, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ position: "absolute", right: -40, width: 80, height: 80, background: C.lightGray, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, transform: "rotate(45deg)" }}>
           <div style={{ width: 64, height: 64, background: C.primary, border: `2px solid ${C.gold}`, transform: "rotate(-45deg)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.1)" }}>
-            <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ height: 32 }} />
+            <img src={LOGO_URL} alt="WallSwiss" style={{ height: 32 }} crossOrigin="anonymous" />
           </div>
         </div>
       </div>
 
-      {/* Contenu principal à droite */}
       <div style={{ flex: 1, padding: "0 100px", display: "flex", flexDirection: "column", justifyContent: "center", zIndex: 1 }}>
         <div style={{ color: C.gray, fontSize: 13, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 16 }}>
           La stratégie recommandée
         </div>
-        <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.primary, fontSize: 56, fontWeight: 700, lineHeight: 1.1 }}>
+        <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.primary, fontSize: 52, fontWeight: 700, lineHeight: 1.1 }}>
           Solution d'investissement
         </div>
-        <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.gold, fontSize: 56, fontStyle: "italic", marginBottom: 40 }}>
+        <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.gold, fontSize: 52, fontStyle: "italic", marginBottom: 40 }}>
           {title}
         </div>
 
-        <div style={{ width: 48, height: 3, background: C.primary, marginBottom: 32 }} />
+        <div style={{ width: 60, height: 3, background: C.primary, marginBottom: 32 }} />
 
         <div style={{ display: "flex", gap: 20 }}>
           <div style={{ width: 4, background: C.gold, flexShrink: 0 }} />
-          <div style={{ fontFamily: "'Montserrat', sans-serif", fontStyle: "italic", color: C.darkGray, fontSize: 14, maxWidth: 500, lineHeight: 1.8, textAlign: "justify" }}>
+          <div style={{ fontFamily: "'Montserrat', sans-serif", fontStyle: "italic", color: C.darkGray, fontSize: 15, maxWidth: 500, lineHeight: 1.8, textAlign: "justify" }}>
             « L'investissement est un voyage à long terme. La clé est de rester concentré sur sa destination finale et de s'entourer des meilleurs partenaires. »
           </div>
         </div>
@@ -460,19 +431,19 @@ function SlideCompteTitre({ data, editMode, onTextChange }) {
     <div style={slideBase}>
       {accentBar()}
       {logoCorner()}
-      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
+      <div style={{ padding: "60px 80px", height: "100%", boxSizing: "border-box", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
         <div>
           <ReportTitle title="La solution" highlight="compte titre" subtitle="STRATÉGIE" />
-          <EditableText editMode={editMode} value={data.texts?.solution1} onChange={v => onTextChange("solution1", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px" }} />
-          <EditableText editMode={editMode} value={data.texts?.solution2} onChange={v => onTextChange("solution2", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px" }} />
-          <EditableText editMode={editMode} value={data.texts?.solution3} onChange={v => onTextChange("solution3", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: 0 }} />
+          <EditableText editMode={editMode} value={data.texts?.solution1} onChange={v => onTextChange("solution1", v)} style={{ fontSize: 15, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px" }} />
+          <EditableText editMode={editMode} value={data.texts?.solution2} onChange={v => onTextChange("solution2", v)} style={{ fontSize: 15, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px" }} />
+          <EditableText editMode={editMode} value={data.texts?.solution3} onChange={v => onTextChange("solution3", v)} style={{ fontSize: 15, lineHeight: 1.8, color: C.darkGray, margin: 0 }} />
         </div>
         <div>
-          <div style={{ background: C.primary, padding: 32, display: "flex", flexDirection: "column", alignItems: "center", borderRadius: "0px", boxShadow: "0 10px 30px rgba(105,33,2,0.15)" }}>
-            <div style={{ color: C.white, fontSize: 18, fontWeight: 800, textAlign: "center", marginBottom: 24 }}>Couteau Suisse<br/>de l'épargne</div>
+          <div style={{ background: C.primary, padding: 32, display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ color: C.white, fontSize: 18, fontWeight: 800, textAlign: "center", marginBottom: 24, letterSpacing: "0.05em" }}>Couteau Suisse de l'épargne</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, width: "100%" }}>
               {bubbles.map((b, i) => (
-                <div key={i} style={{ background: C.gold, padding: "16px 14px", textAlign: "center", fontSize: 11.5, fontWeight: 600, color: C.white, lineHeight: 1.5, borderRadius: "0px" }}>{b}</div>
+                <div key={i} style={{ background: C.gold, padding: "14px 16px", textAlign: "center", fontSize: 11, fontWeight: 600, color: C.white, lineHeight: 1.4, display: "flex", alignItems: "center", justifyContent: "center" }}>{b}</div>
               ))}
             </div>
           </div>
@@ -488,40 +459,40 @@ function SlideFund({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   return (
     <div style={slideBase}>
-      <div style={{ padding: "32px 80px 48px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-        <div style={{ border: `3px solid ${C.gold}`, padding: "24px 32px", boxSizing: "border-box", background: C.white }}>
+      <div style={{ padding: "40px 60px 60px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <div style={{ border: `3px solid ${C.gold}`, padding: "24px 40px", boxSizing: "border-box", background: C.white }}>
           <div style={{ textAlign: "center", marginBottom: 12 }}>
-            <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, fontWeight: 700, color: C.primary }}>NS (CH) FUNDS — Swiss Excellence DPM CHF</div>
-            <div style={{ fontSize: 12, color: C.gray, marginTop: 6 }}>Fonds actions suisses — Synthèse institutionnelle</div>
+            <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary }}>NS (CH) FUNDS — Swiss Excellence DPM CHF</div>
+            <div style={{ fontSize: 13, color: C.gray, marginTop: 4 }}>Fonds actions suisses — Synthèse institutionnelle</div>
           </div>
           <div style={{ width: "100%", height: 2, background: C.gold, margin: "16px 0 24px 0" }} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 48px", fontSize: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 60px", fontSize: 13.5 }}>
             <div>
-              <div style={{ fontWeight: 700, color: C.gold, marginBottom: 8, fontSize: 13, textTransform: "uppercase" }}>Positionnement</div>
+              <div style={{ fontWeight: 700, color: C.gold, marginBottom: 8, fontSize: 15, borderBottom: `1px solid ${C.lightGray}`, paddingBottom: 4 }}>Positionnement</div>
               {["Fonds actions 100% Suisse", "Devise : CHF", "Benchmark : SLI Swiss Leader Index TR", "Objectif : Surperformance du marché suisse"].map((t,i) => (
-                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 4 }}><span style={{ color: C.gold }}>—</span><span style={{ color: C.darkGray }}>{t}</span></div>
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}><span style={{ color: C.gold }}>—</span><span>{t}</span></div>
               ))}
-              <div style={{ fontWeight: 700, color: C.gold, marginTop: 16, marginBottom: 8, fontSize: 13, textTransform: "uppercase" }}>Performance</div>
+              <div style={{ fontWeight: 700, color: C.gold, marginTop: 16, marginBottom: 8, fontSize: 15, borderBottom: `1px solid ${C.lightGray}`, paddingBottom: 4 }}>Performance</div>
               {["Performance annualisée : 4,5%", "YTD 2025 : +8,40%", "Benchmark : +7,99%"].map((t,i) => (
-                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 4 }}><span style={{ color: C.gold }}>—</span><span style={{ color: C.darkGray }}>{t}</span></div>
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}><span style={{ color: C.gold }}>—</span><span>{t}</span></div>
               ))}
-              <div style={{ fontWeight: 700, color: C.gold, marginTop: 16, marginBottom: 8, fontSize: 13, textTransform: "uppercase" }}>Structure de frais</div>
+              <div style={{ fontWeight: 700, color: C.gold, marginTop: 16, marginBottom: 8, fontSize: 15, borderBottom: `1px solid ${C.lightGray}`, paddingBottom: 4 }}>Structure de frais</div>
               {["Management fee : 1,50%", "Performance fee : 10%"].map((t,i) => (
-                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 4 }}><span style={{ color: C.gold }}>—</span><span style={{ color: C.darkGray }}>{t}</span></div>
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}><span style={{ color: C.gold }}>—</span><span>{t}</span></div>
               ))}
             </div>
             <div>
-              <div style={{ fontWeight: 700, color: C.gold, marginBottom: 8, fontSize: 13, textTransform: "uppercase" }}>Profil de risque</div>
+              <div style={{ fontWeight: 700, color: C.gold, marginBottom: 8, fontSize: 15, borderBottom: `1px solid ${C.lightGray}`, paddingBottom: 4 }}>Profil de risque</div>
               {["Volatilité annualisée : 13,2%", "Sharpe ratio : 0,26", "Beta : 0,99", "Corrélation indice : 0,99"].map((t,i) => (
-                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 4 }}><span style={{ color: C.gold }}>—</span><span style={{ color: C.darkGray }}>{t}</span></div>
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}><span style={{ color: C.gold }}>—</span><span>{t}</span></div>
               ))}
-              <div style={{ fontWeight: 700, color: C.gold, marginTop: 16, marginBottom: 8, fontSize: 13, textTransform: "uppercase" }}>Principales positions</div>
+              <div style={{ fontWeight: 700, color: C.gold, marginTop: 16, marginBottom: 8, fontSize: 15, borderBottom: `1px solid ${C.lightGray}`, paddingBottom: 4 }}>Principales positions</div>
               {["Roche — 6,86%", "Novartis — 6,59%", "Nestlé — 5,89%", "UBS — 5,51%"].map((t,i) => (
-                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 4 }}><span style={{ color: C.gold }}>—</span><span style={{ color: C.darkGray }}>{t}</span></div>
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}><span style={{ color: C.gold }}>—</span><span>{t}</span></div>
               ))}
-              <div style={{ fontWeight: 700, color: C.gold, marginTop: 16, marginBottom: 8, fontSize: 13, textTransform: "uppercase" }}>Lecture stratégique WallSwiss</div>
-              {["Exposition domestique CHF", "Qualité suisse défensive", "ESG intégré", "Complément idéal d'une allocation internationale USD"].map((t,i) => (
-                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 4 }}><span style={{ color: C.primary, fontWeight: 800 }}>✓</span><span style={{ color: C.darkGray }}>{t}</span></div>
+              <div style={{ fontWeight: 700, color: C.gold, marginTop: 16, marginBottom: 8, fontSize: 15, borderBottom: `1px solid ${C.lightGray}`, paddingBottom: 4 }}>Lecture stratégique WallSwiss</div>
+              {["Exposition domestique CHF", "Qualité suisse défensive", "ESG intégré", "Complément idéal d'une allocation"].map((t,i) => (
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}><span style={{ color: C.primary, fontWeight: 700 }}>&#10003;</span><span>{t}</span></div>
               ))}
             </div>
           </div>
@@ -539,9 +510,8 @@ function SlideProjections({ data }) {
   const montant = Number(data.montantInvestissement || 100000);
   const frais = Number(data.fraisSouscription || 3);
 
-  // SVG Chart variables
-  const svgW = 420; const svgH = 220;
-  const padL = 50; const padR = 15; const padT = 10; const padB = 25;
+  const svgW = 450; const svgH = 260;
+  const padL = 50; const padR = 20; const padT = 15; const padB = 30;
   const w = svgW - padL - padR; const h = svgH - padT - padB;
   const maxVal = rows[rows.length-1].optimiste;
   const gridMax = Math.ceil(maxVal / 20000) * 20000 || 80000;
@@ -557,28 +527,25 @@ function SlideProjections({ data }) {
     <div style={slideBase}>
       {accentBar()}
       {logoCorner()}
-      <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "50px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Vos objectifs sur le" highlight="compte titre" subtitle="SIMULATION FINANCIÈRE" />
-        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 40, alignItems: "center", minHeight: 0 }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", paddingRight: 20 }}>
-            <p style={{ fontSize: 13, lineHeight: 1.6, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }}>
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: 48, alignItems: "center" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+            <p style={{ fontSize: 15, lineHeight: 1.7, color: C.darkGray, margin: "0 0 20px", textAlign: "justify" }}>
               Ici, nous vous conseillons d'optimiser votre trésorerie actuelle avec un compte titre chez <strong>SwissQuote</strong> sur la solution de placement avec un dépôt initial de <strong>CHF {fmt(montant)}.-</strong>
             </p>
-            <p style={{ fontSize: 13, color: C.gray, margin: "0 0 32px", textAlign: "justify" }}>
+            <p style={{ fontSize: 14, color: C.gray, margin: "0 0 36px", textAlign: "justify" }}>
               Nous appliquons des frais de souscription de {frais}% du montant investi soit {fmt(montant * frais / 100)}.-
             </p>
             
-            {/* Legend */}
-            <div style={{ display: "flex", gap: 20, marginBottom: 20, alignSelf: "center", fontSize: 12, fontWeight: 600 }}>
+            <div style={{ display: "flex", gap: 20, marginBottom: 24, alignSelf: "center", fontSize: 12, fontWeight: 700 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: "#9CA3AF" }} /> Pessimiste</div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.gold }} /> Réaliste</div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.primaryDark }} /> Optimiste</div>
             </div>
 
-            {/* Line chart SVG */}
-            <div style={{ width: 420, height: 220, alignSelf: "center" }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width={420} height={220} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
-                {/* Y Axis Grid */}
+            <div style={{ width: 450, height: 260 }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width={450} height={260} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
                 {[0, 0.25, 0.5, 0.75, 1].map(pct => {
                   const y = padT + h - (pct * h);
                   const val = gridMax * pct;
@@ -589,15 +556,12 @@ function SlideProjections({ data }) {
                     </g>
                   );
                 })}
-                {/* X Axis Labels */}
                 {rows.map((r, i) => (
-                  <text key={i} x={getX(i)} y={svgH - 2} fontSize="11" fill="#6B7280" textAnchor="middle">N+{r.year}</text>
+                  <text key={i} x={getX(i)} y={svgH - 5} fontSize="11" fill="#6B7280" textAnchor="middle">N+{r.year}</text>
                 ))}
-                {/* Lines */}
                 <path d={dP} fill="none" stroke="#9CA3AF" strokeWidth="3" />
                 <path d={dR} fill="none" stroke={C.gold} strokeWidth="3" />
                 <path d={dO} fill="none" stroke={C.primaryDark} strokeWidth="3" />
-                {/* Points */}
                 {rows.map((r, i) => (
                   <g key={i}>
                     <circle cx={getX(i)} cy={getY(r.pessimiste)} r="4.5" fill="#9CA3AF" />
@@ -610,28 +574,28 @@ function SlideProjections({ data }) {
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
             <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16, textAlign: "center" }}>PROJECTIONS FINANCIÈRES*</div>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, textAlign: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, textAlign: "center" }}>
               <thead>
                 <tr style={{ background: C.primary, color: C.white }}>
-                  <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 600 }}>Années</th>
-                  <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 600 }}>Pessimiste<br/>({data.tauxPessimiste || 3}%)</th>
-                  <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 600 }}>Réaliste<br/>({data.tauxRealiste || 6}%)</th>
-                  <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 600 }}>Optimiste<br/>({data.tauxOptimiste || 9}%)</th>
+                  <th style={{ padding: "14px 18px", textAlign: "center", fontWeight: 700 }}>Années</th>
+                  <th style={{ padding: "14px 18px", textAlign: "center", fontWeight: 700 }}>{data.tauxPessimiste || 3}%</th>
+                  <th style={{ padding: "14px 18px", textAlign: "center", fontWeight: 700 }}>{data.tauxRealiste || 6}%</th>
+                  <th style={{ padding: "14px 18px", textAlign: "center", fontWeight: 700 }}>{data.tauxOptimiste || 9}%</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r, i) => (
                   <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white }}>
-                    <td style={{ padding: "12px 16px", fontWeight: 700, color: C.primary, textAlign: "center", borderBottom: "1px solid #E5E3DE" }}>N+{r.year}</td>
-                    <td style={{ padding: "12px 16px", textAlign: "center", borderBottom: "1px solid #E5E3DE" }}>{fmt(r.pessimiste)}</td>
-                    <td style={{ padding: "12px 16px", textAlign: "center", borderBottom: "1px solid #E5E3DE" }}>{fmt(r.realiste)}</td>
-                    <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 700, color: C.primary, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.optimiste)}</td>
+                    <td style={{ padding: "12px 18px", fontWeight: 700, color: C.primary, textAlign: "center" }}>N+{r.year}</td>
+                    <td style={{ padding: "12px 18px", textAlign: "center" }}>{fmt(r.pessimiste)}</td>
+                    <td style={{ padding: "12px 18px", textAlign: "center" }}>{fmt(r.realiste)}</td>
+                    <td style={{ padding: "12px 18px", textAlign: "center", fontWeight: 700, color: C.primary }}>{fmt(r.optimiste)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p style={{ fontSize: 9, color: C.gray, marginTop: 12, lineHeight: 1.5, fontStyle: "italic", textAlign: "center", maxWidth: "90%" }}>
-              *L'illustration présentée ne constitue pas un indicator fiable quant aux performances futures. Elle a seulement pour but d'illustrer les mécanismes de votre investissement.
+            <p style={{ fontSize: 9, color: C.gray, marginTop: 12, lineHeight: 1.5, fontStyle: "italic", textAlign: "center" }}>
+              *L'illustration présentée ne constitue pas un indicateur fiable quant aux performances futures. Elle a seulement pour but d'illustrer les mécanismes de votre investissement.
             </p>
           </div>
         </div>
@@ -647,30 +611,28 @@ function SlideTarifs({ data }) {
   return (
     <div style={slideBase}>
       {logoCorner()}
-      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "60px 80px", height: "100%", boxSizing: "border-box" }}>
         <ReportTitle title="Avantages tarifaires WallSwiss —" highlight="WS Premium" subtitle="TARIFICATION" />
-        <div style={{ fontSize: 14, color: C.gray, marginBottom: 40 }}>Conditions préférentielles "WS Premium" — présentation synthétique</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 800 }}>
+        <div style={{ fontSize: 14, color: C.gray, marginBottom: 36 }}>Conditions préférentielles "WS Premium" — présentation synthétique</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 750 }}>
           {[
             { label: "Droits de garde", value: "0,10% de 0 à 1 M CHF", badge: "max 200 CHF", sub: "Puis 0,03% au-delà de 1 M (pricing sur-mesure possible > 1 M)." },
             { label: "Frais d'achat AMC", value: "0,25%", badge: "min 50 CHF / transaction", sub: "" },
             { label: "Taux de change", value: "0,40% jusqu'à 100 000 CHF", badge: "0,20% au-delà", sub: "" },
           ].map((item, i) => (
-            <div key={i} style={{ display: "grid", gridTemplateColumns: "200px 1fr", border: `1px solid ${C.mediumGray}`, overflow: "hidden", borderRadius: "0px", boxShadow: "0 2px 10px rgba(0,0,0,0.03)" }}>
+            <div key={i} style={{ display: "grid", gridTemplateColumns: "180px 1fr", border: `1px solid ${C.mediumGray}`, overflow: "hidden" }}>
               <div style={{ background: C.lightGray, padding: "20px 24px", display: "flex", alignItems: "center" }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: C.darkGray }}>{item.label}</span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: C.darkGray }}>{item.label}</span>
               </div>
-              <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                <div>
-                  <span style={{ fontSize: 18, fontWeight: 800, color: C.primary }}>{item.value}</span>
-                  {item.badge && <span style={{ marginLeft: 16, fontSize: 11, fontWeight: 700, color: C.primary, border: `1px solid ${C.primary}`, padding: "3px 10px", textTransform: "uppercase", borderRadius: "0px" }}>{item.badge}</span>}
-                </div>
-                {item.sub && <div style={{ fontSize: 11, color: C.gray, marginTop: 6 }}>{item.sub}</div>}
+              <div style={{ padding: "20px 24px" }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: C.primary }}>{item.value}</span>
+                {item.badge && <span style={{ marginLeft: 16, fontSize: 11, fontWeight: 700, color: C.primary, border: `1px solid ${C.primary}`, padding: "3px 10px", textTransform: "uppercase" }}>{item.badge}</span>}
+                {item.sub && <div style={{ fontSize: 12, color: C.gray, marginTop: 6 }}>{item.sub}</div>}
               </div>
             </div>
           ))}
         </div>
-        <div style={{ fontSize: 10, color: C.gray, marginTop: 24, fontStyle: "italic" }}>Tarification indicative à valider selon profil client, volume et configuration de portefeuille.</div>
+        <div style={{ fontSize: 10, color: C.gray, marginTop: 20, fontStyle: "italic" }}>Tarification indicative à valider selon profil client, volume et configuration de portefeuille.</div>
       </div>
       {footer(fullName)}
     </div>
@@ -683,17 +645,17 @@ function SlideComparatif({ data }) {
   return (
     <div style={slideBase}>
       {logoCorner()}
-      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "60px 80px", height: "100%", boxSizing: "border-box" }}>
         <ReportTitle title="Profil 2 —" highlight="Patrimoine en croissance" subtitle="COMPARATIF BANCAIRE" />
         <div style={{ fontSize: 14, color: C.gray, marginBottom: 32 }}>Portefeuille 300 kCHF ; change annuel 60 kCHF ; achats d'AMC 20 kCHF/an.</div>
-        <table style={{ width: "100%", maxWidth: 800, borderCollapse: "collapse", fontSize: 13, boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
+        <table style={{ width: "100%", maxWidth: 800, borderCollapse: "collapse", fontSize: 15 }}>
           <thead>
             <tr>
-              <th style={{ padding: "16px 20px", textAlign: "left", color: C.primary, fontWeight: 700, borderBottom: `2px solid ${C.primary}`, background: C.white }}>Banque</th>
-              <th style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 700, borderBottom: `2px solid ${C.primary}`, background: C.white }}>Garde (an)</th>
-              <th style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 700, borderBottom: `2px solid ${C.primary}`, background: C.white }}>Change (an)</th>
-              <th style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 700, borderBottom: `2px solid ${C.primary}`, background: C.white }}>AMC (an)</th>
-              <th style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 700, borderBottom: `2px solid ${C.primary}`, background: C.white }}>Total (an)</th>
+              <th style={{ padding: "16px 20px", textAlign: "left", color: C.primary, fontWeight: 700, borderBottom: `3px solid ${C.primary}` }}>Banque</th>
+              <th style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 700, borderBottom: `3px solid ${C.primary}` }}>Garde (an)</th>
+              <th style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 700, borderBottom: `3px solid ${C.primary}` }}>Change (an)</th>
+              <th style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 700, borderBottom: `3px solid ${C.primary}` }}>AMC (an)</th>
+              <th style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 700, borderBottom: `3px solid ${C.primary}` }}>Total (an)</th>
             </tr>
           </thead>
           <tbody>
@@ -702,7 +664,7 @@ function SlideComparatif({ data }) {
               { bank: "Raiffeisen", garde: 750, change: 750, amc: 180, total: 1680 },
               { bank: "UBS", garde: 1050, change: 1020, amc: 200, total: 2270 },
             ].map((r, i) => (
-              <tr key={i} style={{ background: i === 0 ? "rgba(105,33,2,0.05)" : C.white }}>
+              <tr key={i} style={{ background: i === 0 ? "rgba(105,33,2,0.04)" : "transparent" }}>
                 <td style={{ padding: "16px 20px", fontWeight: i === 0 ? 700 : 500, color: i === 0 ? C.primary : C.black, borderBottom: `1px solid ${C.lightGray}` }}>{r.bank}</td>
                 <td style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 600, borderBottom: `1px solid ${C.lightGray}` }}>{r.garde}</td>
                 <td style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 600, borderBottom: `1px solid ${C.lightGray}` }}>{r.change}</td>
@@ -726,19 +688,19 @@ function SlideApp({ data }) {
     <div style={slideBase}>
       {accentBar()}
       {logoCorner()}
-      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
+      <div style={{ padding: "60px 80px", height: "100%", boxSizing: "border-box", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
         <div>
           <ReportTitle title="Votre application de suivi" highlight="SwissQuote" subtitle="CENTRALISEZ L'ENSEMBLE DE VOS FINANCES EN UN SEUL ENDROIT" />
-          <p style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 20px", textAlign: "justify" }}>
+          <p style={{ fontSize: 15, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }}>
             Effectuez des opérations de trading, d'investissement et bancaires en <strong>toute sécurité</strong> et à des <strong>tarifs avantageux</strong>, grâce au principal acteur suisse de la banque en ligne.
           </p>
-          <p style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: 0, textAlign: "justify" }}>
+          <p style={{ fontSize: 15, lineHeight: 1.8, color: C.darkGray, margin: 0, textAlign: "justify" }}>
             Nos plateformes intuitives vous invitent à explorer un monde riche en opportunités. Et accédez à une <strong>vaste gamme</strong> d'informations et de programmes de formation.
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative", height: "100%" }}>
-          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_10_width_799.webp" alt="Swissquote App Desktop" className="pdf-image" style={{ width: "85%", objectFit: "contain", borderRadius: "0px", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", zIndex: 1 }} crossOrigin="anonymous" />
-          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_9_width_400.webp" alt="Swissquote App Mobile" className="pdf-image" style={{ width: "35%", objectFit: "contain", position: "absolute", bottom: "8%", right: "2%", borderRadius: "0px", boxShadow: "0 15px 40px rgba(0,0,0,0.3)", zIndex: 2 }} crossOrigin="anonymous" />
+          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_10_width_799.webp" alt="Swissquote App Desktop" style={{ width: "90%", objectFit: "contain", borderRadius: "6px", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", zIndex: 1 }} crossOrigin="anonymous" />
+          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_9_width_400.webp" alt="Swissquote App Mobile" style={{ width: "35%", objectFit: "contain", position: "absolute", bottom: "10%", right: "0%", borderRadius: "10px", boxShadow: "0 15px 40px rgba(0,0,0,0.3)", zIndex: 2 }} crossOrigin="anonymous" />
         </div>
       </div>
       {footer(fullName)}
@@ -751,45 +713,40 @@ function SlideContact({ data, editMode, onTextChange }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   return (
     <div style={{ ...slideBase, background: C.white, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      
-      {/* Décoration filigrane géante centrée */}
       <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", opacity: 0.03, pointerEvents: "none", zIndex: 1 }}>
-         <img src={LOGO_URL} alt="" className="pdf-image" style={{ width: "800px", filter: "invert(1)" }} />
+         <img src={LOGO_URL} alt="" style={{ width: "900px", filter: "invert(1)" }} crossOrigin="anonymous" />
       </div>
 
-      <div style={{ zIndex: 2, display: "flex", width: "100%", padding: "0 80px", gap: "80px", alignItems: "center" }}>
-        
-        {/* Panneau gauche */}
+      <div style={{ zIndex: 2, display: "flex", width: "100%", padding: "0 100px", gap: "100px", alignItems: "center" }}>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 11, color: C.gold, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 16 }}>SYNTHÈSE & CONTACT</div>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 48, fontWeight: 700, color: C.primary, lineHeight: 1.1, marginBottom: 24 }}>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 48, fontWeight: 700, color: C.primary, lineHeight: 1.1, marginBottom: 32 }}>
             Prêt à concrétiser<br/><em style={{ color: C.gold }}>vos projets ?</em>
           </div>
-          <div style={{ width: 48, height: 4, background: C.gold, marginBottom: 32 }} />
-          <EditableText editMode={editMode} value={data.texts?.contactDesc} onChange={v => onTextChange("contactDesc", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, margin: 0, maxWidth: 480 }} />
+          <div style={{ width: 60, height: 4, background: C.gold, marginBottom: 32 }} />
+          <EditableText editMode={editMode} value={data.texts?.contactDesc} onChange={v => onTextChange("contactDesc", v)} style={{ fontSize: 16, lineHeight: 1.8, color: C.darkGray, margin: 0, maxWidth: 500 }} />
         </div>
 
-        {/* Panneau droit - Contact card */}
-        <div style={{ width: 420, border: `1px solid ${C.mediumGray}`, padding: "56px 48px", position: "relative", background: C.white, boxShadow: "0 10px 40px rgba(0,0,0,0.05)", borderRadius: "0px" }}>
-          <div style={{ position: "absolute", top: -12, left: 40, background: C.white, padding: "0 16px", color: C.gold, fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>
+        <div style={{ width: 450, border: `1px solid ${C.mediumGray}`, padding: "60px", position: "relative", background: C.white, boxShadow: "0 10px 40px rgba(0,0,0,0.05)" }}>
+          <div style={{ position: "absolute", top: -12, left: 40, background: C.white, padding: "0 20px", color: C.gold, fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>
             VOTRE INTERLOCUTEUR DÉDIÉ
           </div>
           
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 6 }}>{data.conseiller || "Louis Borne"}</div>
-          <div style={{ color: C.gray, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 40 }}>{data.titreConseiller || "Conseillère en Gestion de Patrimoine"}</div>
+          <div style={{ color: C.gray, fontSize: 13, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 40 }}>{data.titreConseiller || "Conseillère en Gestion de Patrimoine"}</div>
           
           <div style={{ display: "grid", gap: 24 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-              <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>T</div>
-              <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>{data.telephone || "+41.76.231.92.75"}</span>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>T</div>
+              <span style={{ fontSize: 16, color: C.darkGray, fontWeight: 600 }}>{data.telephone || "+41.76.231.92.75"}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-              <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>E</div>
-              <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>{data.email || "l.borne@wallswiss.ch"}</span>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>E</div>
+              <span style={{ fontSize: 16, color: C.darkGray, fontWeight: 600 }}>{data.email || "l.borne@wallswiss.ch"}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-              <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>A</div>
-              <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>Rue Kleberg 14, 1201 Genève</span>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>A</div>
+              <span style={{ fontSize: 16, color: C.darkGray, fontWeight: 600 }}>Rue Kleberg 14, 1201 Genève</span>
             </div>
           </div>
         </div>
@@ -826,26 +783,30 @@ function ReportPreview({ data, onClose, onUpdateData }) {
   const handleDownloadPDF = async () => {
     setIsPdfLoading(true);
 
-    const element = document.getElementById('report-printable');
-    if (!element) {
+    setTimeout(async () => {
+      const element = document.getElementById('report-printable');
+      if (!element) {
         setIsPdfLoading(false);
         return;
-    }
+      }
 
-    // Nous convertissons les images en Base64 AVANT la capture pour s'assurer
-    // que le navigateur les injecte correctement dans le PDF sans blocage CORS.
-    const images = element.querySelectorAll('img.pdf-image');
-    const imagePromises = Array.from(images).map(async (img) => {
-        if (img.src && !img.src.startsWith('data:')) {
-            const base64 = await getBase64Image(img.src);
-            img.src = base64;
-        }
-    });
+      const textareas = element.querySelectorAll('textarea');
+      const replacements = [];
+      textareas.forEach((textarea) => {
+        const div = document.createElement('div');
+        div.style.cssText = window.getComputedStyle(textarea).cssText;
+        div.style.height = 'auto';
+        div.style.whiteSpace = 'pre-wrap';
+        div.style.border = 'none';
+        div.style.background = 'transparent';
+        div.style.resize = 'none';
+        div.style.textAlign = 'justify'; 
+        div.innerText = textarea.value;
+        textarea.parentNode.insertBefore(div, textarea);
+        textarea.style.display = 'none';
+        replacements.push({ textarea, div });
+      });
 
-    // On attend que TOUTES les images soient converties
-    await Promise.all(imagePromises);
-
-    setTimeout(async () => {
       try {
         const html2pdf = await requireHtml2Pdf();
         await html2pdf()
@@ -853,24 +814,25 @@ function ReportPreview({ data, onClose, onUpdateData }) {
             margin: 0,
             filename: `Rapport_${data.nom || 'Client'}.pdf`,
             image: { type: 'jpeg', quality: 1 },
-            // On empêche les coupures au milieu des slides, et on retire le "always" problématique
-            pagebreak: { mode: 'css', avoid: '.pdf-slide' },
+            pagebreak: { mode: ['css', 'legacy'] },
             html2canvas: {
               scale: 2,
               useCORS: true,
               scrollY: 0,
               scrollX: 0,
-              windowWidth: 1280,
-              letterRendering: true
+              windowWidth: 1280
             },
-            // Ajout du hotfix px_scaling pour un respect strict des 1280x720 sans décalage
-            jsPDF: { unit: 'px', format: [1280, 720], orientation: 'landscape', hotfixes: ["px_scaling"] }
+            jsPDF: { unit: 'px', format: [1280, 720], orientation: 'landscape' }
           })
           .from(element)
           .save();
       } catch(e) {
         console.error("Erreur PDF:", e);
       } finally {
+        replacements.forEach(({ textarea, div }) => {
+          textarea.style.display = '';
+          div.remove();
+        });
         setIsPdfLoading(false);
       }
     }, 500); 
@@ -884,7 +846,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
     <SlideSituation data={data} />,
     <SlideSwissquote data={data} editMode={editMode} onTextChange={handleTextChange} />,
     <SlideAdvantages data={data} />,
-    <SlideDivider data={data} number={8} title="Compte Titre" />,
+    <SlideDivider data={data} title="Compte Titre" />,
     <SlideCompteTitre data={data} editMode={editMode} onTextChange={handleTextChange} />,
     <SlideFund data={data} />,
     <SlideProjections data={data} />,
@@ -894,85 +856,57 @@ function ReportPreview({ data, onClose, onUpdateData }) {
     <SlideContact data={data} editMode={editMode} onTextChange={handleTextChange} />,
   ];
 
-  // Variante des slides FORCÉE sans mode édition pour un rendu impression parfait
-  const printSlides = [
-    <SlideCover data={data} />,
-    <SlideTOC data={data} />,
-    <SlidePhilosophy data={data} editMode={false} />,
-    <SlideAbout data={data} editMode={false} />,
-    <SlideSituation data={data} />,
-    <SlideSwissquote data={data} editMode={false} />,
-    <SlideAdvantages data={data} />,
-    <SlideDivider data={data} number={8} title="Compte Titre" />,
-    <SlideCompteTitre data={data} editMode={false} />,
-    <SlideFund data={data} />,
-    <SlideProjections data={data} />,
-    <SlideTarifs data={data} />,
-    <SlideComparatif data={data} />,
-    <SlideApp data={data} />,
-    <SlideContact data={data} editMode={false} />,
-  ];
-
   return (
     <div className="preview-modal-container" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 200, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-      {/* Top bar */}
-      <div className="no-print" style={{ background: C.black, padding: "10px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-        <span style={{ color: C.white, fontSize: 12, fontWeight: 600, letterSpacing: "0.06em" }}>APERCU — {data.prenom} {(data.nom||"").toUpperCase()}</span>
+      <div className="no-print" style={{ background: C.black, padding: "12px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <span style={{ color: C.white, fontSize: 13, fontWeight: 600, letterSpacing: "0.06em" }}>APERCU — {data.prenom} {(data.nom||"").toUpperCase()}</span>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <button onClick={handleDownloadPDF} disabled={isPdfLoading} style={{ background: C.white, color: C.black, border: "none", padding: "6px 12px", cursor: isPdfLoading ? "wait" : "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", opacity: isPdfLoading ? 0.7 : 1, transition: "0.2s" }}>
-            {isPdfLoading ? "⏳ GÉNÉRATION EN COURS..." : "📥 TÉLÉCHARGER PDF"}
+          <button onClick={handleDownloadPDF} disabled={isPdfLoading} style={{ background: C.white, color: C.black, border: "none", padding: "8px 16px", cursor: isPdfLoading ? "wait" : "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 11, fontWeight: 700, borderRadius: "2px", opacity: isPdfLoading ? 0.7 : 1, transition: "0.2s" }}>
+            {isPdfLoading ? "⏳ GÉNÉRATION..." : "📥 TÉLÉCHARGER PDF"}
           </button>
-          <button onClick={() => setEditMode(!editMode)} style={{ background: editMode ? C.gold : "transparent", border: `1px solid ${C.gold}`, color: editMode ? C.white : C.gold, padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", transition: "0.2s" }}>
-            {editMode ? "✓ TERMINER L'ÉDITION" : "✎ ÉDITER LES TEXTES"}
+          <button onClick={() => setEditMode(!editMode)} style={{ background: editMode ? C.gold : "transparent", border: `1px solid ${C.gold}`, color: editMode ? C.white : C.gold, padding: "8px 16px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 11, fontWeight: 700, borderRadius: "2px", transition: "0.2s" }}>
+            {editMode ? "✓ TERMINER" : "✎ ÉDITER"}
           </button>
-          <span style={{ color: C.gold, fontSize: 11, marginLeft: 8 }}>{currentSlide + 1} / {slides.length}</span>
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.1)", color: C.white, border: "none", padding: "6px 16px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 11, fontWeight: 600 }}>FERMER</button>
+          <span style={{ color: C.gold, fontSize: 12, marginLeft: 8 }}>{currentSlide + 1} / {slides.length}</span>
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.1)", color: C.white, border: "none", padding: "8px 20px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: 600 }}>FERMER</button>
         </div>
       </div>
-      {/* Slide area */}
-      <div className="no-print" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 60px", position: "relative", minHeight: 0 }}>
-        <button onClick={() => setCurrentSlide(s => Math.max(0, s - 1))} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: currentSlide === 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", color: currentSlide === 0 ? "rgba(255,255,255,0.2)" : C.white, border: "none", width: 40, height: 40, cursor: currentSlide === 0 ? "default" : "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>&#8249;</button>
-        <div style={{ width: "100%", maxWidth: 960, boxShadow: "0 8px 40px rgba(0,0,0,0.5)", position: "relative" }}>
+      <div className="no-print" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 60px", position: "relative", minHeight: 0 }}>
+        <button onClick={() => setCurrentSlide(s => Math.max(0, s - 1))} style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", background: currentSlide === 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", color: currentSlide === 0 ? "rgba(255,255,255,0.2)" : C.white, border: "none", width: 50, height: 50, cursor: currentSlide === 0 ? "default" : "pointer", fontSize: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>&#8249;</button>
+        <div style={{ width: "100%", maxWidth: 1000, boxShadow: "0 8px 40px rgba(0,0,0,0.5)", position: "relative" }}>
           {slides[currentSlide]}
-          <div style={{ position: "absolute", bottom: 0, right: 40, height: 40, display: "flex", alignItems: "center", zIndex: 10 }}>
-            <span style={{ color: C.white, fontSize: 11, fontWeight: 700 }}>{currentSlide + 1}</span>
+          <div style={{ position: "absolute", bottom: 0, right: 32, height: 42, display: "flex", alignItems: "center", zIndex: 10 }}>
+            <span style={{ color: C.white, fontSize: 12, fontWeight: 700 }}>{currentSlide + 1}</span>
           </div>
         </div>
-        <button onClick={() => setCurrentSlide(s => Math.min(slides.length - 1, s + 1))} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: currentSlide === slides.length - 1 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", color: currentSlide === slides.length - 1 ? "rgba(255,255,255,0.2)" : C.white, border: "none", width: 40, height: 40, cursor: currentSlide === slides.length - 1 ? "default" : "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>&#8250;</button>
+        <button onClick={() => setCurrentSlide(s => Math.min(slides.length - 1, s + 1))} style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", background: currentSlide === slides.length - 1 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", color: currentSlide === slides.length - 1 ? "rgba(255,255,255,0.2)" : C.white, border: "none", width: 50, height: 50, cursor: currentSlide === slides.length - 1 ? "default" : "pointer", fontSize: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>&#8250;</button>
       </div>
-      {/* Thumbnails */}
-      <div className="no-print" style={{ background: C.black, padding: "8px 24px", display: "flex", gap: 4, overflowX: "auto", flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+      <div className="no-print" style={{ background: C.black, padding: "10px 24px", display: "flex", gap: 6, overflowX: "auto", flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
         {slides.map((_, i) => (
-          <div key={i} onClick={() => setCurrentSlide(i)} style={{ width: 48, height: 28, background: i === currentSlide ? C.primary : "rgba(255,255,255,0.06)", border: i === currentSlide ? `1px solid ${C.gold}` : "1px solid rgba(255,255,255,0.04)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: i === currentSlide ? C.white : "rgba(255,255,255,0.35)", fontWeight: 600, flexShrink: 0 }}>
+          <div key={i} onClick={() => setCurrentSlide(i)} style={{ width: 54, height: 32, background: i === currentSlide ? C.primary : "rgba(255,255,255,0.06)", border: i === currentSlide ? `1px solid ${C.gold}` : "1px solid rgba(255,255,255,0.04)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: i === currentSlide ? C.white : "rgba(255,255,255,0.35)", fontWeight: 600, flexShrink: 0 }}>
             {i + 1}
           </div>
         ))}
       </div>
 
-      {/* CONTENEUR D'IMPRESSION (Invisible mais monté) */}
-      <div style={{ position: "fixed", top: 0, left: 0, width: "1280px", opacity: 0.001, zIndex: -1000, pointerEvents: "none" }}>
-        {/* Ajout d'un flex column pour tuer les marges et espaces fantômes entre les divs */}
-        <div id="report-printable" style={{ width: "1280px", background: C.white, margin: 0, padding: 0, display: "flex", flexDirection: "column" }}>
-          {printSlides.map((SlideComponent, index) => (
-            // Remplacement de pageBreakAfter par pageBreakInside: "avoid" pour supprimer la page blanche
-            <div key={index} className="pdf-slide" style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF", margin: 0, padding: 0, boxSizing: "border-box", pageBreakInside: "avoid" }}>
-              {SlideComponent}
-              <div style={{ position: "absolute", bottom: 0, right: 40, height: 40, display: "flex", alignItems: "center", zIndex: 10 }}>
-                <span style={{ color: C.white, fontSize: 11, fontWeight: 700 }}>{index + 1}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* OVERLAY DE CHARGEMENT VISUEL */}
       {isPdfLoading && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(255,255,255,0.95)", zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 16 }}>
-            Génération du rapport en cours...
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999 }}>
+          <div style={{ position: "absolute", top: 0, left: 0, zIndex: 1 }}>
+            <div id="report-printable" style={{ width: "1280px", background: "#FFFFFF" }}>
+              {slides.map((SlideComponent, index) => (
+                <div key={index} style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF" }}>
+                  {SlideComponent}
+                </div>
+              ))}
+            </div>
           </div>
-          <div style={{ fontSize: 13, color: C.gray, fontWeight: 500, fontFamily: "'Montserrat', sans-serif" }}>
-            Veuillez patienter pendant la capture haute définition...
+          <div style={{ position: "absolute", inset: 0, background: C.white, zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 36, fontWeight: 700, color: C.primary, marginBottom: 20 }}>
+              Génération du rapport en cours...
+            </div>
+            <div style={{ fontSize: 15, color: C.gray, fontWeight: 500, fontFamily: "'Montserrat', sans-serif" }}>
+              Optimisation de la mise en page et capture des éléments visuels.
+            </div>
           </div>
         </div>
       )}
@@ -983,15 +917,15 @@ function ReportPreview({ data, onClose, onUpdateData }) {
 // ────────────────────── FORM / MAIN APP ──────────────────────
 
 const S = {
-  label: { display: "block", fontSize: 11, fontWeight: 600, color: C.gray, marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase" },
-  input: { width: "100%", padding: "10px 12px", border: `1.5px solid ${C.mediumGray}`, fontSize: 13, fontFamily: "'Montserrat', sans-serif", color: C.black, background: C.white, outline: "none", boxSizing: "border-box", borderRadius: "0px" },
-  select: { width: "100%", padding: "10px 12px", border: `1.5px solid ${C.mediumGray}`, fontSize: 13, fontFamily: "'Montserrat', sans-serif", color: C.black, background: C.white, outline: "none", cursor: "pointer", boxSizing: "border-box", borderRadius: "0px" },
-  fg: { marginBottom: 16 },
-  card: { background: C.white, padding: 24, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", border: `1px solid ${C.mediumGray}`, borderRadius: "0px" },
-  cardTitle: { fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: C.primary, marginBottom: 18, display: "flex", alignItems: "center", gap: 10 },
-  dot: { width: 8, height: 2, background: C.gold, flexShrink: 0 },
-  btnP: { background: C.primary, color: C.white, border: "none", padding: "12px 28px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.04em", borderRadius: "0px" },
-  btnS: { background: C.white, color: C.primary, border: `2px solid ${C.primary}`, padding: "10px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600, borderRadius: "0px" },
+  label: { display: "block", fontSize: 12, fontWeight: 600, color: C.gray, marginBottom: 6, letterSpacing: "0.06em", textTransform: "uppercase" },
+  input: { width: "100%", padding: "12px 14px", border: `1.5px solid ${C.mediumGray}`, fontSize: 14, fontFamily: "'Montserrat', sans-serif", color: C.black, background: C.white, outline: "none", boxSizing: "border-box" },
+  select: { width: "100%", padding: "12px 14px", border: `1.5px solid ${C.mediumGray}`, fontSize: 14, fontFamily: "'Montserrat', sans-serif", color: C.black, background: C.white, outline: "none", cursor: "pointer", boxSizing: "border-box" },
+  fg: { marginBottom: 20 },
+  card: { background: C.white, padding: 32, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", border: `1px solid ${C.mediumGray}` },
+  cardTitle: { fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: C.primary, marginBottom: 24, display: "flex", alignItems: "center", gap: 12 },
+  dot: { width: 10, height: 2, background: C.gold, flexShrink: 0 },
+  btnP: { background: C.primary, color: C.white, border: "none", padding: "14px 32px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 14, fontWeight: 600, letterSpacing: "0.04em" },
+  btnS: { background: C.white, color: C.primary, border: `2px solid ${C.primary}`, padding: "12px 28px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 14, fontWeight: 600 },
 };
 
 export default function WallSwissApp() {
@@ -1063,33 +997,33 @@ export default function WallSwissApp() {
       case 0: return (
         <div>
           <div style={S.cardTitle}><div style={S.dot} /> Choix du modèle de présentation</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
             {[
               { id: "swissquote", title: "Compte Titre SwissQuote", desc: "Stratégie d'investissement flexible et performante en Suisse.", active: true },
               { id: "assurance", title: "Assurance Vie", desc: "Protection et transmission de patrimoine (Bientôt disponible).", active: false },
               { id: "prevoyance", title: "Prévoyance (3A/3B)", desc: "Optimisation fiscale et retraite (Bientôt disponible).", active: false },
               { id: "immobilier", title: "Immobilier", desc: "Investissements et rendements immobiliers (Bientôt disponible).", active: false },
             ].map(tpl => (
-              <div key={tpl.id} onClick={() => tpl.active && u("templateId", tpl.id)} style={{ border: `2px solid ${form.templateId === tpl.id ? C.primary : C.mediumGray}`, padding: 20, cursor: tpl.active ? "pointer" : "not-allowed", opacity: tpl.active ? 1 : 0.5, background: form.templateId === tpl.id ? "rgba(105,33,2,0.04)" : C.white, display: "flex", flexDirection: "column", gap: 8, borderRadius: "0px" }}>
+              <div key={tpl.id} onClick={() => tpl.active && u("templateId", tpl.id)} style={{ border: `2px solid ${form.templateId === tpl.id ? C.primary : C.mediumGray}`, padding: 24, cursor: tpl.active ? "pointer" : "not-allowed", opacity: tpl.active ? 1 : 0.5, background: form.templateId === tpl.id ? "rgba(105,33,2,0.04)" : C.white, display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontWeight: 700, color: C.primary }}>{tpl.title}</span>
-                  {form.templateId === tpl.id && <span style={{ color: C.gold, fontSize: 16 }}>&#10003;</span>}
+                  <span style={{ fontWeight: 700, color: C.primary, fontSize: 16 }}>{tpl.title}</span>
+                  {form.templateId === tpl.id && <span style={{ color: C.gold, fontSize: 18 }}>&#10003;</span>}
                 </div>
-                <span style={{ fontSize: 12, color: C.gray, lineHeight: 1.5 }}>{tpl.desc}</span>
+                <span style={{ fontSize: 13, color: C.gray, lineHeight: 1.5 }}>{tpl.desc}</span>
               </div>
             ))}
           </div>
         </div>
       );
       case 1: return (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Identité</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div style={S.fg}><label style={S.label}>Prénom</label><input style={S.input} value={form.prenom} onChange={e=>u("prenom",e.target.value)} placeholder="Philippe"/></div>
               <div style={S.fg}><label style={S.label}>Nom</label><input style={S.input} value={form.nom} onChange={e=>u("nom",e.target.value)} placeholder="EVEQUE"/></div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div style={S.fg}><label style={S.label}>Date du rapport</label><input style={S.input} type="date" value={form.dateRapport || ""} onChange={e=>u("dateRapport",e.target.value)}/></div>
               <div style={S.fg}><label style={S.label}>Âge</label><input style={S.input} type="number" value={form.age} onChange={e=>u("age",e.target.value)} placeholder="58"/></div>
             </div>
@@ -1097,12 +1031,12 @@ export default function WallSwissApp() {
           </div>
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Situation Financière</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div style={S.fg}><label style={S.label}>Profession</label><input style={S.input} value={form.profession} onChange={e=>u("profession",e.target.value)} placeholder="Caméraman"/></div>
               <div style={S.fg}><label style={S.label}>Statut</label><select style={S.select} value={form.statut} onChange={e=>u("statut",e.target.value)}>{["Célibataire","Marié(e)","Divorcé(e)","Veuf/Veuve","Pacsé(e)","Union libre"].map(s=><option key={s}>{s}</option>)}</select></div>
             </div>
             <div style={S.fg}><label style={S.label}>Revenus annuels bruts (CHF)</label><input style={S.input} type="number" value={form.revenus} onChange={e=>u("revenus",e.target.value)} placeholder="120000"/></div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div style={S.fg}><label style={S.label}>Épargne mensuelle</label><input style={S.input} type="number" value={form.capaciteEpargne} onChange={e=>u("capaciteEpargne",e.target.value)} placeholder="1500"/></div>
               <div style={S.fg}><label style={S.label}>Fortune globale</label><input style={S.input} type="number" value={form.fortuneGlobale} onChange={e=>u("fortuneGlobale",e.target.value)} placeholder="450000"/></div>
             </div>
@@ -1112,44 +1046,35 @@ export default function WallSwissApp() {
       case 2: return (
         <div style={S.card}>
           <div style={S.cardTitle}><div style={S.dot} /> Objectifs du client</div>
-          <p style={{ fontSize: 12, color: C.gray, marginBottom: 16, marginTop: 0 }}>Sélectionnez les objectifs correspondant à la situation de votre client.</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+          <p style={{ fontSize: 13, color: C.gray, marginBottom: 20, marginTop: 0 }}>Sélectionnez les objectifs correspondant à la situation de votre client.</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {defObj.map(obj => {
               const active = form.objectifs.includes(obj);
               return (
-                <div key={obj} onClick={()=>toggleObj(obj)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: `1.5px solid ${active ? C.primary : C.mediumGray}`, background: active ? "rgba(105,33,2,0.04)" : "transparent", cursor: "pointer", fontSize: 12, fontWeight: 500, borderRadius: "0px" }}>
-                  <div style={{ width: 16, height: 16, border: `2px solid ${active ? C.primary : C.mediumGray}`, background: active ? C.primary : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "0px" }}>
-                    {active && <span style={{ color: C.white, fontSize: 10, fontWeight: 700 }}>&#10003;</span>}
+                <div key={obj} onClick={()=>toggleObj(obj)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 18px", border: `1.5px solid ${active ? C.primary : C.mediumGray}`, background: active ? "rgba(105,33,2,0.04)" : "transparent", cursor: "pointer", fontSize: 13, fontWeight: 500 }}>
+                  <div style={{ width: 18, height: 18, border: `2px solid ${active ? C.primary : C.mediumGray}`, background: active ? C.primary : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {active && <span style={{ color: C.white, fontSize: 11, fontWeight: 700 }}>&#10003;</span>}
                   </div>
                   <span style={{ color: active ? C.primary : C.darkGray }}>{obj}</span>
                 </div>
               );
             })}
           </div>
-          <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
-          <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ height: 1, background: C.mediumGray, margin: "24px 0" }} />
+          <div style={{ display: "flex", gap: 12 }}>
             <input style={{ ...S.input, flex: 1 }} value={form.objectifCustom} onChange={e=>u("objectifCustom",e.target.value)} placeholder="Ajouter un objectif personnalisé..." onKeyDown={e=>e.key==="Enter"&&addCustomObj()} />
-            <button style={{ ...S.btnS, padding: "8px 16px", whiteSpace: "nowrap" }} onClick={addCustomObj}>+ Ajouter</button>
+            <button style={{ ...S.btnS, padding: "8px 20px", whiteSpace: "nowrap" }} onClick={addCustomObj}>+ Ajouter</button>
           </div>
-          {form.objectifs.filter(o=>!defObj.includes(o)).length > 0 && (
-            <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {form.objectifs.filter(o=>!defObj.includes(o)).map((o,i) => (
-                <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 10px", background: "rgba(105,33,2,0.06)", color: C.primary, fontSize: 11, fontWeight: 600, borderRadius: "0px" }}>
-                  {o} <span style={{ cursor: "pointer", opacity: 0.5 }} onClick={()=>toggleObj(o)}>x</span>
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       );
       case 3: return (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Paramètres d'investissement</div>
             <div style={S.fg}><label style={S.label}>Montant initial (CHF)</label><input style={S.input} type="number" value={form.montantInvestissement} onChange={e=>u("montantInvestissement",e.target.value)}/></div>
             <div style={S.fg}><label style={S.label}>Frais de souscription (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscription} onChange={e=>u("fraisSouscription",e.target.value)}/></div>
             
-            <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
+            <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
             
             <div style={S.fg}><label style={S.label}>Horizon de placement</label><select style={S.select} value={form.horizonPlacement} onChange={e=>u("horizonPlacement",e.target.value)}>{["Court terme (< 3 ans)", "Moyen terme (3 - 8 ans)", "Long terme (> 8 ans)"].map(s=><option key={s}>{s}</option>)}</select></div>
             <div style={{...S.fg, margin: 0}}><label style={S.label}>Profil de risque</label><select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>{["Prudent", "Équilibré", "Dynamique", "Offensif"].map(s=><option key={s}>{s}</option>)}</select></div>
@@ -1159,31 +1084,27 @@ export default function WallSwissApp() {
             <div style={S.fg}><label style={S.label}>Taux pessimiste (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxPessimiste} onChange={e=>u("tauxPessimiste",e.target.value)}/></div>
             <div style={S.fg}><label style={S.label}>Taux réaliste (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxRealiste} onChange={e=>u("tauxRealiste",e.target.value)}/></div>
             <div style={S.fg}><label style={S.label}>Taux optimiste (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxOptimiste} onChange={e=>u("tauxOptimiste",e.target.value)}/></div>
-            <div style={{ background: C.lightGray, padding: 14, marginTop: 16, borderRadius: "0px" }}>
-              <div style={{ fontSize: 11, color: C.gray, marginBottom: 4 }}>Montant net investi</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: C.primary }}>CHF {fmt((form.montantInvestissement||0)-(form.montantInvestissement||0)*(form.fraisSouscription||0)/100)}.-</div>
-            </div>
           </div>
         </div>
       );
       case 4: return (
-        <div style={{ ...S.card, maxWidth: 560 }}>
+        <div style={{ ...S.card, maxWidth: 600 }}>
           <div style={S.cardTitle}><div style={S.dot} /> Informations du conseiller</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div style={S.fg}><label style={S.label}>Nom complet</label><input style={S.input} value={form.conseiller} onChange={e=>u("conseiller",e.target.value)}/></div>
             <div style={S.fg}><label style={S.label}>Titre</label><input style={S.input} value={form.titreConseiller} onChange={e=>u("titreConseiller",e.target.value)}/></div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div style={S.fg}><label style={S.label}>Téléphone</label><input style={S.input} value={form.telephone} onChange={e=>u("telephone",e.target.value)}/></div>
             <div style={S.fg}><label style={S.label}>Email</label><input style={S.input} value={form.email} onChange={e=>u("email",e.target.value)}/></div>
           </div>
         </div>
       );
       case 5: return (
-        <div style={{ display: "grid", gap: 20 }}>
+        <div style={{ display: "grid", gap: 24 }}>
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Personnalisation des textes</div>
-            <p style={{ fontSize: 12, color: C.gray, marginBottom: 16, marginTop: 0 }}>Modifiez les textes par défaut qui apparaîtront dans les diapositives.</p>
+            <p style={{ fontSize: 13, color: C.gray, marginBottom: 20, marginTop: 0 }}>Modifiez les textes par défaut qui apparaîtront dans les diapositives.</p>
             
             <div style={S.fg}><label style={S.label}>Page "Qui sommes-nous" - Description</label>
             <textarea style={{...S.input, minHeight: 80, resize: "vertical"}} value={form.texts.aboutDesc} onChange={e=>uText("aboutDesc", e.target.value)} /></div>
@@ -1191,8 +1112,8 @@ export default function WallSwissApp() {
             <div style={S.fg}><label style={S.label}>Page "Pourquoi SwissQuote" - Conclusion</label>
             <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.swissquoteIntro} onChange={e=>uText("swissquoteIntro", e.target.value)} /></div>
 
-            <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
-            <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "SOLUTION COMPTE TITRE"</div>
+            <div style={{ height: 1, background: C.mediumGray, margin: "24px 0" }} />
+            <div style={{marginBottom: 16, color: C.primary, fontWeight: 700, fontSize: 14}}>PAGE "SOLUTION COMPTE TITRE"</div>
             <div style={S.fg}><label style={S.label}>Paragraphe 1 (Introduction)</label>
             <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.solution1} onChange={e=>uText("solution1", e.target.value)} /></div>
             <div style={S.fg}><label style={S.label}>Paragraphe 2 (Avantages)</label>
@@ -1200,7 +1121,7 @@ export default function WallSwissApp() {
             <div style={S.fg}><label style={S.label}>Paragraphe 3 (Fiscalité)</label>
             <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.solution3} onChange={e=>uText("solution3", e.target.value)} /></div>
 
-            <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
+            <div style={{ height: 1, background: C.mediumGray, margin: "24px 0" }} />
             <div style={S.fg}><label style={S.label}>Page "Contact" - Mot de la fin</label>
             <textarea style={{...S.input, minHeight: 80, resize: "vertical"}} value={form.texts.contactDesc} onChange={e=>uText("contactDesc", e.target.value)} /></div>
           </div>
@@ -1209,26 +1130,26 @@ export default function WallSwissApp() {
       case 6: return (
         <div style={S.card}>
           <div style={S.cardTitle}><div style={S.dot} /> Résumé avant génération</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-            <div style={{ background: C.lightGray, padding: 18, borderRadius: "0px" }}>
-              <div style={{ fontSize: 10, color: C.gray, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Client</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: C.primary }}>{form.prenom} {form.nom}</div>
-              <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>{form.age} ans — {form.profession}</div>
-              <div style={{ fontSize: 12, color: C.gray }}>{form.statut} — {form.nationalite}</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
+            <div style={{ background: C.lightGray, padding: 24 }}>
+              <div style={{ fontSize: 11, color: C.gray, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>Client</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>{form.prenom} {form.nom}</div>
+              <div style={{ fontSize: 13, color: C.gray, marginTop: 6 }}>{form.age} ans — {form.profession}</div>
+              <div style={{ fontSize: 13, color: C.gray }}>{form.statut} — {form.nationalite}</div>
             </div>
-            <div style={{ background: C.lightGray, padding: 18, borderRadius: "0px" }}>
-              <div style={{ fontSize: 10, color: C.gray, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Investissement</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: C.primary }}>CHF {fmt(form.montantInvestissement)}.-</div>
-              <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>Frais: {form.fraisSouscription}%</div>
-              <div style={{ fontSize: 12, color: C.gray }}>{form.tauxPessimiste}% / {form.tauxRealiste}% / {form.tauxOptimiste}%</div>
+            <div style={{ background: C.lightGray, padding: 24 }}>
+              <div style={{ fontSize: 11, color: C.gray, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>Investissement</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>CHF {fmt(form.montantInvestissement)}.-</div>
+              <div style={{ fontSize: 13, color: C.gray, marginTop: 6 }}>Frais: {form.fraisSouscription}%</div>
+              <div style={{ fontSize: 13, color: C.gray }}>{form.tauxPessimiste}% / {form.tauxRealiste}% / {form.tauxOptimiste}%</div>
             </div>
-            <div style={{ background: C.lightGray, padding: 18, borderRadius: "0px" }}>
-              <div style={{ fontSize: 10, color: C.gray, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Objectifs</div>
-              <div style={{ fontSize: 12, color: C.darkGray }}>{form.objectifs.length} objectif{form.objectifs.length>1?"s":""}</div>
-              <div style={{ fontSize: 11, color: C.gray, marginTop: 4, lineHeight: 1.5 }}>{form.objectifs.slice(0,3).join(" / ")}{form.objectifs.length>3?" ...":""}</div>
+            <div style={{ background: C.lightGray, padding: 24 }}>
+              <div style={{ fontSize: 11, color: C.gray, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>Objectifs</div>
+              <div style={{ fontSize: 14, color: C.darkGray }}>{form.objectifs.length} objectif{form.objectifs.length>1?"s":""}</div>
+              <div style={{ fontSize: 12, color: C.gray, marginTop: 6, lineHeight: 1.5 }}>{form.objectifs.slice(0,3).join(" / ")}{form.objectifs.length>3?" ...":""}</div>
             </div>
           </div>
-          <div style={{ display: "flex", justifyContent: "center", gap: 14, marginTop: 28 }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 40 }}>
             <button style={S.btnS} onClick={()=>setPreview(form)}>Aperçu du rapport</button>
             <button style={S.btnP} onClick={handleSave}>Générer et sauvegarder</button>
           </div>
@@ -1238,39 +1159,28 @@ export default function WallSwissApp() {
   };
 
   return (
-    <div style={{ fontFamily: "'Montserrat', sans-serif", background: C.lightGray, minHeight: "100vh", color: C.black, width: "100vw", maxWidth: "100%", margin: 0, padding: 0, overflowX: "hidden" }}>
+    <div style={{ fontFamily: "'Montserrat', sans-serif", background: C.lightGray, minHeight: "100vh", color: C.black }}>
       <style>{`
-        body { margin: 0; padding: 0; overflow-x: hidden; }
-        input:focus, select:focus { border-color: ${C.primary} !important; }
+        input:focus, select:focus, textarea:focus { border-color: ${C.primary} !important; }
         ::placeholder { color: #B0ADA6; }
         button:hover { opacity: 0.9; }
-        ::-webkit-scrollbar { width: 5px; height: 5px; } ::-webkit-scrollbar-thumb { background: ${C.mediumGray}; }
-        
-        .print-only { display: none; }
-        @media print {
-          body { margin: 0; padding: 0; background: white; }
-          header, main, .no-print { display: none !important; }
-          .print-only { display: block !important; }
-          .preview-modal-container { position: absolute; left: 0; top: 0; background: white !important; width: 100vw; }
-          @page { size: 16in 9in; margin: 0; }
-          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; } ::-webkit-scrollbar-thumb { background: ${C.mediumGray}; border-radius: 3px; }
       `}</style>
 
-      <header style={{ background: C.primary, position: "sticky", top: 0, zIndex: 100, width: "100%" }}>
-        <div style={{ width: "100%", padding: "14px 40px", display: "flex", alignItems: "center", justifyContent: "space-between", boxSizing: "border-box" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ background: C.primaryDark, padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px" }}>
-              <img src={LOGO_URL} alt="WallSwiss" style={{ height: "16px" }} />
+      <header style={{ background: C.primary, position: "sticky", top: 0, zIndex: 100 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 28px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ background: C.primaryDark, padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "2px" }}>
+              <img src={LOGO_URL} alt="WallSwiss" style={{ height: "18px" }} crossOrigin="anonymous" />
             </div>
             <div>
-              <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.white, fontSize: 18, fontWeight: 700, letterSpacing: "0.06em" }}>WALLSWISS</div>
-              <div style={{ color: C.gold, fontSize: 9, fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase" }}>Rapport Generator</div>
+              <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.white, fontSize: 20, fontWeight: 700, letterSpacing: "0.06em" }}>WALLSWISS</div>
+              <div style={{ color: C.gold, fontSize: 10, fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase" }}>Rapport Generator</div>
             </div>
           </div>
-          <nav style={{ display: "flex", gap: 2 }}>
+          <nav style={{ display: "flex", gap: 4 }}>
             {[["dashboard","Tableau de bord"],["create","Créer un rapport"]].map(([p,l]) => (
-              <button key={p} onClick={()=>{setPage(p);if(p==="create")setStep(0);}} style={{ background: page===p ? "rgba(255,255,255,0.14)" : "transparent", color: page===p ? C.white : "rgba(255,255,255,0.55)", border: "none", padding: "8px 18px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: page===p?600:500, letterSpacing: "0.02em", borderRadius: "0px" }}>
+              <button key={p} onClick={()=>{setPage(p);if(p==="create")setStep(0);}} style={{ background: page===p ? "rgba(255,255,255,0.14)" : "transparent", color: page===p ? C.white : "rgba(255,255,255,0.55)", border: "none", padding: "10px 22px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: page===p?600:500, letterSpacing: "0.02em" }}>
                 {l}
               </button>
             ))}
@@ -1278,34 +1188,33 @@ export default function WallSwissApp() {
         </div>
       </header>
 
-      <main style={{ width: "100%", padding: "40px", boxSizing: "border-box" }}>
+      <main style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 28px" }}>
         {page === "dashboard" && (
           reports.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "120px 40px" }}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ marginBottom: 16, opacity: 0.2 }}><rect x="3" y="3" width="18" height="18" stroke={C.primary} strokeWidth="1.5"/><line x1="7" y1="8" x2="17" y2="8" stroke={C.primary} strokeWidth="1"/><line x1="7" y1="12" x2="14" y2="12" stroke={C.primary} strokeWidth="1"/><line x1="7" y1="16" x2="11" y2="16" stroke={C.primary} strokeWidth="1"/></svg>
-              <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.primary, marginBottom: 8 }}>Aucun rapport créé</div>
-              <p style={{ color: C.gray, fontSize: 13, marginBottom: 24, maxWidth: 380, margin: "0 auto 24px" }}>Commencez par créer votre premier rapport financier personnalisé.</p>
+            <div style={{ textAlign: "center", padding: "100px 40px" }}>
+              <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, marginBottom: 12 }}>Aucun rapport créé</div>
+              <p style={{ color: C.gray, fontSize: 14, marginBottom: 32, maxWidth: 400, margin: "0 auto 32px" }}>Commencez par créer votre premier rapport financier personnalisé.</p>
               <button style={S.btnP} onClick={()=>{setPage("create");resetForm();}}>+ Créer un rapport</button>
             </div>
           ) : (
-            <div style={{ width: "100%" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
                 <div>
-                  <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Mes rapports</h2>
-                  <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>{reports.length} rapport{reports.length>1?"s":""}</p>
+                  <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, margin: 0 }}>Mes rapports</h2>
+                  <p style={{ color: C.gray, fontSize: 14, marginTop: 6 }}>{reports.length} rapport{reports.length>1?"s":""}</p>
                 </div>
                 <button style={S.btnP} onClick={()=>{setPage("create");resetForm();}}>+ Nouveau rapport</button>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
                 {reports.map((r,i) => (
                   <div key={i} style={{ ...S.card, cursor: "pointer", position: "relative", overflow: "hidden" }} onClick={()=>setPreview(r)}>
-                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: C.primary }} />
-                    <div style={{ fontSize: 10, color: C.gold, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10, marginTop: 4 }}>Rapport Client</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: C.primary, marginBottom: 4 }}>{r.prenom} {(r.nom||"").toUpperCase()}</div>
-                    <div style={{ fontSize: 12, color: C.gray, marginBottom: 14 }}>{r.profession} — {r.age} ans</div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 12, borderTop: `1px solid ${C.lightGray}` }}>
-                      <span style={{ fontSize: 11, color: C.gray }}>CHF {fmt(r.montantInvestissement||100000)}.-</span>
-                      <span style={{ fontSize: 10, color: C.primary, fontWeight: 600 }}>VOIR &rarr;</span>
+                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: C.primary }} />
+                    <div style={{ fontSize: 11, color: C.gold, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12, marginTop: 6 }}>Rapport Client</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: C.primary, marginBottom: 6 }}>{r.prenom} {(r.nom||"").toUpperCase()}</div>
+                    <div style={{ fontSize: 14, color: C.gray, marginBottom: 20 }}>{r.profession} — {r.age} ans</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 16, borderTop: `1px solid ${C.lightGray}` }}>
+                      <span style={{ fontSize: 13, color: C.gray }}>CHF {fmt(r.montantInvestissement||100000)}.-</span>
+                      <span style={{ fontSize: 12, color: C.primary, fontWeight: 700 }}>VOIR &rarr;</span>
                     </div>
                   </div>
                 ))}
@@ -1315,29 +1224,24 @@ export default function WallSwissApp() {
         )}
 
         {page === "create" && (
-          <div style={{ width: "100%" }}>
-            <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: "0 0 4px" }}>Nouveau rapport</h2>
-            <p style={{ color: C.gray, fontSize: 13, marginBottom: 24 }}>Remplissez les informations pour générer un rapport personnalisé.</p>
-            <div style={{ display: "flex", gap: 0, marginBottom: 28, background: C.white, border: `1px solid ${C.mediumGray}`, padding: 4, borderRadius: "0px" }}>
+          <div>
+            <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, margin: "0 0 6px" }}>Nouveau rapport</h2>
+            <p style={{ color: C.gray, fontSize: 14, marginBottom: 32 }}>Remplissez les informations pour générer un rapport personnalisé.</p>
+            <div style={{ display: "flex", gap: 0, marginBottom: 36, background: C.white, border: `1px solid ${C.mediumGray}`, padding: 4 }}>
               {stepLabels.map((l,i) => (
-                <div key={i} onClick={()=>setStep(i)} style={{ flex: 1, textAlign: "center", padding: "10px 6px", fontSize: 11, fontWeight: step===i?700:500, color: step===i?C.white:step>i?C.primary:C.gray, background: step===i?C.primary:"transparent", cursor: "pointer", letterSpacing: "0.04em", transition: "all 0.2s", borderRadius: "0px" }}>
+                <div key={i} onClick={()=>setStep(i)} style={{ flex: 1, textAlign: "center", padding: "12px 6px", fontSize: 12, fontWeight: step===i?700:500, color: step===i?C.white:step>i?C.primary:C.gray, background: step===i?C.primary:"transparent", cursor: "pointer", letterSpacing: "0.04em", transition: "all 0.2s" }}>
                   {l}
                 </div>
               ))}
             </div>
             {renderStep()}
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 40 }}>
               <button style={{ ...S.btnS, opacity: step===0?0.35:1, pointerEvents: step===0?"none":"auto" }} onClick={()=>setStep(s=>s-1)}>&larr; Précédent</button>
               {step < 6 && <button style={S.btnP} onClick={()=>setStep(s=>s+1)}>Suivant &rarr;</button>}
             </div>
           </div>
         )}
       </main>
-
-      {/* Mention de version en bas de page */}
-      <div style={{ padding: "20px", textAlign: "center", fontSize: "10px", color: C.gray, marginTop: "auto" }}>
-        WallSwiss Rapport Generator - {APP_VERSION}
-      </div>
 
       {preview && <ReportPreview data={preview} onClose={()=>setPreview(null)} onUpdateData={handlePreviewUpdate} />}
     </div>

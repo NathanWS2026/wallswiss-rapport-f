@@ -193,7 +193,7 @@ function SlidePhilosophy({ data, editMode, onTextChange }) {
   return (
     <div style={{ ...slideBase, display: "flex", alignItems: "stretch" }}>
       <div style={{ width: "35%", position: "relative", overflow: "hidden" }}>
-         <img src="https://wallswiss.ch/wp-content/uploads/2026/03/660942a0ceb2ea252752e568_section-bg-scaled.jpg" alt="Fond" className="pdf-image" style={{ width: "100%", height: "100%", objectFit: "cover" }} crossOrigin="anonymous" />
+         <img src="/image page3.jpg" alt="Fond" className="pdf-image" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       </div>
       <div style={{ flex: 1, padding: "56px 80px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         {logoCorner()}
@@ -249,7 +249,7 @@ function SlideAbout({ data, editMode, onTextChange }) {
           </div>
         </div>
         <div style={{ flex: 1, height: "100%", borderRadius: "0px", overflow: "hidden", boxShadow: "0 8px 30px rgba(0,0,0,0.1)" }}>
-          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_15_uri_ifs3A2F2FM2FZZBVIKww_AjRDCaKNkRtfABGR-02n7Jd8caaieOpDwE.jpg" alt="Equipe WallSwiss" className="pdf-image" style={{ width: "100%", height: "100%", objectFit: "cover" }} crossOrigin="anonymous" />
+          <img src="/geneva.jpg" alt="Equipe WallSwiss" className="pdf-image" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </div>
       </div>
       {footer(fullName)}
@@ -737,8 +737,8 @@ function SlideApp({ data }) {
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative", height: "100%" }}>
-          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_10_width_799.webp" alt="Swissquote App Desktop" className="pdf-image" style={{ width: "85%", objectFit: "contain", borderRadius: "0px", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", zIndex: 1 }} crossOrigin="anonymous" />
-          <img src="https://wallswiss.ch/wp-content/uploads/2026/03/imgi_9_width_400.webp" alt="Swissquote App Mobile" className="pdf-image" style={{ width: "35%", objectFit: "contain", position: "absolute", bottom: "8%", right: "2%", borderRadius: "0px", boxShadow: "0 15px 40px rgba(0,0,0,0.3)", zIndex: 2 }} crossOrigin="anonymous" />
+          <img src="/imgi_10_width_799.webp" alt="Swissquote App Desktop" className="pdf-image" style={{ width: "85%", objectFit: "contain", borderRadius: "0px", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", zIndex: 1 }} />
+          <img src="/imgi_9_width_400.webp" alt="Swissquote App Mobile" className="pdf-image" style={{ width: "35%", objectFit: "contain", position: "absolute", bottom: "8%", right: "2%", borderRadius: "0px", boxShadow: "0 15px 40px rgba(0,0,0,0.3)", zIndex: 2 }} />
         </div>
       </div>
       {footer(fullName)}

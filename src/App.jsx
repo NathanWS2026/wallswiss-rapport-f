@@ -1249,9 +1249,14 @@ export default function WallSwissApp() {
   };
 
   return (
-    <div style={{ fontFamily: "'Montserrat', sans-serif", background: C.lightGray, minHeight: "100vh", color: C.black, width: "100vw", maxWidth: "100%", margin: 0, padding: 0, overflowX: "hidden" }}>
+    <div style={{ fontFamily: "'Montserrat', sans-serif", background: C.lightGray, minHeight: "100vh", color: C.black, margin: 0, padding: 0, display: "flex", flexDirection: "column" }}>
       <style>{`
-        body { margin: 0; padding: 0; overflow-x: hidden; }
+        html, body, #root { 
+          margin: 0; 
+          padding: 0; 
+          background-color: ${C.lightGray}; /* Force le fond clair partout, même en mode sombre */
+          min-height: 100vh;
+        }
         input:focus, select:focus { border-color: ${C.primary} !important; }
         ::placeholder { color: #B0ADA6; }
         button:hover { opacity: 0.9; }

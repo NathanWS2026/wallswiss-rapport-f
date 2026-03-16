@@ -3,6 +3,7 @@ import React, { useState } from "react";
 const C = {
   primary: "#692102",
   primaryDark: "#4A1801",
+  sidebar: "#3A1201", // Couleur plus foncée pour le menu latéral
   gold: "#A59568",
   white: "#FFFFFF",
   black: "#1A1A1A",
@@ -14,7 +15,7 @@ const C = {
 
 // Lien mis à jour pour pointer vers le fichier local dans le dossier "public"
 const LOGO_URL = "/logo blanc sans texte.png";
-const APP_VERSION = "v1.2.7";
+const APP_VERSION = "v1.3.0";
 
 const fontLink = document.createElement("link");
 fontLink.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap";
@@ -941,7 +942,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
       <div className="no-print" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 60px", position: "relative", minHeight: 0 }}>
         <button onClick={() => setCurrentSlide(s => Math.max(0, s - 1))} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: currentSlide === 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", color: currentSlide === 0 ? "rgba(255,255,255,0.2)" : C.white, border: "none", width: 40, height: 40, cursor: currentSlide === 0 ? "default" : "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>&#8249;</button>
         
-        {/* CORRECTION 3 : L'aperçu affiche la slide de 1280x720 réduite proportionnellement (scale) à 960x540 */}
+        {/* L'aperçu affiche la slide de 1280x720 réduite proportionnellement */}
         <div style={{ width: 960, height: 540, position: "relative", boxShadow: "0 8px 40px rgba(0,0,0,0.5)", overflow: "hidden", backgroundColor: C.white }}>
           <div style={{ width: 1280, height: 720, transform: "scale(0.75)", transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}>
             {slides[currentSlide]}
@@ -962,7 +963,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         ))}
       </div>
 
-      {/* CONTENEUR D'IMPRESSION - Flexbox + Hauteur stricte pour empêcher la page blanche "fantôme" */}
+      {/* CONTENEUR D'IMPRESSION */}
       <div style={{ position: "fixed", top: 0, left: 0, zIndex: -1000, opacity: 0.001, pointerEvents: "none" }}>
         <div id="report-printable" style={{ width: "1280px", height: `${slides.length * 720}px`, display: "block", background: C.white, overflow: "hidden" }}>
           {slides.map((SlideComponent, index) => (
@@ -991,7 +992,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
   );
 }
 
-// ────────────────────── FORM / MAIN APP ──────────────────────
+// ────────────────────── MAIN APP / LAYOUT ──────────────────────
 
 const S = {
   label: { display: "block", fontSize: 11, fontWeight: 600, color: C.gray, marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase" },
@@ -1020,8 +1021,13 @@ export default function WallSwissApp() {
     contactDesc: "Gérer son patrimoine nécessite une approche personnalisée et stratégique. En optimisant sa fiscalité, en sécurisant son épargne et en faisant des choix d'investissement éclairés, il est possible de construire un patrimoine pérenne et adapté à vos projets de vie."
   };
 
-  const [page, setPage] = useState("dashboard");
+  // NOUVEAU : Navigation principale du Hub
+  const [activeModule, setActiveModule] = useState("hub"); // "hub" ou "rapport"
+  
+  // Navigation interne au module Rapport Financier
+  const [rapportPage, setRapportPage] = useState("dashboard"); // Remplacé "page" par "rapportPage"
   const [step, setStep] = useState(0);
+
   const [reports, setReports] = useState([{
     id: 1,
     templateId: "swissquote",
@@ -1054,7 +1060,7 @@ export default function WallSwissApp() {
   const uText = (k, v) => setForm(p => ({ ...p, texts: { ...p.texts, [k]: v } }));
   const toggleObj = (o) => setForm(p => ({ ...p, objectifs: p.objectifs.includes(o) ? p.objectifs.filter(x => x !== o) : [...p.objectifs, o] }));
   const addCustomObj = () => { if (form.objectifCustom.trim()) { setForm(p => ({ ...p, objectifs: [...p.objectifs, p.objectifCustom.trim()], objectifCustom: "" })); } };
-  const handleSave = () => { setReports(p => [...p, { ...form, id: Date.now() }]); setPreview(form); setPage("dashboard"); setStep(0); };
+  const handleSave = () => { setReports(p => [...p, { ...form, id: Date.now() }]); setPreview(form); setRapportPage("dashboard"); setStep(0); };
   const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", conseiller: "Louis Borne", titreConseiller: "Planificatrice financière", telephone: "+41.76.231.92.75", email: "l.borne@wallswiss.ch", texts: initialTexts });
 
   const handlePreviewUpdate = (newData) => {
@@ -1249,23 +1255,25 @@ export default function WallSwissApp() {
   };
 
   return (
-    <div style={{ fontFamily: "'Montserrat', sans-serif", background: C.lightGray, minHeight: "100vh", color: C.black, margin: 0, padding: 0, display: "flex", flexDirection: "column" }}>
+    <div style={{ fontFamily: "'Montserrat', sans-serif", display: "flex", height: "100vh", width: "100vw", overflow: "hidden", background: C.lightGray, color: C.black }}>
       <style>{`
         html, body, #root { 
           margin: 0; 
           padding: 0; 
-          background-color: ${C.lightGray}; /* Force le fond clair partout, même en mode sombre */
+          background-color: ${C.lightGray};
           min-height: 100vh;
+          overflow: hidden; /* Prevent global scrollbar */
         }
-        input:focus, select:focus { border-color: ${C.primary} !important; }
+        input:focus, select:focus, textarea:focus { border-color: ${C.primary} !important; }
         ::placeholder { color: #B0ADA6; }
         button:hover { opacity: 0.9; }
-        ::-webkit-scrollbar { width: 5px; height: 5px; } ::-webkit-scrollbar-thumb { background: ${C.mediumGray}; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; } 
+        ::-webkit-scrollbar-thumb { background: ${C.gray}; border-radius: 3px; }
         
         .print-only { display: none; }
         @media print {
-          body { margin: 0; padding: 0; background: white; }
-          header, main, .no-print { display: none !important; }
+          body { margin: 0; padding: 0; background: white; overflow: visible; height: auto; }
+          .no-print, aside { display: none !important; }
           .print-only { display: block !important; }
           .preview-modal-container { position: absolute; left: 0; top: 0; background: white !important; width: 100vw; }
           @page { size: 16in 9in; margin: 0; }
@@ -1273,86 +1281,174 @@ export default function WallSwissApp() {
         }
       `}</style>
 
-      <header style={{ background: C.primary, position: "sticky", top: 0, zIndex: 100, width: "100%" }}>
-        <div style={{ width: "100%", padding: "14px 40px", display: "flex", alignItems: "center", justifyContent: "space-between", boxSizing: "border-box" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ background: C.primaryDark, padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px" }}>
-              <img src={LOGO_URL} alt="WallSwiss" style={{ height: "16px" }} />
-            </div>
-            <div>
-              <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.white, fontSize: 18, fontWeight: 700, letterSpacing: "0.06em" }}>WALLSWISS</div>
-              <div style={{ color: C.gold, fontSize: 9, fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase" }}>Rapport Generator</div>
-            </div>
+      {/* ────────────────── MENU LATÉRAL (SIDEBAR) ────────────────── */}
+      <aside className="no-print" style={{ width: "260px", background: C.sidebar, color: C.white, display: "flex", flexDirection: "column", flexShrink: 0, boxShadow: "2px 0 10px rgba(0,0,0,0.1)", zIndex: 110 }}>
+        <div style={{ padding: "32px 24px", display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+          <div style={{ background: C.white, padding: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <img src={LOGO_URL} alt="WallSwiss" style={{ height: "20px", filter: "invert(1) sepia(1) saturate(5) hue-rotate(345deg) brightness(0.5)" }} />
           </div>
-          <nav style={{ display: "flex", gap: 2 }}>
-            {[["dashboard","Tableau de bord"],["create","Créer un rapport"]].map(([p,l]) => (
-              <button key={p} onClick={()=>{setPage(p);if(p==="create")setStep(0);}} style={{ background: page===p ? "rgba(255,255,255,0.14)" : "transparent", color: page===p ? C.white : "rgba(255,255,255,0.55)", border: "none", padding: "8px 18px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: page===p?600:500, letterSpacing: "0.02em", borderRadius: "0px" }}>
-                {l}
-              </button>
-            ))}
-          </nav>
+          <div>
+            <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, fontWeight: 700, letterSpacing: "0.08em" }}>WALLSWISS</div>
+            <div style={{ color: C.gold, fontSize: 9, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>Espace Conseiller</div>
+          </div>
         </div>
-      </header>
 
-      <main style={{ width: "100%", padding: "40px", boxSizing: "border-box" }}>
-        {page === "dashboard" && (
-          reports.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "120px 40px" }}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ marginBottom: 16, opacity: 0.2 }}><rect x="3" y="3" width="18" height="18" stroke={C.primary} strokeWidth="1.5"/><line x1="7" y1="8" x2="17" y2="8" stroke={C.primary} strokeWidth="1"/><line x1="7" y1="12" x2="14" y2="12" stroke={C.primary} strokeWidth="1"/><line x1="7" y1="16" x2="11" y2="16" stroke={C.primary} strokeWidth="1"/></svg>
-              <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.primary, marginBottom: 8 }}>Aucun rapport créé</div>
-              <p style={{ color: C.gray, fontSize: 13, marginBottom: 24, maxWidth: 380, margin: "0 auto 24px" }}>Commencez par créer votre premier rapport financier personnalisé.</p>
-              <button style={S.btnP} onClick={()=>{setPage("create");resetForm();}}>+ Créer un rapport</button>
-            </div>
-          ) : (
-            <div style={{ width: "100%" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-                <div>
-                  <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Mes rapports</h2>
-                  <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>{reports.length} rapport{reports.length>1?"s":""}</p>
+        <nav style={{ flex: 1, padding: "24px 0", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700, letterSpacing: "0.1em", padding: "0 24px", marginBottom: 8, textTransform: "uppercase" }}>Général</div>
+          
+          <button 
+            onClick={() => setActiveModule("hub")} 
+            style={{ width: "100%", textAlign: "left", background: activeModule === "hub" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "hub" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "hub" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "hub" ? 600 : 500, transition: "0.2s" }}
+          >
+            🏠 Hub d'accueil
+          </button>
+          
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700, letterSpacing: "0.1em", padding: "0 24px", margin: "16px 0 8px", textTransform: "uppercase" }}>Modules</div>
+          
+          <button 
+            onClick={() => setActiveModule("rapport")} 
+            style={{ width: "100%", textAlign: "left", background: activeModule === "rapport" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "rapport" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "rapport" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "rapport" ? 600 : 500, transition: "0.2s" }}
+          >
+            📄 Rapport Financier
+          </button>
+        </nav>
+
+        <div style={{ padding: "24px", borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
+          {APP_VERSION}
+        </div>
+      </aside>
+
+      {/* ────────────────── CONTENU PRINCIPAL ────────────────── */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%", overflowY: "auto", position: "relative" }}>
+        
+        {/* VUE HUB D'ACCUEIL */}
+        {activeModule === "hub" && (
+          <div style={{ padding: "60px 80px", maxWidth: 1200, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+            <h1 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 36, color: C.primary, marginBottom: 8, marginTop: 0 }}>Bonjour, {form.conseiller.split(' ')[0] || "Conseiller"}</h1>
+            <p style={{ color: C.gray, fontSize: 15, marginBottom: 48 }}>Sélectionnez un module ci-dessous pour démarrer vos tâches.</p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
+              {/* Carte Module Rapport */}
+              <div 
+                onClick={() => setActiveModule("rapport")}
+                style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s", borderRadius: 0 }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.06)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+              >
+                <div style={{ background: "rgba(105,33,2,0.06)", width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+                  <span style={{ fontSize: 24 }}>📄</span>
                 </div>
-                <button style={S.btnP} onClick={()=>{setPage("create");resetForm();}}>+ Nouveau rapport</button>
+                <h3 style={{ fontSize: 18, color: C.primary, marginBottom: 8, marginTop: 0 }}>Rapport Financier</h3>
+                <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Générez des rapports d'analyse patrimoniale professionnels et personnalisés pour vos clients en quelques clics.</p>
+                <span style={{ color: C.gold, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ouvrir le module &rarr;</span>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: 16 }}>
-                {reports.map((r,i) => (
-                  <div key={i} style={{ ...S.card, cursor: "pointer", position: "relative", overflow: "hidden" }} onClick={()=>setPreview(r)}>
-                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: C.primary }} />
-                    <div style={{ fontSize: 10, color: C.gold, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10, marginTop: 4 }}>Rapport Client</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: C.primary, marginBottom: 4 }}>{r.prenom} {(r.nom||"").toUpperCase()}</div>
-                    <div style={{ fontSize: 12, color: C.gray, marginBottom: 14 }}>{r.profession} — {r.age} ans</div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 12, borderTop: `1px solid ${C.lightGray}` }}>
-                      <span style={{ fontSize: 11, color: C.gray }}>CHF {fmt(r.montantInvestissement||100000)}.-</span>
-                      <span style={{ fontSize: 10, color: C.primary, fontWeight: 600 }}>VOIR &rarr;</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )
-        )}
 
-        {page === "create" && (
-          <div style={{ width: "100%" }}>
-            <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: "0 0 4px" }}>Nouveau rapport</h2>
-            <p style={{ color: C.gray, fontSize: 13, marginBottom: 24 }}>Remplissez les informations pour générer un rapport personnalisé.</p>
-            <div style={{ display: "flex", gap: 0, marginBottom: 28, background: C.white, border: `1px solid ${C.mediumGray}`, padding: 4, borderRadius: "0px" }}>
-              {stepLabels.map((l,i) => (
-                <div key={i} onClick={()=>setStep(i)} style={{ flex: 1, textAlign: "center", padding: "10px 6px", fontSize: 11, fontWeight: step===i?700:500, color: step===i?C.white:step>i?C.primary:C.gray, background: step===i?C.primary:"transparent", cursor: "pointer", letterSpacing: "0.04em", transition: "all 0.2s", borderRadius: "0px" }}>
-                  {l}
+              {/* Autres modules en placeholder */}
+              {[
+                { title: "Simulateurs Financiers", desc: "Calculez des projections d'assurance vie, prévoyance et immobilier.", icon: "📊" },
+                { title: "CRM Clients", desc: "Gérez votre portefeuille clients et suivez l'historique de vos rendez-vous.", icon: "👥" }
+              ].map((mod, i) => (
+                <div key={i} style={{ background: "rgba(255,255,255,0.5)", border: `1px dashed ${C.mediumGray}`, padding: 32, cursor: "not-allowed", opacity: 0.6 }}>
+                  <div style={{ background: C.lightGray, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+                    <span style={{ fontSize: 24, filter: "grayscale(100%)" }}>{mod.icon}</span>
+                  </div>
+                  <h3 style={{ fontSize: 18, color: C.darkGray, marginBottom: 8, marginTop: 0 }}>{mod.title}</h3>
+                  <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>{mod.desc}</p>
+                  <span style={{ color: C.gray, fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", background: C.mediumGray, padding: "4px 8px" }}>Bientôt disponible</span>
                 </div>
               ))}
             </div>
-            {renderStep()}
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24 }}>
-              <button style={{ ...S.btnS, opacity: step===0?0.35:1, pointerEvents: step===0?"none":"auto" }} onClick={()=>setStep(s=>s-1)}>&larr; Précédent</button>
-              {step < 6 && <button style={S.btnP} onClick={()=>setStep(s=>s+1)}>Suivant &rarr;</button>}
-            </div>
           </div>
         )}
-      </main>
 
-      {/* Mention de version en bas de page */}
-      <div style={{ padding: "20px", textAlign: "center", fontSize: "10px", color: C.gray, marginTop: "auto" }}>
-        WallSwiss Rapport Generator - {APP_VERSION}
+        {/* VUE MODULE RAPPORT FINANCIER */}
+        {activeModule === "rapport" && (
+          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+            
+            {/* Header interne du module Rapport */}
+            <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
+              <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Rapport Financier</div>
+                </div>
+                <nav style={{ display: "flex", gap: 8 }}>
+                  {[["dashboard","Tableau de bord"],["create","Créer un rapport"]].map(([p,l]) => (
+                    <button 
+                      key={p} 
+                      onClick={()=>{setRapportPage(p);if(p==="create")setStep(0);}} 
+                      style={{ background: rapportPage===p ? "rgba(105,33,2,0.06)" : "transparent", color: rapportPage===p ? C.primary : C.gray, border: "none", padding: "8px 16px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: rapportPage===p?700:500, borderRadius: "0px", transition: "0.2s" }}
+                    >
+                      {l}
+                    </button>
+                  ))}
+                </nav>
+              </div>
+            </header>
+
+            <main style={{ flex: 1, padding: "40px", boxSizing: "border-box" }}>
+              {rapportPage === "dashboard" && (
+                reports.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "80px 40px" }}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ marginBottom: 16, opacity: 0.2 }}><rect x="3" y="3" width="18" height="18" stroke={C.primary} strokeWidth="1.5"/><line x1="7" y1="8" x2="17" y2="8" stroke={C.primary} strokeWidth="1"/><line x1="7" y1="12" x2="14" y2="12" stroke={C.primary} strokeWidth="1"/><line x1="7" y1="16" x2="11" y2="16" stroke={C.primary} strokeWidth="1"/></svg>
+                    <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.primary, marginBottom: 8 }}>Aucun rapport créé</div>
+                    <p style={{ color: C.gray, fontSize: 13, marginBottom: 24, maxWidth: 380, margin: "0 auto 24px" }}>Commencez par créer votre premier rapport financier personnalisé.</p>
+                    <button style={S.btnP} onClick={()=>{setRapportPage("create");resetForm();}}>+ Créer un rapport</button>
+                  </div>
+                ) : (
+                  <div style={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
+                      <div>
+                        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Mes rapports récents</h2>
+                        <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Vous avez {reports.length} rapport{reports.length>1?"s":""} enregistré{reports.length>1?"s":""}.</p>
+                      </div>
+                      <button style={S.btnP} onClick={()=>{setRapportPage("create");resetForm();}}>+ Nouveau rapport</button>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 20 }}>
+                      {reports.map((r,i) => (
+                        <div key={i} style={{ ...S.card, cursor: "pointer", position: "relative", overflow: "hidden", padding: "24px 28px", transition: "transform 0.2s" }} onClick={()=>setPreview(r)} onMouseEnter={(e)=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={(e)=>e.currentTarget.style.transform="translateY(0)"}>
+                          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: C.gold }} />
+                          <div style={{ fontSize: 10, color: C.gray, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12, marginTop: 4 }}>Dossier Client</div>
+                          <div style={{ fontSize: 18, fontWeight: 800, color: C.primary, marginBottom: 6 }}>{r.prenom} {(r.nom||"").toUpperCase()}</div>
+                          <div style={{ fontSize: 13, color: C.darkGray, marginBottom: 16 }}>{r.profession} — {r.age} ans</div>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 16, borderTop: `1px solid ${C.lightGray}` }}>
+                            <div>
+                              <div style={{ fontSize: 10, color: C.gray, marginBottom: 2 }}>Montant simulé</div>
+                              <div style={{ fontSize: 13, color: C.primary, fontWeight: 600 }}>CHF {fmt(r.montantInvestissement||100000)}.-</div>
+                            </div>
+                            <span style={{ fontSize: 11, color: C.gold, fontWeight: 700, background: "rgba(165,149,104,0.1)", padding: "6px 12px" }}>OUVRIR &rarr;</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              )}
+
+              {rapportPage === "create" && (
+                <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
+                  <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: "0 0 4px" }}>Générateur de rapport</h2>
+                  <p style={{ color: C.gray, fontSize: 13, marginBottom: 32 }}>Suivez les étapes pour configurer la proposition patrimoniale de votre client.</p>
+                  
+                  <div style={{ display: "flex", gap: 4, marginBottom: 32, background: "transparent" }}>
+                    {stepLabels.map((l,i) => (
+                      <div key={i} onClick={()=>setStep(i)} style={{ flex: 1, textAlign: "center", padding: "12px 6px", fontSize: 11, fontWeight: step===i?700:600, color: step===i?C.white:step>i?C.primary:C.gray, background: step===i?C.primary:step>i?"rgba(105,33,2,0.06)":C.white, border: `1px solid ${step===i?C.primary:step>i?"rgba(105,33,2,0.1)":C.mediumGray}`, cursor: "pointer", letterSpacing: "0.04em", transition: "all 0.2s", borderRadius: "0px", position: "relative" }}>
+                        {l}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {renderStep()}
+                  
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 32 }}>
+                    <button style={{ ...S.btnS, opacity: step===0?0:1, pointerEvents: step===0?"none":"auto" }} onClick={()=>setStep(s=>s-1)}>&larr; Précédent</button>
+                    {step < 6 && <button style={S.btnP} onClick={()=>setStep(s=>s+1)}>Étape Suivante &rarr;</button>}
+                  </div>
+                </div>
+              )}
+            </main>
+          </div>
+        )}
       </div>
 
       {preview && <ReportPreview data={preview} onClose={()=>setPreview(null)} onUpdateData={handlePreviewUpdate} />}

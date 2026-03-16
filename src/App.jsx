@@ -2,8 +2,8 @@ import React, { useState } from "react";
 
 const C = {
   primary: "#692102",
-  primaryDark: "#4A1801",
-  sidebar: "#3A1201", // Couleur plus foncée pour le menu latéral
+  primaryDark: "#4D1801", // Teinte strictement dérivée de #692102 (plus foncée, aucun reflet bordeaux)
+  sidebar: "#2D0E01", // Teinte encore plus foncée de la même base pour le menu
   gold: "#A59568",
   white: "#FFFFFF",
   black: "#1A1A1A",
@@ -1255,20 +1255,24 @@ export default function WallSwissApp() {
   };
 
   return (
-    <div style={{ fontFamily: "'Montserrat', sans-serif", display: "flex", height: "100vh", width: "100vw", overflow: "hidden", background: C.lightGray, color: C.black }}>
+    <div style={{ fontFamily: "'Montserrat', sans-serif", display: "flex", height: "100%", width: "100%", overflow: "hidden", background: C.lightGray, color: C.black }}>
       <style>{`
         html, body, #root { 
           margin: 0; 
           padding: 0; 
           background-color: ${C.lightGray};
-          min-height: 100vh;
-          overflow: hidden; /* Prevent global scrollbar */
+          height: 100%;
+          width: 100%;
+          overflow: hidden; 
         }
         input:focus, select:focus, textarea:focus { border-color: ${C.primary} !important; }
         ::placeholder { color: #B0ADA6; }
         button:hover { opacity: 0.9; }
+        
         ::-webkit-scrollbar { width: 6px; height: 6px; } 
-        ::-webkit-scrollbar-thumb { background: ${C.gray}; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
         
         .print-only { display: none; }
         @media print {

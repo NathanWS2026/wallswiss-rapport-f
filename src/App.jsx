@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const C = {
   primary: "#692102",
-  primaryDark: "#4D1801", // Teinte strictement dérivée de #692102 (plus foncée, aucun reflet bordeaux)
-  sidebar: "#2D0E01", // Teinte encore plus foncée de la même base pour le menu
+  primaryDark: "#4D1801", 
+  sidebar: "#2D0E01", 
   gold: "#A59568",
   white: "#FFFFFF",
   black: "#1A1A1A",
@@ -13,9 +13,8 @@ const C = {
   darkGray: "#374151",
 };
 
-// Lien mis à jour pour pointer vers le fichier local dans le dossier "public"
 const LOGO_URL = "/logo blanc sans texte.png";
-const APP_VERSION = "v1.3.0";
+const APP_VERSION = "v1.5.0";
 
 const fontLink = document.createElement("link");
 fontLink.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap";
@@ -38,9 +37,49 @@ function computeProjections(data) {
   }));
 }
 
+function computeProjectionsPrevoyance(data) {
+  const monthly = Number(data.capaciteEpargne || 500);
+  const annual = monthly * 12;
+  const age = Number(data.age || 40);
+  const duration = Math.max(1, 65 - age); // Projection jusqu'à la retraite (65 ans)
+  
+  const rP = Number(data.tauxPessimistePrev || 2) / 100;
+  const rR = Number(data.tauxRealistePrev || 4) / 100;
+  const rO = Number(data.tauxOptimistePrev || 6) / 100;
+  const taxMarginalRate = 0.30; 
+  
+  // Création d'étapes harmonieuses pour le graphique
+  const step = Math.max(1, Math.floor(duration / 4));
+  let years = [];
+  for(let i = 0; i <= duration; i+=step) { years.push(i); }
+  if (years[years.length-1] !== duration) years.push(duration);
+  const uniqueYears = [...new Set(years)].sort((a,b) => a - b);
+  
+  return uniqueYears.map(y => {
+    const invested = annual * y;
+    const months = y * 12;
+    
+    // Calcul des intérêts composés mensuels
+    const calcCap = (rate) => {
+      if (rate === 0 || months === 0) return invested;
+      const rM = rate / 12;
+      return monthly * ((Math.pow(1 + rM, months) - 1) / rM);
+    };
+    
+    return {
+      year: y,
+      age: age + y,
+      invested: Math.round(invested),
+      pessimiste: Math.round(calcCap(rP)),
+      realiste: Math.round(calcCap(rR)),
+      optimiste: Math.round(calcCap(rO)),
+      taxSavings: data.optiFiscale ? Math.round(invested * taxMarginalRate) : 0
+    };
+  });
+}
+
 function fmt(n) { return Number(n).toLocaleString("fr-CH"); }
 
-// --- SOLUTION ULTIME CORS POUR VERCEL ---
 const getBase64Image = async (url) => {
   try {
     const response = await fetch(url, { mode: 'cors' });
@@ -146,7 +185,7 @@ function SlideCover({ data }) {
   );
 }
 
-// Slide 2 — Table des matières
+// Slide 2 — Table des matières SwissQuote
 function SlideTOC({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   const items = [
@@ -155,7 +194,7 @@ function SlideTOC({ data }) {
     { title: "Résumé de votre situation personnelle", page: 5 },
     { title: "Pourquoi Swissquote est une banque fiable", page: 6 },
     { title: "Avantages WallSwiss BY Swissquote", page: 7 },
-    { title: "Solution — Compte Titre", page: 9 }, // Corrigé car divider est 8
+    { title: "Solution — Compte Titre", page: 9 },
     { title: "Fonds NS (CH) Swiss Excellence DPM", page: 10 },
     { title: "Projections financières", page: 11 },
     { title: "Avantages tarifaires WS Premium", page: 12 },
@@ -188,7 +227,7 @@ function SlideTOC({ data }) {
   );
 }
 
-// Slide 3 — Philosophie (Nouveau "Qui sommes-nous")
+// Slide 3 — Philosophie
 function SlidePhilosophy({ data, editMode, onTextChange }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   return (
@@ -220,7 +259,7 @@ function SlidePhilosophy({ data, editMode, onTextChange }) {
   );
 }
 
-// Slide 4 — Qui sommes-nous (Chiffres)
+// Slide 4 — Qui sommes-nous
 function SlideAbout({ data, editMode, onTextChange }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   const stats = [
@@ -269,9 +308,7 @@ function SlideSituation({ data }) {
         <ReportTitle title="Résumé de" highlight="votre situation personnelle" subtitle="ANALYSE PATRIMONIALE" />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, flex: 1, minHeight: 0, marginTop: 8 }}>
           
-          {/* Colonne Gauche */}
           <div style={{ display: "flex", flexDirection: "column", gap: 24, justifyContent: "flex-start" }}>
-            {/* Block Identité */}
             <div>
               <div style={{ background: C.primary, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Civilité & Statut</div>
               <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
@@ -289,7 +326,6 @@ function SlideSituation({ data }) {
               </div>
             </div>
             
-            {/* Block Financier */}
             <div>
               <div style={{ background: C.primary, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Données Financières</div>
               <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
@@ -307,9 +343,7 @@ function SlideSituation({ data }) {
             </div>
           </div>
 
-          {/* Colonne Droite */}
           <div style={{ display: "flex", flexDirection: "column", gap: 24, justifyContent: "flex-start" }}>
-            {/* Block Objectifs */}
             <div>
               <div style={{ background: C.gold, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Vos objectifs prioritaires</div>
               <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "16px 20px", background: C.white, borderRadius: "0px", minHeight: "120px" }}>
@@ -322,7 +356,6 @@ function SlideSituation({ data }) {
               </div>
             </div>
             
-            {/* Block Profil */}
             <div style={{ marginBottom: 20 }}>
               <div style={{ background: C.gold, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Profil d'investisseur</div>
               <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
@@ -414,11 +447,10 @@ function SlideAdvantages({ data }) {
 }
 
 // Slide 8 — Section divider
-function SlideDivider({ data, number, title }) {
+function SlideDivider({ data, number, title, editMode, onTextChange }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   return (
     <div style={{ ...slideBase, background: C.lightGray, display: "flex" }}>
-      {/* Panneau gauche avec losange décoratif */}
       <div style={{ width: "35%", background: `linear-gradient(150deg, ${C.primary} 0%, ${C.primaryDark} 100%)`, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ position: "absolute", right: -40, width: 80, height: 80, background: C.lightGray, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, transform: "rotate(45deg)" }}>
           <div style={{ width: 64, height: 64, background: C.primary, border: `2px solid ${C.gold}`, transform: "rotate(-45deg)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.1)" }}>
@@ -427,7 +459,6 @@ function SlideDivider({ data, number, title }) {
         </div>
       </div>
 
-      {/* Contenu principal à droite */}
       <div style={{ flex: 1, padding: "0 100px", display: "flex", flexDirection: "column", justifyContent: "center", zIndex: 1 }}>
         <div style={{ color: C.gray, fontSize: 13, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 16 }}>
           La stratégie recommandée
@@ -443,9 +474,7 @@ function SlideDivider({ data, number, title }) {
 
         <div style={{ display: "flex", gap: 20 }}>
           <div style={{ width: 4, background: C.gold, flexShrink: 0 }} />
-          <div style={{ fontFamily: "'Montserrat', sans-serif", fontStyle: "italic", color: C.darkGray, fontSize: 14, maxWidth: 500, lineHeight: 1.8, textAlign: "justify" }}>
-            « L'investissement est un voyage à long terme. La clé est de rester concentré sur sa destination finale et de s'entourer des meilleurs partenaires. »
-          </div>
+          <EditableText editMode={editMode} value={data.texts?.dividerQuote} onChange={v => onTextChange("dividerQuote", v)} style={{ fontFamily: "'Montserrat', sans-serif", fontStyle: "italic", color: C.darkGray, fontSize: 14, maxWidth: 500, lineHeight: 1.8, textAlign: "justify" }} />
         </div>
       </div>
       {footer(fullName)}
@@ -540,7 +569,6 @@ function SlideProjections({ data }) {
   const montant = Number(data.montantInvestissement || 100000);
   const frais = Number(data.fraisSouscription || 3);
 
-  // SVG Chart variables
   const svgW = 420; const svgH = 220;
   const padL = 50; const padR = 15; const padT = 10; const padB = 25;
   const w = svgW - padL - padR; const h = svgH - padT - padB;
@@ -569,17 +597,14 @@ function SlideProjections({ data }) {
               Nous appliquons des frais de souscription de {frais}% du montant investi soit {fmt(montant * frais / 100)}.-
             </p>
             
-            {/* Legend */}
             <div style={{ display: "flex", gap: 20, marginBottom: 20, alignSelf: "center", fontSize: 12, fontWeight: 600 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: "#9CA3AF" }} /> Pessimiste</div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.gold }} /> Réaliste</div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.primaryDark }} /> Optimiste</div>
             </div>
 
-            {/* Line chart SVG */}
             <div style={{ width: 420, height: 220, alignSelf: "center" }}>
               <svg xmlns="http://www.w3.org/2000/svg" width={420} height={220} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
-                {/* Y Axis Grid */}
                 {[0, 0.25, 0.5, 0.75, 1].map(pct => {
                   const y = padT + h - (pct * h);
                   const val = gridMax * pct;
@@ -590,15 +615,12 @@ function SlideProjections({ data }) {
                     </g>
                   );
                 })}
-                {/* X Axis Labels */}
                 {rows.map((r, i) => (
                   <text key={i} x={getX(i)} y={svgH - 2} fontSize="11" fill="#6B7280" textAnchor="middle">N+{r.year}</text>
                 ))}
-                {/* Lines */}
                 <path d={dP} fill="none" stroke="#9CA3AF" strokeWidth="3" />
                 <path d={dR} fill="none" stroke={C.gold} strokeWidth="3" />
                 <path d={dO} fill="none" stroke={C.primaryDark} strokeWidth="3" />
-                {/* Points */}
                 {rows.map((r, i) => (
                   <g key={i}>
                     <circle cx={getX(i)} cy={getY(r.pessimiste)} r="4.5" fill="#9CA3AF" />
@@ -721,7 +743,7 @@ function SlideComparatif({ data }) {
 }
 
 // Slide 14 — Application SwissQuote
-function SlideApp({ data }) {
+function SlideApp({ data, editMode, onTextChange }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   return (
     <div style={slideBase}>
@@ -730,12 +752,8 @@ function SlideApp({ data }) {
       <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
         <div>
           <ReportTitle title="Votre application de suivi" highlight="SwissQuote" subtitle="CENTRALISEZ L'ENSEMBLE DE VOS FINANCES EN UN SEUL ENDROIT" />
-          <p style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 20px", textAlign: "justify" }}>
-            Effectuez des opérations de trading, d'investissement et bancaires en <strong>toute sécurité</strong> et à des <strong>tarifs avantageux</strong>, grâce au principal acteur suisse de la banque en ligne.
-          </p>
-          <p style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: 0, textAlign: "justify" }}>
-            Nos plateformes intuitives vous invitent à explorer un monde riche en opportunités. Et accédez à une <strong>vaste gamme</strong> d'informations et de programmes de formation.
-          </p>
+          <EditableText editMode={editMode} value={data.texts?.appP1} onChange={v => onTextChange("appP1", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 20px", textAlign: "justify" }} />
+          <EditableText editMode={editMode} value={data.texts?.appP2} onChange={v => onTextChange("appP2", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: 0, textAlign: "justify" }} />
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative", height: "100%" }}>
           <img src="/imgi_10_width_799.webp" alt="Swissquote App Desktop" className="pdf-image" style={{ width: "85%", objectFit: "contain", borderRadius: "0px", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", zIndex: 1 }} />
@@ -752,15 +770,11 @@ function SlideContact({ data, editMode, onTextChange }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   return (
     <div style={{ ...slideBase, background: C.white, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      
-      {/* Décoration filigrane géante centrée */}
       <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", opacity: 0.03, pointerEvents: "none", zIndex: 1 }}>
          <img src={LOGO_URL} alt="" className="pdf-image" style={{ width: "800px", filter: "invert(1)" }} />
       </div>
 
       <div style={{ zIndex: 2, display: "flex", width: "100%", padding: "0 80px", gap: "80px", alignItems: "center" }}>
-        
-        {/* Panneau gauche */}
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 11, color: C.gold, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 16 }}>SYNTHÈSE & CONTACT</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 48, fontWeight: 700, color: C.primary, lineHeight: 1.1, marginBottom: 24 }}>
@@ -770,7 +784,6 @@ function SlideContact({ data, editMode, onTextChange }) {
           <EditableText editMode={editMode} value={data.texts?.contactDesc} onChange={v => onTextChange("contactDesc", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, margin: 0, maxWidth: 480 }} />
         </div>
 
-        {/* Panneau droit - Contact card */}
         <div style={{ width: 420, border: `1px solid ${C.mediumGray}`, padding: "56px 48px", position: "relative", background: C.white, boxShadow: "0 10px 40px rgba(0,0,0,0.05)", borderRadius: "0px" }}>
           <div style={{ position: "absolute", top: -12, left: 40, background: C.white, padding: "0 16px", color: C.gold, fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>
             VOTRE INTERLOCUTEUR DÉDIÉ
@@ -801,6 +814,471 @@ function SlideContact({ data, editMode, onTextChange }) {
   );
 }
 
+// ────────────────────── SLIDES PRÉVOYANCE 3A/3B ──────────────────────
+
+function SlideTOCPrevoyance({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const items = [
+    { title: "Qui sommes-nous ? Notre philosophie", page: 3 },
+    { title: "Notre cabinet en chiffres", page: 4 },
+    { title: "Résumé de votre situation personnelle", page: 5 },
+    { title: "Le système des 3 piliers suisses", page: 6 },
+    { title: "Avantages de la Prévoyance 3A/3B", page: 7 },
+    { title: "Solution — Prévoyance & Assurance Vie", page: 9 }, 
+    { title: "Couvertures de risque et garanties", page: 10 },
+    { title: "Stratégie : Fonds de placement", page: 11 },
+  ];
+  
+  let nextPage = 12;
+  if (data.profilRisque === "Dynamique") {
+      items.push({ title: "Détail Stratégie Dynamique & Performances", page: nextPage++ });
+  }
+  items.push({ title: "Comprendre la Valeur de Rachat", page: nextPage++ });
+  
+  if(data.optiFiscale) {
+      items.push({ title: "Impact & Optimisation Fiscale", page: nextPage++ });
+  }
+  items.push({ title: "Projections financières et capitalisation", page: nextPage++ });
+  items.push({ title: "Synthèse & Contact", page: nextPage });
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Table des matières" subtitle="STRUCTURE DE VOTRE PRÉSENTATION" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 80, rowGap: 24, alignContent: "center", maxWidth: 1000, margin: "0" }}>
+          {items.map((item, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "flex-end", width: "100%", paddingBottom: 6 }}>
+              <span style={{ color: C.darkGray, fontSize: 15, fontWeight: 600, paddingBottom: 2 }}>
+                {item.title}
+              </span>
+              <div style={{ flex: 1, borderBottom: `2px dotted ${C.mediumGray}`, margin: "0 16px", position: "relative", top: -8 }} />
+              <span style={{ color: C.primary, fontSize: 16, fontWeight: 700, flexShrink: 0, paddingBottom: 2 }}>
+                {String(item.page).padStart(2, '0')}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceIntro({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Le système des 3 piliers" highlight="en Suisse" subtitle="FONDATIONS DE VOTRE AVENIR" />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 32, flex: 1, alignItems: "center" }}>
+          <div style={{ background: C.lightGray, padding: 32, borderTop: `4px solid ${C.darkGray}`, height: "100%", borderRadius: "0px", display: "flex", flexDirection: "column" }}>
+            <div style={{ fontSize: 48, fontWeight: 900, color: C.darkGray, opacity: 0.2, marginBottom: -20 }}>1</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: C.primary, marginBottom: 16 }}>Prévoyance Étatique</div>
+            <div style={{ fontWeight: 700, color: C.darkGray, fontSize: 13, marginBottom: 8 }}>AVS / AI / APG</div>
+            <EditableText editMode={editMode} value={data.texts?.prevIntroP1} onChange={v => onTextChange("prevIntroP1", v)} style={{ fontSize: 12, color: C.gray, lineHeight: 1.6, textAlign: "justify", margin: 0 }} />
+          </div>
+          <div style={{ background: C.lightGray, padding: 32, borderTop: `4px solid ${C.gold}`, height: "100%", borderRadius: "0px", display: "flex", flexDirection: "column" }}>
+            <div style={{ fontSize: 48, fontWeight: 900, color: C.gold, opacity: 0.2, marginBottom: -20 }}>2</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: C.primary, marginBottom: 16 }}>Prévoyance Professionnelle</div>
+            <div style={{ fontWeight: 700, color: C.darkGray, fontSize: 13, marginBottom: 8 }}>LPP / LAA</div>
+            <EditableText editMode={editMode} value={data.texts?.prevIntroP2} onChange={v => onTextChange("prevIntroP2", v)} style={{ fontSize: 12, color: C.gray, lineHeight: 1.6, textAlign: "justify", margin: 0 }} />
+          </div>
+          <div style={{ background: "rgba(105,33,2,0.04)", padding: 32, borderTop: `4px solid ${C.primary}`, height: "100%", borderRadius: "0px", display: "flex", flexDirection: "column", boxShadow: "0 10px 30px rgba(105,33,2,0.1)" }}>
+            <div style={{ fontSize: 48, fontWeight: 900, color: C.primary, opacity: 0.2, marginBottom: -20 }}>3</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: C.primary, marginBottom: 16 }}>Prévoyance Privée</div>
+            <div style={{ fontWeight: 700, color: C.darkGray, fontSize: 13, marginBottom: 8 }}>Pilier 3A (lié) & 3B (libre)</div>
+            <EditableText editMode={editMode} value={data.texts?.prevIntroP3} onChange={v => onTextChange("prevIntroP3", v)} style={{ fontSize: 12, color: C.primaryDark, lineHeight: 1.6, textAlign: "justify", fontWeight: 500, margin: 0 }} />
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceAvantages({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Avantages de la Prévoyance" highlight="3A et 3B" subtitle="VOS BÉNÉFICES DIRECTS" />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px 48px", flex: 1, alignContent: "center" }}>
+          {[
+            { title: "Économies d'impôts massives (3A)", desc: "Les versements au pilier 3A sont entièrement déductibles du revenu imposable, permettant d'économiser un mois de salaire en impôts sur quelques années." },
+            { title: "Sécurité et Protection de la famille", desc: "En cas de décès ou d'invalidité, le capital ou une rente est garanti pour protéger vos proches et maintenir leur niveau de vie." },
+            { title: "Rendement supérieur", desc: "Contrairement à un compte épargne classique, la prévoyance investie dans des fonds permet de lutter contre l'inflation et de capitaliser." },
+            { title: "Flexibilité du 3B", desc: "Le pilier 3B offre une épargne totalement libre, sans plafond de versement, disponible pour financer un projet (immobilier, études, etc.)." },
+            { title: "Financement immobilier", desc: "Les avoirs du pilier 3A ou 3B peuvent être mis en nantissement ou retirés pour financer l'achat de votre résidence principale." },
+            { title: "Exonération fiscale (3B)", desc: "Les plus-values générées dans le cadre d'une assurance-vie 3B (sous conditions) sont souvent exonérées d'impôts sur le revenu." },
+          ].map((a, i) => (
+            <div key={i} style={{ display: "flex", gap: 16, alignItems: "flex-start", background: C.white, padding: "16px 20px", border: `1px solid ${C.lightGray}`, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
+              <div style={{ background: "rgba(165,149,104,0.15)", color: C.gold, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, flexShrink: 0 }}>✓</div>
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: C.primary, marginBottom: 4 }}>{a.title}</div>
+                <div style={{ fontSize: 11.5, color: C.gray, lineHeight: 1.5, textAlign: "justify" }}>{a.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceSolution({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
+        <div>
+          <ReportTitle title="La solution" highlight="Prévoyance" subtitle="STRATÉGIE RECOMMANDÉE" />
+          <EditableText editMode={editMode} value={data.texts?.prevoyanceSol1} onChange={v => onTextChange("prevoyanceSol1", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px" }} />
+          <EditableText editMode={editMode} value={data.texts?.prevoyanceSol2} onChange={v => onTextChange("prevoyanceSol2", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px" }} />
+          <EditableText editMode={editMode} value={data.texts?.prevoyanceSol3} onChange={v => onTextChange("prevoyanceSol3", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: 0 }} />
+        </div>
+        <div style={{ position: "relative", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+           <img src="/geneva.jpg" alt="Famille Suisse" className="pdf-image" style={{ width: "100%", height: "80%", objectFit: "cover", boxShadow: "0 10px 40px rgba(0,0,0,0.15)" }} />
+           <div style={{ position: "absolute", bottom: "5%", left: "-10%", background: C.primary, color: C.white, padding: "24px 32px", boxShadow: "0 8px 24px rgba(105,33,2,0.3)" }}>
+              <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>Sérénité absolue</div>
+              <div style={{ fontSize: 12, lineHeight: 1.5, opacity: 0.9 }}>Préparez votre avenir et celui<br/>de vos proches dès aujourd'hui.</div>
+           </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceCouvertures({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Vos garanties &" highlight="Couvertures de risque" subtitle="PROTECTION DE LA FAMILLE ET DU PROJET" />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 24 }}>
+          <div style={{ display: "flex", gap: 24, alignItems: "stretch" }}>
+            <div style={{ background: C.primary, width: 8, flexShrink: 0 }} />
+            <div style={{ background: C.lightGray, padding: 24, flex: 1, boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.primary, marginBottom: 8 }}>Libération du paiement des primes (LPP)</div>
+              <EditableText editMode={editMode} value={data.texts?.prevCouvP1} onChange={v => onTextChange("prevCouvP1", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.5, textAlign: "justify", margin: 0 }} />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 24, alignItems: "stretch" }}>
+            <div style={{ background: C.gold, width: 8, flexShrink: 0 }} />
+            <div style={{ background: C.lightGray, padding: 24, flex: 1, boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.gold, marginBottom: 8 }}>Capital en cas de décès</div>
+              <EditableText editMode={editMode} value={data.texts?.prevCouvP2} onChange={v => onTextChange("prevCouvP2", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.5, textAlign: "justify", margin: 0 }} />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 24, alignItems: "stretch" }}>
+            <div style={{ background: C.darkGray, width: 8, flexShrink: 0 }} />
+            <div style={{ background: C.lightGray, padding: 24, flex: 1, boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.darkGray, marginBottom: 8 }}>Rentes Invalidité & Couvertures complémentaires</div>
+              <EditableText editMode={editMode} value={data.texts?.prevCouvP3} onChange={v => onTextChange("prevCouvP3", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.5, textAlign: "justify", margin: 0 }} />
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceFonds({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const compagnie = data.compagniePrevoyance || "Liechtenstein Life";
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Stratégie de placement :" highlight="Vos Fonds" subtitle={`PARTENAIRE : ${compagnie.toUpperCase()}`} />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 40, alignItems: "center" }}>
+          <div>
+            <EditableText editMode={editMode} value={data.texts?.prevFondsIntro} onChange={v => onTextChange("prevFondsIntro", v)} style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.7, marginBottom: 24, textAlign: "justify" }} />
+            <div style={{ borderLeft: `3px solid ${C.gold}`, paddingLeft: 16, marginBottom: 24 }}>
+              <div style={{ fontWeight: 700, color: C.primary, fontSize: 15, marginBottom: 4 }}>Profil de gestion sélectionné</div>
+              <div style={{ color: C.gold, fontWeight: 600, fontSize: 13 }}>{data.profilRisque || "Équilibré"}</div>
+            </div>
+            <div style={{ color: C.primary, fontWeight: 700, fontSize: 13, marginBottom: 8, textTransform: "uppercase" }}>Votre stratégie d'investissement :</div>
+            <EditableText editMode={editMode} value={data.texts?.strategieFonds} onChange={v => onTextChange("strategieFonds", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6 }} />
+          </div>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, boxShadow: "0 10px 30px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", minHeight: 280 }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: C.primary, marginBottom: 12 }}>{compagnie}</div>
+            <div style={{ fontSize: 12, color: C.gray, textAlign: "center", lineHeight: 1.5 }}>
+              Architecture ouverte et sélection<br/>des meilleurs gérants mondiaux.
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceFondsDynamique({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  
+  // 💡 API : À remplacer par un fetch vers votre fournisseur de données réelles
+  const fundPerformanceAPI = {
+    "IE00B5BMR087": { name: "iShares Core S&P 500 UCITS ETF", "3m": "+8.2%", "1y": "+24.5%", "3y": "+35.1%", "5y": "+85.4%", "10y": "+210.3%", "10y_ann": "+12.0%" },
+    "IE00B53SZB19": { name: "iShares NASDAQ 100 UCITS ETF", "3m": "+10.1%", "1y": "+38.2%", "3y": "+45.6%", "5y": "+120.8%", "10y": "+340.5%", "10y_ann": "+16.0%" },
+    "CH0237935637": { name: "iShares Core SPI (CH)", "3m": "+4.5%", "1y": "+8.9%", "3y": "+15.2%", "5y": "+32.1%", "10y": "+75.4%", "10y_ann": "+5.8%" },
+    "DE000A0S9GB0": { name: "Xtrackers DAX UCITS ETF", "3m": "+6.2%", "1y": "+14.5%", "3y": "+22.4%", "5y": "+45.7%", "10y": "+95.2%", "10y_ann": "+6.9%" },
+    "LU0328475792": { name: "Pictet - Water", "3m": "+3.1%", "1y": "+11.2%", "3y": "+18.5%", "5y": "+42.3%", "10y": "+105.6%", "10y_ann": "+7.5%" }
+  };
+
+  const funds = [
+    { isin: "IE00B5BMR087", weight: 30 },
+    { isin: "IE00B53SZB19", weight: 25 },
+    { isin: "CH0237935637", weight: 15 },
+    { isin: "DE000A0S9GB0", weight: 15 },
+    { isin: "LU0328475792", weight: 15 }
+  ];
+
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Détail Stratégie" highlight="Dynamique" subtitle="RÉPARTITION ET PERFORMANCES HISTORIQUES" />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <p style={{ fontSize: 13, color: C.darkGray, marginBottom: 24 }}>Analyse des fonds sous-jacents composant votre portefeuille dynamique. Les rendements ci-dessous sont connectables en temps réel.</p>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, textAlign: "left", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+            <thead>
+              <tr style={{ background: C.primary, color: C.white }}>
+                <th style={{ padding: "12px 16px" }}>ISIN</th>
+                <th style={{ padding: "12px 16px" }}>Nom du Fonds</th>
+                <th style={{ padding: "12px 16px", textAlign: "center" }}>Poids</th>
+                <th style={{ padding: "12px 16px", textAlign: "center" }}>3 Mois</th>
+                <th style={{ padding: "12px 16px", textAlign: "center" }}>1 An</th>
+                <th style={{ padding: "12px 16px", textAlign: "center" }}>3 Ans</th>
+                <th style={{ padding: "12px 16px", textAlign: "center" }}>5 Ans</th>
+                <th style={{ padding: "12px 16px", textAlign: "center" }}>10 Ans (Cumul)</th>
+                <th style={{ padding: "12px 16px", textAlign: "center" }}>Moy. Annuelle</th>
+              </tr>
+            </thead>
+            <tbody>
+              {funds.map((f, i) => {
+                const apiData = fundPerformanceAPI[f.isin] || {};
+                return (
+                  <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white, borderBottom: `1px solid ${C.mediumGray}` }}>
+                    <td style={{ padding: "12px 16px", color: C.gray, fontFamily: "monospace" }}>{f.isin}</td>
+                    <td style={{ padding: "12px 16px", fontWeight: 700, color: C.primaryDark }}>{apiData.name}</td>
+                    <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.primary }}>{f.weight}%</td>
+                    <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["3m"]}</td>
+                    <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["1y"]}</td>
+                    <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["3y"]}</td>
+                    <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["5y"]}</td>
+                    <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 700, color: C.darkGray }}>{apiData["10y"]}</td>
+                    <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.primary }}>{apiData["10y_ann"]}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceRachat({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Comprendre la" highlight="Valeur de Rachat" subtitle="MÉCANISME DU PRODUIT RETRAITE" />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 64 }}>
+          <div style={{ flex: 1 }}>
+             <EditableText editMode={editMode} value={data.texts?.prevRachatP1} onChange={v => onTextChange("prevRachatP1", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 24 }} />
+             <ul style={{ paddingLeft: 20, margin: "0 0 24px 0", color: C.darkGray, fontSize: 13.5, lineHeight: 1.8 }}>
+               <li><strong>Mise en place des garanties :</strong> Une part de vos premiers versements est allouée à la création de votre bouclier financier (capital décès, libération des primes).</li>
+               <li><strong>Fondation du capital :</strong> Le reste est investi sur les marchés pour commencer à générer vos futurs rendements exponentiels.</li>
+             </ul>
+             <EditableText editMode={editMode} value={data.texts?.prevRachatP2} onChange={v => onTextChange("prevRachatP2", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.primary, textAlign: "justify", fontWeight: 600, margin: 0 }} />
+          </div>
+          <div style={{ width: 400, background: C.lightGray, padding: 32, borderLeft: `4px solid ${C.gold}` }}>
+            <div style={{ textAlign: "left", color: C.primary, fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Motifs de retrait anticipé (3A)</div>
+            <div style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, marginBottom: 12 }}>Bien que conçu pour la retraite, le capital peut être débloqué avant terme sous certaines conditions légales :</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", gap: 10 }}><span style={{ color: C.gold, fontWeight: 800 }}>✓</span><span style={{ fontSize: 12.5, color: C.darkGray }}>Achat de la résidence principale</span></div>
+              <div style={{ display: "flex", gap: 10 }}><span style={{ color: C.gold, fontWeight: 800 }}>✓</span><span style={{ fontSize: 12.5, color: C.darkGray }}>Départ définitif de la Suisse</span></div>
+              <div style={{ display: "flex", gap: 10 }}><span style={{ color: C.gold, fontWeight: 800 }}>✓</span><span style={{ fontSize: 12.5, color: C.darkGray }}>Lancement d'une activité indépendante</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceFiscalite({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Impact & Optimisation" highlight="Fiscale" subtitle="LE LEVIER DU PILIER 3A" />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 64 }}>
+          <div style={{ flex: 1 }}>
+             <EditableText editMode={editMode} value={data.texts?.prevFiscP1} onChange={v => onTextChange("prevFiscP1", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 24 }} />
+             <EditableText editMode={editMode} value={data.texts?.prevFiscP2} onChange={v => onTextChange("prevFiscP2", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
+          </div>
+          <div style={{ width: 400, background: C.white, border: `2px solid ${C.gold}`, padding: 32, boxShadow: "0 15px 35px rgba(0,0,0,0.05)" }}>
+            <div style={{ textAlign: "center", color: C.primary, fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 24 }}>Mécanisme de déduction</div>
+            
+            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `1px solid ${C.lightGray}`, paddingBottom: 12, marginBottom: 12 }}>
+              <span style={{ color: C.gray, fontSize: 13 }}>Revenu imposable initial</span>
+              <span style={{ color: C.darkGray, fontWeight: 600, fontSize: 13 }}>CHF {fmt(data.revenus || 120000)}.-</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `1px solid ${C.lightGray}`, paddingBottom: 12, marginBottom: 12 }}>
+              <span style={{ color: C.gold, fontSize: 13, fontWeight: 600 }}>Versement Pilier 3A Max (2025)</span>
+              <span style={{ color: C.gold, fontWeight: 700, fontSize: 13 }}>- CHF 7'258.-</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `2px solid ${C.primary}`, paddingBottom: 12, marginBottom: 16 }}>
+              <span style={{ color: C.primary, fontSize: 13, fontWeight: 700 }}>Nouveau revenu imposable</span>
+              <span style={{ color: C.primary, fontWeight: 800, fontSize: 14 }}>CHF {fmt(Number(data.revenus || 120000) - 7258)}.-</span>
+            </div>
+            
+            <div style={{ background: "rgba(105,33,2,0.05)", padding: 16, textAlign: "center", marginTop: 24 }}>
+               <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.05em", marginBottom: 8 }}>Économie d'impôt estimée par an</div>
+               <div style={{ fontSize: 28, color: C.primary, fontWeight: 900 }}>~ CHF {fmt(Math.round(7258 * 0.30))}.-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideProjectionsPrevoyance({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const rows = computeProjectionsPrevoyance(data);
+  const annual = Number(data.capaciteEpargne || 500) * 12;
+
+  // SVG Chart variables
+  const svgW = 480; const svgH = 240;
+  const padL = 60; const padR = 20; const padT = 20; const padB = 30;
+  const w = svgW - padL - padR; const h = svgH - padT - padB;
+  const maxVal = rows[rows.length-1].optimiste;
+  const gridMax = Math.ceil(maxVal / 50000) * 50000 || 150000;
+  
+  const getX = (i) => padL + (i / (rows.length - 1)) * w;
+  const getY = (val) => padT + h - (val / gridMax) * h;
+
+  const dInvested = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.invested)}`).join(' ');
+  const dPessimiste = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.pessimiste)}`).join(' ');
+  const dRealiste = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.realiste)}`).join(' ');
+  const dOptimiste = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.optimiste)}`).join(' ');
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Croissance de votre" highlight="Capital Prévoyance" subtitle={`PROJECTION JUSQU'À 65 ANS (${Math.max(1, 65 - (Number(data.age)||40))} ANS)`} />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 40, alignItems: "center", minHeight: 0 }}>
+          
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+             <p style={{ fontSize: 13, lineHeight: 1.6, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }}>
+              En investissant <strong>CHF {fmt(data.capaciteEpargne || 500)}.- / mois</strong>, voici la projection de votre capital à la retraite ({data.tauxPessimistePrev}% / {data.tauxRealistePrev}% / {data.tauxOptimistePrev}%), en tenant compte de l'effet des intérêts composés.
+            </p>
+
+            <div style={{ width: svgW, height: svgH, alignSelf: "center", background: C.white, border: `1px solid ${C.lightGray}`, padding: "10px 0" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
+                {/* Y Axis */}
+                {[0, 0.33, 0.66, 1].map(pct => {
+                  const y = padT + h - (pct * h);
+                  const val = Math.round(gridMax * pct);
+                  return (
+                    <g key={pct}>
+                      <line x1={padL} y1={y} x2={svgW - padR} y2={y} stroke="#E5E7EB" strokeWidth="1" strokeDasharray="4 4" />
+                      <text x={padL - 10} y={y + 4} fontSize="11" fill="#6B7280" textAnchor="end">{fmt(val)}</text>
+                    </g>
+                  );
+                })}
+                {/* X Axis */}
+                {rows.map((r, i) => (
+                  <text key={i} x={getX(i)} y={svgH - 5} fontSize="11" fill="#6B7280" textAnchor="middle">{r.age} ans</text>
+                ))}
+                
+                {/* Area under realiste */}
+                <path d={`${dRealiste} L ${getX(rows.length-1)} ${getY(0)} L ${getX(0)} ${getY(0)} Z`} fill="rgba(105,33,2,0.05)" />
+                
+                {/* Lines */}
+                <path d={dInvested} fill="none" stroke={C.gray} strokeWidth="2" strokeDasharray="6 4" />
+                <path d={dPessimiste} fill="none" stroke="#9CA3AF" strokeWidth="2" />
+                <path d={dRealiste} fill="none" stroke={C.primary} strokeWidth="3" />
+                <path d={dOptimiste} fill="none" stroke={C.gold} strokeWidth="2" />
+                
+                {/* Points Realiste */}
+                {rows.map((r, i) => (
+                  <g key={i}>
+                    <circle cx={getX(i)} cy={getY(r.invested)} r="3" fill={C.gray} />
+                    <circle cx={getX(i)} cy={getY(r.realiste)} r="5" fill={C.primary} stroke={C.white} strokeWidth="2" />
+                  </g>
+                ))}
+              </svg>
+            </div>
+            <div style={{ display: "flex", gap: 16, marginTop: 16, alignSelf: "center", fontSize: 11, fontWeight: 600 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 12, height: 2, background: C.gray, borderBottom: "2px dashed" }} /> Total Versé</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: "#9CA3AF" }} /> Pessimiste</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: C.primary }} /> Réaliste</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: C.gold }} /> Optimiste</div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, textAlign: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+              <thead>
+                <tr style={{ background: C.primary, color: C.white }}>
+                  <th style={{ padding: "10px 8px", fontWeight: 600 }}>Âge</th>
+                  <th style={{ padding: "10px 8px", fontWeight: 600 }}>Versé</th>
+                  <th style={{ padding: "10px 8px", fontWeight: 600 }}>Pessimiste</th>
+                  <th style={{ padding: "10px 8px", fontWeight: 600 }}>Réaliste</th>
+                  <th style={{ padding: "10px 8px", fontWeight: 600 }}>Optimiste</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.filter(r => r.year > 0).map((r, i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white }}>
+                    <td style={{ padding: "10px 8px", fontWeight: 700, color: C.primary, borderBottom: "1px solid #E5E3DE" }}>{r.age} ans</td>
+                    <td style={{ padding: "10px 8px", color: C.darkGray, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.invested)}</td>
+                    <td style={{ padding: "10px 8px", color: C.darkGray, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.pessimiste)}</td>
+                    <td style={{ padding: "10px 8px", fontWeight: 700, color: C.primary, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.realiste)}</td>
+                    <td style={{ padding: "10px 8px", fontWeight: 700, color: C.gold, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.optimiste)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {data.optiFiscale && (
+              <div style={{ marginTop: 12, background: "rgba(165,149,104,0.1)", padding: "8px 16px", border: `1px solid ${C.gold}`, color: C.primaryDark, fontSize: 11, fontWeight: 700 }}>
+                Gain Fiscal Cumulé à 65 ans : ~ CHF {fmt(rows[rows.length-1].taxSavings)}.-
+              </div>
+            )}
+            <p style={{ fontSize: 9, color: C.gray, marginTop: 12, lineHeight: 1.5, fontStyle: "italic", textAlign: "center" }}>
+              *Simulation non garantie à but illustratif. Les performances passées ne préjugent pas des résultats futurs.
+            </p>
+          </div>
+
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
 
 // ────────────────────── PREVIEW MODAL ──────────────────────
 
@@ -833,8 +1311,6 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         return;
     }
 
-    // Nous convertissons les images en Base64 AVANT la capture pour s'assurer
-    // que le navigateur les injecte correctement dans le PDF sans blocage CORS.
     const images = element.querySelectorAll('img.pdf-image');
     const imagePromises = Array.from(images).map(async (img) => {
         if (img.src && !img.src.startsWith('data:')) {
@@ -843,11 +1319,9 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         }
     });
 
-    // On attend que TOUTES les images soient converties
     await Promise.all(imagePromises);
 
     setTimeout(async () => {
-      // Convertir temporairement les textareas en divs pour le PDF
       const textareas = element.querySelectorAll('textarea');
       const replacements = [];
       textareas.forEach((textarea) => {
@@ -868,7 +1342,6 @@ function ReportPreview({ data, onClose, onUpdateData }) {
       try {
         const html2pdf = await requireHtml2Pdf();
         
-        // CORRECTION 2 : Empêcher le décalage induit par le scroll du navigateur
         window.scrollTo(0, 0);
         
         await html2pdf()
@@ -886,8 +1359,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
               windowWidth: 1280,
               logging: false
             },
-            pagebreak: { mode: ['css', 'legacy'] }, // On s'assure que la logique de saut de page n'ajoute pas de page vide
-            // Précision accrue sur la largeur (13.33334) pour éviter le débordement horizontal
+            pagebreak: { mode: ['css', 'legacy'] },
             jsPDF: { unit: 'in', format: [13.33334, 7.5], orientation: 'landscape' }
           })
           .from(element)
@@ -904,7 +1376,7 @@ function ReportPreview({ data, onClose, onUpdateData }) {
     }, 500); 
   };
 
-  const slides = [
+  const slidesSwissquote = [
     <SlideCover data={data} />,
     <SlideTOC data={data} />,
     <SlidePhilosophy data={data} editMode={editMode} onTextChange={handleTextChange} />,
@@ -912,19 +1384,45 @@ function ReportPreview({ data, onClose, onUpdateData }) {
     <SlideSituation data={data} />,
     <SlideSwissquote data={data} editMode={editMode} onTextChange={handleTextChange} />,
     <SlideAdvantages data={data} />,
-    <SlideDivider data={data} number={8} title="Compte Titre" />,
+    <SlideDivider data={data} number={8} title="Compte Titre" editMode={editMode} onTextChange={handleTextChange} />,
     <SlideCompteTitre data={data} editMode={editMode} onTextChange={handleTextChange} />,
     <SlideFund data={data} />,
     <SlideProjections data={data} />,
     <SlideTarifs data={data} />,
     <SlideComparatif data={data} />,
-    <SlideApp data={data} />,
+    <SlideApp data={data} editMode={editMode} onTextChange={handleTextChange} />,
     <SlideContact data={data} editMode={editMode} onTextChange={handleTextChange} />,
   ];
 
+  const slidesPrevoyance = [
+    <SlideCover data={data} />,
+    <SlideTOCPrevoyance data={data} />,
+    <SlidePhilosophy data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlideAbout data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlideSituation data={data} />,
+    <SlidePrevoyanceIntro data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlidePrevoyanceAvantages data={data} />,
+    <SlideDivider data={data} number={8} title="Prévoyance 3A/3B" editMode={editMode} onTextChange={handleTextChange} />,
+    <SlidePrevoyanceSolution data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlidePrevoyanceCouvertures data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlidePrevoyanceFonds data={data} editMode={editMode} onTextChange={handleTextChange} />,
+  ];
+
+  if (data.profilRisque === "Dynamique") {
+      slidesPrevoyance.push(<SlidePrevoyanceFondsDynamique data={data} />);
+  }
+  slidesPrevoyance.push(<SlidePrevoyanceRachat data={data} editMode={editMode} onTextChange={handleTextChange} />);
+
+  if (data.optiFiscale) {
+      slidesPrevoyance.push(<SlidePrevoyanceFiscalite data={data} editMode={editMode} onTextChange={handleTextChange} />);
+  }
+  slidesPrevoyance.push(<SlideProjectionsPrevoyance data={data} />);
+  slidesPrevoyance.push(<SlideContact data={data} editMode={editMode} onTextChange={handleTextChange} />);
+
+  const slides = data.templateId === "prevoyance" ? slidesPrevoyance : slidesSwissquote;
+
   return (
     <div className="preview-modal-container" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 200, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-      {/* Top bar */}
       <div className="no-print" style={{ background: C.black, padding: "10px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <span style={{ color: C.white, fontSize: 12, fontWeight: 600, letterSpacing: "0.06em" }}>APERCU — {data.prenom} {(data.nom||"").toUpperCase()}</span>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -938,11 +1436,9 @@ function ReportPreview({ data, onClose, onUpdateData }) {
           <button onClick={onClose} style={{ background: "rgba(255,255,255,0.1)", color: C.white, border: "none", padding: "6px 16px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 11, fontWeight: 600 }}>FERMER</button>
         </div>
       </div>
-      {/* Slide area */}
       <div className="no-print" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 60px", position: "relative", minHeight: 0 }}>
         <button onClick={() => setCurrentSlide(s => Math.max(0, s - 1))} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: currentSlide === 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", color: currentSlide === 0 ? "rgba(255,255,255,0.2)" : C.white, border: "none", width: 40, height: 40, cursor: currentSlide === 0 ? "default" : "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>&#8249;</button>
         
-        {/* L'aperçu affiche la slide de 1280x720 réduite proportionnellement */}
         <div style={{ width: 960, height: 540, position: "relative", boxShadow: "0 8px 40px rgba(0,0,0,0.5)", overflow: "hidden", backgroundColor: C.white }}>
           <div style={{ width: 1280, height: 720, transform: "scale(0.75)", transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}>
             {slides[currentSlide]}
@@ -954,7 +1450,6 @@ function ReportPreview({ data, onClose, onUpdateData }) {
 
         <button onClick={() => setCurrentSlide(s => Math.min(slides.length - 1, s + 1))} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: currentSlide === slides.length - 1 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", color: currentSlide === slides.length - 1 ? "rgba(255,255,255,0.2)" : C.white, border: "none", width: 40, height: 40, cursor: currentSlide === slides.length - 1 ? "default" : "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>&#8250;</button>
       </div>
-      {/* Thumbnails */}
       <div className="no-print" style={{ background: C.black, padding: "8px 24px", display: "flex", gap: 4, overflowX: "auto", flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
         {slides.map((_, i) => (
           <div key={i} onClick={() => setCurrentSlide(i)} style={{ width: 48, height: 28, background: i === currentSlide ? C.primary : "rgba(255,255,255,0.06)", border: i === currentSlide ? `1px solid ${C.gold}` : "1px solid rgba(255,255,255,0.04)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: i === currentSlide ? C.white : "rgba(255,255,255,0.35)", fontWeight: 600, flexShrink: 0 }}>
@@ -963,7 +1458,6 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         ))}
       </div>
 
-      {/* CONTENEUR D'IMPRESSION */}
       <div style={{ position: "fixed", top: 0, left: 0, zIndex: -1000, opacity: 0.001, pointerEvents: "none" }}>
         <div id="report-printable" style={{ width: "1280px", height: `${slides.length * 720}px`, display: "block", background: C.white, overflow: "hidden" }}>
           {slides.map((SlideComponent, index) => (
@@ -977,7 +1471,6 @@ function ReportPreview({ data, onClose, onUpdateData }) {
         </div>
       </div>
 
-      {/* OVERLAY DE CHARGEMENT VISUEL */}
       {isPdfLoading && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(255,255,255,0.95)", zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 16 }}>
@@ -1018,14 +1511,29 @@ export default function WallSwissApp() {
     solution1: "Le compte-titres est une solution d'investissement flexible et performante, idéale pour faire fructifier votre capital en Suisse.",
     solution2: "Contrairement à d'autres solutions d'épargne, le compte-titres ne présente aucune contrainte de durée et permet d'accéder à un large choix d'actifs : actions, obligations, ETF, fonds d'investissement et produits dérivés.",
     solution3: "En Suisse, il offre une fiscalité attractive, notamment en matière de plus-values mobilières et d'absence de prélèvements sociaux, tout en permettant une gestion libre ou déléguée.",
-    contactDesc: "Gérer son patrimoine nécessite une approche personnalisée et stratégique. En optimisant sa fiscalité, en sécurisant son épargne et en faisant des choix d'investissement éclairés, il est possible de construire un patrimoine pérenne et adapté à vos projets de vie."
+    prevoyanceSol1: "L'assurance-vie liée à des fonds de placement est le véhicule idéal pour combiner croissance du capital et sécurité pour vos proches.",
+    prevoyanceSol2: "En choisissant une solution en architecture ouverte, vous accédez aux meilleurs gérants mondiaux tout en bénéficiant des avantages exclusifs du cadre de l'assurance-vie (protection du preneur d'assurance, désignation libre des bénéficiaires).",
+    prevoyanceSol3: "Cette stratégie permet une optimisation fiscale maximale aujourd'hui, tout en garantissant une transmission simplifiée et optimisée de votre patrimoine demain.",
+    strategieFonds: "Investissement diversifié et orienté sur les actions mondiales de qualité, avec une couverture du risque de change si nécessaire. Focus sur la croissance à long terme.",
+    contactDesc: "Gérer son patrimoine nécessite une approche personnalisée et stratégique. En optimisant sa fiscalité, en sécurisant son épargne et en faisant des choix d'investissement éclairés, il est possible de construire un patrimoine pérenne et adapté à vos projets de vie.",
+    dividerQuote: "« L'investissement est un voyage à long terme. La clé est de rester concentré sur sa destination finale et de s'entourer des meilleurs partenaires. »",
+    appP1: "Effectuez des opérations de trading, d'investissement et bancaires en toute sécurité et à des tarifs avantageux, grâce au principal acteur suisse de la banque en ligne.",
+    appP2: "Nos plateformes intuitives vous invitent à explorer un monde riche en opportunités. Et accédez à une vaste gamme d'informations et de programmes de formation.",
+    prevIntroP1: "Couvre les besoins vitaux. Obligatoire pour toute personne domiciliée ou exerçant une activité lucrative en Suisse.",
+    prevIntroP2: "Maintien du niveau de vie antérieur. Obligatoire pour les salariés dépassant un certain seuil de revenu.",
+    prevIntroP3: "Comble les lacunes de prévoyance (qui s'élèvent souvent à 40% du dernier salaire) et permet de réaliser des économies d'impôts majeures.",
+    prevCouvP1: "En cas d'incapacité de gain (maladie ou accident), la compagnie prend le relais et paie vos primes. Votre capital retraite continue de se construire sans que vous n'ayez à débourser un centime.",
+    prevCouvP2: "En cas de coup dur prématuré, un capital garanti est immédiatement versé à vos bénéficiaires (conjoint, enfants) pour les mettre à l'abri du besoin et assumer les charges courantes (hypothèque, études).",
+    prevCouvP3: "Selon vos besoins, il est possible d'ajouter des rentes en cas d'invalidité pour compenser la perte de revenus, garantissant le maintien absolu de votre niveau de vie.",
+    prevFondsIntro: "Pour contrer l'inflation et maximiser votre capital à la retraite, votre épargne est investie sur les marchés financiers au travers de fonds de placement de premier ordre, sélectionnés via notre partenaire",
+    prevRachatP1: "Une solution de prévoyance liée à des fonds est un puissant levier conçu pour le long terme (jusqu'à l'âge de la retraite). Les premières années de votre plan constituent le socle de votre sécurité :",
+    prevRachatP2: "La valeur de votre contrat (valeur de rachat) se construit ainsi progressivement. Un retrait lors des toutes premières années ne reflète pas encore le plein potentiel de croissance de votre investissement à terme.",
+    prevFiscP1: "Le système fiscal suisse encourage fortement la prévoyance individuelle. Chaque franc investi dans votre pilier 3A vient réduire directement votre revenu imposable.",
+    prevFiscP2: "Pour un contribuable moyen, cela représente un retour sur investissement immédiat et garanti par l'État pouvant aller de 20% à 35% du montant versé, indépendamment des performances des marchés financiers."
   };
 
-  // NOUVEAU : Navigation principale du Hub
-  const [activeModule, setActiveModule] = useState("hub"); // "hub" ou "rapport"
-  
-  // Navigation interne au module Rapport Financier
-  const [rapportPage, setRapportPage] = useState("dashboard"); // Remplacé "page" par "rapportPage"
+  const [activeModule, setActiveModule] = useState("hub"); 
+  const [rapportPage, setRapportPage] = useState("dashboard"); 
   const [step, setStep] = useState(0);
 
   const [reports, setReports] = useState([{
@@ -1037,6 +1545,8 @@ export default function WallSwissApp() {
     objectifs: ["Préparer la retraite", "Financer un projet immobilier", "Améliorer la fiscalité des placements"], objectifCustom: "",
     montantInvestissement: "200000", fraisSouscription: "2.5",
     tauxPessimiste: "4", tauxRealiste: "7", tauxOptimiste: "10",
+    compagniePrevoyance: "Liechtenstein Life", optiFiscale: true,
+    tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6",
     conseiller: "Louis Borne", titreConseiller: "Planificatrice financière",
     telephone: "+41.76.231.92.75", email: "l.borne@wallswiss.ch",
     texts: initialTexts
@@ -1051,6 +1561,8 @@ export default function WallSwissApp() {
     objectifs: [], objectifCustom: "",
     montantInvestissement: "100000", fraisSouscription: "3",
     tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9",
+    compagniePrevoyance: "Liechtenstein Life", optiFiscale: true,
+    tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6",
     conseiller: "Louis Borne", titreConseiller: "Planificatrice financière",
     telephone: "+41.76.231.92.75", email: "l.borne@wallswiss.ch",
     texts: initialTexts
@@ -1061,7 +1573,7 @@ export default function WallSwissApp() {
   const toggleObj = (o) => setForm(p => ({ ...p, objectifs: p.objectifs.includes(o) ? p.objectifs.filter(x => x !== o) : [...p.objectifs, o] }));
   const addCustomObj = () => { if (form.objectifCustom.trim()) { setForm(p => ({ ...p, objectifs: [...p.objectifs, p.objectifCustom.trim()], objectifCustom: "" })); } };
   const handleSave = () => { setReports(p => [...p, { ...form, id: Date.now() }]); setPreview(form); setRapportPage("dashboard"); setStep(0); };
-  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", conseiller: "Louis Borne", titreConseiller: "Planificatrice financière", telephone: "+41.76.231.92.75", email: "l.borne@wallswiss.ch", texts: initialTexts });
+  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", conseiller: "Louis Borne", titreConseiller: "Planificatrice financière", telephone: "+41.76.231.92.75", email: "l.borne@wallswiss.ch", texts: initialTexts });
 
   const handlePreviewUpdate = (newData) => {
     setPreview(newData);
@@ -1083,8 +1595,8 @@ export default function WallSwissApp() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             {[
               { id: "swissquote", title: "Compte Titre SwissQuote", desc: "Stratégie d'investissement flexible et performante en Suisse.", active: true },
+              { id: "prevoyance", title: "Prévoyance (3A/3B)", desc: "Optimisation fiscale et préparation retraite avec assurance vie.", active: true },
               { id: "assurance", title: "Assurance Vie", desc: "Protection et transmission de patrimoine (Bientôt disponible).", active: false },
-              { id: "prevoyance", title: "Prévoyance (3A/3B)", desc: "Optimisation fiscale et retraite (Bientôt disponible).", active: false },
               { id: "immobilier", title: "Immobilier", desc: "Investissements et rendements immobiliers (Bientôt disponible).", active: false },
             ].map(tpl => (
               <div key={tpl.id} onClick={() => tpl.active && u("templateId", tpl.id)} style={{ border: `2px solid ${form.templateId === tpl.id ? C.primary : C.mediumGray}`, padding: 20, cursor: tpl.active ? "pointer" : "not-allowed", opacity: tpl.active ? 1 : 0.5, background: form.templateId === tpl.id ? "rgba(105,33,2,0.04)" : C.white, display: "flex", flexDirection: "column", gap: 8, borderRadius: "0px" }}>
@@ -1108,7 +1620,7 @@ export default function WallSwissApp() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <div style={S.fg}><label style={S.label}>Date du rapport</label><input style={S.input} type="date" value={form.dateRapport || ""} onChange={e=>u("dateRapport",e.target.value)}/></div>
-              <div style={S.fg}><label style={S.label}>Âge</label><input style={S.input} type="number" value={form.age} onChange={e=>u("age",e.target.value)} placeholder="58"/></div>
+              <div style={S.fg}><label style={S.label}>Âge</label><input style={S.input} type="number" value={form.age} onChange={e=>u("age",e.target.value)} placeholder="40"/></div>
             </div>
             <div style={S.fg}><label style={S.label}>Nationalité</label><input style={S.input} value={form.nationalite} onChange={e=>u("nationalite",e.target.value)}/></div>
           </div>
@@ -1120,7 +1632,7 @@ export default function WallSwissApp() {
             </div>
             <div style={S.fg}><label style={S.label}>Revenus annuels bruts (CHF)</label><input style={S.input} type="number" value={form.revenus} onChange={e=>u("revenus",e.target.value)} placeholder="120000"/></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div style={S.fg}><label style={S.label}>Épargne mensuelle</label><input style={S.input} type="number" value={form.capaciteEpargne} onChange={e=>u("capaciteEpargne",e.target.value)} placeholder="1500"/></div>
+              <div style={S.fg}><label style={S.label}>{form.templateId === "prevoyance" ? "Montant mensuel souhaité (3P)" : "Épargne mensuelle globale"}</label><input style={S.input} type="number" value={form.capaciteEpargne} onChange={e=>u("capaciteEpargne",e.target.value)} placeholder="500"/></div>
               <div style={S.fg}><label style={S.label}>Fortune globale</label><input style={S.input} type="number" value={form.fortuneGlobale} onChange={e=>u("fortuneGlobale",e.target.value)} placeholder="450000"/></div>
             </div>
           </div>
@@ -1163,23 +1675,64 @@ export default function WallSwissApp() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Paramètres d'investissement</div>
-            <div style={S.fg}><label style={S.label}>Montant initial (CHF)</label><input style={S.input} type="number" value={form.montantInvestissement} onChange={e=>u("montantInvestissement",e.target.value)}/></div>
-            <div style={S.fg}><label style={S.label}>Frais de souscription (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscription} onChange={e=>u("fraisSouscription",e.target.value)}/></div>
             
-            <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
-            
-            <div style={S.fg}><label style={S.label}>Horizon de placement</label><select style={S.select} value={form.horizonPlacement} onChange={e=>u("horizonPlacement",e.target.value)}>{["Court terme (< 3 ans)", "Moyen terme (3 - 8 ans)", "Long terme (> 8 ans)"].map(s=><option key={s}>{s}</option>)}</select></div>
-            <div style={{...S.fg, margin: 0}}><label style={S.label}>Profil de risque</label><select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>{["Prudent", "Équilibré", "Dynamique", "Offensif"].map(s=><option key={s}>{s}</option>)}</select></div>
+            {form.templateId === "prevoyance" ? (
+              <>
+                <div style={S.fg}>
+                  <label style={S.label}>Compagnie partenaire</label>
+                  <select style={S.select} value={form.compagniePrevoyance} onChange={e=>u("compagniePrevoyance",e.target.value)}>
+                    <option>Liechtenstein Life</option>
+                    <option>Groupe Mutuel</option>
+                  </select>
+                </div>
+                <div style={S.fg}>
+                  <label style={{...S.label, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: 8, color: C.primary}}>
+                    <input type="checkbox" checked={form.optiFiscale} onChange={e=>u("optiFiscale",e.target.checked)} style={{width: 16, height: 16}} /> 
+                    Inclure la slide Optimisation Fiscale (3A)
+                  </label>
+                </div>
+                
+                <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
+                
+                <div style={{...S.fg, margin: 0}}>
+                  <label style={S.label}>Profil de risque du portefeuille</label>
+                  <select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>
+                    {["Prudent", "Équilibré", "Dynamique", "Offensif"].map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={S.fg}><label style={S.label}>Montant initial (CHF)</label><input style={S.input} type="number" value={form.montantInvestissement} onChange={e=>u("montantInvestissement",e.target.value)}/></div>
+                <div style={S.fg}><label style={S.label}>Frais de souscription (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscription} onChange={e=>u("fraisSouscription",e.target.value)}/></div>
+                
+                <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
+                
+                <div style={S.fg}><label style={S.label}>Horizon de placement</label><select style={S.select} value={form.horizonPlacement} onChange={e=>u("horizonPlacement",e.target.value)}>{["Court terme (< 3 ans)", "Moyen terme (3 - 8 ans)", "Long terme (> 8 ans)"].map(s=><option key={s}>{s}</option>)}</select></div>
+                <div style={{...S.fg, margin: 0}}><label style={S.label}>Profil de risque</label><select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>{["Prudent", "Équilibré", "Dynamique", "Offensif"].map(s=><option key={s}>{s}</option>)}</select></div>
+              </>
+            )}
           </div>
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Scénarios de rendement</div>
-            <div style={S.fg}><label style={S.label}>Taux pessimiste (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxPessimiste} onChange={e=>u("tauxPessimiste",e.target.value)}/></div>
-            <div style={S.fg}><label style={S.label}>Taux réaliste (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxRealiste} onChange={e=>u("tauxRealiste",e.target.value)}/></div>
-            <div style={S.fg}><label style={S.label}>Taux optimiste (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxOptimiste} onChange={e=>u("tauxOptimiste",e.target.value)}/></div>
-            <div style={{ background: C.lightGray, padding: 14, marginTop: 16, borderRadius: "0px" }}>
-              <div style={{ fontSize: 11, color: C.gray, marginBottom: 4 }}>Montant net investi</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: C.primary }}>CHF {fmt((form.montantInvestissement||0)-(form.montantInvestissement||0)*(form.fraisSouscription||0)/100)}.-</div>
-            </div>
+            {form.templateId === "prevoyance" ? (
+              <>
+                <div style={S.fg}><label style={S.label}>Taux pessimiste net (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxPessimistePrev} onChange={e=>u("tauxPessimistePrev",e.target.value)}/></div>
+                <div style={S.fg}><label style={S.label}>Taux réaliste net (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxRealistePrev} onChange={e=>u("tauxRealistePrev",e.target.value)}/></div>
+                <div style={S.fg}><label style={S.label}>Taux optimiste net (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxOptimistePrev} onChange={e=>u("tauxOptimistePrev",e.target.value)}/></div>
+                <div style={S.fg}><label style={S.label}>Mensualité investie (CHF)</label><input style={S.input} type="number" value={form.capaciteEpargne} onChange={e=>u("capaciteEpargne",e.target.value)} placeholder="500"/></div>
+              </>
+            ) : (
+              <>
+                <div style={S.fg}><label style={S.label}>Taux pessimiste (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxPessimiste} onChange={e=>u("tauxPessimiste",e.target.value)}/></div>
+                <div style={S.fg}><label style={S.label}>Taux réaliste (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxRealiste} onChange={e=>u("tauxRealiste",e.target.value)}/></div>
+                <div style={S.fg}><label style={S.label}>Taux optimiste (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxOptimiste} onChange={e=>u("tauxOptimiste",e.target.value)}/></div>
+                <div style={{ background: C.lightGray, padding: 14, marginTop: 16, borderRadius: "0px" }}>
+                  <div style={{ fontSize: 11, color: C.gray, marginBottom: 4 }}>Montant net investi</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: C.primary }}>CHF {fmt((form.montantInvestissement||0)-(form.montantInvestissement||0)*(form.fraisSouscription||0)/100)}.-</div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       );
@@ -1205,17 +1758,39 @@ export default function WallSwissApp() {
             <div style={S.fg}><label style={S.label}>Page "Qui sommes-nous" - Description</label>
             <textarea style={{...S.input, minHeight: 80, resize: "vertical"}} value={form.texts.aboutDesc} onChange={e=>uText("aboutDesc", e.target.value)} /></div>
             
-            <div style={S.fg}><label style={S.label}>Page "Pourquoi SwissQuote" - Conclusion</label>
-            <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.swissquoteIntro} onChange={e=>uText("swissquoteIntro", e.target.value)} /></div>
+            {form.templateId === "swissquote" && (
+              <>
+                <div style={S.fg}><label style={S.label}>Page "Pourquoi SwissQuote" - Conclusion</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.swissquoteIntro} onChange={e=>uText("swissquoteIntro", e.target.value)} /></div>
 
-            <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
-            <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "SOLUTION COMPTE TITRE"</div>
-            <div style={S.fg}><label style={S.label}>Paragraphe 1 (Introduction)</label>
-            <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.solution1} onChange={e=>uText("solution1", e.target.value)} /></div>
-            <div style={S.fg}><label style={S.label}>Paragraphe 2 (Avantages)</label>
-            <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.solution2} onChange={e=>uText("solution2", e.target.value)} /></div>
-            <div style={S.fg}><label style={S.label}>Paragraphe 3 (Fiscalité)</label>
-            <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.solution3} onChange={e=>uText("solution3", e.target.value)} /></div>
+                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "SOLUTION COMPTE TITRE"</div>
+                <div style={S.fg}><label style={S.label}>Paragraphe 1 (Introduction)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.solution1} onChange={e=>uText("solution1", e.target.value)} /></div>
+                <div style={S.fg}><label style={S.label}>Paragraphe 2 (Avantages)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.solution2} onChange={e=>uText("solution2", e.target.value)} /></div>
+                <div style={S.fg}><label style={S.label}>Paragraphe 3 (Fiscalité)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.solution3} onChange={e=>uText("solution3", e.target.value)} /></div>
+              </>
+            )}
+
+            {form.templateId === "prevoyance" && (
+              <>
+                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "SOLUTION PRÉVOYANCE"</div>
+                <div style={S.fg}><label style={S.label}>Paragraphe 1 (Introduction)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.prevoyanceSol1} onChange={e=>uText("prevoyanceSol1", e.target.value)} /></div>
+                <div style={S.fg}><label style={S.label}>Paragraphe 2 (Avantages)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.prevoyanceSol2} onChange={e=>uText("prevoyanceSol2", e.target.value)} /></div>
+                <div style={S.fg}><label style={S.label}>Paragraphe 3 (Fiscalité & Transmission)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.prevoyanceSol3} onChange={e=>uText("prevoyanceSol3", e.target.value)} /></div>
+                
+                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "FONDS DE PLACEMENT"</div>
+                <div style={S.fg}><label style={S.label}>Stratégie d'investissement personnalisée</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.strategieFonds} onChange={e=>uText("strategieFonds", e.target.value)} /></div>
+              </>
+            )}
 
             <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
             <div style={S.fg}><label style={S.label}>Page "Contact" - Mot de la fin</label>
@@ -1235,9 +1810,19 @@ export default function WallSwissApp() {
             </div>
             <div style={{ background: C.lightGray, padding: 18, borderRadius: "0px" }}>
               <div style={{ fontSize: 10, color: C.gray, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Investissement</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: C.primary }}>CHF {fmt(form.montantInvestissement)}.-</div>
-              <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>Frais: {form.fraisSouscription}%</div>
-              <div style={{ fontSize: 12, color: C.gray }}>{form.tauxPessimiste}% / {form.tauxRealiste}% / {form.tauxOptimiste}%</div>
+              {form.templateId === "prevoyance" ? (
+                <>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: C.primary }}>CHF {fmt(form.capaciteEpargne)}.- / mois</div>
+                  <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>{form.compagniePrevoyance}</div>
+                  <div style={{ fontSize: 12, color: C.gray }}>Opti. Fiscale: {form.optiFiscale ? "Oui" : "Non"}</div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: C.primary }}>CHF {fmt(form.montantInvestissement)}.-</div>
+                  <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>Frais: {form.fraisSouscription}%</div>
+                  <div style={{ fontSize: 12, color: C.gray }}>{form.tauxPessimiste}% / {form.tauxRealiste}% / {form.tauxOptimiste}%</div>
+                </>
+              )}
             </div>
             <div style={{ background: C.lightGray, padding: 18, borderRadius: "0px" }}>
               <div style={{ fontSize: 10, color: C.gray, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Objectifs</div>
@@ -1417,8 +2002,15 @@ export default function WallSwissApp() {
                           <div style={{ fontSize: 13, color: C.darkGray, marginBottom: 16 }}>{r.profession} — {r.age} ans</div>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 16, borderTop: `1px solid ${C.lightGray}` }}>
                             <div>
-                              <div style={{ fontSize: 10, color: C.gray, marginBottom: 2 }}>Montant simulé</div>
-                              <div style={{ fontSize: 13, color: C.primary, fontWeight: 600 }}>CHF {fmt(r.montantInvestissement||100000)}.-</div>
+                              <div style={{ fontSize: 10, color: C.gray, marginBottom: 2 }}>
+                                {r.templateId === "prevoyance" ? "Épargne simulée" : "Montant simulé"}
+                              </div>
+                              <div style={{ fontSize: 13, color: C.primary, fontWeight: 600 }}>
+                                {r.templateId === "prevoyance" 
+                                  ? `CHF ${fmt(r.capaciteEpargne || 500)}.-/mois` 
+                                  : `CHF ${fmt(r.montantInvestissement||100000)}.-`
+                                }
+                              </div>
                             </div>
                             <span style={{ fontSize: 11, color: C.gold, fontWeight: 700, background: "rgba(165,149,104,0.1)", padding: "6px 12px" }}>OUVRIR &rarr;</span>
                           </div>

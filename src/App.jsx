@@ -1909,13 +1909,15 @@ function SlideLPPProjections({ data }) {
   );
 }
 
-
-// ────────────────────── PREVIEW MODAL ──────────────────────
-
-function ReportPreview({ data, onClose, onUpdateData }) {
+function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [editMode, setEditMode] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [isEmailing, setIsEmailing] = useState(false);
+  const [emailSuccess, setEmailSuccess] = useState(false);
+  
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailForm, setEmailForm] = useState({ to: "", subject: "", body: "" });
 
   const handleTextChange = (key, value) => {
     onUpdateData({ ...data, texts: { ...data.texts, [key]: value } });
@@ -2006,6 +2008,35 @@ function ReportPreview({ data, onClose, onUpdateData }) {
     }, 500); 
   };
 
+  const openEmailModal = () => {
+    const replaceVars = (str) => {
+      return str.replace(/{{prenom}}/g, data.prenom || "")
+                .replace(/{{nom}}/g, (data.nom || "").toUpperCase())
+                .replace(/{{conseiller}}/g, data.conseiller || "");
+    };
+
+    setEmailForm({
+      to: data.emailClient || "",
+      subject: replaceVars(appSettings.emailSubject),
+      body: replaceVars(appSettings.emailBody)
+    });
+    setShowEmailModal(true);
+  };
+
+  const handleConfirmEmail = async () => {
+    setShowEmailModal(false);
+    setIsEmailing(true);
+    
+    // Simulation de l'appel Webhook Make.com avec les données du formulaire emailForm
+    // fetch(appSettings.webhookUrl, { method: 'POST', body: JSON.stringify({ email: emailForm.to, subject: emailForm.subject, body: emailForm.body, pdfBase64: '...' }) })
+    
+    setTimeout(() => {
+      setIsEmailing(false);
+      setEmailSuccess(true);
+      setTimeout(() => setEmailSuccess(false), 3000);
+    }, 2000);
+  };
+
   const slidesSwissquote = [
     <SlideCover data={data} />,
     <SlideTOC data={data} />,
@@ -2078,7 +2109,10 @@ function ReportPreview({ data, onClose, onUpdateData }) {
       <div className="no-print" style={{ background: C.black, padding: "10px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <span style={{ color: C.white, fontSize: 12, fontWeight: 600, letterSpacing: "0.06em" }}>APERCU — {data.prenom} {(data.nom||"").toUpperCase()}</span>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <button onClick={handleDownloadPDF} disabled={isPdfLoading} style={{ background: C.white, color: C.black, border: "none", padding: "6px 12px", cursor: isPdfLoading ? "wait" : "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", opacity: isPdfLoading ? 0.7 : 1, transition: "0.2s" }}>
+          <button onClick={openEmailModal} disabled={isPdfLoading || isEmailing} style={{ background: emailSuccess ? "#10B981" : C.gold, color: C.white, border: "none", padding: "6px 12px", cursor: (isPdfLoading || isEmailing) ? "wait" : "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", opacity: (isPdfLoading || isEmailing) ? 0.7 : 1, transition: "0.2s" }}>
+            {isEmailing ? "⏳ ENVOI..." : emailSuccess ? "✅ ENVOYÉ !" : "📧 ENVOYER PAR EMAIL"}
+          </button>
+          <button onClick={handleDownloadPDF} disabled={isPdfLoading || isEmailing} style={{ background: C.white, color: C.black, border: "none", padding: "6px 12px", cursor: (isPdfLoading || isEmailing) ? "wait" : "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", opacity: (isPdfLoading || isEmailing) ? 0.7 : 1, transition: "0.2s" }}>
             {isPdfLoading ? "⏳ GÉNÉRATION EN COURS..." : "📥 TÉLÉCHARGER PDF"}
           </button>
           <button onClick={() => setEditMode(!editMode)} style={{ background: editMode ? C.gold : "transparent", border: `1px solid ${C.gold}`, color: editMode ? C.white : C.gold, padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", transition: "0.2s" }}>
@@ -2130,6 +2164,40 @@ function ReportPreview({ data, onClose, onUpdateData }) {
           </div>
           <div style={{ fontSize: 13, color: C.gray, fontWeight: 500, fontFamily: "'Montserrat', sans-serif" }}>
             Veuillez patienter pendant la capture haute définition...
+          </div>
+        </div>
+      )}
+      {isEmailing && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(255,255,255,0.95)", zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 16 }}>
+            Envoi de l'email en cours...
+          </div>
+          <div style={{ fontSize: 13, color: C.gray, fontWeight: 500, fontFamily: "'Montserrat', sans-serif" }}>
+            Connexion à l'automatisation Make.com...
+          </div>
+        </div>
+      )}
+
+      {showEmailModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: C.white, width: 500, padding: 32, borderRadius: "0px", boxShadow: "0 20px 40px rgba(0,0,0,0.2)" }}>
+            <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.primary, marginTop: 0, marginBottom: 24 }}>Envoyer le rapport par email</h3>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.gray, marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase" }}>Email destinataire</label>
+              <input style={{ width: "100%", padding: "10px 12px", border: `1.5px solid ${C.mediumGray}`, fontSize: 13, fontFamily: "'Montserrat', sans-serif", boxSizing: "border-box", outline: "none" }} value={emailForm.to} onChange={e=>setEmailForm({...emailForm, to: e.target.value})} placeholder="client@email.com" />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.gray, marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase" }}>Objet</label>
+              <input style={{ width: "100%", padding: "10px 12px", border: `1.5px solid ${C.mediumGray}`, fontSize: 13, fontFamily: "'Montserrat', sans-serif", boxSizing: "border-box", outline: "none" }} value={emailForm.subject} onChange={e=>setEmailForm({...emailForm, subject: e.target.value})} />
+            </div>
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.gray, marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase" }}>Message</label>
+              <textarea style={{ width: "100%", padding: "10px 12px", border: `1.5px solid ${C.mediumGray}`, fontSize: 13, fontFamily: "'Montserrat', sans-serif", boxSizing: "border-box", outline: "none", minHeight: 140, resize: "vertical" }} value={emailForm.body} onChange={e=>setEmailForm({...emailForm, body: e.target.value})} />
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+              <button onClick={() => setShowEmailModal(false)} style={{ background: "transparent", color: C.gray, border: `1px solid ${C.mediumGray}`, padding: "10px 20px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600 }}>Annuler</button>
+              <button onClick={handleConfirmEmail} style={{ background: C.primary, color: C.white, border: "none", padding: "10px 20px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600 }}>Confirmer l'envoi</button>
+            </div>
           </div>
         </div>
       )}
@@ -2202,12 +2270,18 @@ export default function WallSwissApp() {
   const [rapportPage, setRapportPage] = useState("dashboard"); 
   const [step, setStep] = useState(0);
 
+  const [appSettings, setAppSettings] = useState({
+    webhookUrl: "",
+    emailSubject: "Votre Analyse Patrimoniale - WallSwiss",
+    emailBody: "Bonjour {{prenom}} {{nom}},\n\nVeuillez trouver ci-joint votre rapport d'analyse patrimoniale personnalisé suite à notre entretien.\n\nRestant à votre entière disposition pour toute question.\n\nCordialement,\n{{conseiller}}"
+  });
+
   const [reports, setReports] = useState([
     {
       id: 1,
       templateId: "swissquote",
       dateRapport: new Date().toISOString().split('T')[0],
-      nom: "MULLER", prenom: "Thomas", age: "42", profession: "Directeur Marketing", nationalite: "Suisse", statut: "Marié(e)", revenus: "145000",
+      nom: "MULLER", prenom: "Thomas", emailClient: "thomas.muller@email.com", age: "42", profession: "Directeur Marketing", nationalite: "Suisse", statut: "Marié(e)", revenus: "145000",
       capaciteEpargne: "3000", fortuneGlobale: "650000", profilRisque: "Dynamique", horizonPlacement: "Long terme (> 8 ans)",
       objectifs: ["Financer un projet immobilier", "Améliorer la fiscalité des placements"], objectifCustom: "",
       assetManager: "NS Partners",
@@ -2221,7 +2295,7 @@ export default function WallSwissApp() {
       id: 2,
       templateId: "prevoyance",
       dateRapport: new Date().toISOString().split('T')[0],
-      nom: "DUBOIS", prenom: "Sophie", age: "35", profession: "Architecte", nationalite: "Suisse", statut: "Célibataire", revenus: "95000",
+      nom: "DUBOIS", prenom: "Sophie", emailClient: "sophie.dubois@email.ch", age: "35", profession: "Architecte", nationalite: "Suisse", statut: "Célibataire", revenus: "95000",
       capaciteEpargne: "600", fortuneGlobale: "120000", profilRisque: "Dynamique", horizonPlacement: "Long terme (> 8 ans)",
       objectifs: ["Préparer la retraite", "Obtenir une réduction d'impôt (via l'optimisation fiscale Suisse)"], objectifCustom: "",
       compagniePrevoyance: "Liechtenstein Life", optiFiscale: true,
@@ -2234,7 +2308,7 @@ export default function WallSwissApp() {
       id: 3,
       templateId: "lpp",
       dateRapport: new Date().toISOString().split('T')[0],
-      nom: "WEBER", prenom: "Marc", age: "52", profession: "Ingénieur", nationalite: "Suisse", statut: "Marié(e)", revenus: "160000",
+      nom: "WEBER", prenom: "Marc", emailClient: "m.weber@email.com", age: "52", profession: "Ingénieur", nationalite: "Suisse", statut: "Marié(e)", revenus: "160000",
       capaciteEpargne: "1500", fortuneGlobale: "400000", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)",
       objectifs: ["Préparer la retraite", "Optimiser la transmission de patrimoine"], objectifCustom: "",
       capitalLibrePassage: "250000", administrateurLpp: "Pictet", tauxClp: "4.5",
@@ -2248,7 +2322,7 @@ export default function WallSwissApp() {
   const [form, setForm] = useState({
     templateId: "swissquote",
     dateRapport: new Date().toISOString().split('T')[0],
-    nom: "", prenom: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "",
+    nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "",
     capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)",
     objectifs: [], objectifCustom: "",
     assetManager: "NS Partners",
@@ -2267,7 +2341,7 @@ export default function WallSwissApp() {
   const toggleObj = (o) => setForm(p => ({ ...p, objectifs: p.objectifs.includes(o) ? p.objectifs.filter(x => x !== o) : [...p.objectifs, o] }));
   const addCustomObj = () => { if (form.objectifCustom.trim()) { setForm(p => ({ ...p, objectifs: [...p.objectifs, p.objectifCustom.trim()], objectifCustom: "" })); } };
   const handleSave = () => { setReports(p => [...p, { ...form, id: Date.now() }]); setPreview(form); setRapportPage("dashboard"); setStep(0); };
-  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP", telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch", texts: initialTexts });
+  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP", telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch", texts: initialTexts });
 
   const handlePreviewUpdate = (newData) => {
     setPreview(newData);
@@ -2313,10 +2387,13 @@ export default function WallSwissApp() {
               <div style={S.fg}><label style={S.label}>Nom</label><input style={S.input} value={form.nom} onChange={e=>u("nom",e.target.value)} placeholder="EVEQUE"/></div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div style={S.fg}><label style={S.label}>Date du rapport</label><input style={S.input} type="date" value={form.dateRapport || ""} onChange={e=>u("dateRapport",e.target.value)}/></div>
+              <div style={S.fg}><label style={S.label}>Email Client</label><input style={S.input} type="email" value={form.emailClient || ""} onChange={e=>u("emailClient",e.target.value)} placeholder="client@email.com"/></div>
               <div style={S.fg}><label style={S.label}>Âge</label><input style={S.input} type="number" value={form.age} onChange={e=>u("age",e.target.value)} placeholder="40"/></div>
             </div>
-            <div style={S.fg}><label style={S.label}>Nationalité</label><input style={S.input} value={form.nationalite} onChange={e=>u("nationalite",e.target.value)}/></div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div style={S.fg}><label style={S.label}>Date du rapport</label><input style={S.input} type="date" value={form.dateRapport || ""} onChange={e=>u("dateRapport",e.target.value)}/></div>
+              <div style={S.fg}><label style={S.label}>Nationalité</label><input style={S.input} value={form.nationalite} onChange={e=>u("nationalite",e.target.value)}/></div>
+            </div>
           </div>
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Situation Financière</div>
@@ -2682,6 +2759,13 @@ export default function WallSwissApp() {
           >
             📄 Rapport Financier
           </button>
+          
+          <button 
+            onClick={() => setActiveModule("settings")} 
+            style={{ width: "100%", textAlign: "left", background: activeModule === "settings" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "settings" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "settings" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "settings" ? 600 : 500, transition: "0.2s", marginTop: "8px" }}
+          >
+            ⚙️ Paramètres & Intégrations
+          </button>
         </nav>
 
         <div style={{ padding: "24px", borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
@@ -2728,6 +2812,70 @@ export default function WallSwissApp() {
                   <span style={{ color: C.gray, fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", background: C.mediumGray, padding: "4px 8px" }}>Bientôt disponible</span>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* VUE PARAMÈTRES (TUTO MAKE) */}
+        {activeModule === "settings" && (
+          <div style={{ padding: "60px 80px", maxWidth: 1000, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+            <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: "0 0 8px" }}>Paramètres & Intégrations</h2>
+            <p style={{ color: C.gray, fontSize: 14, marginBottom: 40 }}>Configurez vos outils externes et automatisations pour gagner du temps au quotidien.</p>
+            
+            <div style={S.card}>
+              <div style={S.cardTitle}><div style={S.dot} /> Automatisation Email via Make.com</div>
+              <p style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, marginBottom: 24 }}>
+                Vous pouvez automatiser l'envoi du rapport PDF directement à votre client (ou à vous-même) en connectant l'application WallSwiss à <strong>Make</strong> (anciennement Integromat).
+              </p>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <div style={{ background: C.lightGray, padding: 20, borderLeft: `4px solid ${C.primary}` }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.primaryDark, marginBottom: 8 }}>Étape 1 : Créer un Webhook sur Make</div>
+                  <div style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.5 }}>
+                    1. Connectez-vous à Make.com et créez un nouveau scénario.<br/>
+                    2. Ajoutez le module <strong>"Webhooks"</strong> et sélectionnez <strong>"Custom webhook"</strong>.<br/>
+                    3. Cliquez sur "Add", nommez votre webhook (ex: "Envoi PDF WallSwiss") et copiez l'URL générée.
+                  </div>
+                </div>
+                
+                <div style={{ background: C.lightGray, padding: 20, borderLeft: `4px solid ${C.gold}` }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.primaryDark, marginBottom: 8 }}>Étape 2 : Configurer le module Email</div>
+                  <div style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.5 }}>
+                    1. Ajoutez un module <strong>"Gmail"</strong>, <strong>"Microsoft 365 Email"</strong> ou "Sendinblue" à la suite du webhook.<br/>
+                    2. Dans le champ destinataire ("To"), mappez la variable <code>email</code> provenant du Webhook.<br/>
+                    3. Dans "Attachments", sélectionnez la variable <code>file</code> (votre PDF encodé en base64) et nommez-le <code>Rapport_Patrimonial.pdf</code>.
+                  </div>
+                </div>
+
+                <div style={{ background: C.lightGray, padding: 20, borderLeft: `4px solid ${C.darkGray}` }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.primaryDark, marginBottom: 8 }}>Étape 3 : Connecter l'application</div>
+                  <div style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.5, marginBottom: 12 }}>
+                    Collez l'URL de votre Webhook Make ci-dessous. Dès que vous cliquerez sur <strong>"Confirmer l'envoi"</strong>, les données seront transmises.
+                  </div>
+                  <input 
+                    style={{...S.input, background: C.white, border: `1px solid ${C.gray}`}} 
+                    value={appSettings.webhookUrl || ""}
+                    onChange={e => setAppSettings({...appSettings, webhookUrl: e.target.value})}
+                    placeholder="https://hook.eu1.make.com/xxxxxxxxxxxxxxxxxxxxxx" 
+                  />
+                  <div style={{ fontSize: 11, color: C.gray, marginTop: 8 }}>*L'envoi est actuellement simulé dans cet environnement de démonstration.</div>
+                </div>
+              </div>
+              
+              <div style={{ height: 1, background: C.mediumGray, margin: "32px 0" }} />
+              
+              <div style={S.cardTitle}><div style={S.dot} /> Template d'Email par défaut</div>
+              <p style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, marginBottom: 16 }}>
+                Personnalisez le message qui sera envoyé au client. Variables dynamiques supportées : <code style={{background: C.mediumGray, padding: "2px 4px", borderRadius: 4}}>{"{{prenom}}"}</code>, <code style={{background: C.mediumGray, padding: "2px 4px", borderRadius: 4}}>{"{{nom}}"}</code>, <code style={{background: C.mediumGray, padding: "2px 4px", borderRadius: 4}}>{"{{conseiller}}"}</code>
+              </p>
+              <div style={S.fg}>
+                <label style={S.label}>Objet de l'email</label>
+                <input style={S.input} value={appSettings.emailSubject} onChange={e => setAppSettings({...appSettings, emailSubject: e.target.value})} />
+              </div>
+              <div style={S.fg}>
+                <label style={S.label}>Corps du message</label>
+                <textarea style={{...S.input, minHeight: 120, resize: "vertical"}} value={appSettings.emailBody} onChange={e => setAppSettings({...appSettings, emailBody: e.target.value})} />
+              </div>
             </div>
           </div>
         )}
@@ -2846,7 +2994,7 @@ export default function WallSwissApp() {
         )}
       </div>
 
-      {preview && <ReportPreview data={preview} onClose={()=>setPreview(null)} onUpdateData={handlePreviewUpdate} />}
+      {preview && <ReportPreview data={preview} onClose={()=>setPreview(null)} onUpdateData={handlePreviewUpdate} appSettings={appSettings} />}
     </div>
   );
 }

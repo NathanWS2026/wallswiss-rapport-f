@@ -14,7 +14,7 @@ const C = {
 };
 
 const LOGO_URL = "/logo blanc sans texte.png";
-const APP_VERSION = "v1.5.0";
+const APP_VERSION = "v1.9.0";
 
 const fontLink = document.createElement("link");
 fontLink.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap";
@@ -22,8 +22,8 @@ fontLink.rel = "stylesheet";
 document.head.appendChild(fontLink);
 
 function computeProjections(data) {
-  const initial = Number(data.montantInvestissement || 100000);
-  const fee = Number(data.fraisSouscription || 3);
+  const initial = data.montantInvestissement !== "" && data.montantInvestissement !== undefined ? Number(data.montantInvestissement) : 100000;
+  const fee = data.fraisSouscription !== "" && data.fraisSouscription !== undefined ? Number(data.fraisSouscription) : 3;
   const net = initial - (initial * fee / 100);
   const rP = Number(data.tauxPessimiste || 3) / 100;
   const rR = Number(data.tauxRealiste || 6) / 100;
@@ -41,14 +41,13 @@ function computeProjectionsPrevoyance(data) {
   const monthly = Number(data.capaciteEpargne || 500);
   const annual = monthly * 12;
   const age = Number(data.age || 40);
-  const duration = Math.max(1, 65 - age); // Projection jusqu'à la retraite (65 ans)
+  const duration = Math.max(1, 65 - age); 
   
   const rP = Number(data.tauxPessimistePrev || 2) / 100;
   const rR = Number(data.tauxRealistePrev || 4) / 100;
   const rO = Number(data.tauxOptimistePrev || 6) / 100;
   const taxMarginalRate = 0.30; 
   
-  // Création d'étapes harmonieuses pour le graphique
   const step = Math.max(1, Math.floor(duration / 4));
   let years = [];
   for(let i = 0; i <= duration; i+=step) { years.push(i); }
@@ -59,7 +58,6 @@ function computeProjectionsPrevoyance(data) {
     const invested = annual * y;
     const months = y * 12;
     
-    // Calcul des intérêts composés mensuels
     const calcCap = (rate) => {
       if (rate === 0 || months === 0) return invested;
       const rM = rate / 12;
@@ -76,6 +74,28 @@ function computeProjectionsPrevoyance(data) {
       taxSavings: data.optiFiscale ? Math.round(invested * taxMarginalRate) : 0
     };
   });
+}
+
+function computeProjectionsLPP(data) {
+  const initial = Number(data.capitalLibrePassage || 120000);
+  const age = Number(data.age || 40);
+  const duration = Math.max(1, 65 - age);
+  const rateClassic = 0.01; 
+  const rateCLP = Number(data.tauxClp || 4) / 100; 
+  
+  const step = Math.max(1, Math.floor(duration / 5));
+  let years = [];
+  for(let i = 0; i <= duration; i+=step) { years.push(i); }
+  if (years[years.length-1] !== duration) years.push(duration);
+  const uniqueYears = [...new Set(years)].sort((a,b) => a - b);
+  
+  return uniqueYears.map(y => ({
+    year: y,
+    age: age + y,
+    classic: Math.round(initial * Math.pow(1 + rateClassic, y)),
+    clp: Math.round(initial * Math.pow(1 + rateCLP, y)),
+    rateCLP
+  }));
 }
 
 function fmt(n) { return Number(n).toLocaleString("fr-CH"); }
@@ -176,8 +196,8 @@ function SlideCover({ data }) {
           Rapport<br /><em style={{ color: C.gold, fontStyle: "italic" }}>Financier</em>
         </div>
         <div style={{ marginTop: 48, borderLeft: `3px solid rgba(255,255,255,0.2)`, paddingLeft: 24, position: "relative", zIndex: 2 }}>
-          <div style={{ color: C.white, fontSize: 22, fontWeight: 600 }}>{data.conseiller || "Louis Borne"}</div>
-          <div style={{ color: C.gold, fontSize: 14, fontWeight: 500, marginTop: 6 }}>{data.titreConseiller || "Planificatrice financière"}</div>
+          <div style={{ color: C.white, fontSize: 22, fontWeight: 600 }}>{data.conseiller || "Elisa MARQUET"}</div>
+          <div style={{ color: C.gold, fontSize: 14, fontWeight: 500, marginTop: 6 }}>{data.titreConseiller || "Planificatrice financière | CGP"}</div>
         </div>
       </div>
       {footer(fullName)}
@@ -188,20 +208,35 @@ function SlideCover({ data }) {
 // Slide 2 — Table des matières SwissQuote
 function SlideTOC({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
-  const items = [
+  const isParFinance = data.assetManager === "ParFinance";
+  
+  let items = [
     { title: "Qui sommes-nous ? Notre philosophie", page: 3 },
     { title: "Notre cabinet en chiffres", page: 4 },
     { title: "Résumé de votre situation personnelle", page: 5 },
     { title: "Pourquoi Swissquote est une banque fiable", page: 6 },
     { title: "Avantages WallSwiss BY Swissquote", page: 7 },
     { title: "Solution — Compte Titre", page: 9 },
-    { title: "Fonds NS (CH) Swiss Excellence DPM", page: 10 },
-    { title: "Projections financières", page: 11 },
-    { title: "Avantages tarifaires WS Premium", page: 12 },
-    { title: "Comparatif bancaire", page: 13 },
-    { title: "Votre application de suivi", page: 14 },
-    { title: "Synthèse & Contact", page: 15 },
   ];
+  
+  let nextPage = 10;
+  
+  if (isParFinance) {
+    items.push({ title: "Votre Asset Manager : ParFinance", page: nextPage++ });
+    items.push({ title: "Factsheet | Aries Portfolio", page: nextPage++ });
+    items.push({ title: "Stratégie : Les principales positions", page: nextPage++ });
+  } else {
+    items.push({ title: "Fonds NS (CH) Swiss Excellence DPM", page: nextPage++ });
+  }
+  
+  items.push(
+    { title: "Projections financières", page: nextPage++ },
+    { title: "Avantages tarifaires WS Premium", page: nextPage++ },
+    { title: "Comparatif bancaire", page: nextPage++ },
+    { title: "Votre application de suivi", page: nextPage++ },
+    { title: "Synthèse & Contact", page: nextPage }
+  );
+
   return (
     <div style={slideBase}>
       {accentBar()}
@@ -331,7 +366,7 @@ function SlideSituation({ data }) {
               <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
                 {[
                   ["Revenus annuels bruts", data.revenus ? `CHF ${fmt(data.revenus)}.-` : "À renseigner"],
-                  ["Capacité d'épargne / mois", data.capaciteEpargne ? `CHF ${fmt(data.capaciteEpargne)}.-` : "À renseigner"],
+                  ["Capacité d'épargne", data.capaciteEpargne ? `CHF ${fmt(data.capaciteEpargne)}.- / mois` : "À renseigner"],
                   ["Fortune globale estimée", data.fortuneGlobale ? `CHF ${fmt(data.fortuneGlobale)}.-` : "À renseigner"],
                 ].map(([k, v], i, arr) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < arr.length - 1 ? `1px solid ${C.lightGray}` : "none", fontSize: 12.5 }}>
@@ -513,16 +548,54 @@ function SlideCompteTitre({ data, editMode, onTextChange }) {
   );
 }
 
-// Slide 10 — NS (CH) FUNDS
+// Slide 10 — Fonds (NS ou ParFinance)
 function SlideFund({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const isParFinance = data.assetManager === "ParFinance";
+
+  if (isParFinance) {
+    const parFinancePositions = [
+      { title: "1. First Trust Water ETF (FIW)", desc: "Axé sur le secteur de l'eau, un domaine crucial en pleine expansion. Idéal pour s'exposer à un secteur durable nécessaire avec une performance solide." },
+      { title: "2. Global X Artificial Intelligence & Technology ETF (AIQ)", desc: "Capitalise sur l'essor de l'IA et du big data via des entreprises innovantes. Pour une exposition aux technologies émergentes et une croissance long terme." },
+      { title: "3. Global X US Infrastructure Development ETF (PAVE)", desc: "Mise sur le développement des infrastructures américaines (matériaux, ingénierie) bénéficiant de financements publics importants." },
+      { title: "4. iShares Global Healthcare ETF (IXJ)", desc: "Exposition mondiale au secteur de la santé (biotech, dispositifs médicaux) pour répondre aux besoins de la population vieillissante." },
+      { title: "5. iShares MSCI KLD 400 Social ETF (DSI)", desc: "Applique des critères ESG ciblés sur des entreprises aux pratiques durables et éthiques, tout en bénéficiant de rendements compétitifs." },
+      { title: "6. iShares S&P 500 Value ETF (IVE)", desc: "Se concentre sur les actions de valeur sous-évaluées du S&P 500. Idéal pour une approche prudente axée sur la stabilité." },
+      { title: "7. iShares Semiconductor ETF (SOXX)", desc: "Investit dans les semi-conducteurs, essentiels dans l'ère numérique. Adapté aux investisseurs ayant une tolérance au risque et attirés par l'innovation." },
+      { title: "8. iShares U.S. Consumer Staples ETF (IYK)", desc: "Cible les biens de consommation de base, offrant une stabilité en période d'incertitude économique." },
+      { title: "9. Schwab U.S. Large-Cap Growth ETF (SCHG)", desc: "Sélectionne des actions de croissance de grandes entreprises américaines privilégiant les leaders dans leurs secteurs." },
+      { title: "10. Technology Select Sector SPDR Fund (XLK)", desc: "Centré sur les géants technologiques américains. Un fonds pour les investisseurs optimistes sur le secteur numérique." },
+      { title: "11. VanEck Oil Services ETF (OIH)", desc: "Spécialisé dans les services pétroliers et l'énergie. Adapté pour naviguer dans un secteur volatil mais potentiellement lucratif." },
+      { title: "12. Vanguard Health Care ETF (VHT)", desc: "Investit dans un large éventail d'entreprises du secteur de la santé recherchant une stabilité et une croissance progressive." }
+    ];
+
+    return (
+      <div style={slideBase}>
+        {accentBar()}
+        {logoCorner()}
+        <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+          <ReportTitle title="Un investissement qui a du" highlight="sens" subtitle="LES PRINCIPALES POSITIONS" />
+          <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 40, rowGap: 14, overflow: "hidden", marginTop: -10 }}>
+            {parFinancePositions.map((pos, i) => (
+              <div key={i}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, marginBottom: 2 }}>{pos.title}</div>
+                <div style={{ fontSize: 9, color: C.darkGray, lineHeight: 1.4, textAlign: "justify" }}>{pos.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        {footer(fullName)}
+      </div>
+    );
+  }
+
   return (
     <div style={slideBase}>
       <div style={{ padding: "32px 80px 48px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <div style={{ border: `3px solid ${C.gold}`, padding: "24px 32px", boxSizing: "border-box", background: C.white }}>
           <div style={{ textAlign: "center", marginBottom: 12 }}>
             <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, fontWeight: 700, color: C.primary }}>NS (CH) FUNDS — Swiss Excellence DPM CHF</div>
-            <div style={{ fontSize: 12, color: C.gray, marginTop: 6 }}>Fonds actions suisses — Synthèse institutionnelle</div>
+            <div style={{ fontSize: 12, color: C.gray, marginTop: 6 }}>Fonds actions suisses — Synthèse institutionnelle (NS Partners)</div>
           </div>
           <div style={{ width: "100%", height: 2, background: C.gold, margin: "16px 0 24px 0" }} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 48px", fontSize: 12 }}>
@@ -562,12 +635,166 @@ function SlideFund({ data }) {
   );
 }
 
+function SlideParFinanceIntro({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Votre Asset Manager :" highlight="ParFinance" subtitle="GESTION INDÉPENDANTE DE HAUT NIVEAU" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 48, alignItems: "center" }}>
+          <div>
+            <EditableText editMode={editMode} value={data.texts?.parFinanceP1} onChange={v => onTextChange("parFinanceP1", v)} style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.7, marginBottom: 24, textAlign: "justify" }} />
+            <EditableText editMode={editMode} value={data.texts?.parFinanceP2} onChange={v => onTextChange("parFinanceP2", v)} style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.7, marginBottom: 24, textAlign: "justify" }} />
+          </div>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 40, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.05)", minHeight: 280 }}>
+            <div style={{ fontSize: 32, fontWeight: 800, color: C.primary, marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.1em" }}>ParFinance</div>
+            <div style={{ width: 40, height: 3, background: C.gold, marginBottom: 24 }} />
+            <div style={{ fontSize: 13, color: C.gray, textAlign: "center", lineHeight: 1.6 }}>
+              Société de gestion indépendante basée à Genève, spécialisée dans la création de portefeuilles performants et sur-mesure.
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideParFinanceFactsheet({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+
+  const topHoldings = [
+    { name: "SPDR® Blmbg 1-...ill ETF", weight: "7.03%" },
+    { name: "iShares US Consu..les ETF", weight: "5.59%" },
+    { name: "First Trust Water ETF", weight: "4.84%" },
+    { name: "Northern Oil & Gas Inc", weight: "4.50%" },
+    { name: "Meta Platforms Inc", weight: "3.93%" },
+    { name: "Netflix Inc", weight: "3.50%" },
+    { name: "Microsoft Corp", weight: "3.45%" },
+    { name: "Global X US Infras.Dev ETF", weight: "3.42%" },
+    { name: "iShares MSCI KLD.ial ETF", weight: "3.09%" },
+    { name: "iShares S&P 500 Value ETF", weight: "3.02%" }
+  ];
+
+  const topUnderlying = [
+    { name: "Microsoft Corp", weight: "4.72%" },
+    { name: "Northern Oil & Gas Inc", weight: "4.50%" },
+    { name: "Meta Platforms Inc", weight: "4.10%" },
+    { name: "Netflix Inc", weight: "3.60%" },
+    { name: "The Home Depot Inc", weight: "2.98%" },
+    { name: "NVIDIA Corp", weight: "2.90%" },
+    { name: "GE Vernova Inc", weight: "2.63%" },
+    { name: "Apple Inc", weight: "2.43%" },
+    { name: "Caterpillar Inc", weight: "2.25%" },
+    { name: "Freeport-McMoRan Inc", weight: "2.25%" }
+  ];
+
+  // Simulation visuelle du graphique améliorée
+  const chartPoints = "0,160 20,150 40,175 60,180 80,140 100,165 120,160 140,165 160,180 180,170 200,175 220,180 240,175 260,160 280,170 300,175 320,180 340,120 360,110 380,115 400,130 420,110 440,115 460,125 480,90 500,100 520,70 540,110 560,95 580,70 600,75 620,40";
+  const areaPoints = `0,200 ${chartPoints} 620,200`;
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Un investissement qui a du" highlight="sens" subtitle="FACTSHEET | ARIES PORTOFOLIO (USD)" />
+        
+        <div style={{ flex: 1, display: "flex", gap: 40, minHeight: 0, marginTop: -10 }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: C.primaryDark, marginBottom: 12, borderBottom: `2px solid ${C.primaryDark}`, paddingBottom: 8 }}>
+              Performances d'ARIES
+            </div>
+            <div style={{ fontSize: 9, color: C.gray, marginBottom: 16 }}>
+              • 1_ARIES PORTFOLIO USD - CUSTODY BANK UBS - ASSET MANAGEMENT PARFINANCE - ISIN CH0511368091 V2 (P:1711097) TOTAL RETURN
+            </div>
+            <div style={{ flex: 1, position: "relative", border: `1px solid ${C.lightGray}`, background: C.white, overflow: "visible" }}>
+              <svg viewBox="-10 -10 680 230" preserveAspectRatio="none" style={{ width: "100%", height: "100%", position: "absolute", bottom: 0, left: 0, overflow: "visible" }}>
+                 <line x1="0" y1="40" x2="620" y2="40" stroke="#E5E7EB" strokeWidth="1" />
+                 <line x1="0" y1="120" x2="620" y2="120" stroke="#E5E7EB" strokeWidth="1" />
+                 <line x1="0" y1="200" x2="620" y2="200" stroke="#E5E7EB" strokeWidth="1" />
+                 
+                 <text x="628" y="124" fontSize="11" fill="#6B7280">20.00%</text>
+                 <text x="628" y="204" fontSize="11" fill="#6B7280">0.00%</text>
+                 
+                 <line x1="100" y1="200" x2="100" y2="205" stroke="#E5E7EB" strokeWidth="1" />
+                 <text x="100" y="218" fontSize="10" fill="#6B7280" textAnchor="middle">JAN '23</text>
+                 <line x1="200" y1="200" x2="200" y2="205" stroke="#E5E7EB" strokeWidth="1" />
+                 <text x="200" y="218" fontSize="10" fill="#6B7280" textAnchor="middle">JUL '23</text>
+                 <line x1="300" y1="200" x2="300" y2="205" stroke="#E5E7EB" strokeWidth="1" />
+                 <text x="300" y="218" fontSize="10" fill="#6B7280" textAnchor="middle">JAN '24</text>
+                 <line x1="400" y1="200" x2="400" y2="205" stroke="#E5E7EB" strokeWidth="1" />
+                 <text x="400" y="218" fontSize="10" fill="#6B7280" textAnchor="middle">JUL '24</text>
+                 <line x1="500" y1="200" x2="500" y2="205" stroke="#E5E7EB" strokeWidth="1" />
+                 <text x="500" y="218" fontSize="10" fill="#6B7280" textAnchor="middle">JAN '25</text>
+                 <line x1="600" y1="200" x2="600" y2="205" stroke="#E5E7EB" strokeWidth="1" />
+                 <text x="600" y="218" fontSize="10" fill="#6B7280" textAnchor="middle">JUL '25</text>
+
+                 <polygon points={areaPoints} fill="rgba(139, 92, 246, 0.2)" />
+                 <polyline points={chartPoints} fill="none" stroke="#8b5cf6" strokeWidth="2.5" />
+
+                 <rect x="625" y="30" width="40" height="20" fill="#8b5cf6" rx="4"/>
+                 <text x="645" y="44" fontSize="10" fill="white" textAnchor="middle" fontWeight="bold">31.78%</text>
+              </svg>
+            </div>
+          </div>
+
+          <div style={{ width: "260px", display: "flex", flexDirection: "column", gap: 20 }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: C.darkGray, marginBottom: 8 }}>Top 10 Holdings</div>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 9.5 }}>
+                <thead>
+                  <tr style={{ borderBottom: `2px solid ${C.mediumGray}` }}>
+                    <th style={{ textAlign: "left", paddingBottom: 4, color: C.gray, fontWeight: 600 }}>HOLDING</th>
+                    <th style={{ textAlign: "right", paddingBottom: 4, color: C.gray, fontWeight: 600 }}>WEIGHT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topHoldings.map((h, i) => (
+                    <tr key={i} style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                      <td style={{ padding: "4px 0", color: C.darkGray, fontWeight: 600 }}>{h.name}</td>
+                      <td style={{ padding: "4px 0", textAlign: "right", color: C.gray }}>{h.weight}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: C.darkGray, marginBottom: 8 }}>Top 10 Underlying Holdings</div>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 9.5 }}>
+                <thead>
+                  <tr style={{ borderBottom: `2px solid ${C.mediumGray}` }}>
+                    <th style={{ textAlign: "left", paddingBottom: 4, color: C.gray, fontWeight: 600 }}>HOLDING</th>
+                    <th style={{ textAlign: "right", paddingBottom: 4, color: C.gray, fontWeight: 600 }}>WEIGHT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topUnderlying.map((h, i) => (
+                    <tr key={i} style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                      <td style={{ padding: "4px 0", color: C.darkGray, fontWeight: 600 }}>{h.name}</td>
+                      <td style={{ padding: "4px 0", textAlign: "right", color: C.gray }}>{h.weight}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
 // Slide 11 — Projections
 function SlideProjections({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   const rows = computeProjections(data);
-  const montant = Number(data.montantInvestissement || 100000);
-  const frais = Number(data.fraisSouscription || 3);
+  const montant = data.montantInvestissement !== "" && data.montantInvestissement !== undefined ? Number(data.montantInvestissement) : 100000;
+  const frais = data.fraisSouscription !== "" && data.fraisSouscription !== undefined ? Number(data.fraisSouscription) : 3;
 
   const svgW = 420; const svgH = 220;
   const padL = 50; const padR = 15; const padT = 10; const padB = 25;
@@ -789,13 +1016,17 @@ function SlideContact({ data, editMode, onTextChange }) {
             VOTRE INTERLOCUTEUR DÉDIÉ
           </div>
           
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 6 }}>{data.conseiller || "Louis Borne"}</div>
-          <div style={{ color: C.gray, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 40 }}>{data.titreConseiller || "Conseillère en Gestion de Patrimoine"}</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 6 }}>{data.conseiller || "Elisa MARQUET"}</div>
+          <div style={{ color: C.gray, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 40 }}>{data.titreConseiller || "Planificatrice financière | CGP"}</div>
           
           <div style={{ display: "grid", gap: 24 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
               <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>T</div>
-              <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>{data.telephone || "+41.76.231.92.75"}</span>
+              <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>{data.telephone || "+41 76 762 90 32"}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>E</div>
+              <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>{data.email || "e.marquet@wallswiss.ch"}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
               <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>E</div>
@@ -911,7 +1142,7 @@ function SlidePrevoyanceAvantages({ data }) {
             { title: "Économies d'impôts massives (3A)", desc: "Les versements au pilier 3A sont entièrement déductibles du revenu imposable, permettant d'économiser un mois de salaire en impôts sur quelques années." },
             { title: "Sécurité et Protection de la famille", desc: "En cas de décès ou d'invalidité, le capital ou une rente est garanti pour protéger vos proches et maintenir leur niveau de vie." },
             { title: "Rendement supérieur", desc: "Contrairement à un compte épargne classique, la prévoyance investie dans des fonds permet de lutter contre l'inflation et de capitaliser." },
-            { title: "Flexibilité du 3B", desc: "Le pilier 3B offre une épargne totalement libre, sans plafond de versement, disponible pour financer un projet (immobilier, études, etc.)." },
+            { title: "Flexibilité du 3B", desc: "Le pilier 3B offre une épargne totally libre, sans plafond de versement, disponible pour financer un projet (immobilier, études, etc.)." },
             { title: "Financement immobilier", desc: "Les avoirs du pilier 3A ou 3B peuvent être mis en nantissement ou retirés pour financer l'achat de votre résidence principale." },
             { title: "Exonération fiscale (3B)", desc: "Les plus-values générées dans le cadre d'une assurance-vie 3B (sous conditions) sont souvent exonérées d'impôts sur le revenu." },
           ].map((a, i) => (
@@ -1280,6 +1511,405 @@ function SlideProjectionsPrevoyance({ data }) {
   );
 }
 
+// ────────────────────── SLIDES LPP (NOUVEAU MODÈLE) ──────────────────────
+
+function SlideTOCLPP({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const items = [
+    { title: "Qui sommes-nous ? Notre philosophie", page: 3 },
+    { title: "Notre cabinet en chiffres", page: 4 },
+    { title: "Résumé de votre situation personnelle", page: 5 },
+    { title: "Les enjeux du 2ème Pilier (LPP)", page: 6 },
+    { title: "Fonctionnement du Libre Passage", page: 7 },
+    { title: "Votre Compte de Libre Passage", page: 8 }, 
+    { title: `Votre Administrateur : ${data.administrateurLpp || "Pictet"}`, page: 9 },
+    { title: "Avantages de l'investissement", page: 10 },
+    { title: "Allocation d'actifs recommandée", page: 11 },
+    { title: "Projections : Classique vs Investi", page: 12 },
+    { title: "Synthèse & Contact", page: 13 },
+  ];
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Table des matières" subtitle="STRUCTURE DE VOTRE PRÉSENTATION" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 80, rowGap: 24, alignContent: "center", maxWidth: 1000, margin: "0" }}>
+          {items.map((item, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "flex-end", width: "100%", paddingBottom: 6 }}>
+              <span style={{ color: C.darkGray, fontSize: 15, fontWeight: 600, paddingBottom: 2 }}>
+                {item.title}
+              </span>
+              <div style={{ flex: 1, borderBottom: `2px dotted ${C.mediumGray}`, margin: "0 16px", position: "relative", top: -8 }} />
+              <span style={{ color: C.primary, fontSize: 16, fontWeight: 700, flexShrink: 0, paddingBottom: 2 }}>
+                {String(item.page).padStart(2, '0')}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideLPPIntro({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Les enjeux du" highlight="2ème Pilier (LPP)" subtitle="LE DÉFI DE VOTRE RETRAITE" />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 64 }}>
+          <div style={{ flex: 1 }}>
+             <EditableText editMode={editMode} value={data.texts?.lppIntroP1} onChange={v => onTextChange("lppIntroP1", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 24 }} />
+             <EditableText editMode={editMode} value={data.texts?.lppIntroP2} onChange={v => onTextChange("lppIntroP2", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 24 }} />
+             <EditableText editMode={editMode} value={data.texts?.lppIntroP3} onChange={v => onTextChange("lppIntroP3", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.primary, fontWeight: 600, textAlign: "justify", margin: 0 }} />
+          </div>
+          <div style={{ width: 420, background: C.lightGray, borderTop: `4px solid ${C.primary}`, padding: 32, boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: C.primaryDark, marginBottom: 16 }}>La baisse du taux de conversion</div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 12 }}>
+              <div style={{ fontSize: 48, fontWeight: 900, color: C.primary, lineHeight: 1 }}>6.8%</div>
+              <div style={{ fontSize: 12, color: C.gray, textTransform: "uppercase", fontWeight: 700 }}>Taux légal minimum actuel</div>
+            </div>
+            <div style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, textAlign: "justify" }}>
+              Ce taux définit le montant de votre rente. Pour 100'000 CHF de capital, vous touchez 6'800 CHF/an. Cependant, la partie "surobligatoire" (la majorité de votre capital) est souvent soumise à un taux bien plus bas (parfois &lt; 5.0%), réduisant drastiquement votre niveau de vie futur.
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideLPPFonctionnement({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Fonctionnement du" highlight="Libre Passage" subtitle="REPRENEZ LE CONTRÔLE DE VOTRE ÉPARGNE" />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 64 }}>
+          <div style={{ flex: 1 }}>
+             <EditableText editMode={editMode} value={data.texts?.lppFonctP1} onChange={v => onTextChange("lppFonctP1", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 24 }} />
+             <EditableText editMode={editMode} value={data.texts?.lppFonctP2} onChange={v => onTextChange("lppFonctP2", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 24 }} />
+             <EditableText editMode={editMode} value={data.texts?.lppFonctP3} onChange={v => onTextChange("lppFonctP3", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.primary, fontWeight: 600, textAlign: "justify", margin: 0 }} />
+          </div>
+          <div style={{ width: 420, display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 24, display: "flex", alignItems: "center", gap: 20, boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+              <div style={{ fontSize: 32, opacity: 0.5 }}>🏢</div>
+              <div>
+                <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em", marginBottom: 4 }}>Avant</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: C.darkGray }}>Caisse de pension</div>
+                <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>Géré collectivement, rendement dicté par la caisse.</div>
+              </div>
+            </div>
+            <div style={{ textAlign: "center", color: C.gold, fontSize: 24 }}>↓</div>
+            <div style={{ background: C.white, border: `2px solid ${C.gold}`, padding: 24, display: "flex", alignItems: "center", gap: 20, boxShadow: "0 10px 30px rgba(165,149,104,0.15)" }}>
+              <div style={{ fontSize: 32, opacity: 0.8 }}>🏦</div>
+              <div>
+                <div style={{ fontSize: 11, color: C.gold, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em", marginBottom: 4 }}>Aujourd'hui</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: C.primaryDark }}>Compte de Maintien</div>
+                <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>Dort sur un compte, rendement quasi nul.</div>
+              </div>
+            </div>
+            <div style={{ textAlign: "center", color: C.primary, fontSize: 24 }}>↓</div>
+            <div style={{ background: C.primary, color: C.white, padding: 24, display: "flex", alignItems: "center", gap: 20, boxShadow: "0 10px 30px rgba(105,33,2,0.2)" }}>
+              <div style={{ fontSize: 32 }}>📈</div>
+              <div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em", marginBottom: 4 }}>Notre Solution</div>
+                <div style={{ fontSize: 15, fontWeight: 800 }}>Libre Passage Investi</div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", marginTop: 4 }}>Géré selon votre profil, rendement du marché.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideLPPLibrePassage({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Le Compte de" highlight="Libre Passage" subtitle="DYNAMISATION DU CAPITAL DORMANT" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
+          <div>
+            <EditableText editMode={editMode} value={data.texts?.lppLibreP1} onChange={v => onTextChange("lppLibreP1", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }} />
+            <EditableText editMode={editMode} value={data.texts?.lppLibreP2} onChange={v => onTextChange("lppLibreP2", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 24px", textAlign: "justify" }} />
+            <div style={{ background: C.lightGray, padding: 20, borderLeft: `4px solid ${C.primary}` }}>
+              <div style={{ fontSize: 12, color: C.gray, textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Votre Capital Libre Passage</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: C.primary }}>CHF {fmt(Number(data.capitalLibrePassage || 120000))}.-</div>
+            </div>
+          </div>
+          <div style={{ background: C.primary, padding: 32, display: "flex", flexDirection: "column", justifyContent: "center", borderRadius: "0px", boxShadow: "0 10px 30px rgba(105,33,2,0.15)", color: C.white, height: "100%" }}>
+            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 24, textAlign: "center" }}>Stratégie d'investissement</div>
+            <div style={{ display: "grid", gap: 16 }}>
+              <div style={{ background: "rgba(255,255,255,0.1)", padding: "16px", display: "flex", alignItems: "center", gap: 16 }}>
+                <span style={{ fontSize: 24 }}>📈</span>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>Profil sélectionné</div>
+                  <div style={{ fontSize: 12, color: C.gold }}>{data.profilRisque || "Dynamique"}</div>
+                </div>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.1)", padding: "16px", display: "flex", alignItems: "center", gap: 16 }}>
+                <span style={{ fontSize: 24 }}>🏦</span>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>Administrateur / Fondation</div>
+                  <div style={{ fontSize: 12, color: C.gold }}>{data.administrateurLpp || "Pictet"}</div>
+                </div>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.1)", padding: "16px", display: "flex", alignItems: "center", gap: 16 }}>
+                <span style={{ fontSize: 24 }}>🛡️</span>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>Sécurité</div>
+                  <div style={{ fontSize: 12, color: C.gold }}>Avoirs hors bilan bancaire</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideLPPAllocation({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const profil = data.profilRisque || "Équilibré";
+  
+  let actions = 45; let oblig = 45; let immo = 10;
+  if (profil === "Prudent") { actions = 25; oblig = 65; immo = 10; }
+  else if (profil === "Dynamique") { actions = 65; oblig = 25; immo = 10; }
+  else if (profil === "Offensif") { actions = 85; oblig = 10; immo = 5; }
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Allocation d'actifs recommandée" highlight={`Profil ${profil}`} subtitle="RÉPARTITION DE VOTRE LIBRE PASSAGE" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            <p style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }}>
+              Afin de générer un rendement optimal tout en maîtrisant la volatilité, votre capital de libre passage sera réparti selon votre tolérance au risque.
+            </p>
+            <div style={{ background: C.lightGray, padding: 24, borderLeft: `4px solid ${C.primary}` }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.primary, marginBottom: 8 }}>{actions}% Actions mondiales</div>
+              <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.5 }}>Moteur de performance à long terme, participation à la croissance économique globale.</div>
+            </div>
+            <div style={{ background: C.lightGray, padding: 24, borderLeft: `4px solid ${C.gold}` }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.gold, marginBottom: 8 }}>{oblig}% Obligations & Revenu fixe</div>
+              <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.5 }}>Amortisseur de volatilité, génère des rendements stables et sécurise le portefeuille.</div>
+            </div>
+            <div style={{ background: C.lightGray, padding: 24, borderLeft: `4px solid ${C.darkGray}` }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.darkGray, marginBottom: 8 }}>{immo}% Immobilier & Liquidités</div>
+              <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.5 }}>Protection contre l'inflation et diversification des classes d'actifs.</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative" }}>
+             <div style={{ width: 280, height: 280, borderRadius: "50%", background: `conic-gradient(${C.primary} 0% ${actions}%, ${C.gold} ${actions}% ${actions+oblig}%, ${C.darkGray} ${actions+oblig}% 100%)`, position: "relative", boxShadow: "0 10px 30px rgba(0,0,0,0.15)" }}>
+                <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 160, height: 160, background: C.white, borderRadius: "50%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: C.primaryDark }}>100%</div>
+                  <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Investi</div>
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideLPPAdministrateur({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const admin = data.administrateurLpp || "Pictet";
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title={`Votre Administrateur :`} highlight={admin} subtitle="SÉCURITÉ & GOUVERNANCE INSTITUTIONNELLE" />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 64 }}>
+          <div style={{ flex: 1 }}>
+             <EditableText editMode={editMode} value={data.texts?.lppAdminP1} onChange={v => onTextChange("lppAdminP1", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 24 }} />
+             <EditableText editMode={editMode} value={data.texts?.lppAdminP2} onChange={v => onTextChange("lppAdminP2", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
+          </div>
+          <div style={{ width: 400, background: C.white, border: `1px solid ${C.mediumGray}`, padding: 40, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.05)", minHeight: 280 }}>
+            <div style={{ fontSize: 28, fontWeight: 900, color: C.primary, marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.05em" }}>{admin}</div>
+            <div style={{ width: 40, height: 3, background: C.gold, marginBottom: 24 }} />
+            <div style={{ fontSize: 13, color: C.gray, textAlign: "center", lineHeight: 1.6 }}>
+              Une institution financière suisse renommée, spécialisée dans la gestion institutionnelle et le respect absolu du cadre légal OPP2.
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideLPPAvantagesCLP({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Avantages de l'investissement" highlight="sur les marchés" subtitle="POURQUOI NE PAS LAISSER SON CAPITAL DORMIR" />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 32 }}>
+          
+          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 40 }}>
+             <div>
+                <EditableText editMode={editMode} value={data.texts?.lppAvantagesP1} onChange={v => onTextChange("lppAvantagesP1", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 16 }} />
+                <EditableText editMode={editMode} value={data.texts?.lppAvantagesP2} onChange={v => onTextChange("lppAvantagesP2", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
+             </div>
+             
+             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+               <div style={{ display: "flex", gap: 16, alignItems: "flex-start", background: C.lightGray, padding: "16px 20px" }}>
+                  <div style={{ color: C.primary, fontSize: 24 }}>🛡️</div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.primaryDark, marginBottom: 4 }}>Protection de la famille</div>
+                    <div style={{ fontSize: 12, color: C.gray, lineHeight: 1.5 }}>Libre désignation des bénéficiaires en cas de décès (au sein du cadre légal).</div>
+                  </div>
+               </div>
+               <div style={{ display: "flex", gap: 16, alignItems: "flex-start", background: C.lightGray, padding: "16px 20px" }}>
+                  <div style={{ color: C.primary, fontSize: 24 }}>📈</div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.primaryDark, marginBottom: 4 }}>Contre l'inflation</div>
+                    <div style={{ fontSize: 12, color: C.gray, lineHeight: 1.5 }}>L'investissement en actions/obligations maintient le pouvoir d'achat de votre retraite.</div>
+                  </div>
+               </div>
+             </div>
+          </div>
+
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideLPPProjections({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const rows = computeProjectionsLPP(data);
+  const initial = Number(data.capitalLibrePassage || 120000);
+
+  // SVG Chart variables
+  const svgW = 480; const svgH = 240;
+  const padL = 70; const padR = 20; const padT = 20; const padB = 30;
+  const w = svgW - padL - padR; const h = svgH - padT - padB;
+  const maxVal = rows[rows.length-1].clp;
+  const gridMax = Math.ceil(maxVal / 50000) * 50000 || 200000;
+  
+  const getX = (i) => padL + (i / (rows.length - 1)) * w;
+  const getY = (val) => padT + h - (val / gridMax) * h;
+
+  const dClassic = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.classic)}`).join(' ');
+  const dCLP = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.clp)}`).join(' ');
+
+  const rateCLPDisplay = (rows[0].rateCLP * 100).toFixed(1);
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Projections :" highlight="Classique vs Libre Passage" subtitle={`SIMULATION JUSQU'À 65 ANS (${Math.max(1, 65 - (Number(data.age)||40))} ANS)`} />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 40, alignItems: "center", minHeight: 0 }}>
+          
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+             <p style={{ fontSize: 13, lineHeight: 1.6, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }}>
+              Comparaison de l'évolution de votre capital de <strong>CHF {fmt(initial)}.-</strong> s'il reste sur un compte de fondation classique (~1% net/an) ou s'il est investi sur les marchés selon votre profil <strong>{data.profilRisque || "Dynamique"}</strong> (~{rateCLPDisplay}% estimé net/an).
+            </p>
+
+            <div style={{ width: svgW, height: svgH, alignSelf: "center", background: C.white, border: `1px solid ${C.lightGray}`, padding: "10px 0" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
+                {/* Y Axis */}
+                {[0, 0.33, 0.66, 1].map(pct => {
+                  const y = padT + h - (pct * h);
+                  const val = Math.round(gridMax * pct);
+                  return (
+                    <g key={pct}>
+                      <line x1={padL} y1={y} x2={svgW - padR} y2={y} stroke="#E5E7EB" strokeWidth="1" strokeDasharray="4 4" />
+                      <text x={padL - 10} y={y + 4} fontSize="11" fill="#6B7280" textAnchor="end">{fmt(val)}</text>
+                    </g>
+                  );
+                })}
+                {/* X Axis */}
+                {rows.map((r, i) => (
+                  <text key={i} x={getX(i)} y={svgH - 5} fontSize="11" fill="#6B7280" textAnchor="middle">{r.age} ans</text>
+                ))}
+                
+                {/* Area under CLP */}
+                <path d={`${dCLP} L ${getX(rows.length-1)} ${getY(0)} L ${getX(0)} ${getY(0)} Z`} fill="rgba(105,33,2,0.05)" />
+                
+                {/* Lines */}
+                <path d={dClassic} fill="none" stroke={C.gray} strokeWidth="2" />
+                <path d={dCLP} fill="none" stroke={C.primary} strokeWidth="3" />
+                
+                {/* Points */}
+                {rows.map((r, i) => (
+                  <g key={i}>
+                    <circle cx={getX(i)} cy={getY(r.classic)} r="3" fill={C.gray} />
+                    <circle cx={getX(i)} cy={getY(r.clp)} r="5" fill={C.primary} stroke={C.white} strokeWidth="2" />
+                  </g>
+                ))}
+              </svg>
+            </div>
+            <div style={{ display: "flex", gap: 24, marginTop: 16, alignSelf: "center", fontSize: 12, fontWeight: 600 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 12, height: 2, background: C.gray }} /> Compte Classique (~1%)</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.primary }} /> Libre Passage ({data.profilRisque})</div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, textAlign: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+              <thead>
+                <tr style={{ background: C.primary, color: C.white }}>
+                  <th style={{ padding: "12px 10px", fontWeight: 600 }}>Âge</th>
+                  <th style={{ padding: "12px 10px", fontWeight: 600 }}>Compte Classique</th>
+                  <th style={{ padding: "12px 10px", fontWeight: 600 }}>Libre Passage</th>
+                  <th style={{ padding: "12px 10px", fontWeight: 600 }}>Différence</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.filter((_, i) => i > 0).map((r, i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white }}>
+                    <td style={{ padding: "12px 10px", fontWeight: 700, color: C.primary, borderBottom: "1px solid #E5E3DE" }}>{r.age} ans</td>
+                    <td style={{ padding: "12px 10px", color: C.darkGray, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.classic)}</td>
+                    <td style={{ padding: "12px 10px", fontWeight: 700, color: C.primary, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.clp)}</td>
+                    <td style={{ padding: "12px 10px", fontWeight: 700, color: C.gold, borderBottom: "1px solid #E5E3DE" }}>+ {fmt(r.clp - r.classic)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            
+            <div style={{ marginTop: 20, background: "rgba(165,149,104,0.1)", padding: "12px 20px", border: `1px solid ${C.gold}`, color: C.primaryDark, fontSize: 12, fontWeight: 700, textAlign: "center" }}>
+              Manque à gagner évité à 65 ans :<br/>
+              <span style={{ fontSize: 20, color: C.primary, marginTop: 4, display: "block" }}>CHF {fmt(rows[rows.length-1].clp - rows[rows.length-1].classic)}.-</span>
+            </div>
+
+            <p style={{ fontSize: 9, color: C.gray, marginTop: 12, lineHeight: 1.5, fontStyle: "italic", textAlign: "center" }}>
+              *Simulation non garantie à but illustratif. Les rendements d'investissement sont estimés nets de frais selon le profil choisi.
+            </p>
+          </div>
+
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+
 // ────────────────────── PREVIEW MODAL ──────────────────────
 
 function ReportPreview({ data, onClose, onUpdateData }) {
@@ -1386,7 +2016,13 @@ function ReportPreview({ data, onClose, onUpdateData }) {
     <SlideAdvantages data={data} />,
     <SlideDivider data={data} number={8} title="Compte Titre" editMode={editMode} onTextChange={handleTextChange} />,
     <SlideCompteTitre data={data} editMode={editMode} onTextChange={handleTextChange} />,
-    <SlideFund data={data} />,
+    ...(data.assetManager === "ParFinance" ? [
+      <SlideParFinanceIntro data={data} editMode={editMode} onTextChange={handleTextChange} />,
+      <SlideParFinanceFactsheet data={data} />,
+      <SlideFund data={data} />
+    ] : [
+      <SlideFund data={data} />
+    ]),
     <SlideProjections data={data} />,
     <SlideTarifs data={data} />,
     <SlideComparatif data={data} />,
@@ -1419,7 +2055,23 @@ function ReportPreview({ data, onClose, onUpdateData }) {
   slidesPrevoyance.push(<SlideProjectionsPrevoyance data={data} />);
   slidesPrevoyance.push(<SlideContact data={data} editMode={editMode} onTextChange={handleTextChange} />);
 
-  const slides = data.templateId === "prevoyance" ? slidesPrevoyance : slidesSwissquote;
+  const slidesLPP = [
+    <SlideCover data={data} />,
+    <SlideTOCLPP data={data} />,
+    <SlidePhilosophy data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlideAbout data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlideSituation data={data} />,
+    <SlideLPPIntro data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlideLPPFonctionnement data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlideLPPLibrePassage data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlideLPPAdministrateur data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlideLPPAvantagesCLP data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlideLPPAllocation data={data} />,
+    <SlideLPPProjections data={data} />,
+    <SlideContact data={data} editMode={editMode} onTextChange={handleTextChange} />,
+  ];
+
+  const slides = data.templateId === "lpp" ? slidesLPP : data.templateId === "prevoyance" ? slidesPrevoyance : slidesSwissquote;
 
   return (
     <div className="preview-modal-container" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 200, overflow: "hidden", display: "flex", flexDirection: "column" }}>
@@ -1515,6 +2167,8 @@ export default function WallSwissApp() {
     prevoyanceSol2: "En choisissant une solution en architecture ouverte, vous accédez aux meilleurs gérants mondiaux tout en bénéficiant des avantages exclusifs du cadre de l'assurance-vie (protection du preneur d'assurance, désignation libre des bénéficiaires).",
     prevoyanceSol3: "Cette stratégie permet une optimisation fiscale maximale aujourd'hui, tout en garantissant une transmission simplifiée et optimisée de votre patrimoine demain.",
     strategieFonds: "Investissement diversifié et orienté sur les actions mondiales de qualité, avec une couverture du risque de change si nécessaire. Focus sur la croissance à long terme.",
+    parFinanceP1: "ParFinance est une société de gestion d'actifs suisse indépendante, reconnue pour son expertise pointue dans l'allocation d'actifs et la sélection de fonds de placement de premier ordre.",
+    parFinanceP2: "En choisissant la stratégie Aries Portfolio, vous bénéficiez d'une gestion active et rigoureuse, visant à maximiser les rendements tout en contrôlant la volatilité grâce à une diversification intelligente à l'échelle mondiale.",
     contactDesc: "Gérer son patrimoine nécessite une approche personnalisée et stratégique. En optimisant sa fiscalité, en sécurisant son épargne et en faisant des choix d'investissement éclairés, il est possible de construire un patrimoine pérenne et adapté à vos projets de vie.",
     dividerQuote: "« L'investissement est un voyage à long terme. La clé est de rester concentré sur sa destination finale et de s'entourer des meilleurs partenaires. »",
     appP1: "Effectuez des opérations de trading, d'investissement et bancaires en toute sécurité et à des tarifs avantageux, grâce au principal acteur suisse de la banque en ligne.",
@@ -1529,28 +2183,66 @@ export default function WallSwissApp() {
     prevRachatP1: "Une solution de prévoyance liée à des fonds est un puissant levier conçu pour le long terme (jusqu'à l'âge de la retraite). Les premières années de votre plan constituent le socle de votre sécurité :",
     prevRachatP2: "La valeur de votre contrat (valeur de rachat) se construit ainsi progressivement. Un retrait lors des toutes premières années ne reflète pas encore le plein potentiel de croissance de votre investissement à terme.",
     prevFiscP1: "Le système fiscal suisse encourage fortement la prévoyance individuelle. Chaque franc investi dans votre pilier 3A vient réduire directement votre revenu imposable.",
-    prevFiscP2: "Pour un contribuable moyen, cela représente un retour sur investissement immédiat et garanti par l'État pouvant aller de 20% à 35% du montant versé, indépendamment des performances des marchés financiers."
+    prevFiscP2: "Pour un contribuable moyen, cela représente un retour sur investissement immédiat et garanti par l'État pouvant aller de 20% à 35% du montant versé, indépendamment des performances des marchés financiers.",
+    lppIntroP1: "Le 2ème pilier (LPP) est la pierre angulaire de votre retraite. Toutefois, face à l'augmentation de l'espérance de vie, les taux de conversion légaux et surobligatoires sont en baisse constante.",
+    lppIntroP2: "Cela signifie que pour un même capital accumulé, la rente versée à la retraite sera plus faible que par le passé.",
+    lppIntroP3: "Il est donc crucial de reprendre le contrôle de votre prévoyance professionnelle : dynamiser vos avoirs de libre passage est aujourd'hui une nécessité absolue pour maintenir votre niveau de vie.",
+    lppFonctP1: "Le compte de libre passage accueille vos avoirs LPP lorsque vous quittez une caisse de pension sans en rejoindre une nouvelle immédiatement (activité indépendante, départ à l'étranger, pause).",
+    lppFonctP2: "Sur un compte bancaire classique, ce capital dort et subit l'érosion monétaire due à l'inflation. De plus, il n'est plus géré activement par une caisse de pension.",
+    lppFonctP3: "La loi vous autorise à reprendre le contrôle de cette épargne bloquée en l'investissant sur les marchés, afin de recréer une dynamique de rendement propre à la prévoyance.",
+    lppLibreP1: "Si vous quittez votre employeur, prenez une année sabbatique ou devenez indépendant, vos avoirs LPP sont transférés sur un compte de libre passage (CLP).",
+    lppLibreP2: "Au lieu de laisser ce capital dormir sur un compte rémunéré à un taux proche de zéro, vous avez la possibilité légale de l'investir sur les marchés financiers selon votre profil de risque.",
+    lppAdminP1: "Pour sécuriser et gérer vos avoirs de libre passage, nous nous appuyons sur une fondation institutionnelle de premier plan en Suisse.",
+    lppAdminP2: "La fondation agit comme le gardien légal de vos avoirs, garantissant que ceux-ci restent insaisissables, séparés du bilan de la banque dépositaire, et investis strictement selon les directives fédérales (OPP2).",
+    lppAvantagesP1: "Investir son Libre Passage permet de viser des rendements historiques nettement supérieurs à ceux d'un compte de fondation classique ou d'une caisse de pension standard.",
+    lppAvantagesP2: "Vous bénéficiez d'une architecture ouverte : vos avoirs sont gérés par des experts mondiaux, tout en profitant d'avantages fiscaux majeurs."
   };
 
   const [activeModule, setActiveModule] = useState("hub"); 
   const [rapportPage, setRapportPage] = useState("dashboard"); 
   const [step, setStep] = useState(0);
 
-  const [reports, setReports] = useState([{
-    id: 1,
-    templateId: "swissquote",
-    dateRapport: new Date().toISOString().split('T')[0],
-    nom: "MULLER", prenom: "Thomas", age: "42", profession: "Directeur Marketing", nationalite: "Suisse", statut: "Marié(e)", revenus: "145000",
-    capaciteEpargne: "3000", fortuneGlobale: "650000", profilRisque: "Dynamique", horizonPlacement: "Long terme (> 8 ans)",
-    objectifs: ["Préparer la retraite", "Financer un projet immobilier", "Améliorer la fiscalité des placements"], objectifCustom: "",
-    montantInvestissement: "200000", fraisSouscription: "2.5",
-    tauxPessimiste: "4", tauxRealiste: "7", tauxOptimiste: "10",
-    compagniePrevoyance: "Liechtenstein Life", optiFiscale: true,
-    tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6",
-    conseiller: "Louis Borne", titreConseiller: "Planificatrice financière",
-    telephone: "+41.76.231.92.75", email: "l.borne@wallswiss.ch",
-    texts: initialTexts
-  }]);
+  const [reports, setReports] = useState([
+    {
+      id: 1,
+      templateId: "swissquote",
+      dateRapport: new Date().toISOString().split('T')[0],
+      nom: "MULLER", prenom: "Thomas", age: "42", profession: "Directeur Marketing", nationalite: "Suisse", statut: "Marié(e)", revenus: "145000",
+      capaciteEpargne: "3000", fortuneGlobale: "650000", profilRisque: "Dynamique", horizonPlacement: "Long terme (> 8 ans)",
+      objectifs: ["Financer un projet immobilier", "Améliorer la fiscalité des placements"], objectifCustom: "",
+      assetManager: "NS Partners",
+      montantInvestissement: "200000", fraisSouscription: "2.5",
+      tauxPessimiste: "4", tauxRealiste: "7", tauxOptimiste: "10",
+      conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP",
+      telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch",
+      texts: initialTexts
+    },
+    {
+      id: 2,
+      templateId: "prevoyance",
+      dateRapport: new Date().toISOString().split('T')[0],
+      nom: "DUBOIS", prenom: "Sophie", age: "35", profession: "Architecte", nationalite: "Suisse", statut: "Célibataire", revenus: "95000",
+      capaciteEpargne: "600", fortuneGlobale: "120000", profilRisque: "Dynamique", horizonPlacement: "Long terme (> 8 ans)",
+      objectifs: ["Préparer la retraite", "Obtenir une réduction d'impôt (via l'optimisation fiscale Suisse)"], objectifCustom: "",
+      compagniePrevoyance: "Liechtenstein Life", optiFiscale: true,
+      tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6",
+      conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP",
+      telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch",
+      texts: initialTexts
+    },
+    {
+      id: 3,
+      templateId: "lpp",
+      dateRapport: new Date().toISOString().split('T')[0],
+      nom: "WEBER", prenom: "Marc", age: "52", profession: "Ingénieur", nationalite: "Suisse", statut: "Marié(e)", revenus: "160000",
+      capaciteEpargne: "1500", fortuneGlobale: "400000", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)",
+      objectifs: ["Préparer la retraite", "Optimiser la transmission de patrimoine"], objectifCustom: "",
+      capitalLibrePassage: "250000", administrateurLpp: "Pictet", tauxClp: "4.5",
+      conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP",
+      telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch",
+      texts: initialTexts
+    }
+  ]);
   const [preview, setPreview] = useState(null);
   
   const [form, setForm] = useState({
@@ -1559,12 +2251,14 @@ export default function WallSwissApp() {
     nom: "", prenom: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "",
     capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)",
     objectifs: [], objectifCustom: "",
+    assetManager: "NS Partners",
     montantInvestissement: "100000", fraisSouscription: "3",
     tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9",
     compagniePrevoyance: "Liechtenstein Life", optiFiscale: true,
     tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6",
-    conseiller: "Louis Borne", titreConseiller: "Planificatrice financière",
-    telephone: "+41.76.231.92.75", email: "l.borne@wallswiss.ch",
+    capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5",
+    conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP",
+    telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch",
     texts: initialTexts
   });
 
@@ -1573,7 +2267,7 @@ export default function WallSwissApp() {
   const toggleObj = (o) => setForm(p => ({ ...p, objectifs: p.objectifs.includes(o) ? p.objectifs.filter(x => x !== o) : [...p.objectifs, o] }));
   const addCustomObj = () => { if (form.objectifCustom.trim()) { setForm(p => ({ ...p, objectifs: [...p.objectifs, p.objectifCustom.trim()], objectifCustom: "" })); } };
   const handleSave = () => { setReports(p => [...p, { ...form, id: Date.now() }]); setPreview(form); setRapportPage("dashboard"); setStep(0); };
-  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", conseiller: "Louis Borne", titreConseiller: "Planificatrice financière", telephone: "+41.76.231.92.75", email: "l.borne@wallswiss.ch", texts: initialTexts });
+  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP", telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch", texts: initialTexts });
 
   const handlePreviewUpdate = (newData) => {
     setPreview(newData);
@@ -1594,9 +2288,9 @@ export default function WallSwissApp() {
           <div style={S.cardTitle}><div style={S.dot} /> Choix du modèle de présentation</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             {[
-              { id: "swissquote", title: "Compte Titre SwissQuote", desc: "Stratégie d'investissement flexible et performante en Suisse.", active: true },
+              { id: "swissquote", title: "Compte Titre", desc: "Stratégie d'investissement flexible et performante en Suisse.", active: true },
               { id: "prevoyance", title: "Prévoyance (3A/3B)", desc: "Optimisation fiscale et préparation retraite avec assurance vie.", active: true },
-              { id: "assurance", title: "Assurance Vie", desc: "Protection et transmission de patrimoine (Bientôt disponible).", active: false },
+              { id: "lpp", title: "2ème Pilier LPP", desc: "Analyse et dynamisation du Libre passage institutionnel.", active: true },
               { id: "immobilier", title: "Immobilier", desc: "Investissements et rendements immobiliers (Bientôt disponible).", active: false },
             ].map(tpl => (
               <div key={tpl.id} onClick={() => tpl.active && u("templateId", tpl.id)} style={{ border: `2px solid ${form.templateId === tpl.id ? C.primary : C.mediumGray}`, padding: 20, cursor: tpl.active ? "pointer" : "not-allowed", opacity: tpl.active ? 1 : 0.5, background: form.templateId === tpl.id ? "rgba(105,33,2,0.04)" : C.white, display: "flex", flexDirection: "column", gap: 8, borderRadius: "0px" }}>
@@ -1701,8 +2395,36 @@ export default function WallSwissApp() {
                   </select>
                 </div>
               </>
+            ) : form.templateId === "lpp" ? (
+              <>
+                <div style={S.fg}><label style={S.label}>Capital de Libre Passage (CHF)</label><input style={S.input} type="number" value={form.capitalLibrePassage} onChange={e=>u("capitalLibrePassage",e.target.value)} placeholder="120000"/></div>
+                <div style={S.fg}>
+                  <label style={S.label}>Administrateur / Fondation de Libre Passage</label>
+                  <select style={S.select} value={form.administrateurLpp} onChange={e=>u("administrateurLpp",e.target.value)}>
+                    <option>Pictet</option>
+                    <option>Lemania</option>
+                  </select>
+                </div>
+                
+                <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
+                
+                <div style={S.fg}><label style={S.label}>Taux de rendement cible net (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxClp} onChange={e=>u("tauxClp",e.target.value)} placeholder="4.5"/></div>
+                <div style={{...S.fg, margin: 0}}>
+                  <label style={S.label}>Profil de risque (Libre Passage)</label>
+                  <select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>
+                    {["Prudent", "Équilibré", "Dynamique", "Offensif"].map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </div>
+              </>
             ) : (
               <>
+                <div style={S.fg}>
+                  <label style={S.label}>Asset Manager</label>
+                  <select style={S.select} value={form.assetManager || "NS Partners"} onChange={e=>u("assetManager",e.target.value)}>
+                    <option>NS Partners</option>
+                    <option>ParFinance</option>
+                  </select>
+                </div>
                 <div style={S.fg}><label style={S.label}>Montant initial (CHF)</label><input style={S.input} type="number" value={form.montantInvestissement} onChange={e=>u("montantInvestissement",e.target.value)}/></div>
                 <div style={S.fg}><label style={S.label}>Frais de souscription (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscription} onChange={e=>u("fraisSouscription",e.target.value)}/></div>
                 
@@ -1722,6 +2444,11 @@ export default function WallSwissApp() {
                 <div style={S.fg}><label style={S.label}>Taux optimiste net (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxOptimistePrev} onChange={e=>u("tauxOptimistePrev",e.target.value)}/></div>
                 <div style={S.fg}><label style={S.label}>Mensualité investie (CHF)</label><input style={S.input} type="number" value={form.capaciteEpargne} onChange={e=>u("capaciteEpargne",e.target.value)} placeholder="500"/></div>
               </>
+            ) : form.templateId === "lpp" ? (
+              <div style={{ padding: 20, background: C.lightGray, color: C.darkGray, fontSize: 13, lineHeight: 1.6, textAlign: "center" }}>
+                La projection financière du Libre Passage s'appuie sur le <strong>Profil de risque</strong> choisi.<br/><br/>
+                La comparaison se fera automatiquement entre une rémunération classique (compte de fondation) et l'investissement sur les marchés.
+              </div>
             ) : (
               <>
                 <div style={S.fg}><label style={S.label}>Taux pessimiste (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxPessimiste} onChange={e=>u("tauxPessimiste",e.target.value)}/></div>
@@ -1771,6 +2498,17 @@ export default function WallSwissApp() {
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.solution2} onChange={e=>uText("solution2", e.target.value)} /></div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 3 (Fiscalité)</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.solution3} onChange={e=>uText("solution3", e.target.value)} /></div>
+                
+                {form.assetManager === "ParFinance" && (
+                  <>
+                    <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
+                    <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "ASSET MANAGER PARFINANCE"</div>
+                    <div style={S.fg}><label style={S.label}>Présentation (Paragraphe 1)</label>
+                    <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.parFinanceP1} onChange={e=>uText("parFinanceP1", e.target.value)} /></div>
+                    <div style={S.fg}><label style={S.label}>Présentation (Paragraphe 2)</label>
+                    <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.parFinanceP2} onChange={e=>uText("parFinanceP2", e.target.value)} /></div>
+                  </>
+                )}
               </>
             )}
 
@@ -1789,6 +2527,44 @@ export default function WallSwissApp() {
                 <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "FONDS DE PLACEMENT"</div>
                 <div style={S.fg}><label style={S.label}>Stratégie d'investissement personnalisée</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.strategieFonds} onChange={e=>uText("strategieFonds", e.target.value)} /></div>
+              </>
+            )}
+
+            {form.templateId === "lpp" && (
+              <>
+                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "ENJEUX LPP"</div>
+                <div style={S.fg}><label style={S.label}>Paragraphe 1 (Contexte)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppIntroP1} onChange={e=>uText("lppIntroP1", e.target.value)} /></div>
+                <div style={S.fg}><label style={S.label}>Paragraphe 2 (Conséquence)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppIntroP2} onChange={e=>uText("lppIntroP2", e.target.value)} /></div>
+                <div style={S.fg}><label style={S.label}>Paragraphe 3 (Conclusion)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppIntroP3} onChange={e=>uText("lppIntroP3", e.target.value)} /></div>
+                
+                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "FONCTIONNEMENT LIBRE PASSAGE"</div>
+                <div style={S.fg}><label style={S.label}>Paragraphe 1 (Définition)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppFonctP1} onChange={e=>uText("lppFonctP1", e.target.value)} /></div>
+                <div style={S.fg}><label style={S.label}>Paragraphe 2 (Problème)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppFonctP2} onChange={e=>uText("lppFonctP2", e.target.value)} /></div>
+                <div style={S.fg}><label style={S.label}>Paragraphe 3 (Solution)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppFonctP3} onChange={e=>uText("lppFonctP3", e.target.value)} /></div>
+
+                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGES "COMPTE DE LIBRE PASSAGE"</div>
+                <div style={S.fg}><label style={S.label}>Introduction Libre Passage</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppLibreP1} onChange={e=>uText("lppLibreP1", e.target.value)} /></div>
+                <div style={S.fg}><label style={S.label}>Avantages des Fonds (LPP)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppAvantagesP1} onChange={e=>uText("lppAvantagesP1", e.target.value)} /></div>
+                <div style={S.fg}><label style={S.label}>Architecture Ouverte (LPP)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppAvantagesP2} onChange={e=>uText("lppAvantagesP2", e.target.value)} /></div>
+                
+                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "ADMINISTRATEUR CLP"</div>
+                <div style={S.fg}><label style={S.label}>Présentation du partenaire</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppAdminP1} onChange={e=>uText("lppAdminP1", e.target.value)} /></div>
+                <div style={S.fg}><label style={S.label}>Sécurité et gouvernance</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppAdminP2} onChange={e=>uText("lppAdminP2", e.target.value)} /></div>
               </>
             )}
 
@@ -1815,6 +2591,12 @@ export default function WallSwissApp() {
                   <div style={{ fontSize: 15, fontWeight: 700, color: C.primary }}>CHF {fmt(form.capaciteEpargne)}.- / mois</div>
                   <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>{form.compagniePrevoyance}</div>
                   <div style={{ fontSize: 12, color: C.gray }}>Opti. Fiscale: {form.optiFiscale ? "Oui" : "Non"}</div>
+                </>
+              ) : form.templateId === "lpp" ? (
+                <>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: C.primary }}>Libre Passage LPP</div>
+                  <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>Capital: CHF {fmt(form.capitalLibrePassage)}.-</div>
+                  <div style={{ fontSize: 12, color: C.gray }}>Cible: {form.tauxClp}% net/an</div>
                 </>
               ) : (
                 <>
@@ -1993,30 +2775,47 @@ export default function WallSwissApp() {
                       </div>
                       <button style={S.btnP} onClick={()=>{setRapportPage("create");resetForm();}}>+ Nouveau rapport</button>
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 20 }}>
-                      {reports.map((r,i) => (
-                        <div key={i} style={{ ...S.card, cursor: "pointer", position: "relative", overflow: "hidden", padding: "24px 28px", transition: "transform 0.2s" }} onClick={()=>setPreview(r)} onMouseEnter={(e)=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={(e)=>e.currentTarget.style.transform="translateY(0)"}>
-                          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: C.gold }} />
-                          <div style={{ fontSize: 10, color: C.gray, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12, marginTop: 4 }}>Dossier Client</div>
-                          <div style={{ fontSize: 18, fontWeight: 800, color: C.primary, marginBottom: 6 }}>{r.prenom} {(r.nom||"").toUpperCase()}</div>
-                          <div style={{ fontSize: 13, color: C.darkGray, marginBottom: 16 }}>{r.profession} — {r.age} ans</div>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 16, borderTop: `1px solid ${C.lightGray}` }}>
-                            <div>
-                              <div style={{ fontSize: 10, color: C.gray, marginBottom: 2 }}>
-                                {r.templateId === "prevoyance" ? "Épargne simulée" : "Montant simulé"}
+                    
+                    {[
+                      { id: "swissquote", title: "Compte Titre" }, 
+                      { id: "prevoyance", title: "Prévoyance (3A/3B)" }, 
+                      { id: "lpp", title: "2ème Pilier LPP" }
+                    ].map(cat => {
+                      const catReports = reports.filter(r => r.templateId === cat.id);
+                      if (catReports.length === 0) return null;
+                      
+                      return (
+                        <div key={cat.id} style={{ marginBottom: 40 }}>
+                          <h3 style={{ fontSize: 14, color: C.gray, textTransform: "uppercase", letterSpacing: "0.1em", borderBottom: `2px solid ${C.mediumGray}`, paddingBottom: 8, marginBottom: 20 }}>{cat.title}</h3>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 20 }}>
+                            {catReports.map((r,i) => (
+                              <div key={i} style={{ ...S.card, cursor: "pointer", position: "relative", overflow: "hidden", padding: "24px 28px", transition: "transform 0.2s" }} onClick={()=>setPreview(r)} onMouseEnter={(e)=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={(e)=>e.currentTarget.style.transform="translateY(0)"}>
+                                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: C.gold }} />
+                                <div style={{ fontSize: 10, color: C.gray, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12, marginTop: 4 }}>Dossier Client</div>
+                                <div style={{ fontSize: 18, fontWeight: 800, color: C.primary, marginBottom: 6 }}>{r.prenom} {(r.nom||"").toUpperCase()}</div>
+                                <div style={{ fontSize: 13, color: C.darkGray, marginBottom: 16 }}>{r.profession} — {r.age} ans</div>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 16, borderTop: `1px solid ${C.lightGray}` }}>
+                                  <div>
+                                    <div style={{ fontSize: 10, color: C.gray, marginBottom: 2 }}>
+                                      {r.templateId === "prevoyance" ? "Épargne simulée" : r.templateId === "lpp" ? "Libre Passage" : "Montant simulé"}
+                                    </div>
+                                    <div style={{ fontSize: 13, color: C.primary, fontWeight: 600 }}>
+                                      {r.templateId === "prevoyance" 
+                                        ? `CHF ${fmt(r.capaciteEpargne || 500)}.-/mois` 
+                                        : r.templateId === "lpp"
+                                        ? `CHF ${fmt(r.capitalLibrePassage || 120000)}.-`
+                                        : `CHF ${fmt(r.montantInvestissement||100000)}.-`
+                                      }
+                                    </div>
+                                  </div>
+                                  <span style={{ fontSize: 11, color: C.gold, fontWeight: 700, background: "rgba(165,149,104,0.1)", padding: "6px 12px" }}>OUVRIR &rarr;</span>
+                                </div>
                               </div>
-                              <div style={{ fontSize: 13, color: C.primary, fontWeight: 600 }}>
-                                {r.templateId === "prevoyance" 
-                                  ? `CHF ${fmt(r.capaciteEpargne || 500)}.-/mois` 
-                                  : `CHF ${fmt(r.montantInvestissement||100000)}.-`
-                                }
-                              </div>
-                            </div>
-                            <span style={{ fontSize: 11, color: C.gold, fontWeight: 700, background: "rgba(165,149,104,0.1)", padding: "6px 12px" }}>OUVRIR &rarr;</span>
+                            ))}
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
                 )
               )}

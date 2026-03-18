@@ -10,14 +10,14 @@ let app, auth, db, appId = "wallswiss-app";
 const ADMIN_EMAIL = "admin@wallswiss.ch";
 
 // ⚠️ INSTRUCTIONS POUR VERCEL / STACKBLITZ : 
-// Configuration officielle de votre projet Firebase
+// Ne laissez JAMAIS vos vraies clés en clair sur GitHub.
 const firebaseConfig = {
-  apiKey: "AIzaSyD6siK4q7ovudou4pmwMxQU0-Mrl7H_foA",
-  authDomain: "appws-3b512.firebaseapp.com",
-  projectId: "appws-3b512",
-  storageBucket: "appws-3b512.firebasestorage.app",
-  messagingSenderId: "1063328233614",
-  appId: "1:1063328233614:web:e15d8f9ba7811462b4f1df"
+  apiKey: "VOTRE_API_KEY",
+  authDomain: "VOTRE_AUTH_DOMAIN",
+  projectId: "VOTRE_PROJECT_ID",
+  storageBucket: "VOTRE_STORAGE_BUCKET",
+  messagingSenderId: "VOTRE_MESSAGING_SENDER_ID",
+  appId: "VOTRE_APP_ID"
 };
 
 try {

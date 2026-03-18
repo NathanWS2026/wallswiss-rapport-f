@@ -2841,7 +2841,7 @@ export default function WallSwissApp() {
                 <div style={{ background: C.lightGray, padding: 20, borderLeft: `4px solid ${C.gold}` }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: C.primaryDark, marginBottom: 8 }}>Étape 2 : Configurer le module Email</div>
                   <div style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.5 }}>
-                    1. Ajoutez un module <strong>"Gmail"</strong>, <strong>"Microsoft 365 Email"</strong> ou "Sendinblue" à la suite du webhook.<br/>
+                    1. Ajoutez le module <strong>"Microsoft 365 Email" (Outlook)</strong> à la suite du webhook.<br/>
                     2. Dans le champ destinataire ("To"), mappez la variable <code>email</code> provenant du Webhook.<br/>
                     3. Dans "Attachments", sélectionnez la variable <code>file</code> (votre PDF encodé en base64) et nommez-le <code>Rapport_Patrimonial.pdf</code>.
                   </div>

@@ -2692,7 +2692,7 @@ export default function WallSwissApp() {
 
   if (authLoading) {
     return (
-      <div style={{ display: "flex", height: "100%", width: "100%", overflow: "hidden", alignItems: "center", justifyContent: "center", background: C.lightGray, flexDirection: "column", fontFamily: "'Montserrat', sans-serif" }}>
+      <div style={{ display: "flex", minHeight: "100vh", width: "100vw", overflow: "hidden", alignItems: "center", justifyContent: "center", background: C.white, flexDirection: "column", fontFamily: "'Montserrat', sans-serif" }}>
         <div style={{ background: C.primary, width: "72px", height: "72px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px", marginBottom: 24 }}>
           <img src={LOGO_URL} alt="WallSwiss" style={{ width: "40px", height: "40px", objectFit: "contain" }} />
         </div>
@@ -2704,8 +2704,8 @@ export default function WallSwissApp() {
 
   if (!user) {
     return (
-      <div style={{ display: "flex", height: "100%", width: "100%", overflow: "hidden", alignItems: "center", justifyContent: "center", background: C.lightGray, fontFamily: "'Montserrat', sans-serif" }}>
-        <div style={{ background: C.white, padding: "48px", width: "100%", maxWidth: "400px", boxShadow: "0 10px 40px rgba(0,0,0,0.1)" }}>
+      <div style={{ display: "flex", minHeight: "100vh", width: "100vw", overflow: "hidden", alignItems: "center", justifyContent: "center", background: C.white, fontFamily: "'Montserrat', sans-serif" }}>
+        <div style={{ background: C.white, padding: "48px", width: "100%", maxWidth: "400px" }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
             <div style={{ background: C.primary, width: "64px", height: "64px", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <img src={LOGO_URL} alt="WallSwiss" style={{ width: "36px", height: "36px", objectFit: "contain" }} />

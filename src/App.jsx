@@ -1,4 +1,39 @@
 import React, { useState, useEffect } from "react";
+import { initializeApp } from "firebase/app";
+import { getAuth, onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+
+// ────────────────────── FIREBASE SETUP ──────────────────────
+let app, auth, db, appId = "wallswiss-app";
+
+// 👑 EMAIL DE L'ADMINISTRATEUR (Mettez votre propre email ici)
+const ADMIN_EMAIL = "admin@wallswiss.ch";
+
+// ⚠️ INSTRUCTIONS POUR VERCEL / STACKBLITZ : 
+// Configuration officielle de votre projet Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyD6siK4q7ovudou4pmwMxQU0-Mrl7H_foA",
+  authDomain: "appws-3b512.firebaseapp.com",
+  projectId: "appws-3b512",
+  storageBucket: "appws-3b512.firebasestorage.app",
+  messagingSenderId: "1063328233614",
+  appId: "1:1063328233614:web:e15d8f9ba7811462b4f1df"
+};
+
+try {
+  // Détection : Environnement de test actuel vs Hébergement externe
+  const isCanvasEnv = typeof __firebase_config !== 'undefined';
+  const finalConfig = isCanvasEnv ? JSON.parse(__firebase_config) : firebaseConfig;
+  
+  if (finalConfig.apiKey !== "VOTRE_API_KEY" || isCanvasEnv) {
+    app = initializeApp(finalConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    if (isCanvasEnv && typeof __app_id !== 'undefined') appId = __app_id;
+  }
+} catch (error) {
+  console.error("Erreur d'initialisation Firebase:", error);
+}
 
 const C = {
   primary: "#692102",
@@ -14,7 +49,7 @@ const C = {
 };
 
 const LOGO_URL = "/logo blanc sans texte.png";
-const APP_VERSION = "v1.9.0";
+const APP_VERSION = "v2.1.0 (Secured)";
 
 const fontLink = document.createElement("link");
 fontLink.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap";
@@ -1029,10 +1064,6 @@ function SlideContact({ data, editMode, onTextChange }) {
               <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>{data.email || "e.marquet@wallswiss.ch"}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-              <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>E</div>
-              <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>{data.email || "l.borne@wallswiss.ch"}</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
               <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>A</div>
               <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>Rue Kleberg 14, 1201 Genève</span>
             </div>
@@ -1909,6 +1940,9 @@ function SlideLPPProjections({ data }) {
   );
 }
 
+
+// ────────────────────── PREVIEW MODAL ──────────────────────
+
 function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [editMode, setEditMode] = useState(false);
@@ -2270,55 +2304,153 @@ export default function WallSwissApp() {
   const [rapportPage, setRapportPage] = useState("dashboard"); 
   const [step, setStep] = useState(0);
 
+  const [user, setUser] = useState(null);
+  const [userStatus, setUserStatus] = useState(null); // 'pending' ou 'approved'
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [agentsList, setAgentsList] = useState([]);
+  const [adminTab, setAdminTab] = useState("reports"); // 'reports' ou 'agents'
+
+  useEffect(() => {
+    if (!auth) {
+      setAuthLoading(false);
+      return;
+    }
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        }
+      } catch(e) {
+        console.error("Auth error", e);
+      }
+    };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      if (!u) setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    setAuthError("");
+    setAuthLoading(true);
+    try {
+      if (isSignUp) {
+        const cred = await createUserWithEmailAndPassword(auth, authEmail, authPassword);
+        // Création du profil en attente pour le nouvel agent
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'agents', cred.user.uid), {
+          email: authEmail,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        });
+      } else {
+        await signInWithEmailAndPassword(auth, authEmail, authPassword);
+      }
+    } catch (error) {
+      setAuthError("Erreur d'authentification : " + error.message);
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUserStatus(null);
+    } catch (error) {
+      console.error("Erreur de déconnexion", error);
+    }
+  };
+
+  const toggleAgentStatus = async (agentId, currentStatus) => {
+    const newStatus = currentStatus === 'approved' ? 'pending' : 'approved';
+    try {
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'agents', agentId), {
+        status: newStatus
+      });
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du statut", error);
+    }
+  };
+
   const [appSettings, setAppSettings] = useState({
     webhookUrl: "",
     emailSubject: "Votre Analyse Patrimoniale - WallSwiss",
     emailBody: "Bonjour {{prenom}} {{nom}},\n\nVeuillez trouver ci-joint votre rapport d'analyse patrimoniale personnalisé suite à notre entretien.\n\nRestant à votre entière disposition pour toute question.\n\nCordialement,\n{{conseiller}}"
   });
 
-  const [reports, setReports] = useState([
-    {
-      id: 1,
-      templateId: "swissquote",
-      dateRapport: new Date().toISOString().split('T')[0],
-      nom: "MULLER", prenom: "Thomas", emailClient: "thomas.muller@email.com", age: "42", profession: "Directeur Marketing", nationalite: "Suisse", statut: "Marié(e)", revenus: "145000",
-      capaciteEpargne: "3000", fortuneGlobale: "650000", profilRisque: "Dynamique", horizonPlacement: "Long terme (> 8 ans)",
-      objectifs: ["Financer un projet immobilier", "Améliorer la fiscalité des placements"], objectifCustom: "",
-      assetManager: "NS Partners",
-      montantInvestissement: "200000", fraisSouscription: "2.5",
-      tauxPessimiste: "4", tauxRealiste: "7", tauxOptimiste: "10",
-      conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP",
-      telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch",
-      texts: initialTexts
-    },
-    {
-      id: 2,
-      templateId: "prevoyance",
-      dateRapport: new Date().toISOString().split('T')[0],
-      nom: "DUBOIS", prenom: "Sophie", emailClient: "sophie.dubois@email.ch", age: "35", profession: "Architecte", nationalite: "Suisse", statut: "Célibataire", revenus: "95000",
-      capaciteEpargne: "600", fortuneGlobale: "120000", profilRisque: "Dynamique", horizonPlacement: "Long terme (> 8 ans)",
-      objectifs: ["Préparer la retraite", "Obtenir une réduction d'impôt (via l'optimisation fiscale Suisse)"], objectifCustom: "",
-      compagniePrevoyance: "Liechtenstein Life", optiFiscale: true,
-      tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6",
-      conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP",
-      telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch",
-      texts: initialTexts
-    },
-    {
-      id: 3,
-      templateId: "lpp",
-      dateRapport: new Date().toISOString().split('T')[0],
-      nom: "WEBER", prenom: "Marc", emailClient: "m.weber@email.com", age: "52", profession: "Ingénieur", nationalite: "Suisse", statut: "Marié(e)", revenus: "160000",
-      capaciteEpargne: "1500", fortuneGlobale: "400000", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)",
-      objectifs: ["Préparer la retraite", "Optimiser la transmission de patrimoine"], objectifCustom: "",
-      capitalLibrePassage: "250000", administrateurLpp: "Pictet", tauxClp: "4.5",
-      conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP",
-      telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch",
-      texts: initialTexts
-    }
-  ]);
+  const [reports, setReports] = useState([]);
   const [preview, setPreview] = useState(null);
   
+  useEffect(() => {
+    if (!user || !db) return;
+
+    let unsubProfile = () => {};
+    let unsubAgents = () => {};
+
+    // 1. Vérifier le statut de l'utilisateur (sauf si c'est l'admin)
+    if (user.email !== ADMIN_EMAIL) {
+      const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'agents', user.uid);
+      unsubProfile = onSnapshot(profileRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setUserStatus(docSnap.data().status);
+        } else {
+          setUserStatus('pending'); // Par défaut bloqué si pas de profil
+        }
+        setAuthLoading(false);
+      });
+    } else {
+      setUserStatus('approved'); // L'admin est toujours approuvé
+      setAuthLoading(false);
+
+      // 2. Si c'est l'admin, charger la liste des agents
+      const agentsRef = collection(db, 'artifacts', appId, 'public', 'data', 'agents');
+      unsubAgents = onSnapshot(agentsRef, (snapshot) => {
+        const loadedAgents = [];
+        snapshot.forEach((doc) => {
+          loadedAgents.push({ id: doc.id, ...doc.data() });
+        });
+        setAgentsList(loadedAgents.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      });
+    }
+
+    // 3. Charger les rapports
+    const reportsRef = collection(db, 'artifacts', appId, 'public', 'data', 'reports');
+    const unsubscribeReports = onSnapshot(reportsRef, (snapshot) => {
+      const loadedReports = [];
+      snapshot.forEach((doc) => {
+        loadedReports.push({ id: doc.id, ...doc.data() });
+      });
+      
+      // Si l'utilisateur n'est pas admin, il ne voit que ses propres rapports
+      if (user.email !== ADMIN_EMAIL) {
+        setReports(loadedReports.filter(r => r.agentId === user.uid).sort((a, b) => b.id - a.id));
+      } else {
+        // L'admin voit tout le cabinet
+        setReports(loadedReports.sort((a, b) => b.id - a.id));
+      }
+    }, (error) => console.error("Reports snapshot error", error));
+
+    const settingsRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'default');
+    const unsubscribeSettings = onSnapshot(settingsRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setAppSettings(docSnap.data());
+      }
+    }, (error) => console.error("Settings snapshot error", error));
+
+    return () => {
+      unsubscribeReports();
+      unsubscribeSettings();
+      unsubProfile();
+      unsubAgents();
+    };
+  }, [user]);
+
   const [form, setForm] = useState({
     templateId: "swissquote",
     dateRapport: new Date().toISOString().split('T')[0],
@@ -2340,13 +2472,59 @@ export default function WallSwissApp() {
   const uText = (k, v) => setForm(p => ({ ...p, texts: { ...p.texts, [k]: v } }));
   const toggleObj = (o) => setForm(p => ({ ...p, objectifs: p.objectifs.includes(o) ? p.objectifs.filter(x => x !== o) : [...p.objectifs, o] }));
   const addCustomObj = () => { if (form.objectifCustom.trim()) { setForm(p => ({ ...p, objectifs: [...p.objectifs, p.objectifCustom.trim()], objectifCustom: "" })); } };
-  const handleSave = () => { setReports(p => [...p, { ...form, id: Date.now() }]); setPreview(form); setRapportPage("dashboard"); setStep(0); };
+  
+  const handleSave = async () => {
+    const newId = Date.now();
+    const newReport = { 
+      ...form, 
+      id: newId,
+      agentId: user ? user.uid : "demo",
+      agentEmail: user ? user.email : "demo@wallswiss.ch",
+      dateCreation: new Date().toISOString()
+    };
+    
+    if (user && db) {
+      try {
+        // Sauvegarde dans la collection globale
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reports', newId.toString()), newReport);
+      } catch (e) {
+        console.error("Erreur de sauvegarde", e);
+      }
+    } else {
+      setReports(p => [...p, newReport]);
+    }
+    
+    setPreview(newReport); 
+    setRapportPage("dashboard"); 
+    setStep(0); 
+  };
+
+  const updateSettings = async (newSettings) => {
+    setAppSettings(newSettings);
+    if (user && db) {
+      try {
+        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'default'), newSettings);
+      } catch (e) {
+        console.error("Erreur de sauvegarde des paramètres", e);
+      }
+    }
+  };
+
   const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP", telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch", texts: initialTexts });
 
-  const handlePreviewUpdate = (newData) => {
+  const handlePreviewUpdate = async (newData) => {
     setPreview(newData);
     if (newData.id) {
-      setReports(prev => prev.map(r => r.id === newData.id ? newData : r));
+      if (user && db) {
+        try {
+          // Mise à jour dans la collection globale
+          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reports', newData.id.toString()), newData);
+        } catch (e) {
+          console.error("Erreur de mise à jour", e);
+        }
+      } else {
+        setReports(prev => prev.map(r => r.id === newData.id ? newData : r));
+      }
     } else {
       setForm(newData);
     }
@@ -2354,6 +2532,76 @@ export default function WallSwissApp() {
 
   const defObj = ["Sécuriser son épargne", "Obtenir une réduction d'impôt (via l'optimisation fiscale Suisse)", "Améliorer la fiscalité des placements", "Mettre en place des sécurités (fonds d'urgence)", "Maintenir un standing de vie", "Préparer la retraite", "Optimiser la transmission de patrimoine", "Financer un projet immobilier"];
   const stepLabels = ["Modèles", "Client", "Objectifs", "Investissement", "Conseiller", "Textes", "Aperçu"];
+
+  if (authLoading) {
+    return (
+      <div style={{ display: "flex", height: "100vh", width: "100vw", alignItems: "center", justifyContent: "center", background: C.lightGray, flexDirection: "column", fontFamily: "'Montserrat', sans-serif" }}>
+        <div style={{ background: C.primary, width: "72px", height: "72px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px", marginBottom: 24 }}>
+          <img src={LOGO_URL} alt="WallSwiss" style={{ width: "40px", height: "40px", objectFit: "contain" }} />
+        </div>
+        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.primary, margin: "0 0 8px 0" }}>WallSwiss</h2>
+        <div style={{ color: C.gray, fontSize: 13, fontWeight: 500, letterSpacing: "0.05em" }}>Authentification en cours...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div style={{ display: "flex", height: "100vh", width: "100vw", alignItems: "center", justifyContent: "center", background: C.lightGray, fontFamily: "'Montserrat', sans-serif" }}>
+        <div style={{ background: C.white, padding: "48px", width: "100%", maxWidth: "400px", boxShadow: "0 10px 40px rgba(0,0,0,0.1)" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+            <div style={{ background: C.primary, width: "64px", height: "64px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <img src={LOGO_URL} alt="WallSwiss" style={{ width: "36px", height: "36px", objectFit: "contain" }} />
+            </div>
+          </div>
+          <h2 style={{ textAlign: "center", fontFamily: "'Times New Roman', Times, serif", color: C.primary, marginBottom: 8 }}>Espace Conseiller</h2>
+          <p style={{ textAlign: "center", color: C.gray, fontSize: 13, marginBottom: 32 }}>Connectez-vous pour accéder à vos dossiers clients et paramètres.</p>
+          
+          <form onSubmit={handleAuth} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <label style={S.label}>Email professionnel</label>
+              <input type="email" required style={S.input} value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="nom@wallswiss.ch" />
+            </div>
+            <div>
+              <label style={S.label}>Mot de passe</label>
+              <input type="password" required style={S.input} value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="••••••••" />
+            </div>
+            {authError && <div style={{ color: "#DC2626", fontSize: 12, background: "#FEE2E2", padding: "8px 12px" }}>{authError}</div>}
+            
+            <button type="submit" style={{ ...S.btnP, width: "100%", marginTop: 8 }}>
+              {isSignUp ? "Créer mon compte" : "Se connecter"}
+            </button>
+          </form>
+          
+          <div style={{ textAlign: "center", marginTop: 24, fontSize: 12, color: C.gray }}>
+            {isSignUp ? "Déjà un compte ?" : "Pas encore de compte ?"} 
+            <span onClick={() => setIsSignUp(!isSignUp)} style={{ color: C.gold, fontWeight: 700, cursor: "pointer", marginLeft: 6 }}>
+              {isSignUp ? "Se connecter" : "Créer un compte"}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Ecran d'attente d'approbation
+  if (false && userStatus === 'pending' && user.email !== ADMIN_EMAIL) { // ⚠️ BLOQUAGE DÉSACTIVÉ TEMPORAIREMENT
+    return (
+      <div style={{ display: "flex", height: "100vh", width: "100vw", alignItems: "center", justifyContent: "center", background: C.lightGray, fontFamily: "'Montserrat', sans-serif" }}>
+        <div style={{ background: C.white, padding: "48px", width: "100%", maxWidth: "500px", boxShadow: "0 10px 40px rgba(0,0,0,0.1)", textAlign: "center" }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+          <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.primary, marginBottom: 8, marginTop: 0 }}>Compte en attente</h2>
+          <p style={{ color: C.gray, fontSize: 14, lineHeight: 1.6, marginBottom: 32 }}>
+            Votre compte a bien été créé, mais il nécessite l'approbation d'un administrateur avant de pouvoir accéder à l'outil de génération de rapports.
+          </p>
+          <div style={{ background: "rgba(105,33,2,0.05)", padding: "16px", color: C.primaryDark, fontSize: 12, fontWeight: 600, marginBottom: 32 }}>
+            Connecté en tant que : {user.email}
+          </div>
+          <button onClick={handleLogout} style={S.btnS}>Se déconnecter</button>
+        </div>
+      </div>
+    );
+  }
 
   const renderStep = () => {
     switch(step) {
@@ -2766,10 +3014,21 @@ export default function WallSwissApp() {
           >
             ⚙️ Paramètres & Intégrations
           </button>
+
+          {user?.email === ADMIN_EMAIL && (
+            <button 
+              onClick={() => setActiveModule("admin")} 
+              style={{ width: "100%", textAlign: "left", background: activeModule === "admin" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "admin" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "admin" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "admin" ? 600 : 500, transition: "0.2s", marginTop: "8px" }}
+            >
+              🛡️ Gestion des accès
+            </button>
+          )}
         </nav>
 
         <div style={{ padding: "24px", borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
-          {APP_VERSION}
+          <div style={{ marginBottom: 12, color: C.gold, fontWeight: 600 }}>👤 {user?.email || "Mode Démo"}</div>
+          <button onClick={handleLogout} style={{ background: "transparent", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.2)", padding: "4px 8px", cursor: "pointer", fontSize: 10, width: "100%", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 16 }}>Déconnexion</button>
+          <div>{APP_VERSION}</div>
         </div>
       </aside>
 
@@ -2783,7 +3042,6 @@ export default function WallSwissApp() {
             <p style={{ color: C.gray, fontSize: 15, marginBottom: 48 }}>Sélectionnez un module ci-dessous pour démarrer vos tâches.</p>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
-              {/* Carte Module Rapport */}
               <div 
                 onClick={() => setActiveModule("rapport")}
                 style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s", borderRadius: 0 }}
@@ -2798,7 +3056,6 @@ export default function WallSwissApp() {
                 <span style={{ color: C.gold, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ouvrir le module &rarr;</span>
               </div>
 
-              {/* Autres modules en placeholder */}
               {[
                 { title: "Simulateurs Financiers", desc: "Calculez des projections d'assurance vie, prévoyance et immobilier.", icon: "📊" },
                 { title: "CRM Clients", desc: "Gérez votre portefeuille clients et suivez l'historique de vos rendez-vous.", icon: "👥" }
@@ -2816,11 +3073,72 @@ export default function WallSwissApp() {
           </div>
         )}
 
+        {/* VUE GESTION DES ACCÈS ADMIN */}
+        {activeModule === "admin" && user?.email === ADMIN_EMAIL && (
+          <div style={{ padding: "60px 80px", maxWidth: 1000, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+            <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: "0 0 8px" }}>Gestion des Accès</h2>
+            <p style={{ color: C.gray, fontSize: 14, marginBottom: 40 }}>Approuvez ou bloquez l'accès des conseillers à l'application.</p>
+
+            <div style={S.card}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr style={{ borderBottom: `2px solid ${C.mediumGray}`, color: C.gray }}>
+                    <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600 }}>Email Agent</th>
+                    <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 600 }}>Date d'inscription</th>
+                    <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 600 }}>Statut</th>
+                    <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 600 }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {agentsList.map(agent => (
+                    <tr key={agent.id} style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                      <td style={{ padding: "16px", fontWeight: 600, color: C.darkGray }}>{agent.email}</td>
+                      <td style={{ padding: "16px", textAlign: "center", color: C.gray }}>{new Date(agent.createdAt).toLocaleDateString()}</td>
+                      <td style={{ padding: "16px", textAlign: "center" }}>
+                        <span style={{ 
+                          padding: "4px 12px", borderRadius: "20px", fontSize: 11, fontWeight: 700,
+                          background: agent.status === 'approved' ? "#D1FAE5" : "#FEF3C7",
+                          color: agent.status === 'approved' ? "#065F46" : "#92400E"
+                        }}>
+                          {agent.status === 'approved' ? "Approuvé" : "En attente"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "16px", textAlign: "right" }}>
+                        <button 
+                          onClick={() => toggleAgentStatus(agent.id, agent.status)}
+                          style={{ 
+                            background: agent.status === 'approved' ? "white" : C.primary, 
+                            color: agent.status === 'approved' ? C.primary : "white",
+                            border: `1px solid ${C.primary}`, padding: "6px 12px", cursor: "pointer", 
+                            fontSize: 11, fontWeight: 600 
+                          }}
+                        >
+                          {agent.status === 'approved' ? "Révoquer l'accès" : "Approuver"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {agentsList.length === 0 && (
+                    <tr>
+                      <td colSpan="4" style={{ padding: "32px", textAlign: "center", color: C.gray }}>Aucun agent inscrit pour le moment.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* VUE PARAMÈTRES (TUTO MAKE) */}
         {activeModule === "settings" && (
           <div style={{ padding: "60px 80px", maxWidth: 1000, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
-            <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: "0 0 8px" }}>Paramètres & Intégrations</h2>
-            <p style={{ color: C.gray, fontSize: 14, marginBottom: 40 }}>Configurez vos outils externes et automatisations pour gagner du temps au quotidien.</p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 40 }}>
+              <div>
+                <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: "0 0 8px" }}>Paramètres & Intégrations</h2>
+                <p style={{ color: C.gray, fontSize: 14, margin: 0 }}>Configurez vos outils externes et automatisations pour gagner du temps au quotidien.</p>
+              </div>
+              <button onClick={() => updateSettings(appSettings)} style={S.btnP}>Enregistrer les modifications</button>
+            </div>
             
             <div style={S.card}>
               <div style={S.cardTitle}><div style={S.dot} /> Automatisation Email via Make.com</div>
@@ -2850,7 +3168,7 @@ export default function WallSwissApp() {
                 <div style={{ background: C.lightGray, padding: 20, borderLeft: `4px solid ${C.darkGray}` }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: C.primaryDark, marginBottom: 8 }}>Étape 3 : Connecter l'application</div>
                   <div style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.5, marginBottom: 12 }}>
-                    Collez l'URL de votre Webhook Make ci-dessous. Dès que vous cliquerez sur <strong>"Confirmer l'envoi"</strong>, les données seront transmises.
+                    Collez l'URL de votre Webhook Make ci-dessous. Dès que vous cliquerez sur <strong>"Envoyer par email"</strong> dans l'aperçu du rapport, le PDF sera transmis à ce webhook.
                   </div>
                   <input 
                     style={{...S.input, background: C.white, border: `1px solid ${C.gray}`}} 
@@ -2916,10 +3234,37 @@ export default function WallSwissApp() {
                   </div>
                 ) : (
                   <div style={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
+                    {user?.email === ADMIN_EMAIL && (
+                      <div style={{ background: C.white, border: `2px solid ${C.gold}`, padding: 24, marginBottom: 32, display: "flex", gap: 32, alignItems: "center" }}>
+                        <div>
+                          <div style={{ fontSize: 11, color: C.gold, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>👑 Vue Administrateur</div>
+                          <div style={{ fontSize: 24, fontWeight: 800, color: C.primary }}>Statistiques Globales</div>
+                        </div>
+                        <div style={{ height: 40, width: 1, background: C.mediumGray }}></div>
+                        <div>
+                          <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 600 }}>Total Rapports</div>
+                          <div style={{ fontSize: 20, fontWeight: 700, color: C.primaryDark }}>{reports.length}</div>
+                        </div>
+                        <div style={{ height: 40, width: 1, background: C.mediumGray }}></div>
+                        <div>
+                          <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 600 }}>Agents Actifs</div>
+                          <div style={{ fontSize: 20, fontWeight: 700, color: C.primaryDark }}>
+                            {new Set(reports.map(r => r.agentEmail)).size}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
                       <div>
-                        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Mes rapports récents</h2>
-                        <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Vous avez {reports.length} rapport{reports.length>1?"s":""} enregistré{reports.length>1?"s":""}.</p>
+                        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>
+                          {user?.email === ADMIN_EMAIL ? "Tous les rapports (Cabinet)" : "Mes rapports récents"}
+                        </h2>
+                        <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>
+                          {user?.email === ADMIN_EMAIL 
+                            ? `Vue globale : ${reports.length} rapport(s) sur l'ensemble des agents.` 
+                            : `Vous avez ${reports.length} rapport${reports.length>1?"s":""} enregistré${reports.length>1?"s":""}.`}
+                        </p>
                       </div>
                       <button style={S.btnP} onClick={()=>{setRapportPage("create");resetForm();}}>+ Nouveau rapport</button>
                     </div>
@@ -2939,7 +3284,12 @@ export default function WallSwissApp() {
                             {catReports.map((r,i) => (
                               <div key={i} style={{ ...S.card, cursor: "pointer", position: "relative", overflow: "hidden", padding: "24px 28px", transition: "transform 0.2s" }} onClick={()=>setPreview(r)} onMouseEnter={(e)=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={(e)=>e.currentTarget.style.transform="translateY(0)"}>
                                 <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: C.gold }} />
-                                <div style={{ fontSize: 10, color: C.gray, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12, marginTop: 4 }}>Dossier Client</div>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, marginTop: 4 }}>
+                                  <div style={{ fontSize: 10, color: C.gray, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Dossier Client</div>
+                                  {user?.email === ADMIN_EMAIL && (
+                                    <div style={{ fontSize: 9, background: C.lightGray, color: C.primary, padding: "2px 6px", borderRadius: 4, fontWeight: 700 }}>Agent: {r.agentEmail?.split('@')[0]}</div>
+                                  )}
+                                </div>
                                 <div style={{ fontSize: 18, fontWeight: 800, color: C.primary, marginBottom: 6 }}>{r.prenom} {(r.nom||"").toUpperCase()}</div>
                                 <div style={{ fontSize: 13, color: C.darkGray, marginBottom: 16 }}>{r.profession} — {r.age} ans</div>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 16, borderTop: `1px solid ${C.lightGray}` }}>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
-import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+import { getAuth, onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, addDoc, deleteDoc } from "firebase/firestore";
 
 // ────────────────────── FIREBASE SETUP ──────────────────────
 let app, auth, db, appId = "wallswiss-app";
@@ -10,14 +10,22 @@ let app, auth, db, appId = "wallswiss-app";
 const ADMIN_EMAIL = "admin@wallswiss.ch";
 
 // ⚠️ INSTRUCTIONS POUR VERCEL / STACKBLITZ : 
-// Ne laissez JAMAIS vos vraies clés en clair sur GitHub.
+// Ne laissez JAMAIS vos clés en clair dans le code source.
+// Créez un fichier .env à la racine de votre projet avec vos variables 
+// (ex: VITE_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_API_KEY ou REACT_APP_FIREBASE_API_KEY)
+const getEnv = (key) => {
+  try { return import.meta.env[`VITE_FIREBASE_${key}`]; } catch (e) {}
+  try { return process.env[`REACT_APP_FIREBASE_${key}`] || process.env[`NEXT_PUBLIC_FIREBASE_${key}`]; } catch (e) {}
+  return null;
+};
+
 const firebaseConfig = {
-  apiKey: "VOTRE_API_KEY",
-  authDomain: "VOTRE_AUTH_DOMAIN",
-  projectId: "VOTRE_PROJECT_ID",
-  storageBucket: "VOTRE_STORAGE_BUCKET",
-  messagingSenderId: "VOTRE_MESSAGING_SENDER_ID",
-  appId: "VOTRE_APP_ID"
+  apiKey: getEnv("API_KEY") || "VOTRE_API_KEY",
+  authDomain: getEnv("AUTH_DOMAIN") || "VOTRE_AUTH_DOMAIN",
+  projectId: getEnv("PROJECT_ID") || "VOTRE_PROJECT_ID",
+  storageBucket: getEnv("STORAGE_BUCKET") || "VOTRE_STORAGE_BUCKET",
+  messagingSenderId: getEnv("MESSAGING_SENDER_ID") || "VOTRE_MESSAGING_SENDER_ID",
+  appId: getEnv("APP_ID") || "VOTRE_APP_ID"
 };
 
 try {
@@ -2062,7 +2070,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
     setIsEmailing(true);
     
     // Simulation de l'appel Webhook Make.com avec les données du formulaire emailForm
-    // fetch(appSettings.webhookUrl, { method: 'POST', body: JSON.stringify({ email: emailForm.to, subject: emailForm.subject, body: emailForm.body, pdfBase64: '...' }) })
+    // fetch(appSettings.reportWebhookUrl, { method: 'POST', body: JSON.stringify({ email: emailForm.to, subject: emailForm.subject, body: emailForm.body, pdfBase64: '...' }) })
     
     setTimeout(() => {
       setIsEmailing(false);
@@ -2313,6 +2321,33 @@ export default function WallSwissApp() {
   const [authError, setAuthError] = useState("");
   const [agentsList, setAgentsList] = useState([]);
   const [adminTab, setAdminTab] = useState("reports"); // 'reports' ou 'agents'
+  const [settingsTab, setSettingsTab] = useState("profile");
+
+  // --- STATE MAILING MODULE ---
+  const [mailingClients, setMailingClients] = useState([]);
+  const [mailingTab, setMailingTab] = useState("contacts");
+  const [newClient, setNewClient] = useState({ prenom: "", nom: "", email: "" });
+  const [bulkImport, setBulkImport] = useState("");
+  const [campaign, setCampaign] = useState({ subject: "", body: "Bonjour {{prenom}},\n\nJe vous contacte suite à...", selectedIds: [] });
+  const [isSendingCampaign, setIsSendingCampaign] = useState(false);
+  const [campaignSuccess, setCampaignSuccess] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleImageUpload = async (file, path) => {
+    if (!file || !storage) return null;
+    setUploadingImage(true);
+    try {
+      const storageRef = ref(storage, path);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setUploadingImage(false);
+      return url;
+    } catch (error) {
+      console.error("Erreur d'upload :", error);
+      setUploadingImage(false);
+      return null;
+    }
+  };
 
   useEffect(() => {
     if (!auth) {
@@ -2321,6 +2356,7 @@ export default function WallSwissApp() {
     }
     const initAuth = async () => {
       try {
+        await setPersistence(auth, browserLocalPersistence);
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
           await signInWithCustomToken(auth, __initial_auth_token);
         }
@@ -2379,9 +2415,18 @@ export default function WallSwissApp() {
   };
 
   const [appSettings, setAppSettings] = useState({
-    webhookUrl: "",
+    reportWebhookUrl: "",
+    campaignWebhookUrl: "",
     emailSubject: "Votre Analyse Patrimoniale - WallSwiss",
-    emailBody: "Bonjour {{prenom}} {{nom}},\n\nVeuillez trouver ci-joint votre rapport d'analyse patrimoniale personnalisé suite à notre entretien.\n\nRestant à votre entière disposition pour toute question.\n\nCordialement,\n{{conseiller}}"
+    emailBody: "Bonjour {{prenom}} {{nom}},\n\nVeuillez trouver ci-joint votre rapport d'analyse patrimoniale personnalisé suite à notre entretien.\n\nRestant à votre entière disposition pour toute question.\n\nCordialement,\n{{conseiller}}",
+    agentFirstName: "Elisa",
+    agentLastName: "MARQUET",
+    agentTitle: "Planificatrice financière | CGP",
+    agentPhone: "+41 76 762 90 32",
+    agentEmail: "e.marquet@wallswiss.ch",
+    defaultLogo: "",
+    defaultCover: "",
+    defaultPhilosophy: ""
   });
 
   const [reports, setReports] = useState([]);
@@ -2392,6 +2437,7 @@ export default function WallSwissApp() {
 
     let unsubProfile = () => {};
     let unsubAgents = () => {};
+    let unsubMailing = () => {};
 
     // 1. Vérifier le statut de l'utilisateur (sauf si c'est l'admin)
     if (user.email !== ADMIN_EMAIL) {
@@ -2439,17 +2485,127 @@ export default function WallSwissApp() {
     const settingsRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'default');
     const unsubscribeSettings = onSnapshot(settingsRef, (docSnap) => {
       if (docSnap.exists()) {
-        setAppSettings(docSnap.data());
+        const data = docSnap.data();
+        setAppSettings(data);
+        setForm(prev => {
+          if (!prev.id) {
+            return {
+              ...prev,
+              conseiller: `${data.agentFirstName || ""} ${data.agentLastName || ""}`.trim() || prev.conseiller,
+              titreConseiller: data.agentTitle || prev.titreConseiller,
+              telephone: data.agentPhone || prev.telephone,
+              email: data.agentEmail || prev.email,
+              customLogo: data.defaultLogo || prev.customLogo,
+              customCoverImage: data.defaultCover || prev.customCoverImage,
+              customPhilosophyImage: data.defaultPhilosophy || prev.customPhilosophyImage
+            };
+          }
+          return prev;
+        });
       }
     }, (error) => console.error("Settings snapshot error", error));
+
+    // 4. Charger la base de contacts Mailing
+    const mailingRef = collection(db, 'artifacts', appId, 'users', user.uid, 'mailing_clients');
+    unsubMailing = onSnapshot(mailingRef, (snapshot) => {
+      const list = [];
+      snapshot.forEach((doc) => {
+        list.push({ id: doc.id, ...doc.data() });
+      });
+      setMailingClients(list.sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt)));
+    });
 
     return () => {
       unsubscribeReports();
       unsubscribeSettings();
       unsubProfile();
       unsubAgents();
+      unsubMailing();
     };
   }, [user]);
+
+  // --- ACTIONS MAILING ---
+  const handleAddMailingClient = async (e) => {
+    e.preventDefault();
+    if (!newClient.email || !user || !db) return;
+    try {
+      await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'mailing_clients'), {
+        prenom: newClient.prenom.trim(),
+        nom: newClient.nom.trim(),
+        email: newClient.email.trim(),
+        addedAt: new Date().toISOString()
+      });
+      setNewClient({ prenom: "", nom: "", email: "" });
+    } catch(err) {
+      console.error("Erreur ajout contact", err);
+    }
+  };
+
+  const handleBulkImport = async () => {
+    if (!bulkImport.trim() || !user || !db) return;
+    const lines = bulkImport.trim().split('\n');
+    let added = 0;
+    for (const line of lines) {
+      const parts = line.split(/[\t,;]+/).map(s => s.trim());
+      // On cherche une adresse email dans la ligne
+      const email = parts.find(p => p.includes('@'));
+      if (email) {
+        const otherParts = parts.filter(p => !p.includes('@'));
+        const prenom = otherParts[0] || "";
+        const nom = otherParts[1] || "";
+        try {
+          await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'mailing_clients'), {
+            prenom, nom, email, addedAt: new Date().toISOString()
+          });
+          added++;
+        } catch(e){}
+      }
+    }
+    setBulkImport("");
+    alert(`${added} contacts importés avec succès !`);
+  };
+
+  const handleDeleteMailingClient = async (id) => {
+    if(!user || !db) return;
+    try {
+      await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'mailing_clients', id));
+      setCampaign(p => ({ ...p, selectedIds: p.selectedIds.filter(cid => cid !== id) }));
+    } catch(e) {
+      console.error("Erreur suppression", e);
+    }
+  };
+
+  const handleToggleRecipient = (id) => {
+    setCampaign(p => {
+      if(p.selectedIds.includes(id)) return { ...p, selectedIds: p.selectedIds.filter(x => x !== id) };
+      return { ...p, selectedIds: [...p.selectedIds, id] };
+    });
+  };
+
+  const handleSelectAllRecipients = () => {
+    if (campaign.selectedIds.length === mailingClients.length) {
+      setCampaign(p => ({ ...p, selectedIds: [] }));
+    } else {
+      setCampaign(p => ({ ...p, selectedIds: mailingClients.map(c => c.id) }));
+    }
+  };
+
+  const handleSendCampaign = () => {
+    if (campaign.selectedIds.length === 0) {
+      alert("Veuillez sélectionner au moins un destinataire.");
+      return;
+    }
+    setIsSendingCampaign(true);
+    // Simulation d'envoi de la campagne (A lier avec Make/SendGrid plus tard)
+    // fetch(appSettings.campaignWebhookUrl, { method: 'POST', body: JSON.stringify({ ids: campaign.selectedIds, subject: campaign.subject, body: campaign.body }) })
+    setTimeout(() => {
+      setIsSendingCampaign(false);
+      setCampaignSuccess(true);
+      setTimeout(() => setCampaignSuccess(false), 3000);
+      setCampaign({ subject: "", body: "Bonjour {{prenom}},\n\nJe vous contacte suite à...", selectedIds: [] });
+    }, 2000);
+  };
+  // -------------------------
 
   const [form, setForm] = useState({
     templateId: "swissquote",
@@ -2465,6 +2621,7 @@ export default function WallSwissApp() {
     capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5",
     conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP",
     telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch",
+    customLogo: "", customCoverImage: "", customPhilosophyImage: "",
     texts: initialTexts
   });
 
@@ -2510,7 +2667,7 @@ export default function WallSwissApp() {
     }
   };
 
-  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP", telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch", texts: initialTexts });
+  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", conseiller: `${appSettings.agentFirstName || "Elisa"} ${appSettings.agentLastName || "MARQUET"}`.trim() || "Conseiller", titreConseiller: appSettings.agentTitle || "Planificatrice financière | CGP", telephone: appSettings.agentPhone || "+41 76 762 90 32", email: appSettings.agentEmail || "e.marquet@wallswiss.ch", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
 
   const handlePreviewUpdate = async (newData) => {
     setPreview(newData);
@@ -2531,11 +2688,11 @@ export default function WallSwissApp() {
   };
 
   const defObj = ["Sécuriser son épargne", "Obtenir une réduction d'impôt (via l'optimisation fiscale Suisse)", "Améliorer la fiscalité des placements", "Mettre en place des sécurités (fonds d'urgence)", "Maintenir un standing de vie", "Préparer la retraite", "Optimiser la transmission de patrimoine", "Financer un projet immobilier"];
-  const stepLabels = ["Modèles", "Client", "Objectifs", "Investissement", "Conseiller", "Textes", "Aperçu"];
+  const stepLabels = ["Modèles", "Client", "Objectifs", "Investissement", "Conseiller", "Personnalisation", "Aperçu"];
 
   if (authLoading) {
     return (
-      <div style={{ display: "flex", height: "100vh", width: "100vw", alignItems: "center", justifyContent: "center", background: C.lightGray, flexDirection: "column", fontFamily: "'Montserrat', sans-serif" }}>
+      <div style={{ display: "flex", height: "100%", width: "100%", overflow: "hidden", alignItems: "center", justifyContent: "center", background: C.lightGray, flexDirection: "column", fontFamily: "'Montserrat', sans-serif" }}>
         <div style={{ background: C.primary, width: "72px", height: "72px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px", marginBottom: 24 }}>
           <img src={LOGO_URL} alt="WallSwiss" style={{ width: "40px", height: "40px", objectFit: "contain" }} />
         </div>
@@ -2547,7 +2704,7 @@ export default function WallSwissApp() {
 
   if (!user) {
     return (
-      <div style={{ display: "flex", height: "100vh", width: "100vw", alignItems: "center", justifyContent: "center", background: C.lightGray, fontFamily: "'Montserrat', sans-serif" }}>
+      <div style={{ display: "flex", height: "100%", width: "100%", overflow: "hidden", alignItems: "center", justifyContent: "center", background: C.lightGray, fontFamily: "'Montserrat', sans-serif" }}>
         <div style={{ background: C.white, padding: "48px", width: "100%", maxWidth: "400px", boxShadow: "0 10px 40px rgba(0,0,0,0.1)" }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
             <div style={{ background: C.primary, width: "64px", height: "64px", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -2804,6 +2961,31 @@ export default function WallSwissApp() {
       case 5: return (
         <div style={{ display: "grid", gap: 20 }}>
           <div style={S.card}>
+            <div style={S.cardTitle}><div style={S.dot} /> Médias et Design Client</div>
+            <p style={{ fontSize: 12, color: C.gray, marginBottom: 16, marginTop: 0 }}>Remplacez les images par défaut par des éléments spécifiques à ce client (ex: logo de son entreprise).</p>
+            
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+              <div>
+                <label style={S.label}>Logo personnalisé</label>
+                <input type="file" accept="image/*" onChange={async (e) => {
+                  const url = await handleImageUpload(e.target.files[0], `reports/${user.uid}/logo_${Date.now()}`);
+                  if (url) u("customLogo", url);
+                }} style={{ fontSize: 11, fontFamily: "'Montserrat', sans-serif" }} />
+                {form.customLogo && form.customLogo !== appSettings.defaultLogo && <div style={{ marginTop: 8, fontSize: 11, color: C.gold, fontWeight: 600 }}>✓ Logo client chargé</div>}
+              </div>
+              <div>
+                <label style={S.label}>Image de couverture spécifique</label>
+                <input type="file" accept="image/*" onChange={async (e) => {
+                  const url = await handleImageUpload(e.target.files[0], `reports/${user.uid}/cover_${Date.now()}`);
+                  if (url) u("customCoverImage", url);
+                }} style={{ fontSize: 11, fontFamily: "'Montserrat', sans-serif" }} />
+                {form.customCoverImage && form.customCoverImage !== appSettings.defaultCover && <div style={{ marginTop: 8, fontSize: 11, color: C.gold, fontWeight: 600 }}>✓ Image spécifique chargée</div>}
+              </div>
+            </div>
+            {uploadingImage && <div style={{ fontSize: 12, color: C.gold, fontWeight: 700, marginTop: 12 }}>⏳ Téléchargement vers le cloud en cours...</div>}
+          </div>
+
+          <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Personnalisation des textes</div>
             <p style={{ fontSize: 12, color: C.gray, marginBottom: 16, marginTop: 0 }}>Modifiez les textes par défaut qui apparaîtront dans les diapositives.</p>
             
@@ -2981,7 +3163,7 @@ export default function WallSwissApp() {
       <aside className="no-print" style={{ width: "260px", background: C.sidebar, color: C.white, display: "flex", flexDirection: "column", flexShrink: 0, boxShadow: "2px 0 10px rgba(0,0,0,0.1)", zIndex: 110 }}>
         <div style={{ padding: "32px 24px", display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
           <div style={{ background: C.white, padding: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <img src={LOGO_URL} alt="WallSwiss" style={{ height: "20px", filter: "invert(1) sepia(1) saturate(5) hue-rotate(345deg) brightness(0.5)" }} />
+            <img src={appSettings.defaultLogo || LOGO_URL} alt="WallSwiss" style={{ height: "20px", filter: "invert(1) sepia(1) saturate(5) hue-rotate(345deg) brightness(0.5)" }} />
           </div>
           <div>
             <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, fontWeight: 700, letterSpacing: "0.08em" }}>WALLSWISS</div>
@@ -3009,10 +3191,10 @@ export default function WallSwissApp() {
           </button>
           
           <button 
-            onClick={() => setActiveModule("settings")} 
-            style={{ width: "100%", textAlign: "left", background: activeModule === "settings" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "settings" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "settings" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "settings" ? 600 : 500, transition: "0.2s", marginTop: "8px" }}
+            onClick={() => setActiveModule("mailing")} 
+            style={{ width: "100%", textAlign: "left", background: activeModule === "mailing" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "mailing" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "mailing" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "mailing" ? 600 : 500, transition: "0.2s", marginTop: "8px" }}
           >
-            ⚙️ Paramètres & Intégrations
+            📧 Mailing & Séquences
           </button>
 
           {user?.email === ADMIN_EMAIL && (
@@ -3024,6 +3206,15 @@ export default function WallSwissApp() {
             </button>
           )}
         </nav>
+
+        <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+          <button 
+            onClick={() => setActiveModule("settings")} 
+            style={{ width: "100%", textAlign: "left", background: activeModule === "settings" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "settings" ? C.white : "rgba(255,255,255,0.6)", border: "none", padding: "8px 0", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: activeModule === "settings" ? 600 : 500, transition: "0.2s", display: "flex", alignItems: "center", gap: 8 }}
+          >
+            ⚙️ Paramètres & Intégrations
+          </button>
+        </div>
 
         <div style={{ padding: "24px", borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
           <div style={{ marginBottom: 12, color: C.gold, fontWeight: 600 }}>👤 {user?.email || "Mode Démo"}</div>
@@ -3056,6 +3247,20 @@ export default function WallSwissApp() {
                 <span style={{ color: C.gold, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ouvrir le module &rarr;</span>
               </div>
 
+              <div 
+                onClick={() => setActiveModule("mailing")}
+                style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s", borderRadius: 0 }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.06)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+              >
+                <div style={{ background: "rgba(105,33,2,0.06)", width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+                  <span style={{ fontSize: 24 }}>📧</span>
+                </div>
+                <h3 style={{ fontSize: 18, color: C.primary, marginBottom: 8, marginTop: 0 }}>Mailing & Séquences</h3>
+                <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Importez vos contacts en masse et envoyez des campagnes d'e-mails personnalisées.</p>
+                <span style={{ color: C.gold, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ouvrir le module &rarr;</span>
+              </div>
+
               {[
                 { title: "Simulateurs Financiers", desc: "Calculez des projections d'assurance vie, prévoyance et immobilier.", icon: "📊" },
                 { title: "CRM Clients", desc: "Gérez votre portefeuille clients et suivez l'historique de vos rendez-vous.", icon: "👥" }
@@ -3073,128 +3278,296 @@ export default function WallSwissApp() {
           </div>
         )}
 
-        {/* VUE GESTION DES ACCÈS ADMIN */}
-        {activeModule === "admin" && user?.email === ADMIN_EMAIL && (
-          <div style={{ padding: "60px 80px", maxWidth: 1000, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
-            <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: "0 0 8px" }}>Gestion des Accès</h2>
-            <p style={{ color: C.gray, fontSize: 14, marginBottom: 40 }}>Approuvez ou bloquez l'accès des conseillers à l'application.</p>
-
-            <div style={S.card}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                <thead>
-                  <tr style={{ borderBottom: `2px solid ${C.mediumGray}`, color: C.gray }}>
-                    <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600 }}>Email Agent</th>
-                    <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 600 }}>Date d'inscription</th>
-                    <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 600 }}>Statut</th>
-                    <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 600 }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {agentsList.map(agent => (
-                    <tr key={agent.id} style={{ borderBottom: `1px solid ${C.lightGray}` }}>
-                      <td style={{ padding: "16px", fontWeight: 600, color: C.darkGray }}>{agent.email}</td>
-                      <td style={{ padding: "16px", textAlign: "center", color: C.gray }}>{new Date(agent.createdAt).toLocaleDateString()}</td>
-                      <td style={{ padding: "16px", textAlign: "center" }}>
-                        <span style={{ 
-                          padding: "4px 12px", borderRadius: "20px", fontSize: 11, fontWeight: 700,
-                          background: agent.status === 'approved' ? "#D1FAE5" : "#FEF3C7",
-                          color: agent.status === 'approved' ? "#065F46" : "#92400E"
-                        }}>
-                          {agent.status === 'approved' ? "Approuvé" : "En attente"}
-                        </span>
-                      </td>
-                      <td style={{ padding: "16px", textAlign: "right" }}>
-                        <button 
-                          onClick={() => toggleAgentStatus(agent.id, agent.status)}
-                          style={{ 
-                            background: agent.status === 'approved' ? "white" : C.primary, 
-                            color: agent.status === 'approved' ? C.primary : "white",
-                            border: `1px solid ${C.primary}`, padding: "6px 12px", cursor: "pointer", 
-                            fontSize: 11, fontWeight: 600 
-                          }}
-                        >
-                          {agent.status === 'approved' ? "Révoquer l'accès" : "Approuver"}
-                        </button>
-                      </td>
-                    </tr>
+        {/* VUE MODULE MAILING */}
+        {activeModule === "mailing" && (
+          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+            <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
+              <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Mailing & Séquences</div>
+                </div>
+                <nav style={{ display: "flex", gap: 8 }}>
+                  {[["contacts","Base de Contacts"],["campaigns","Créer une Campagne"]].map(([p,l]) => (
+                    <button 
+                      key={p} 
+                      onClick={() => setMailingTab(p)} 
+                      style={{ background: mailingTab===p ? "rgba(105,33,2,0.06)" : "transparent", color: mailingTab===p ? C.primary : C.gray, border: "none", padding: "8px 16px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: mailingTab===p?700:500, borderRadius: "0px", transition: "0.2s" }}
+                    >
+                      {l}
+                    </button>
                   ))}
-                  {agentsList.length === 0 && (
-                    <tr>
-                      <td colSpan="4" style={{ padding: "32px", textAlign: "center", color: C.gray }}>Aucun agent inscrit pour le moment.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                </nav>
+              </div>
+            </header>
+
+            <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto" }}>
+              {mailingTab === "contacts" && (
+                <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
+                    <div>
+                      <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Gestion des Contacts</h2>
+                      <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>{mailingClients.length} contact(s) dans votre base de données.</p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 40 }}>
+                    <div style={S.card}>
+                      <div style={S.cardTitle}><div style={S.dot} /> Ajouter un contact manuel</div>
+                      <form onSubmit={handleAddMailingClient} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        <div style={{ display: "flex", gap: 12 }}>
+                          <div style={{ flex: 1 }}><input required style={S.input} placeholder="Prénom" value={newClient.prenom} onChange={e=>setNewClient({...newClient, prenom: e.target.value})} /></div>
+                          <div style={{ flex: 1 }}><input required style={S.input} placeholder="Nom" value={newClient.nom} onChange={e=>setNewClient({...newClient, nom: e.target.value})} /></div>
+                        </div>
+                        <input type="email" required style={S.input} placeholder="Email" value={newClient.email} onChange={e=>setNewClient({...newClient, email: e.target.value})} />
+                        <button type="submit" style={S.btnP}>Ajouter</button>
+                      </form>
+                    </div>
+                    
+                    <div style={S.card}>
+                      <div style={S.cardTitle}><div style={S.dot} /> Import en masse (Copier/Coller)</div>
+                      <p style={{ fontSize: 11, color: C.gray, marginTop: 0, marginBottom: 8 }}>Format attendu par ligne: <code>Prénom Nom Email</code> (séparés par un espace, une virgule ou une tabulation).</p>
+                      <textarea style={{...S.input, minHeight: 80, resize: "vertical", marginBottom: 12, fontFamily: "monospace", fontSize: 11}} placeholder="Jean Dupont jean@email.com&#10;Marie Curie marie@email.com" value={bulkImport} onChange={e=>setBulkImport(e.target.value)} />
+                      <button onClick={handleBulkImport} style={{...S.btnS, width: "100%"}}>Importer la liste</button>
+                    </div>
+                  </div>
+
+                  <div style={S.card}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                      <thead>
+                        <tr style={{ borderBottom: `2px solid ${C.mediumGray}`, color: C.gray }}>
+                          <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600 }}>Prénom</th>
+                          <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600 }}>Nom</th>
+                          <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600 }}>Email</th>
+                          <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 600 }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {mailingClients.map(c => (
+                          <tr key={c.id} style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                            <td style={{ padding: "12px 16px" }}>{c.prenom}</td>
+                            <td style={{ padding: "12px 16px" }}>{c.nom}</td>
+                            <td style={{ padding: "12px 16px", color: C.primary, fontWeight: 500 }}>{c.email}</td>
+                            <td style={{ padding: "12px 16px", textAlign: "right" }}>
+                              <button onClick={()=>handleDeleteMailingClient(c.id)} style={{ background: "transparent", border: "none", color: "#EF4444", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Supprimer</button>
+                            </td>
+                          </tr>
+                        ))}
+                        {mailingClients.length === 0 && <tr><td colSpan="4" style={{ padding: "32px", textAlign: "center", color: C.gray }}>Aucun contact. Ajoutez-en ou importez une liste.</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {mailingTab === "campaigns" && (
+                <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 340px", gap: 32 }}>
+                  <div>
+                    <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: "0 0 8px" }}>Créer une campagne</h2>
+                    <p style={{ color: C.gray, fontSize: 13, marginBottom: 32 }}>Rédigez votre email et sélectionnez vos cibles.</p>
+
+                    <div style={S.card}>
+                      <div style={S.fg}>
+                        <label style={S.label}>Objet de l'email</label>
+                        <input style={S.input} value={campaign.subject} onChange={e=>setCampaign({...campaign, subject: e.target.value})} placeholder="Sujet de votre email..." />
+                      </div>
+                      <div style={S.fg}>
+                        <label style={S.label}>Corps du message</label>
+                        <p style={{ fontSize: 11, color: C.gray, marginTop: 0, marginBottom: 8 }}>Variables disponibles : <code>{"{{prenom}}"}</code>, <code>{"{{nom}}"}</code></p>
+                        <textarea style={{...S.input, minHeight: 300, resize: "vertical"}} value={campaign.body} onChange={e=>setCampaign({...campaign, body: e.target.value})} />
+                      </div>
+                      
+                      <button onClick={handleSendCampaign} disabled={isSendingCampaign} style={{...S.btnP, width: "100%", background: campaignSuccess ? "#10B981" : C.primary, marginTop: 16 }}>
+                        {isSendingCampaign ? "Envoi en cours..." : campaignSuccess ? "Campagne Envoyée !" : `Envoyer à ${campaign.selectedIds.length} contact(s)`}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{...S.card, padding: "20px 16px", position: "sticky", top: 120 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: C.primary, textTransform: "uppercase" }}>Destinataires</div>
+                        <span style={{ fontSize: 11, color: C.gold, fontWeight: 700 }}>{campaign.selectedIds.length} / {mailingClients.length}</span>
+                      </div>
+                      <button onClick={handleSelectAllRecipients} style={{...S.btnS, width: "100%", padding: "6px 12px", fontSize: 11, marginBottom: 16}}>
+                        {campaign.selectedIds.length === mailingClients.length ? "Tout désélectionner" : "Tout sélectionner"}
+                      </button>
+                      <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+                        {mailingClients.map(c => (
+                          <label key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${C.lightGray}`, cursor: "pointer", fontSize: 12 }}>
+                            <input type="checkbox" checked={campaign.selectedIds.includes(c.id)} onChange={()=>handleToggleRecipient(c.id)} />
+                            <div>
+                              <div style={{ fontWeight: 600, color: C.darkGray }}>{c.prenom} {c.nom}</div>
+                              <div style={{ color: C.gray, fontSize: 10 }}>{c.email}</div>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </main>
           </div>
         )}
 
-        {/* VUE PARAMÈTRES (TUTO MAKE) */}
+        {/* VUE PARAMÈTRES & INTÉGRATIONS */}
         {activeModule === "settings" && (
-          <div style={{ padding: "60px 80px", maxWidth: 1000, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 40 }}>
-              <div>
-                <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: "0 0 8px" }}>Paramètres & Intégrations</h2>
-                <p style={{ color: C.gray, fontSize: 14, margin: 0 }}>Configurez vos outils externes et automatisations pour gagner du temps au quotidien.</p>
+          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+            <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
+              <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Configuration Globale</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Paramètres & Intégrations</div>
+                </div>
+                <nav style={{ display: "flex", gap: 8 }}>
+                  {[["profile","Profil Agent"],["design","Marque & Design"],["reports","Envoi Rapports"],["campaigns","Campagnes Mailing"]].map(([p,l]) => (
+                    <button 
+                      key={p} 
+                      onClick={() => setSettingsTab(p)} 
+                      style={{ background: settingsTab===p ? "rgba(105,33,2,0.06)" : "transparent", color: settingsTab===p ? C.primary : C.gray, border: "none", padding: "8px 16px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: settingsTab===p?700:500, borderRadius: "0px", transition: "0.2s" }}
+                    >
+                      {l}
+                    </button>
+                  ))}
+                </nav>
               </div>
-              <button onClick={() => updateSettings(appSettings)} style={S.btnP}>Enregistrer les modifications</button>
-            </div>
-            
-            <div style={S.card}>
-              <div style={S.cardTitle}><div style={S.dot} /> Automatisation Email via Make.com</div>
-              <p style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, marginBottom: 24 }}>
-                Vous pouvez automatiser l'envoi du rapport PDF directement à votre client (ou à vous-même) en connectant l'application WallSwiss à <strong>Make</strong> (anciennement Integromat).
-              </p>
-              
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <div style={{ background: C.lightGray, padding: 20, borderLeft: `4px solid ${C.primary}` }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: C.primaryDark, marginBottom: 8 }}>Étape 1 : Créer un Webhook sur Make</div>
-                  <div style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.5 }}>
-                    1. Connectez-vous à Make.com et créez un nouveau scénario.<br/>
-                    2. Ajoutez le module <strong>"Webhooks"</strong> et sélectionnez <strong>"Custom webhook"</strong>.<br/>
-                    3. Cliquez sur "Add", nommez votre webhook (ex: "Envoi PDF WallSwiss") et copiez l'URL générée.
-                  </div>
-                </div>
-                
-                <div style={{ background: C.lightGray, padding: 20, borderLeft: `4px solid ${C.gold}` }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: C.primaryDark, marginBottom: 8 }}>Étape 2 : Configurer le module Email</div>
-                  <div style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.5 }}>
-                    1. Ajoutez le module <strong>"Microsoft 365 Email" (Outlook)</strong> à la suite du webhook.<br/>
-                    2. Dans le champ destinataire ("To"), mappez la variable <code>email</code> provenant du Webhook.<br/>
-                    3. Dans "Attachments", sélectionnez la variable <code>file</code> (votre PDF encodé en base64) et nommez-le <code>Rapport_Patrimonial.pdf</code>.
-                  </div>
-                </div>
+            </header>
 
-                <div style={{ background: C.lightGray, padding: 20, borderLeft: `4px solid ${C.darkGray}` }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: C.primaryDark, marginBottom: 8 }}>Étape 3 : Connecter l'application</div>
-                  <div style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.5, marginBottom: 12 }}>
-                    Collez l'URL de votre Webhook Make ci-dessous. Dès que vous cliquerez sur <strong>"Envoyer par email"</strong> dans l'aperçu du rapport, le PDF sera transmis à ce webhook.
+            <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto" }}>
+              <div style={{ width: "100%", maxWidth: 800, margin: "0 auto" }}>
+                
+                {settingsTab === "profile" && (
+                  <div style={S.card}>
+                    <div style={S.cardTitle}><div style={S.dot} /> Configuration de l'Agent</div>
+                    <p style={{ color: C.gray, fontSize: 13, marginBottom: 24, marginTop: 0 }}>Ces informations seront utilisées par défaut comme variables dans vos rapports et vos campagnes d'e-mailing.</p>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+                      <div><label style={S.label}>Prénom</label><input style={S.input} value={appSettings.agentFirstName || ""} onChange={e => setAppSettings({...appSettings, agentFirstName: e.target.value})} placeholder="Elisa" /></div>
+                      <div><label style={S.label}>Nom</label><input style={S.input} value={appSettings.agentLastName || ""} onChange={e => setAppSettings({...appSettings, agentLastName: e.target.value})} placeholder="MARQUET" /></div>
+                    </div>
+                    <div style={S.fg}><label style={S.label}>Titre / Fonction</label><input style={S.input} value={appSettings.agentTitle || ""} onChange={e => setAppSettings({...appSettings, agentTitle: e.target.value})} placeholder="Planificatrice financière | CGP" /></div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+                      <div><label style={S.label}>Téléphone</label><input style={S.input} value={appSettings.agentPhone || ""} onChange={e => setAppSettings({...appSettings, agentPhone: e.target.value})} placeholder="+41 76..." /></div>
+                      <div><label style={S.label}>Email de contact</label><input style={S.input} value={appSettings.agentEmail || ""} onChange={e => setAppSettings({...appSettings, agentEmail: e.target.value})} placeholder="e.marquet@wallswiss.ch" /></div>
+                    </div>
                   </div>
-                  <input 
-                    style={{...S.input, background: C.white, border: `1px solid ${C.gray}`}} 
-                    value={appSettings.webhookUrl || ""}
-                    onChange={e => setAppSettings({...appSettings, webhookUrl: e.target.value})}
-                    placeholder="https://hook.eu1.make.com/xxxxxxxxxxxxxxxxxxxxxx" 
-                  />
-                  <div style={{ fontSize: 11, color: C.gray, marginTop: 8 }}>*L'envoi est actuellement simulé dans cet environnement de démonstration.</div>
+                )}
+
+                {settingsTab === "design" && (
+                  <div style={S.card}>
+                    <div style={S.cardTitle}><div style={S.dot} /> Marque & Design de l'Agence</div>
+                    <p style={{ color: C.gray, fontSize: 13, marginBottom: 24, marginTop: 0 }}>Définissez les images par défaut pour l'ensemble de vos rapports.</p>
+
+                    <div style={S.fg}>
+                      <label style={S.label}>Logo de l'Agence (Remplace le logo WallSwiss)</label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                        <div style={{ width: 64, height: 64, background: C.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <img src={appSettings.defaultLogo || LOGO_URL} style={{ maxWidth: "80%", maxHeight: "80%", objectFit: "contain" }} />
+                        </div>
+                        <input type="file" accept="image/*" onChange={async (e) => {
+                          const url = await handleImageUpload(e.target.files[0], `agency/${user.uid}/logo_${Date.now()}`);
+                          if (url) setAppSettings({...appSettings, defaultLogo: url});
+                        }} style={{ fontSize: 12, fontFamily: "'Montserrat', sans-serif" }} />
+                      </div>
+                    </div>
+
+                    <div style={S.fg}>
+                      <label style={S.label}>Image de couverture (Page Agence & Solutions)</label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                        <div style={{ width: 120, height: 64, background: C.lightGray, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                          <img src={appSettings.defaultCover || "/geneva.jpg"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        </div>
+                        <input type="file" accept="image/*" onChange={async (e) => {
+                          const url = await handleImageUpload(e.target.files[0], `agency/${user.uid}/cover_${Date.now()}`);
+                          if (url) setAppSettings({...appSettings, defaultCover: url});
+                        }} style={{ fontSize: 12, fontFamily: "'Montserrat', sans-serif" }} />
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: 16 }}>
+                      <label style={S.label}>Image Philosophie (Page 3)</label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                        <div style={{ width: 120, height: 64, background: C.lightGray, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                          <img src={appSettings.defaultPhilosophy || "/image page3.jpg"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        </div>
+                        <input type="file" accept="image/*" onChange={async (e) => {
+                          const url = await handleImageUpload(e.target.files[0], `agency/${user.uid}/philosophy_${Date.now()}`);
+                          if (url) setAppSettings({...appSettings, defaultPhilosophy: url});
+                        }} style={{ fontSize: 12, fontFamily: "'Montserrat', sans-serif" }} />
+                      </div>
+                    </div>
+                    {uploadingImage && <div style={{ fontSize: 12, color: C.gold, fontWeight: 700, marginTop: 8 }}>⏳ Upload de l'image en cours vers Firebase...</div>}
+                  </div>
+                )}
+
+                {settingsTab === "reports" && (
+                  <div style={S.card}>
+                    <div style={S.cardTitle}><div style={S.dot} /> Configuration Envoi de Rapports</div>
+                    <p style={{ color: C.gray, fontSize: 13, marginBottom: 24, marginTop: 0 }}>Configurez le Webhook (Make.com, Zapier) qui gère l'envoi individuel de vos PDF par email à la fin d'un rapport.</p>
+
+                    <div style={S.fg}>
+                      <label style={S.label}>URL du Webhook (Rapports individuels)</label>
+                      <input 
+                        style={S.input} 
+                        value={appSettings.reportWebhookUrl || ""} 
+                        onChange={e => setAppSettings({...appSettings, reportWebhookUrl: e.target.value})} 
+                        placeholder="https://hook.eu1.make.com/..." 
+                      />
+                    </div>
+
+                    <div style={S.fg}>
+                      <label style={S.label}>Sujet de l'e-mail par défaut</label>
+                      <input 
+                        style={S.input} 
+                        value={appSettings.emailSubject || ""} 
+                        onChange={e => setAppSettings({...appSettings, emailSubject: e.target.value})} 
+                      />
+                    </div>
+
+                    <div style={S.fg}>
+                      <label style={S.label}>Corps de l'e-mail par défaut</label>
+                      <div style={{ fontSize: 11, color: C.gray, marginBottom: 8 }}>Variables disponibles : <code>{"{{prenom}}"}</code>, <code>{"{{nom}}"}</code>, <code>{"{{conseiller}}"}</code></div>
+                      <textarea 
+                        style={{ ...S.input, minHeight: 120, resize: "vertical" }} 
+                        value={appSettings.emailBody || ""} 
+                        onChange={e => setAppSettings({...appSettings, emailBody: e.target.value})} 
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {settingsTab === "campaigns" && (
+                  <div style={S.card}>
+                    <div style={S.cardTitle}><div style={S.dot} /> Configuration Campagnes Mailing</div>
+                    <p style={{ color: C.gray, fontSize: 13, marginBottom: 24, marginTop: 0 }}>Configurez le Webhook dédié à l'envoi en masse (séquences d'emails) vers votre liste de contacts.</p>
+
+                    <div style={S.fg}>
+                      <label style={S.label}>URL du Webhook (Campagnes en masse)</label>
+                      <input 
+                        style={S.input} 
+                        value={appSettings.campaignWebhookUrl || ""} 
+                        onChange={e => setAppSettings({...appSettings, campaignWebhookUrl: e.target.value})} 
+                        placeholder="https://hook.eu1.make.com/..." 
+                      />
+                      <div style={{ fontSize: 11, color: C.gray, marginTop: 4 }}>Ce webhook recevra un tableau d'identifiants ou d'emails pour déclencher votre scénario d'envoi en masse.</div>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
+                  <button 
+                    onClick={() => {
+                      updateSettings(appSettings);
+                      alert("Paramètres sauvegardés avec succès !");
+                    }} 
+                    style={S.btnP}
+                  >
+                    Enregistrer les paramètres
+                  </button>
                 </div>
               </div>
-              
-              <div style={{ height: 1, background: C.mediumGray, margin: "32px 0" }} />
-              
-              <div style={S.cardTitle}><div style={S.dot} /> Template d'Email par défaut</div>
-              <p style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, marginBottom: 16 }}>
-                Personnalisez le message qui sera envoyé au client. Variables dynamiques supportées : <code style={{background: C.mediumGray, padding: "2px 4px", borderRadius: 4}}>{"{{prenom}}"}</code>, <code style={{background: C.mediumGray, padding: "2px 4px", borderRadius: 4}}>{"{{nom}}"}</code>, <code style={{background: C.mediumGray, padding: "2px 4px", borderRadius: 4}}>{"{{conseiller}}"}</code>
-              </p>
-              <div style={S.fg}>
-                <label style={S.label}>Objet de l'email</label>
-                <input style={S.input} value={appSettings.emailSubject} onChange={e => setAppSettings({...appSettings, emailSubject: e.target.value})} />
-              </div>
-              <div style={S.fg}>
-                <label style={S.label}>Corps du message</label>
-                <textarea style={{...S.input, minHeight: 120, resize: "vertical"}} value={appSettings.emailBody} onChange={e => setAppSettings({...appSettings, emailBody: e.target.value})} />
-              </div>
-            </div>
+            </main>
           </div>
         )}
 

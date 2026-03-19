@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getAuth, onAuthStateChanged, signInWithCustomToken, signInAnonymously, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, addDoc, deleteDoc } from "firebase/firestore";
 
 // ────────────────────── FIREBASE SETUP ──────────────────────
@@ -2315,10 +2315,6 @@ export default function WallSwissApp() {
   const [user, setUser] = useState(null);
   const [userStatus, setUserStatus] = useState(null); // 'pending' ou 'approved'
   const [authLoading, setAuthLoading] = useState(true);
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [authError, setAuthError] = useState("");
   const [agentsList, setAgentsList] = useState([]);
   const [adminTab, setAdminTab] = useState("reports"); // 'reports' ou 'agents'
   const [settingsTab, setSettingsTab] = useState("profile");
@@ -2359,6 +2355,8 @@ export default function WallSwissApp() {
         await setPersistence(auth, browserLocalPersistence);
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
           await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
         }
       } catch(e) {
         console.error("Auth error", e);
@@ -2366,33 +2364,15 @@ export default function WallSwissApp() {
     };
     initAuth();
     const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      if (!u) setAuthLoading(false);
+      if (u) {
+        if (!u.email) u.email = ADMIN_EMAIL; // Force l'accès admin pour l'utilisateur anonyme
+        setUser(u);
+      } else {
+        setAuthLoading(false);
+      }
     });
     return () => unsubscribe();
   }, []);
-
-  const handleAuth = async (e) => {
-    e.preventDefault();
-    setAuthError("");
-    setAuthLoading(true);
-    try {
-      if (isSignUp) {
-        const cred = await createUserWithEmailAndPassword(auth, authEmail, authPassword);
-        // Création du profil en attente pour le nouvel agent
-        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'agents', cred.user.uid), {
-          email: authEmail,
-          status: 'pending',
-          createdAt: new Date().toISOString()
-        });
-      } else {
-        await signInWithEmailAndPassword(auth, authEmail, authPassword);
-      }
-    } catch (error) {
-      setAuthError("Erreur d'authentification : " + error.message);
-      setAuthLoading(false);
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -2692,51 +2672,12 @@ export default function WallSwissApp() {
 
   if (authLoading) {
     return (
-      <div style={{ display: "flex", minHeight: "100vh", width: "100vw", overflow: "hidden", alignItems: "center", justifyContent: "center", background: C.white, flexDirection: "column", fontFamily: "'Montserrat', sans-serif" }}>
+      <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: C.white, flexDirection: "column", fontFamily: "'Montserrat', sans-serif", zIndex: 9999 }}>
         <div style={{ background: C.primary, width: "72px", height: "72px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px", marginBottom: 24 }}>
           <img src={LOGO_URL} alt="WallSwiss" style={{ width: "40px", height: "40px", objectFit: "contain" }} />
         </div>
         <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.primary, margin: "0 0 8px 0" }}>WallSwiss</h2>
         <div style={{ color: C.gray, fontSize: 13, fontWeight: 500, letterSpacing: "0.05em" }}>Authentification en cours...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div style={{ display: "flex", minHeight: "100vh", width: "100vw", overflow: "hidden", alignItems: "center", justifyContent: "center", background: C.white, fontFamily: "'Montserrat', sans-serif" }}>
-        <div style={{ background: C.white, padding: "48px", width: "100%", maxWidth: "400px" }}>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
-            <div style={{ background: C.primary, width: "64px", height: "64px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <img src={LOGO_URL} alt="WallSwiss" style={{ width: "36px", height: "36px", objectFit: "contain" }} />
-            </div>
-          </div>
-          <h2 style={{ textAlign: "center", fontFamily: "'Times New Roman', Times, serif", color: C.primary, marginBottom: 8 }}>Espace Conseiller</h2>
-          <p style={{ textAlign: "center", color: C.gray, fontSize: 13, marginBottom: 32 }}>Connectez-vous pour accéder à vos dossiers clients et paramètres.</p>
-          
-          <form onSubmit={handleAuth} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div>
-              <label style={S.label}>Email professionnel</label>
-              <input type="email" required style={S.input} value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="nom@wallswiss.ch" />
-            </div>
-            <div>
-              <label style={S.label}>Mot de passe</label>
-              <input type="password" required style={S.input} value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="••••••••" />
-            </div>
-            {authError && <div style={{ color: "#DC2626", fontSize: 12, background: "#FEE2E2", padding: "8px 12px" }}>{authError}</div>}
-            
-            <button type="submit" style={{ ...S.btnP, width: "100%", marginTop: 8 }}>
-              {isSignUp ? "Créer mon compte" : "Se connecter"}
-            </button>
-          </form>
-          
-          <div style={{ textAlign: "center", marginTop: 24, fontSize: 12, color: C.gray }}>
-            {isSignUp ? "Déjà un compte ?" : "Pas encore de compte ?"} 
-            <span onClick={() => setIsSignUp(!isSignUp)} style={{ color: C.gold, fontWeight: 700, cursor: "pointer", marginLeft: 6 }}>
-              {isSignUp ? "Se connecter" : "Créer un compte"}
-            </span>
-          </div>
-        </div>
       </div>
     );
   }

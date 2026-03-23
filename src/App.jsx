@@ -1314,6 +1314,19 @@ function SlidePrevoyanceFondsDynamique({ data }) {
     { isin: "LU0328475792", weight: 15 }
   ];
 
+  // Calcul des moyennes pondérées du portefeuille
+  const parsePct = (str) => parseFloat((str || "0").replace("+", "").replace("%", "")) || 0;
+  const formatPct = (val) => (val > 0 ? "+" : "") + val.toFixed(1) + "%";
+  
+  const weightedAvg = { "3m": 0, "1y": 0, "3y": 0, "5y": 0, "10y": 0, "10y_ann": 0 };
+  funds.forEach(f => {
+    const apiData = fundPerformanceAPI[f.isin] || {};
+    const w = f.weight / 100;
+    Object.keys(weightedAvg).forEach(k => {
+      weightedAvg[k] += parsePct(apiData[k]) * w;
+    });
+  });
+
   return (
     <div style={slideBase}>
       {logoCorner()}
@@ -1352,6 +1365,16 @@ function SlidePrevoyanceFondsDynamique({ data }) {
                   </tr>
                 );
               })}
+              <tr style={{ background: "rgba(165,149,104,0.15)", borderTop: `2px solid ${C.gold}` }}>
+                <td colSpan="2" style={{ padding: "12px 16px", fontWeight: 800, color: C.primaryDark, textAlign: "right", textTransform: "uppercase" }}>Moyenne Pondérée</td>
+                <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 900, color: C.primary }}>100%</td>
+                <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["3m"])}</td>
+                <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["1y"])}</td>
+                <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["3y"])}</td>
+                <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["5y"])}</td>
+                <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 900, color: C.darkGray }}>{formatPct(weightedAvg["10y"])}</td>
+                <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 900, color: C.primary }}>{formatPct(weightedAvg["10y_ann"])}</td>
+              </tr>
             </tbody>
           </table>
         </div>

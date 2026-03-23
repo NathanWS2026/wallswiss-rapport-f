@@ -1297,14 +1297,59 @@ function SlidePrevoyanceFonds({ data, editMode, onTextChange }) {
 function SlidePrevoyanceFondsDynamique({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   
-  // 💡 API : À remplacer par un fetch vers votre fournisseur de données réelles
-  const fundPerformanceAPI = {
-    "IE00B5BMR087": { name: "iShares Core S&P 500 UCITS ETF", "3m": "+8.2%", "1y": "+24.5%", "3y": "+35.1%", "5y": "+85.4%", "10y": "+210.3%", "10y_ann": "+12.0%" },
-    "IE00B53SZB19": { name: "iShares NASDAQ 100 UCITS ETF", "3m": "+10.1%", "1y": "+38.2%", "3y": "+45.6%", "5y": "+120.8%", "10y": "+340.5%", "10y_ann": "+16.0%" },
-    "CH0237935637": { name: "iShares Core SPI (CH)", "3m": "+4.5%", "1y": "+8.9%", "3y": "+15.2%", "5y": "+32.1%", "10y": "+75.4%", "10y_ann": "+5.8%" },
-    "DE000A0S9GB0": { name: "Xtrackers DAX UCITS ETF", "3m": "+6.2%", "1y": "+14.5%", "3y": "+22.4%", "5y": "+45.7%", "10y": "+95.2%", "10y_ann": "+6.9%" },
-    "LU0328475792": { name: "Pictet - Water", "3m": "+3.1%", "1y": "+11.2%", "3y": "+18.5%", "5y": "+42.3%", "10y": "+105.6%", "10y_ann": "+7.5%" }
-  };
+  const [fundPerformanceAPI, setFundPerformanceAPI] = useState(null);
+
+  useEffect(() => {
+    // 🔗 ÉTAPE 1 : Collez ici le lien CSV de votre Google Sheet publié
+    const googleSheetCsvUrl = "VOTRE_LIEN_GOOGLE_SHEET_CSV_ICI";
+
+    // Données de secours (affichées par défaut si le lien n'est pas configuré ou échoue)
+    const fallbackData = {
+      "IE00B5BMR087": { name: "iShares Core S&P 500 UCITS ETF", "3m": "+0.7%", "1y": "+16.7%", "3y": "+79.3%", "5y": "+91.5%", "10y": "+309.5%", "10y_ann": "+15.1%" },
+      "IE00B53SZB19": { name: "iShares NASDAQ 100 UCITS ETF", "3m": "-1.8%", "1y": "+19.8%", "3y": "+109.4%", "5y": "+96.8%", "10y": "+522.2%", "10y_ann": "+20.1%" },
+      "CH0237935637": { name: "iShares Swiss Dividend ETF (CH)", "3m": "-1.4%", "1y": "+4.1%", "3y": "+48.6%", "5y": "+72.0%", "10y": "+197.2%", "10y_ann": "+11.5%" },
+      "DE000A0S9GB0": { name: "Xetra-Gold ETC", "3m": "+7.2%", "1y": "+42.6%", "3y": "+116.7%", "5y": "+172.1%", "10y": "+258.1%", "10y_ann": "+13.6%" },
+      "LU0328475792": { name: "Xtrackers Stoxx Europe 600 UCITS ETF 1C", "3m": "-1.7%", "1y": "+7.1%", "3y": "+42.1%", "5y": "+55.6%", "10y": "+102.4%", "10y_ann": "+7.3%" }
+    };
+
+    if (!googleSheetCsvUrl || googleSheetCsvUrl === "VOTRE_LIEN_GOOGLE_SHEET_CSV_ICI") {
+      setFundPerformanceAPI(fallbackData);
+      return;
+    }
+
+    // Récupération des données depuis le Google Sheet
+    fetch(googleSheetCsvUrl)
+      .then(res => res.text())
+      .then(csv => {
+        // Parsing basique du CSV
+        const lines = csv.split('\n');
+        const parsedData = {};
+        
+        // On commence à i=1 pour ignorer la ligne d'en-tête du tableau Excel
+        for(let i = 1; i < lines.length; i++) {
+          if(!lines[i].trim()) continue;
+          // Séparation par virgules (Attention: Ne pas utiliser de virgules dans les noms des fonds sur le Sheet)
+          const row = lines[i].split(',');
+          if(row.length >= 8) {
+            const isin = row[0].trim();
+            parsedData[isin] = {
+              name: row[1]?.trim(),
+              "3m": row[2]?.trim(),
+              "1y": row[3]?.trim(),
+              "3y": row[4]?.trim(),
+              "5y": row[5]?.trim(),
+              "10y": row[6]?.trim(),
+              "10y_ann": row[7]?.trim(),
+            };
+          }
+        }
+        setFundPerformanceAPI(Object.keys(parsedData).length > 0 ? parsedData : fallbackData);
+      })
+      .catch(err => {
+        console.error("Erreur lecture Google Sheet CSV:", err);
+        setFundPerformanceAPI(fallbackData); 
+      });
+  }, []);
 
   const funds = [
     { isin: "IE00B5BMR087", weight: 30 },
@@ -1319,13 +1364,16 @@ function SlidePrevoyanceFondsDynamique({ data }) {
   const formatPct = (val) => (val > 0 ? "+" : "") + val.toFixed(1) + "%";
   
   const weightedAvg = { "3m": 0, "1y": 0, "3y": 0, "5y": 0, "10y": 0, "10y_ann": 0 };
-  funds.forEach(f => {
-    const apiData = fundPerformanceAPI[f.isin] || {};
-    const w = f.weight / 100;
-    Object.keys(weightedAvg).forEach(k => {
-      weightedAvg[k] += parsePct(apiData[k]) * w;
+  
+  if (fundPerformanceAPI) {
+    funds.forEach(f => {
+      const apiData = fundPerformanceAPI[f.isin] || {};
+      const w = f.weight / 100;
+      Object.keys(weightedAvg).forEach(k => {
+        weightedAvg[k] += parsePct(apiData[k]) * w;
+      });
     });
-  });
+  }
 
   return (
     <div style={slideBase}>
@@ -1334,49 +1382,56 @@ function SlidePrevoyanceFondsDynamique({ data }) {
         <ReportTitle title="Détail Stratégie" highlight="Dynamique" subtitle="RÉPARTITION ET PERFORMANCES HISTORIQUES" />
         <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <p style={{ fontSize: 13, color: C.darkGray, marginBottom: 24 }}>Analyse des fonds sous-jacents composant votre portefeuille dynamique. Les rendements ci-dessous sont connectables en temps réel.</p>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, textAlign: "left", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
-            <thead>
-              <tr style={{ background: C.primary, color: C.white }}>
-                <th style={{ padding: "12px 16px" }}>ISIN</th>
-                <th style={{ padding: "12px 16px" }}>Nom du Fonds</th>
-                <th style={{ padding: "12px 16px", textAlign: "center" }}>Poids</th>
-                <th style={{ padding: "12px 16px", textAlign: "center" }}>3 Mois</th>
-                <th style={{ padding: "12px 16px", textAlign: "center" }}>1 An</th>
-                <th style={{ padding: "12px 16px", textAlign: "center" }}>3 Ans</th>
-                <th style={{ padding: "12px 16px", textAlign: "center" }}>5 Ans</th>
-                <th style={{ padding: "12px 16px", textAlign: "center" }}>10 Ans (Cumul)</th>
-                <th style={{ padding: "12px 16px", textAlign: "center" }}>Moy. Annuelle</th>
-              </tr>
-            </thead>
-            <tbody>
-              {funds.map((f, i) => {
-                const apiData = fundPerformanceAPI[f.isin] || {};
-                return (
-                  <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white, borderBottom: `1px solid ${C.mediumGray}` }}>
-                    <td style={{ padding: "12px 16px", color: C.gray, fontFamily: "monospace" }}>{f.isin}</td>
-                    <td style={{ padding: "12px 16px", fontWeight: 700, color: C.primaryDark }}>{apiData.name}</td>
-                    <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.primary }}>{f.weight}%</td>
-                    <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["3m"]}</td>
-                    <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["1y"]}</td>
-                    <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["3y"]}</td>
-                    <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["5y"]}</td>
-                    <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 700, color: C.darkGray }}>{apiData["10y"]}</td>
-                    <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.primary }}>{apiData["10y_ann"]}</td>
-                  </tr>
-                );
-              })}
-              <tr style={{ background: "rgba(165,149,104,0.15)", borderTop: `2px solid ${C.gold}` }}>
-                <td colSpan="2" style={{ padding: "12px 16px", fontWeight: 800, color: C.primaryDark, textAlign: "right", textTransform: "uppercase" }}>Moyenne Pondérée</td>
-                <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 900, color: C.primary }}>100%</td>
-                <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["3m"])}</td>
-                <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["1y"])}</td>
-                <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["3y"])}</td>
-                <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["5y"])}</td>
-                <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 900, color: C.darkGray }}>{formatPct(weightedAvg["10y"])}</td>
-                <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 900, color: C.primary }}>{formatPct(weightedAvg["10y_ann"])}</td>
-              </tr>
-            </tbody>
-          </table>
+          
+          {!fundPerformanceAPI ? (
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.gray, fontSize: 14 }}>
+              ⏳ Chargement des performances du marché en cours...
+            </div>
+          ) : (
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, textAlign: "left", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+              <thead>
+                <tr style={{ background: C.primary, color: C.white }}>
+                  <th style={{ padding: "12px 16px" }}>ISIN</th>
+                  <th style={{ padding: "12px 16px" }}>Nom du Fonds</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center" }}>Poids</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center" }}>3 Mois</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center" }}>1 An</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center" }}>3 Ans</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center" }}>5 Ans</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center" }}>10 Ans (Cumul)</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center" }}>Moy. Annuelle</th>
+                </tr>
+              </thead>
+              <tbody>
+                {funds.map((f, i) => {
+                  const apiData = fundPerformanceAPI[f.isin] || { name: "Données indisponibles", "3m": "-", "1y": "-", "3y": "-", "5y": "-", "10y": "-", "10y_ann": "-" };
+                  return (
+                    <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white, borderBottom: `1px solid ${C.mediumGray}` }}>
+                      <td style={{ padding: "12px 16px", color: C.gray, fontFamily: "monospace" }}>{f.isin}</td>
+                      <td style={{ padding: "12px 16px", fontWeight: 700, color: C.primaryDark }}>{apiData.name}</td>
+                      <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.primary }}>{f.weight}%</td>
+                      <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["3m"]}</td>
+                      <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["1y"]}</td>
+                      <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["3y"]}</td>
+                      <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["5y"]}</td>
+                      <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 700, color: C.darkGray }}>{apiData["10y"]}</td>
+                      <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.primary }}>{apiData["10y_ann"]}</td>
+                    </tr>
+                  );
+                })}
+                <tr style={{ background: "rgba(165,149,104,0.15)", borderTop: `2px solid ${C.gold}` }}>
+                  <td colSpan="2" style={{ padding: "12px 16px", fontWeight: 800, color: C.primaryDark, textAlign: "right", textTransform: "uppercase" }}>Moyenne Pondérée</td>
+                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 900, color: C.primary }}>100%</td>
+                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["3m"])}</td>
+                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["1y"])}</td>
+                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["3y"])}</td>
+                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["5y"])}</td>
+                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 900, color: C.darkGray }}>{formatPct(weightedAvg["10y"])}</td>
+                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 900, color: C.primary }}>{formatPct(weightedAvg["10y_ann"])}</td>
+                </tr>
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
       {footer(fullName)}

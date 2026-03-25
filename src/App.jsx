@@ -146,11 +146,7 @@ function computeProjectionsLPP(data) {
   const rateSupletive = 0.0005; // 0.05% pour la Fondation Institutionnelle Supplétive
   const rateCLP = Number(data.tauxClp || 4) / 100; 
   
-  const step = Math.max(1, Math.floor(duration / 5));
-  let years = [];
-  for(let i = 0; i <= duration; i+=step) { years.push(i); }
-  if (years[years.length-1] !== duration) years.push(duration);
-  const uniqueYears = [...new Set(years)].sort((a,b) => a - b);
+  const uniqueYears = [...new Set([0, Math.round(duration*0.2), Math.round(duration*0.4), Math.round(duration*0.6), Math.round(duration*0.8), duration])].sort((a,b) => a - b);
   
   return uniqueYears.map(y => ({
     year: y,
@@ -333,7 +329,7 @@ function SlidePhilosophy({ data, editMode, onTextChange }) {
   return (
     <div style={{ ...slideBase, display: "flex", alignItems: "stretch" }}>
       <div style={{ width: "35%", position: "relative", overflow: "hidden" }}>
-         <img src="/image page3.jpg" alt="Fond" className="pdf-image" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+         <img src="/image page3.jpg" alt="Fond" className="pdf-image" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       </div>
       <div style={{ flex: 1, padding: "56px 80px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         {logoCorner()}
@@ -413,10 +409,10 @@ function SlideSituation({ data }) {
               <div style={{ background: C.primary, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Civilité & Statut</div>
               <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
                 {[
-                  ["Âge", `${data.age || "-"} ans`],
-                  ["Profession", data.profession || "À renseigner"],
-                  ["Nationalité", data.nationalite || "À renseigner"],
-                  ["Statut civil", data.statut || "À renseigner"],
+                  ["Âge", data.age ? `${data.age} ans` : "-"],
+                  ["Profession", data.profession || "-"],
+                  ["Nationalité", data.nationalite || "-"],
+                  ["Statut civil", data.statut || "-"],
                 ].map(([k, v], i, arr) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < arr.length - 1 ? `1px solid ${C.lightGray}` : "none", fontSize: 12.5 }}>
                     <span style={{ color: C.gray, fontWeight: 500 }}>{k}</span>
@@ -430,9 +426,9 @@ function SlideSituation({ data }) {
               <div style={{ background: C.primary, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Données Financières</div>
               <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
                 {[
-                  ["Revenus annuels bruts", data.revenus ? `CHF ${fmt(data.revenus)}.-` : "À renseigner"],
-                  ["Capacité d'épargne", data.capaciteEpargne ? `CHF ${fmt(data.capaciteEpargne)}.- / mois` : "À renseigner"],
-                  ["Fortune globale estimée", data.fortuneGlobale ? `CHF ${fmt(data.fortuneGlobale)}.-` : "À renseigner"],
+                  ["Revenus annuels bruts", data.revenus ? `CHF ${fmt(data.revenus)}.-` : "-"],
+                  ["Capacité d'épargne", data.capaciteEpargne ? `CHF ${fmt(data.capaciteEpargne)}.- / mois` : "-"],
+                  ["Fortune globale estimée", data.fortuneGlobale ? `CHF ${fmt(data.fortuneGlobale)}.-` : "-"],
                 ].map(([k, v], i, arr) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < arr.length - 1 ? `1px solid ${C.lightGray}` : "none", fontSize: 12.5 }}>
                     <span style={{ color: C.gray, fontWeight: 500 }}>{k}</span>
@@ -529,7 +525,7 @@ function SlideAdvantages({ data }) {
       {logoCorner()}
       <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Avantages WallSwiss BY Swissquote" highlight="pour l'investissement" subtitle="CONDITIONS EXCLUSIVES" />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 40px", flex: 1, alignContent: "center" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 32px", flex: 1, alignContent: "center" }}>
           {avantages.map((a, i) => (
             <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
               <div style={{ color: C.primary, fontSize: 20, marginTop: -4 }}>•</div>
@@ -1737,8 +1733,8 @@ function SlideLPPFonctionnement({ data, editMode, onTextChange }) {
              <EditableText editMode={editMode} value={data.texts?.lppFonctP2} onChange={v => onTextChange("lppFonctP2", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 24 }} />
              <EditableText editMode={editMode} value={data.texts?.lppFonctP3} onChange={v => onTextChange("lppFonctP3", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.primary, fontWeight: 600, textAlign: "justify", margin: 0 }} />
           </div>
-          <div style={{ width: 420, display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 24, display: "flex", alignItems: "center", gap: 20, boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+          <div style={{ width: 420, display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: "16px 24px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
               <div style={{ opacity: 0.5, color: C.darkGray }}><Icons.Building size={32} /></div>
               <div>
                 <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em", marginBottom: 4 }}>Avant</div>
@@ -1746,8 +1742,8 @@ function SlideLPPFonctionnement({ data, editMode, onTextChange }) {
                 <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>Géré collectivement, rendement dicté par la caisse.</div>
               </div>
             </div>
-            <div style={{ textAlign: "center", color: C.gold, fontSize: 24 }}>↓</div>
-            <div style={{ background: C.white, border: `2px solid ${C.gold}`, padding: 24, display: "flex", alignItems: "center", gap: 20, boxShadow: "0 10px 30px rgba(165,149,104,0.15)" }}>
+            <div style={{ textAlign: "center", color: C.gold, fontSize: 20 }}>↓</div>
+            <div style={{ background: C.white, border: `2px solid ${C.gold}`, padding: "16px 24px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 10px 30px rgba(165,149,104,0.15)" }}>
               <div style={{ opacity: 0.8, color: C.gold }}><Icons.Bank size={32} /></div>
               <div>
                 <div style={{ fontSize: 11, color: C.gold, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em", marginBottom: 4 }}>Aujourd'hui</div>
@@ -1755,8 +1751,8 @@ function SlideLPPFonctionnement({ data, editMode, onTextChange }) {
                 <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>Dort sur un compte, rendement quasi nul.</div>
               </div>
             </div>
-            <div style={{ textAlign: "center", color: C.primary, fontSize: 24 }}>↓</div>
-            <div style={{ background: C.primary, color: C.white, padding: 24, display: "flex", alignItems: "center", gap: 20, boxShadow: "0 10px 30px rgba(105,33,2,0.2)" }}>
+            <div style={{ textAlign: "center", color: C.primary, fontSize: 20 }}>↓</div>
+            <div style={{ background: C.primary, color: C.white, padding: "16px 24px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 10px 30px rgba(105,33,2,0.2)" }}>
               <div style={{ color: C.white }}><Icons.TrendUp size={32} /></div>
               <div>
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em", marginBottom: 4 }}>Notre Solution</div>
@@ -1825,10 +1821,14 @@ function SlideLPPAllocation({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   const profil = data.profilRisque || "Équilibré";
   
-  let actions = 45; let oblig = 45; let immo = 10;
-  if (profil === "Prudent") { actions = 25; oblig = 65; immo = 10; }
-  else if (profil === "Dynamique") { actions = 65; oblig = 25; immo = 10; }
-  else if (profil === "Offensif") { actions = 85; oblig = 10; immo = 5; }
+  let actions = data.lppActions !== undefined && data.lppActions !== "" ? Number(data.lppActions) : (profil === "Prudent" ? 25 : profil === "Dynamique" ? 65 : profil === "Offensif" ? 85 : 45);
+  let oblig = data.lppOblig !== undefined && data.lppOblig !== "" ? Number(data.lppOblig) : (profil === "Prudent" ? 65 : profil === "Dynamique" ? 25 : profil === "Offensif" ? 10 : 45);
+  let immo = data.lppImmo !== undefined && data.lppImmo !== "" ? Number(data.lppImmo) : (profil === "Prudent" ? 10 : profil === "Dynamique" ? 10 : profil === "Offensif" ? 5 : 10);
+  
+  const total = actions + oblig + immo || 1;
+  const aPct = (actions/total)*100;
+  const oPct = (oblig/total)*100;
+  const iPct = (immo/total)*100;
 
   return (
     <div style={slideBase}>
@@ -1854,12 +1854,24 @@ function SlideLPPAllocation({ data }) {
               <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.5 }}>Protection contre l'inflation et diversification des classes d'actifs.</div>
             </div>
           </div>
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative" }}>
-             <div style={{ width: 280, height: 280, borderRadius: "50%", background: `conic-gradient(${C.primary} 0% ${actions}%, ${C.gold} ${actions}% ${actions+oblig}%, ${C.darkGray} ${actions+oblig}% 100%)`, position: "relative", boxShadow: "0 10px 30px rgba(0,0,0,0.15)" }}>
-                <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 160, height: 160, background: C.white, borderRadius: "50%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+             <div style={{ width: 280, height: 280, position: "relative", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                <svg viewBox="0 0 48 48" style={{ width: "100%", height: "100%", transform: "rotate(-90deg)", filter: "drop-shadow(0 10px 15px rgba(0,0,0,0.1))", overflow: "visible" }}>
+                  <circle r="24" cx="24" cy="24" fill="white" />
+                  <circle r="15.9155" cx="24" cy="24" fill="transparent" stroke={C.primary} strokeWidth="16" strokeDasharray={`${aPct} 100`} />
+                  <circle r="15.9155" cx="24" cy="24" fill="transparent" stroke={C.gold} strokeWidth="16" strokeDasharray={`${oPct} 100`} strokeDashoffset={`-${aPct}`} />
+                  <circle r="15.9155" cx="24" cy="24" fill="transparent" stroke={C.darkGray} strokeWidth="16" strokeDasharray={`${iPct} 100`} strokeDashoffset={`-${aPct + oPct}`} />
+                  <circle r="14" cx="24" cy="24" fill="white" />
+                </svg>
+                <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ fontSize: 24, fontWeight: 800, color: C.primaryDark }}>100%</div>
                   <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Investi</div>
                 </div>
+             </div>
+             <div style={{ display: "flex", gap: 16, marginTop: 24, justifyContent: "center" }}>
+               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 700, color: C.darkGray }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.primary }}/> Actions</div>
+               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 700, color: C.darkGray }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.gold }}/> Obligations</div>
+               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 700, color: C.darkGray }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.darkGray }}/> Immo/Liq.</div>
              </div>
           </div>
         </div>
@@ -2189,17 +2201,93 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
   };
 
   const handleConfirmEmail = async () => {
+    if (!appSettings.reportWebhookUrl) {
+      alert("Veuillez configurer l'URL du Webhook dans les paramètres (Module Paramètres > Envoi Rapports).");
+      return;
+    }
+    
     setShowEmailModal(false);
     setIsEmailing(true);
     
-    // Simulation de l'appel Webhook Make.com avec les données du formulaire emailForm
-    // fetch(appSettings.reportWebhookUrl, { method: 'POST', body: JSON.stringify({ email: emailForm.to, subject: emailForm.subject, body: emailForm.body, pdfBase64: '...' }) })
-    
-    setTimeout(() => {
-      setIsEmailing(false);
+    const element = document.getElementById('report-printable');
+    if (!element) {
+        setIsEmailing(false);
+        return;
+    }
+
+    // 1. Convertir les images en base64 (pour éviter les erreurs CORS du PDF)
+    const images = element.querySelectorAll('img.pdf-image');
+    const imagePromises = Array.from(images).map(async (img) => {
+        if (img.src && !img.src.startsWith('data:')) {
+            const base64 = await getBase64Image(img.src);
+            img.src = base64;
+        }
+    });
+    await Promise.all(imagePromises);
+
+    // 2. Transformer les textareas en div le temps de la capture
+    const textareas = element.querySelectorAll('textarea');
+    const replacements = [];
+    textareas.forEach((textarea) => {
+      const div = document.createElement('div');
+      div.style.cssText = window.getComputedStyle(textarea).cssText;
+      div.style.height = 'auto';
+      div.style.whiteSpace = 'pre-wrap';
+      div.style.border = 'none';
+      div.style.background = 'transparent';
+      div.style.resize = 'none';
+      div.style.textAlign = 'justify'; 
+      div.innerText = textarea.value;
+      textarea.parentNode.insertBefore(div, textarea);
+      textarea.style.display = 'none';
+      replacements.push({ textarea, div });
+    });
+
+    try {
+      const html2pdf = await requireHtml2Pdf();
+      
+      // 3. Génération du PDF en base64 en mémoire
+      const pdfDataUri = await html2pdf()
+        .set({
+          margin: 0,
+          filename: `Rapport_${data.nom || 'Client'}.pdf`,
+          image: { type: 'jpeg', quality: 1 },
+          html2canvas: { scale: 2, useCORS: true, scrollY: 0, scrollX: 0, windowWidth: 1280, logging: false },
+          pagebreak: { mode: ['css', 'legacy'] },
+          jsPDF: { unit: 'in', format: [13.33334, 7.5], orientation: 'landscape' }
+        })
+        .from(element)
+        .outputPdf('datauristring'); // Récupère une string "data:application/pdf;base64,JVBERi0..."
+
+      // On enlève l'entête pour ne garder que le code Base64 pur
+      const pureBase64 = pdfDataUri.split(',')[1];
+
+      // 4. Envoi réel des données au Webhook Make.com
+      await fetch(appSettings.reportWebhookUrl, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: emailForm.to, 
+          subject: emailForm.subject, 
+          body: emailForm.body, 
+          pdfBase64: pureBase64,
+          filename: `Rapport_Financier_${data.nom || 'Client'}.pdf`
+        }) 
+      });
+
       setEmailSuccess(true);
       setTimeout(() => setEmailSuccess(false), 3000);
-    }, 2000);
+    } catch (error) {
+      console.error("Erreur lors de l'envoi de l'email :", error);
+      alert("Une erreur est survenue lors de l'envoi au Webhook.");
+    } finally {
+      // 5. Restauration de l'interface
+      replacements.forEach(({ textarea, div }) => {
+        textarea.style.display = '';
+        div.remove();
+      });
+      setIsEmailing(false);
+    }
   };
 
   const slidesSwissquote = [
@@ -2736,6 +2824,7 @@ export default function WallSwissApp() {
     compagniePrevoyance: "Liechtenstein Life", optiFiscale: true,
     tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6",
     capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1",
+    lppActions: "", lppOblig: "", lppImmo: "",
     conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP",
     telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch",
     customLogo: "", customCoverImage: "", customPhilosophyImage: "",
@@ -2784,7 +2873,7 @@ export default function WallSwissApp() {
     }
   };
 
-  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", conseiller: `${appSettings.agentFirstName || "Elisa"} ${appSettings.agentLastName || "MARQUET"}`.trim() || "Conseiller", titreConseiller: appSettings.agentTitle || "Planificatrice financière | CGP", telephone: appSettings.agentPhone || "+41 76 762 90 32", email: appSettings.agentEmail || "e.marquet@wallswiss.ch", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
+  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", lppActions: "", lppOblig: "", lppImmo: "", conseiller: `${appSettings.agentFirstName || "Elisa"} ${appSettings.agentLastName || "MARQUET"}`.trim() || "Conseiller", titreConseiller: appSettings.agentTitle || "Planificatrice financière | CGP", telephone: appSettings.agentPhone || "+41 76 762 90 32", email: appSettings.agentEmail || "e.marquet@wallswiss.ch", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
 
   const handlePreviewUpdate = async (newData) => {
     setPreview(newData);
@@ -2970,11 +3059,19 @@ export default function WallSwissApp() {
                 
                 <div style={S.fg}><label style={S.label}>Taux de rendement cible net (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxClp} onChange={e=>u("tauxClp",e.target.value)} placeholder="4.5"/></div>
                 <div style={S.fg}><label style={S.label}>Frais d'entrée (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscriptionLpp} onChange={e=>u("fraisSouscriptionLpp",e.target.value)} placeholder="1"/></div>
-                <div style={{...S.fg, margin: 0}}>
+                <div style={S.fg}>
                   <label style={S.label}>Profil de risque (Libre Passage)</label>
                   <select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>
                     {["Prudent", "Équilibré", "Dynamique", "Offensif"].map(s=><option key={s}>{s}</option>)}
                   </select>
+                </div>
+                
+                <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
+                <div style={{ marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12, textTransform: "uppercase" }}>Allocation d'actifs personnalisée (%)</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 0 }}>
+                  <div><label style={S.label}>Actions</label><input style={S.input} type="number" value={form.lppActions} onChange={e=>u("lppActions",e.target.value)} placeholder="Ex: 65" /></div>
+                  <div><label style={S.label}>Obligations</label><input style={S.input} type="number" value={form.lppOblig} onChange={e=>u("lppOblig",e.target.value)} placeholder="Ex: 25" /></div>
+                  <div><label style={S.label}>Immo/Liq</label><input style={S.input} type="number" value={form.lppImmo} onChange={e=>u("lppImmo",e.target.value)} placeholder="Ex: 10" /></div>
                 </div>
               </>
             ) : (
@@ -3532,10 +3629,10 @@ export default function WallSwissApp() {
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
                   {[
-                    { nom: "Swissquote", type: "Banque / Dépôt", contact: "Support B2B", tel: "+41 44 825 88 88", email: "b2b@swissquote.ch" },
-                    { nom: "ParFinance", type: "Asset Manager", contact: "Desk Gestion", tel: "+41 22 311 00 11", email: "info@parfinance.ch" },
-                    { nom: "NS Partners", type: "Asset Manager", contact: "Relation Partenaires", tel: "+41 22 818 04 00", email: "contact@nspartners.ch" },
-                    { nom: "Liechtenstein Life", type: "Prévoyance & Assurance", contact: "Support Courtier", tel: "+423 265 34 40", email: "partner@lla-group.com" },
+                    { nom: "Swissquote", type: "Banque / Dépôt", contact: "Desk B2B", tel: "+41 44 825 89 90", email: "b2b-desk@swissquote.ch" },
+                    { nom: "ParFinance", type: "Asset Manager", contact: "Desk Gestion", tel: "+41 22 989 55 55", email: "info@parfinance.ch" },
+                    { nom: "NS Partners", type: "Asset Manager", contact: "Relation Partenaires", tel: "+41 22 906 52 50", email: "geneva@nspgroup.com" },
+                    { nom: "Liechtenstein Life", type: "Prévoyance & Assurance", contact: "Support Courtier", tel: "+423 265 34 40", email: "info@liechtensteinlife.com" },
                     { nom: "Pictet", type: "Fondation LPP", contact: "Service LPP", tel: "+41 58 323 23 23", email: "lpp@pictet.com" },
                     { nom: "Lemania", type: "Fondation LPP", contact: "Administration", tel: "+41 21 311 11 11", email: "info@lemania-lpp.ch" }
                   ].map((p, i) => (

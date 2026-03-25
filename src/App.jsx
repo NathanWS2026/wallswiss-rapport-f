@@ -46,7 +46,7 @@ try {
 const C = {
   primary: "#692102",
   primaryDark: "#4D1801", 
-  sidebar: "#2D0E01", 
+  sidebar: "#692102", 
   gold: "#A59568",
   white: "#FFFFFF",
   black: "#1A1A1A",
@@ -54,6 +54,23 @@ const C = {
   lightGray: "#F3F2EF",
   mediumGray: "#E5E3DE",
   darkGray: "#374151",
+};
+
+const Icons = {
+  Building: ({ size = 28, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path></svg>,
+  Bank: ({ size = 28, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18"></path><path d="M3 10h18"></path><path d="M5 6l7-3 7 3"></path><path d="M4 10v11"></path><path d="M20 10v11"></path><path d="M8 14v3"></path><path d="M12 14v3"></path><path d="M16 14v3"></path></svg>,
+  TrendUp: ({ size = 28, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>,
+  Shield: ({ size = 28, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>,
+  Home: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>,
+  FileText: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>,
+  Mail: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22 6 12 13 2 6"></polyline></svg>,
+  Settings: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>,
+  User: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>,
+  Users: ({ size = 24, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>,
+  PieChart: ({ size = 24, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>,
+  ExternalLink: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>,
+  Phone: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>,
+  BookContacts: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path><path d="M8 7h6"></path><path d="M8 11h8"></path></svg>
 };
 
 const LOGO_URL = "/logo blanc sans texte.png";
@@ -121,9 +138,12 @@ function computeProjectionsPrevoyance(data) {
 
 function computeProjectionsLPP(data) {
   const initial = Number(data.capitalLibrePassage || 120000);
+  const fee = data.fraisSouscriptionLpp !== "" && data.fraisSouscriptionLpp !== undefined ? Number(data.fraisSouscriptionLpp) : 1;
+  const netInitial = initial - (initial * fee / 100);
   const age = Number(data.age || 40);
   const duration = Math.max(1, 65 - age);
   const rateClassic = 0.01; 
+  const rateSupletive = 0.0005; // 0.05% pour la Fondation Institutionnelle Supplétive
   const rateCLP = Number(data.tauxClp || 4) / 100; 
   
   const step = Math.max(1, Math.floor(duration / 5));
@@ -135,9 +155,11 @@ function computeProjectionsLPP(data) {
   return uniqueYears.map(y => ({
     year: y,
     age: age + y,
+    supletive: Math.round(initial * Math.pow(1 + rateSupletive, y)),
     classic: Math.round(initial * Math.pow(1 + rateClassic, y)),
-    clp: Math.round(initial * Math.pow(1 + rateCLP, y)),
-    rateCLP
+    clp: Math.round(netInitial * Math.pow(1 + rateCLP, y)),
+    rateCLP,
+    fee
   }));
 }
 
@@ -1717,7 +1739,7 @@ function SlideLPPFonctionnement({ data, editMode, onTextChange }) {
           </div>
           <div style={{ width: 420, display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 24, display: "flex", alignItems: "center", gap: 20, boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
-              <div style={{ fontSize: 32, opacity: 0.5 }}>🏢</div>
+              <div style={{ opacity: 0.5, color: C.darkGray }}><Icons.Building size={32} /></div>
               <div>
                 <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em", marginBottom: 4 }}>Avant</div>
                 <div style={{ fontSize: 15, fontWeight: 800, color: C.darkGray }}>Caisse de pension</div>
@@ -1726,7 +1748,7 @@ function SlideLPPFonctionnement({ data, editMode, onTextChange }) {
             </div>
             <div style={{ textAlign: "center", color: C.gold, fontSize: 24 }}>↓</div>
             <div style={{ background: C.white, border: `2px solid ${C.gold}`, padding: 24, display: "flex", alignItems: "center", gap: 20, boxShadow: "0 10px 30px rgba(165,149,104,0.15)" }}>
-              <div style={{ fontSize: 32, opacity: 0.8 }}>🏦</div>
+              <div style={{ opacity: 0.8, color: C.gold }}><Icons.Bank size={32} /></div>
               <div>
                 <div style={{ fontSize: 11, color: C.gold, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em", marginBottom: 4 }}>Aujourd'hui</div>
                 <div style={{ fontSize: 15, fontWeight: 800, color: C.primaryDark }}>Compte de Maintien</div>
@@ -1735,7 +1757,7 @@ function SlideLPPFonctionnement({ data, editMode, onTextChange }) {
             </div>
             <div style={{ textAlign: "center", color: C.primary, fontSize: 24 }}>↓</div>
             <div style={{ background: C.primary, color: C.white, padding: 24, display: "flex", alignItems: "center", gap: 20, boxShadow: "0 10px 30px rgba(105,33,2,0.2)" }}>
-              <div style={{ fontSize: 32 }}>📈</div>
+              <div style={{ color: C.white }}><Icons.TrendUp size={32} /></div>
               <div>
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em", marginBottom: 4 }}>Notre Solution</div>
                 <div style={{ fontSize: 15, fontWeight: 800 }}>Libre Passage Investi</div>
@@ -1770,21 +1792,21 @@ function SlideLPPLibrePassage({ data, editMode, onTextChange }) {
             <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 24, textAlign: "center" }}>Stratégie d'investissement</div>
             <div style={{ display: "grid", gap: 16 }}>
               <div style={{ background: "rgba(255,255,255,0.1)", padding: "16px", display: "flex", alignItems: "center", gap: 16 }}>
-                <span style={{ fontSize: 24 }}>📈</span>
+                <span style={{ color: C.white }}><Icons.TrendUp size={24} /></span>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700 }}>Profil sélectionné</div>
                   <div style={{ fontSize: 12, color: C.gold }}>{data.profilRisque || "Dynamique"}</div>
                 </div>
               </div>
               <div style={{ background: "rgba(255,255,255,0.1)", padding: "16px", display: "flex", alignItems: "center", gap: 16 }}>
-                <span style={{ fontSize: 24 }}>🏦</span>
+                <span style={{ color: C.white }}><Icons.Bank size={24} /></span>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700 }}>Administrateur / Fondation</div>
                   <div style={{ fontSize: 12, color: C.gold }}>{data.administrateurLpp || "Pictet"}</div>
                 </div>
               </div>
               <div style={{ background: "rgba(255,255,255,0.1)", padding: "16px", display: "flex", alignItems: "center", gap: 16 }}>
-                <span style={{ fontSize: 24 }}>🛡️</span>
+                <span style={{ color: C.white }}><Icons.Shield size={24} /></span>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700 }}>Sécurité</div>
                   <div style={{ fontSize: 12, color: C.gold }}>Avoirs hors bilan bancaire</div>
@@ -1883,25 +1905,35 @@ function SlideLPPAvantagesCLP({ data, editMode, onTextChange }) {
         <ReportTitle title="Avantages de l'investissement" highlight="sur les marchés" subtitle="POURQUOI NE PAS LAISSER SON CAPITAL DORMIR" />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 32 }}>
           
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 40 }}>
-             <div>
-                <EditableText editMode={editMode} value={data.texts?.lppAvantagesP1} onChange={v => onTextChange("lppAvantagesP1", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 16 }} />
-                <EditableText editMode={editMode} value={data.texts?.lppAvantagesP2} onChange={v => onTextChange("lppAvantagesP2", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr", gap: 64, alignItems: "center" }}>
+             <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                <EditableText editMode={editMode} value={data.texts?.lppAvantagesP1} onChange={v => onTextChange("lppAvantagesP1", v)} style={{ fontSize: 14.5, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
+                <div style={{ width: 60, height: 3, background: C.gold }} />
+                <EditableText editMode={editMode} value={data.texts?.lppAvantagesP2} onChange={v => onTextChange("lppAvantagesP2", v)} style={{ fontSize: 14.5, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
              </div>
              
-             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-               <div style={{ display: "flex", gap: 16, alignItems: "flex-start", background: C.lightGray, padding: "16px 20px" }}>
-                  <div style={{ color: C.primary, fontSize: 24 }}>🛡️</div>
+             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+               <div style={{ display: "flex", gap: 20, alignItems: "flex-start", background: C.white, border: `1px solid ${C.mediumGray}`, padding: "24px", boxShadow: "0 10px 30px rgba(0,0,0,0.03)" }}>
+                  <div style={{ color: C.primary, background: "rgba(105,33,2,0.06)", padding: 12, borderRadius: "50%", flexShrink: 0 }}><Icons.TrendUp size={28} /></div>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: C.primaryDark, marginBottom: 4 }}>Protection de la famille</div>
-                    <div style={{ fontSize: 12, color: C.gray, lineHeight: 1.5 }}>Libre désignation des bénéficiaires en cas de décès (au sein du cadre légal).</div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: C.primaryDark, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Contre l'inflation</div>
+                    <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.6 }}>L'investissement en actions/obligations maintient le pouvoir d'achat de votre retraite à long terme.</div>
                   </div>
                </div>
-               <div style={{ display: "flex", gap: 16, alignItems: "flex-start", background: C.lightGray, padding: "16px 20px" }}>
-                  <div style={{ color: C.primary, fontSize: 24 }}>📈</div>
+               
+               <div style={{ display: "flex", gap: 20, alignItems: "flex-start", background: C.white, border: `1px solid ${C.mediumGray}`, padding: "24px", boxShadow: "0 10px 30px rgba(0,0,0,0.03)" }}>
+                  <div style={{ color: C.gold, background: "rgba(165,149,104,0.1)", padding: 12, borderRadius: "50%", flexShrink: 0 }}><Icons.Shield size={28} /></div>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: C.primaryDark, marginBottom: 4 }}>Contre l'inflation</div>
-                    <div style={{ fontSize: 12, color: C.gray, lineHeight: 1.5 }}>L'investissement en actions/obligations maintient le pouvoir d'achat de votre retraite.</div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: C.primaryDark, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Protection de la famille</div>
+                    <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.6 }}>Libre désignation des bénéficiaires en cas de décès (au sein du cadre légal OPP2).</div>
+                  </div>
+               </div>
+
+               <div style={{ display: "flex", gap: 20, alignItems: "flex-start", background: C.white, border: `1px solid ${C.mediumGray}`, padding: "24px", boxShadow: "0 10px 30px rgba(0,0,0,0.03)" }}>
+                  <div style={{ color: C.darkGray, background: C.lightGray, padding: 12, borderRadius: "50%", flexShrink: 0 }}><Icons.PieChart size={28} /></div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: C.primaryDark, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Gestion sur-mesure</div>
+                    <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.6 }}>Une architecture ouverte permettant de sélectionner les meilleurs gérants mondiaux selon votre profil.</div>
                   </div>
                </div>
              </div>
@@ -1918,6 +1950,7 @@ function SlideLPPProjections({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   const rows = computeProjectionsLPP(data);
   const initial = Number(data.capitalLibrePassage || 120000);
+  const fee = rows.length > 0 ? rows[0].fee : 1;
 
   // SVG Chart variables
   const svgW = 480; const svgH = 240;
@@ -1929,10 +1962,12 @@ function SlideLPPProjections({ data }) {
   const getX = (i) => padL + (i / (rows.length - 1)) * w;
   const getY = (val) => padT + h - (val / gridMax) * h;
 
+  const dSupletive = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.supletive)}`).join(' ');
   const dClassic = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.classic)}`).join(' ');
   const dCLP = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.clp)}`).join(' ');
 
   const rateCLPDisplay = (rows[0].rateCLP * 100).toFixed(1);
+  const netInitial = initial - (initial * fee / 100);
 
   return (
     <div style={slideBase}>
@@ -1943,8 +1978,11 @@ function SlideLPPProjections({ data }) {
         <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 40, alignItems: "center", minHeight: 0 }}>
           
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-             <p style={{ fontSize: 13, lineHeight: 1.6, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }}>
-              Comparaison de l'évolution de votre capital de <strong>CHF {fmt(initial)}.-</strong> s'il reste sur un compte de fondation classique (~1% net/an) ou s'il est investi sur les marchés selon votre profil <strong>{data.profilRisque || "Dynamique"}</strong> (~{rateCLPDisplay}% estimé net/an).
+             <p style={{ fontSize: 12.5, lineHeight: 1.6, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }}>
+              Comparaison de l'évolution de votre capital de <strong>CHF {fmt(initial)}.-</strong> s'il est placé sur une Fondation Institutionnelle Supplétive (~0.05% net/an), s'il reste sur un compte de fondation classique (~1% net/an) ou s'il est investi sur les marchés via un <strong>Compte de libre passage WallSwiss</strong> (profil <strong>{data.profilRisque || "Dynamique"}</strong>, ~{rateCLPDisplay}% net/an).<br/>
+              <span style={{ fontSize: 11, color: C.primary, fontWeight: 600 }}>
+                *Des frais d'entrée de {fee}% (soit CHF {fmt(initial * fee / 100)}.-) sont déduits du capital initial, portant le montant net investi à CHF {fmt(netInitial)}.- pour la simulation WallSwiss.
+              </span>
             </p>
 
             <div style={{ width: svgW, height: svgH, alignSelf: "center", background: C.white, border: `1px solid ${C.lightGray}`, padding: "10px 0" }}>
@@ -1969,53 +2007,61 @@ function SlideLPPProjections({ data }) {
                 <path d={`${dCLP} L ${getX(rows.length-1)} ${getY(0)} L ${getX(0)} ${getY(0)} Z`} fill="rgba(105,33,2,0.05)" />
                 
                 {/* Lines */}
+                <path d={dSupletive} fill="none" stroke="#D1D5DB" strokeWidth="2" strokeDasharray="4 4" />
                 <path d={dClassic} fill="none" stroke={C.gray} strokeWidth="2" />
                 <path d={dCLP} fill="none" stroke={C.primary} strokeWidth="3" />
                 
                 {/* Points */}
                 {rows.map((r, i) => (
                   <g key={i}>
+                    <circle cx={getX(i)} cy={getY(r.supletive)} r="3" fill="#D1D5DB" />
                     <circle cx={getX(i)} cy={getY(r.classic)} r="3" fill={C.gray} />
                     <circle cx={getX(i)} cy={getY(r.clp)} r="5" fill={C.primary} stroke={C.white} strokeWidth="2" />
                   </g>
                 ))}
               </svg>
             </div>
-            <div style={{ display: "flex", gap: 24, marginTop: 16, alignSelf: "center", fontSize: 12, fontWeight: 600 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 12, height: 2, background: C.gray }} /> Compte Classique (~1%)</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.primary }} /> Libre Passage ({data.profilRisque})</div>
+            <div style={{ display: "flex", gap: 16, marginTop: 16, alignSelf: "center", fontSize: 11, fontWeight: 600 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 12, height: 2, borderBottom: "2px dashed #D1D5DB" }} /> Fondation Supplétive (0.05%)</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 12, height: 2, background: C.gray }} /> Compte Classique (~1%)</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.primary }} /> Libre Passage WallSwiss</div>
             </div>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, textAlign: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5, textAlign: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
               <thead>
                 <tr style={{ background: C.primary, color: C.white }}>
-                  <th style={{ padding: "12px 10px", fontWeight: 600 }}>Âge</th>
-                  <th style={{ padding: "12px 10px", fontWeight: 600 }}>Compte Classique</th>
-                  <th style={{ padding: "12px 10px", fontWeight: 600 }}>Libre Passage</th>
-                  <th style={{ padding: "12px 10px", fontWeight: 600 }}>Différence</th>
+                  <th style={{ padding: "12px 6px", fontWeight: 600 }}>Âge</th>
+                  <th style={{ padding: "12px 6px", fontWeight: 600 }}>Fondation<br/>Supplétive</th>
+                  <th style={{ padding: "12px 6px", fontWeight: 600 }}>Compte<br/>Classique</th>
+                  <th style={{ padding: "12px 6px", fontWeight: 600 }}>Libre Passage<br/>WallSwiss<br/><span style={{fontSize: 9, opacity: 0.8}}>(net de frais)</span></th>
+                  <th style={{ padding: "12px 6px", fontWeight: 600 }}>Différence<br/>(WS - Classique)</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.filter((_, i) => i > 0).map((r, i) => (
+                {rows.map((r, i) => (
                   <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white }}>
-                    <td style={{ padding: "12px 10px", fontWeight: 700, color: C.primary, borderBottom: "1px solid #E5E3DE" }}>{r.age} ans</td>
-                    <td style={{ padding: "12px 10px", color: C.darkGray, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.classic)}</td>
-                    <td style={{ padding: "12px 10px", fontWeight: 700, color: C.primary, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.clp)}</td>
-                    <td style={{ padding: "12px 10px", fontWeight: 700, color: C.gold, borderBottom: "1px solid #E5E3DE" }}>+ {fmt(r.clp - r.classic)}</td>
+                    <td style={{ padding: "10px 6px", fontWeight: 700, color: C.primary, borderBottom: "1px solid #E5E3DE" }}>{i === 0 ? "Aujourd'hui" : `${r.age} ans`}</td>
+                    <td style={{ padding: "10px 6px", color: C.gray, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.supletive)}</td>
+                    <td style={{ padding: "10px 6px", color: C.darkGray, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.classic)}</td>
+                    <td style={{ padding: "10px 6px", fontWeight: 700, color: C.primary, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.clp)}</td>
+                    <td style={{ padding: "10px 6px", fontWeight: 700, color: r.clp - r.classic >= 0 ? C.gold : "#EF4444", borderBottom: "1px solid #E5E3DE" }}>
+                      {r.clp - r.classic > 0 ? "+ " : ""}
+                      {fmt(r.clp - r.classic)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
             
-            <div style={{ marginTop: 20, background: "rgba(165,149,104,0.1)", padding: "12px 20px", border: `1px solid ${C.gold}`, color: C.primaryDark, fontSize: 12, fontWeight: 700, textAlign: "center" }}>
+            <div style={{ marginTop: 20, background: "rgba(165,149,104,0.1)", padding: "12px 20px", border: `1px solid ${C.gold}`, color: C.primaryDark, fontSize: 12, fontWeight: 700, textAlign: "center", width: "100%", boxSizing: "border-box" }}>
               Manque à gagner évité à 65 ans :<br/>
               <span style={{ fontSize: 20, color: C.primary, marginTop: 4, display: "block" }}>CHF {fmt(rows[rows.length-1].clp - rows[rows.length-1].classic)}.-</span>
             </div>
 
             <p style={{ fontSize: 9, color: C.gray, marginTop: 12, lineHeight: 1.5, fontStyle: "italic", textAlign: "center" }}>
-              *Simulation non garantie à but illustratif. Les rendements d'investissement sont estimés nets de frais selon le profil choisi.
+              *Simulation non garantie à but illustratif. Les rendements d'investissement sont estimés nets de frais de gestion selon le profil choisi.
             </p>
           </div>
 
@@ -2025,7 +2071,6 @@ function SlideLPPProjections({ data }) {
     </div>
   );
 }
-
 
 // ────────────────────── PREVIEW MODAL ──────────────────────
 
@@ -2338,6 +2383,20 @@ const S = {
   btnP: { background: C.primary, color: C.white, border: "none", padding: "12px 28px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.04em", borderRadius: "0px" },
   btnS: { background: C.white, color: C.primary, border: `2px solid ${C.primary}`, padding: "10px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600, borderRadius: "0px" },
 };
+
+const PREDEFINED_AGENTS = [
+  { prenom: "Fleurie", nom: "PEREZ MATTHEEUWS", tel: "076 286 55 26", email: "fp.mattheeuws@wallswiss.ch", genre: "F" },
+  { prenom: "Jesse", nom: "BELE", tel: "078 237 99 83", email: "j.bele@wallswiss.ch", genre: "M" },
+  { prenom: "Léna", nom: "LE MANCHEC", tel: "076 768 36 56", email: "l.lemanchec@wallswiss.ch", genre: "F" },
+  { prenom: "Denis", nom: "PHILIBERT", tel: "078 260 23 55", email: "d.philibert@wallswiss.ch", genre: "M" },
+  { prenom: "Edouard", nom: "MELOUX", tel: "078 247 41 93", email: "e.meloux@wallswiss.ch", genre: "M" },
+  { prenom: "Esteban", nom: "TORAL", tel: "078 232 05 50", email: "e.toral@wallswiss.ch", genre: "M" },
+  { prenom: "Baptiste", nom: "HAENSLER", tel: "077 209 29 08", email: "b.haensler@wallswiss.ch", genre: "M" },
+  { prenom: "Louis", nom: "BORNE", tel: "076 231 92 75", email: "l.borne@wallswiss.ch", genre: "M" },
+  { prenom: "Badis", nom: "TOUIHRI", tel: "", email: "b.touihri@wallswiss.ch", genre: "M" },
+  { prenom: "Cloé", nom: "BESNARD", tel: "", email: "c.besnard@wallswiss.ch", genre: "F" },
+  { prenom: "Elisa", nom: "MARQUET", tel: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch", genre: "F" }
+];
 
 export default function WallSwissApp() {
   const initialTexts = {
@@ -2676,7 +2735,7 @@ export default function WallSwissApp() {
     tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9",
     compagniePrevoyance: "Liechtenstein Life", optiFiscale: true,
     tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6",
-    capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5",
+    capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1",
     conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP",
     telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch",
     customLogo: "", customCoverImage: "", customPhilosophyImage: "",
@@ -2725,7 +2784,7 @@ export default function WallSwissApp() {
     }
   };
 
-  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", conseiller: `${appSettings.agentFirstName || "Elisa"} ${appSettings.agentLastName || "MARQUET"}`.trim() || "Conseiller", titreConseiller: appSettings.agentTitle || "Planificatrice financière | CGP", telephone: appSettings.agentPhone || "+41 76 762 90 32", email: appSettings.agentEmail || "e.marquet@wallswiss.ch", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
+  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", conseiller: `${appSettings.agentFirstName || "Elisa"} ${appSettings.agentLastName || "MARQUET"}`.trim() || "Conseiller", titreConseiller: appSettings.agentTitle || "Planificatrice financière | CGP", telephone: appSettings.agentPhone || "+41 76 762 90 32", email: appSettings.agentEmail || "e.marquet@wallswiss.ch", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
 
   const handlePreviewUpdate = async (newData) => {
     setPreview(newData);
@@ -2910,6 +2969,7 @@ export default function WallSwissApp() {
                 <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
                 
                 <div style={S.fg}><label style={S.label}>Taux de rendement cible net (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxClp} onChange={e=>u("tauxClp",e.target.value)} placeholder="4.5"/></div>
+                <div style={S.fg}><label style={S.label}>Frais d'entrée (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscriptionLpp} onChange={e=>u("fraisSouscriptionLpp",e.target.value)} placeholder="1"/></div>
                 <div style={{...S.fg, margin: 0}}>
                   <label style={S.label}>Profil de risque (Libre Passage)</label>
                   <select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>
@@ -2967,6 +3027,22 @@ export default function WallSwissApp() {
       case 4: return (
         <div style={{ ...S.card, maxWidth: 560 }}>
           <div style={S.cardTitle}><div style={S.dot} /> Informations du conseiller</div>
+          <div style={S.fg}>
+            <label style={S.label}>Sélection rapide du conseiller</label>
+            <select style={S.select} onChange={(e) => {
+              if (e.target.value === "") return;
+              const agent = PREDEFINED_AGENTS[e.target.value];
+              u("conseiller", `${agent.prenom} ${agent.nom}`);
+              u("email", agent.email);
+              if (agent.tel) u("telephone", agent.tel);
+              u("titreConseiller", agent.genre === "M" ? "Planificateur financier | CGP" : "Planificatrice financière | CGP");
+            }}>
+              <option value="">-- Choisir un conseiller --</option>
+              {PREDEFINED_AGENTS.map((a, i) => (
+                <option key={i} value={i}>{a.prenom} {a.nom}</option>
+              ))}
+            </select>
+          </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div style={S.fg}><label style={S.label}>Nom complet</label><input style={S.input} value={form.conseiller} onChange={e=>u("conseiller",e.target.value)}/></div>
             <div style={S.fg}><label style={S.label}>Titre</label><input style={S.input} value={form.titreConseiller} onChange={e=>u("titreConseiller",e.target.value)}/></div>
@@ -2979,31 +3055,6 @@ export default function WallSwissApp() {
       );
       case 5: return (
         <div style={{ display: "grid", gap: 20 }}>
-          <div style={S.card}>
-            <div style={S.cardTitle}><div style={S.dot} /> Médias et Design Client</div>
-            <p style={{ fontSize: 12, color: C.gray, marginBottom: 16, marginTop: 0 }}>Remplacez les images par défaut par des éléments spécifiques à ce client (ex: logo de son entreprise).</p>
-            
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-              <div>
-                <label style={S.label}>Logo personnalisé</label>
-                <input type="file" accept="image/*" onChange={async (e) => {
-                  const url = await handleImageUpload(e.target.files[0], `reports/${user.uid}/logo_${Date.now()}`);
-                  if (url) u("customLogo", url);
-                }} style={{ fontSize: 11, fontFamily: "'Montserrat', sans-serif" }} />
-                {form.customLogo && form.customLogo !== appSettings.defaultLogo && <div style={{ marginTop: 8, fontSize: 11, color: C.gold, fontWeight: 600 }}>✓ Logo client chargé</div>}
-              </div>
-              <div>
-                <label style={S.label}>Image de couverture spécifique</label>
-                <input type="file" accept="image/*" onChange={async (e) => {
-                  const url = await handleImageUpload(e.target.files[0], `reports/${user.uid}/cover_${Date.now()}`);
-                  if (url) u("customCoverImage", url);
-                }} style={{ fontSize: 11, fontFamily: "'Montserrat', sans-serif" }} />
-                {form.customCoverImage && form.customCoverImage !== appSettings.defaultCover && <div style={{ marginTop: 8, fontSize: 11, color: C.gold, fontWeight: 600 }}>✓ Image spécifique chargée</div>}
-              </div>
-            </div>
-            {uploadingImage && <div style={{ fontSize: 12, color: C.gold, fontWeight: 700, marginTop: 12 }}>⏳ Téléchargement vers le cloud en cours...</div>}
-          </div>
-
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Personnalisation des textes</div>
             <p style={{ fontSize: 12, color: C.gray, marginBottom: 16, marginTop: 0 }}>Modifiez les textes par défaut qui apparaîtront dans les diapositives.</p>
@@ -3195,48 +3246,64 @@ export default function WallSwissApp() {
           
           <button 
             onClick={() => setActiveModule("hub")} 
-            style={{ width: "100%", textAlign: "left", background: activeModule === "hub" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "hub" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "hub" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "hub" ? 600 : 500, transition: "0.2s" }}
+            style={{ width: "100%", textAlign: "left", background: activeModule === "hub" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "hub" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "hub" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "hub" ? 600 : 500, transition: "0.2s", display: "flex", alignItems: "center", gap: 10 }}
           >
-            🏠 Hub d'accueil
+            <Icons.Home size={16} /> Hub d'accueil
           </button>
           
           <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700, letterSpacing: "0.1em", padding: "0 24px", margin: "16px 0 8px", textTransform: "uppercase" }}>Modules</div>
           
           <button 
             onClick={() => setActiveModule("rapport")} 
-            style={{ width: "100%", textAlign: "left", background: activeModule === "rapport" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "rapport" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "rapport" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "rapport" ? 600 : 500, transition: "0.2s" }}
+            style={{ width: "100%", textAlign: "left", background: activeModule === "rapport" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "rapport" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "rapport" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "rapport" ? 600 : 500, transition: "0.2s", display: "flex", alignItems: "center", gap: 10 }}
           >
-            📄 Rapport Financier
+            <Icons.FileText size={16} /> Rapport Financier
           </button>
           
           <button 
             onClick={() => setActiveModule("mailing")} 
-            style={{ width: "100%", textAlign: "left", background: activeModule === "mailing" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "mailing" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "mailing" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "mailing" ? 600 : 500, transition: "0.2s", marginTop: "8px" }}
+            style={{ width: "100%", textAlign: "left", background: activeModule === "mailing" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "mailing" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "mailing" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "mailing" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
           >
-            📧 Mailing & Séquences
+            <Icons.Mail size={16} /> Mailing & Séquences
+          </button>
+
+          <button 
+            onClick={() => setActiveModule("annuaire")} 
+            style={{ width: "100%", textAlign: "left", background: activeModule === "annuaire" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "annuaire" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "annuaire" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "annuaire" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
+          >
+            <Icons.BookContacts size={16} /> Annuaire Partenaires
           </button>
 
           {user?.email === ADMIN_EMAIL && (
             <button 
               onClick={() => setActiveModule("admin")} 
-              style={{ width: "100%", textAlign: "left", background: activeModule === "admin" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "admin" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "admin" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "admin" ? 600 : 500, transition: "0.2s", marginTop: "8px" }}
+              style={{ width: "100%", textAlign: "left", background: activeModule === "admin" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "admin" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "admin" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "admin" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
             >
-              🛡️ Gestion des accès
+              <Icons.Shield size={16} /> Gestion des accès
             </button>
           )}
+
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700, letterSpacing: "0.1em", padding: "0 24px", margin: "16px 0 8px", textTransform: "uppercase" }}>Liens rapides</div>
+          
+          <button 
+            onClick={() => window.open("https://wallswiss.lightning.force.com/lightning/page/chatter", "_blank")} 
+            style={{ width: "100%", textAlign: "left", background: "transparent", color: "rgba(255,255,255,0.6)", border: "none", borderLeft: "3px solid transparent", padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 500, transition: "0.2s", display: "flex", alignItems: "center", gap: 10 }}
+          >
+            <Icons.ExternalLink size={16} /> CRM Salesforce
+          </button>
         </nav>
 
         <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
           <button 
             onClick={() => setActiveModule("settings")} 
-            style={{ width: "100%", textAlign: "left", background: activeModule === "settings" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "settings" ? C.white : "rgba(255,255,255,0.6)", border: "none", padding: "8px 0", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: activeModule === "settings" ? 600 : 500, transition: "0.2s", display: "flex", alignItems: "center", gap: 8 }}
+            style={{ width: "100%", textAlign: "left", background: activeModule === "settings" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "settings" ? C.white : "rgba(255,255,255,0.6)", border: "none", padding: "8px 0", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: activeModule === "settings" ? 600 : 500, transition: "0.2s", display: "flex", alignItems: "center", gap: 10 }}
           >
-            ⚙️ Paramètres & Intégrations
+            <Icons.Settings size={16} /> Paramètres & Intégrations
           </button>
         </div>
 
         <div style={{ padding: "24px", borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
-          <div style={{ marginBottom: 12, color: C.gold, fontWeight: 600 }}>👤 {user?.email || "Mode Démo"}</div>
+          <div style={{ marginBottom: 12, color: C.gold, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}><Icons.User size={14} /> {user?.email || "Mode Démo"}</div>
           <button onClick={handleLogout} style={{ background: "transparent", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.2)", padding: "4px 8px", cursor: "pointer", fontSize: 10, width: "100%", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 16 }}>Déconnexion</button>
           <div>{APP_VERSION}</div>
         </div>
@@ -3258,8 +3325,8 @@ export default function WallSwissApp() {
                 onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.06)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
               >
-                <div style={{ background: "rgba(105,33,2,0.06)", width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                  <span style={{ fontSize: 24 }}>📄</span>
+                <div style={{ background: "rgba(105,33,2,0.06)", color: C.primary, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+                  <Icons.FileText size={28} />
                 </div>
                 <h3 style={{ fontSize: 18, color: C.primary, marginBottom: 8, marginTop: 0 }}>Rapport Financier</h3>
                 <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Générez des rapports d'analyse patrimoniale professionnels et personnalisés pour vos clients en quelques clics.</p>
@@ -3272,21 +3339,35 @@ export default function WallSwissApp() {
                 onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.06)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
               >
-                <div style={{ background: "rgba(105,33,2,0.06)", width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                  <span style={{ fontSize: 24 }}>📧</span>
+                <div style={{ background: "rgba(105,33,2,0.06)", color: C.primary, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+                  <Icons.Mail size={28} />
                 </div>
                 <h3 style={{ fontSize: 18, color: C.primary, marginBottom: 8, marginTop: 0 }}>Mailing & Séquences</h3>
                 <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Importez vos contacts en masse et envoyez des campagnes d'e-mails personnalisées.</p>
                 <span style={{ color: C.gold, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ouvrir le module &rarr;</span>
               </div>
 
+              <div 
+                onClick={() => setActiveModule("annuaire")}
+                style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s", borderRadius: 0 }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.06)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+              >
+                <div style={{ background: "rgba(105,33,2,0.06)", color: C.primary, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+                  <Icons.BookContacts size={28} />
+                </div>
+                <h3 style={{ fontSize: 18, color: C.primary, marginBottom: 8, marginTop: 0 }}>Annuaire Partenaires</h3>
+                <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Retrouvez rapidement les contacts de nos partenaires financiers et assureurs.</p>
+                <span style={{ color: C.gold, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ouvrir le module &rarr;</span>
+              </div>
+
               {[
-                { title: "Simulateurs Financiers", desc: "Calculez des projections d'assurance vie, prévoyance et immobilier.", icon: "📊" },
-                { title: "CRM Clients", desc: "Gérez votre portefeuille clients et suivez l'historique de vos rendez-vous.", icon: "👥" }
+                { title: "Simulateurs Financiers", desc: "Calculez des projections d'assurance vie, prévoyance et immobilier.", icon: <Icons.PieChart size={28} /> },
+                { title: "CRM Clients", desc: "Gérez votre portefeuille clients et suivez l'historique de vos rendez-vous.", icon: <Icons.Users size={28} /> }
               ].map((mod, i) => (
                 <div key={i} style={{ background: "rgba(255,255,255,0.5)", border: `1px dashed ${C.mediumGray}`, padding: 32, cursor: "not-allowed", opacity: 0.6 }}>
-                  <div style={{ background: C.lightGray, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                    <span style={{ fontSize: 24, filter: "grayscale(100%)" }}>{mod.icon}</span>
+                  <div style={{ background: C.lightGray, color: C.darkGray, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+                    {mod.icon}
                   </div>
                   <h3 style={{ fontSize: 18, color: C.darkGray, marginBottom: 8, marginTop: 0 }}>{mod.title}</h3>
                   <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>{mod.desc}</p>
@@ -3426,6 +3507,60 @@ export default function WallSwissApp() {
                   </div>
                 </div>
               )}
+            </main>
+          </div>
+        )}
+
+        {/* VUE MODULE ANNUAIRE */}
+        {activeModule === "annuaire" && (
+          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+            <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
+              <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Annuaire Partenaires</div>
+                </div>
+              </div>
+            </header>
+
+            <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto" }}>
+              <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
+                <div style={{ marginBottom: 32 }}>
+                  <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Contacts Partenaires</h2>
+                  <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Retrouvez les coordonnées directes de nos partenaires institutionnels.</p>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+                  {[
+                    { nom: "Swissquote", type: "Banque / Dépôt", contact: "Support B2B", tel: "+41 44 825 88 88", email: "b2b@swissquote.ch" },
+                    { nom: "ParFinance", type: "Asset Manager", contact: "Desk Gestion", tel: "+41 22 311 00 11", email: "info@parfinance.ch" },
+                    { nom: "NS Partners", type: "Asset Manager", contact: "Relation Partenaires", tel: "+41 22 818 04 00", email: "contact@nspartners.ch" },
+                    { nom: "Liechtenstein Life", type: "Prévoyance & Assurance", contact: "Support Courtier", tel: "+423 265 34 40", email: "partner@lla-group.com" },
+                    { nom: "Pictet", type: "Fondation LPP", contact: "Service LPP", tel: "+41 58 323 23 23", email: "lpp@pictet.com" },
+                    { nom: "Lemania", type: "Fondation LPP", contact: "Administration", tel: "+41 21 311 11 11", email: "info@lemania-lpp.ch" }
+                  ].map((p, i) => (
+                    <div key={i} style={S.card}>
+                      <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>{p.type}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: C.primary, marginBottom: 16 }}>{p.nom}</div>
+                      
+                      <div style={{ display: "grid", gap: 12 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <div style={{ color: C.gray }}><Icons.User size={16} /></div>
+                          <span style={{ fontSize: 13, color: C.darkGray, fontWeight: 500 }}>{p.contact}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <div style={{ color: C.gray }}><Icons.Phone size={16} /></div>
+                          <span style={{ fontSize: 13, color: C.darkGray, fontWeight: 500 }}>{p.tel}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <div style={{ color: C.gray }}><Icons.Mail size={16} /></div>
+                          <span style={{ fontSize: 13, color: C.primary, fontWeight: 500 }}>{p.email}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </main>
           </div>
         )}

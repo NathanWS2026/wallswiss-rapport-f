@@ -2201,8 +2201,9 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
   };
 
   const handleConfirmEmail = async () => {
-    if (!appSettings.reportWebhookUrl) {
-      alert("Veuillez configurer l'URL du Webhook dans les paramètres (Module Paramètres > Envoi Rapports).");
+    const webhookUrl = appSettings.reportWebhookUrl?.trim();
+    if (!webhookUrl || !webhookUrl.startsWith('http')) {
+      alert("Veuillez configurer une URL de Webhook valide (commençant par http) dans les paramètres (Module Paramètres > Envoi Rapports).");
       return;
     }
     
@@ -2251,8 +2252,8 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
         .set({
           margin: 0,
           filename: `Rapport_${data.nom || 'Client'}.pdf`,
-          image: { type: 'jpeg', quality: 1 },
-          html2canvas: { scale: 2, useCORS: true, scrollY: 0, scrollX: 0, windowWidth: 1280, logging: false },
+          image: { type: 'jpeg', quality: 0.75 }, // Qualité réduite pour éviter la limite de taille Make.com
+          html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, scrollX: 0, windowWidth: 1280, logging: false }, // Scale réduit pour PDF plus léger
           pagebreak: { mode: ['css', 'legacy'] },
           jsPDF: { unit: 'in', format: [13.33334, 7.5], orientation: 'landscape' }
         })
@@ -2263,7 +2264,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
       const pureBase64 = pdfDataUri.split(',')[1];
 
       // 4. Envoi réel des données au Webhook Make.com
-      await fetch(appSettings.reportWebhookUrl, { 
+      const response = await fetch(webhookUrl, { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -2275,11 +2276,16 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
         }) 
       });
 
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Make.com a refusé l'envoi (${response.status}): ${errText}`);
+      }
+
       setEmailSuccess(true);
       setTimeout(() => setEmailSuccess(false), 3000);
     } catch (error) {
       console.error("Erreur lors de l'envoi de l'email :", error);
-      alert("Une erreur est survenue lors de l'envoi au Webhook.");
+      alert(`Une erreur est survenue lors de l'envoi : ${error.message || 'Vérifiez le lien du webhook.'}`);
     } finally {
       // 5. Restauration de l'interface
       replacements.forEach(({ textarea, div }) => {
@@ -2691,7 +2697,7 @@ export default function WallSwissApp() {
     const unsubscribeSettings = onSnapshot(settingsRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        setAppSettings(data);
+        setAppSettings(prev => ({ ...prev, ...data }));
         setForm(prev => {
           if (!prev.id) {
             return {
@@ -2866,10 +2872,13 @@ export default function WallSwissApp() {
     setAppSettings(newSettings);
     if (user && db) {
       try {
-        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'default'), newSettings);
+        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'default'), newSettings, { merge: true });
       } catch (e) {
         console.error("Erreur de sauvegarde des paramètres", e);
+        alert("Erreur lors de la sauvegarde : " + e.message);
       }
+    } else {
+      alert("Erreur : Connexion à la base de données introuvable.");
     }
   };
 

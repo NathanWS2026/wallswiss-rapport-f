@@ -9,27 +9,17 @@ let app, auth, db, appId = "wallswiss-app";
 // 👑 EMAIL DE L'ADMINISTRATEUR (Mettez votre propre email ici)
 const ADMIN_EMAIL = "admin@wallswiss.ch";
 
-// ⚠️ INSTRUCTIONS POUR VERCEL / STACKBLITZ : 
-// Ne laissez JAMAIS vos clés en clair dans le code source.
-// Créez un fichier .env à la racine de votre projet avec vos variables 
-// (ex: VITE_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_API_KEY ou REACT_APP_FIREBASE_API_KEY)
-const getEnv = (key) => {
-  try { return import.meta.env[`VITE_FIREBASE_${key}`]; } catch (e) {}
-  try { return process.env[`REACT_APP_FIREBASE_${key}`] || process.env[`NEXT_PUBLIC_FIREBASE_${key}`]; } catch (e) {}
-  return null;
-};
-
+// Configuration Firebase WallSwiss
 const firebaseConfig = {
-  apiKey: getEnv("API_KEY") || "VOTRE_API_KEY",
-  authDomain: getEnv("AUTH_DOMAIN") || "VOTRE_AUTH_DOMAIN",
-  projectId: getEnv("PROJECT_ID") || "VOTRE_PROJECT_ID",
-  storageBucket: getEnv("STORAGE_BUCKET") || "VOTRE_STORAGE_BUCKET",
-  messagingSenderId: getEnv("MESSAGING_SENDER_ID") || "VOTRE_MESSAGING_SENDER_ID",
-  appId: getEnv("APP_ID") || "VOTRE_APP_ID"
+  apiKey: "AIzaSyD6siK4q7ovudou4pmwMxQU0-Mrl7H_foA",
+  authDomain: "appws-3b512.firebaseapp.com",
+  projectId: "appws-3b512",
+  storageBucket: "appws-3b512.firebasestorage.app",
+  messagingSenderId: "1063328233614",
+  appId: "1:1063328233614:web:e15d8f9ba7811462b4f1df"
 };
 
 try {
-  // Détection : Environnement de test actuel vs Hébergement externe
   const isCanvasEnv = typeof __firebase_config !== 'undefined';
   const finalConfig = isCanvasEnv ? JSON.parse(__firebase_config) : firebaseConfig;
   
@@ -2625,19 +2615,27 @@ export default function WallSwissApp() {
     }
   };
 
-  const [appSettings, setAppSettings] = useState({
-    reportWebhookUrl: "",
-    campaignWebhookUrl: "",
-    emailSubject: "Votre Analyse Patrimoniale - WallSwiss",
-    emailBody: "Bonjour {{prenom}} {{nom}},\n\nVeuillez trouver ci-joint votre rapport d'analyse patrimoniale personnalisé suite à notre entretien.\n\nRestant à votre entière disposition pour toute question.\n\nCordialement,\n{{conseiller}}",
-    agentFirstName: "Elisa",
-    agentLastName: "MARQUET",
-    agentTitle: "Planificatrice financière | CGP",
-    agentPhone: "+41 76 762 90 32",
-    agentEmail: "e.marquet@wallswiss.ch",
-    defaultLogo: "",
-    defaultCover: "",
-    defaultPhilosophy: ""
+  const [appSettings, setAppSettings] = useState(() => {
+    const defaults = {
+      reportWebhookUrl: "",
+      campaignWebhookUrl: "",
+      emailSubject: "Votre Analyse Patrimoniale - WallSwiss",
+      emailBody: "Bonjour {{prenom}} {{nom}},\n\nVeuillez trouver ci-joint votre rapport d'analyse patrimoniale personnalisé suite à notre entretien.\n\nRestant à votre entière disposition pour toute question.\n\nCordialement,\n{{conseiller}}",
+      agentFirstName: "Elisa",
+      agentLastName: "MARQUET",
+      agentTitle: "Planificatrice financière | CGP",
+      agentPhone: "+41 76 762 90 32",
+      agentEmail: "e.marquet@wallswiss.ch",
+      defaultLogo: "",
+      defaultCover: "",
+      defaultPhilosophy: ""
+    };
+    try {
+      const local = localStorage.getItem('wallswiss_settings');
+      return local ? { ...defaults, ...JSON.parse(local) } : defaults;
+    } catch(e) {
+      return defaults;
+    }
   });
 
   const [reports, setReports] = useState([]);
@@ -2831,9 +2829,13 @@ export default function WallSwissApp() {
     tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6",
     capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1",
     lppActions: "", lppOblig: "", lppImmo: "",
-    conseiller: "Elisa MARQUET", titreConseiller: "Planificatrice financière | CGP",
-    telephone: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch",
-    customLogo: "", customCoverImage: "", customPhilosophyImage: "",
+    conseiller: `${appSettings.agentFirstName || "Elisa"} ${appSettings.agentLastName || "MARQUET"}`.trim() || "Conseiller", 
+    titreConseiller: appSettings.agentTitle || "Planificatrice financière | CGP",
+    telephone: appSettings.agentPhone || "+41 76 762 90 32", 
+    email: appSettings.agentEmail || "e.marquet@wallswiss.ch",
+    customLogo: appSettings.defaultLogo || "", 
+    customCoverImage: appSettings.defaultCover || "", 
+    customPhilosophyImage: appSettings.defaultPhilosophy || "",
     texts: initialTexts
   });
 
@@ -2854,12 +2856,12 @@ export default function WallSwissApp() {
     
     if (user && db) {
       try {
-        // Sauvegarde dans la collection globale
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reports', newId.toString()), newReport);
       } catch (e) {
         console.error("Erreur de sauvegarde", e);
       }
     } else {
+      alert("⚠️ Attention : Le rapport est créé temporairement mais ne sera pas sauvegardé sur Firebase car vos clés de connexion sont manquantes dans le code.");
       setReports(p => [...p, newReport]);
     }
     
@@ -2870,15 +2872,17 @@ export default function WallSwissApp() {
 
   const updateSettings = async (newSettings) => {
     setAppSettings(newSettings);
-    if (user && db) {
-      try {
-        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'default'), newSettings, { merge: true });
-      } catch (e) {
-        console.error("Erreur de sauvegarde des paramètres", e);
-        alert("Erreur lors de la sauvegarde : " + e.message);
-      }
-    } else {
-      alert("Erreur : Connexion à la base de données introuvable.");
+    
+    if (!db || !user) {
+      alert("🚨 Firebase n'est pas connecté.\n\nPour que la sauvegarde s'effectue sur app.wallswiss.ch, vous devez remplacer les valeurs 'VOTRE_API_KEY' par vos vraies clés Firebase tout en haut du code source.");
+      return;
+    }
+
+    try {
+      await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'default'), newSettings, { merge: true });
+    } catch (e) {
+      console.error("Erreur de sauvegarde des paramètres", e);
+      alert("Erreur lors de la sauvegarde Firebase : " + e.message);
     }
   };
 
@@ -3817,10 +3821,7 @@ export default function WallSwissApp() {
 
                 <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
                   <button 
-                    onClick={() => {
-                      updateSettings(appSettings);
-                      alert("Paramètres sauvegardés avec succès !");
-                    }} 
+                    onClick={() => updateSettings(appSettings)} 
                     style={S.btnP}
                   >
                     Enregistrer les paramètres

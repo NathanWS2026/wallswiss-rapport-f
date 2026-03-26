@@ -2230,14 +2230,14 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
 
       window.scrollTo(0, 0);
 
-      // 3. Génération EXACTEMENT identique au téléchargement
+      // 3. Génération avec la méthode onclone du CRM
       const opt = {
         margin: 0,
         filename: `Rapport_Financier_${data.nom || 'Client'}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 }, 
+        image: { type: 'jpeg', quality: 0.8 }, 
         pagebreak: { mode: ['css', 'legacy'] },
         html2canvas: { 
-          scale: 1.5, 
+          scale: 1.2, 
           useCORS: true, 
           windowWidth: 1280, 
           logging: false,
@@ -2272,7 +2272,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
       });
 
       // On isole proprement la base64 pure
-      const pureBase64 = rawPdfBase64.split(',')[1];
+      const pureBase64 = rawPdfBase64.includes('base64,') ? rawPdfBase64.substring(rawPdfBase64.indexOf('base64,') + 7) : rawPdfBase64;
 
       // 4. Envoi réel des données au Webhook Make.com
       const response = await fetch(webhookUrl, { 

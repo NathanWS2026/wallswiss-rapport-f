@@ -2234,24 +2234,31 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
       replacements.push({ textarea, div });
     });
 
+    // Pause de 500ms indispensable pour que le DOM se mette à jour correctement
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     try {
       const html2pdf = await requireHtml2Pdf();
       
+      // Sécurité anti-page blanche (scroll tout en haut avant capture)
+      window.scrollTo(0, 0);
+      
       // 3. Génération du PDF en base64 en mémoire
-      const pdfDataUri = await html2pdf()
+      const worker = html2pdf()
         .set({
           margin: 0,
           filename: `Rapport_${data.nom || 'Client'}.pdf`,
-          image: { type: 'jpeg', quality: 0.75 }, // Qualité réduite pour éviter la limite de taille Make.com
-          html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, scrollX: 0, windowWidth: 1280, logging: false }, // Scale réduit pour PDF plus léger
+          image: { type: 'jpeg', quality: 0.8 }, 
+          html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, scrollX: 0, windowWidth: 1280, logging: false }, 
           pagebreak: { mode: ['css', 'legacy'] },
           jsPDF: { unit: 'in', format: [13.33334, 7.5], orientation: 'landscape' }
         })
-        .from(element)
-        .outputPdf('datauristring'); // Récupère une string "data:application/pdf;base64,JVBERi0..."
+        .from(element);
 
-      // On enlève l'entête pour ne garder que le code Base64 pur
-      const pureBase64 = pdfDataUri.split(',')[1];
+      const pdfDataUri = await worker.output('datauristring');
+
+      // On isole proprement la base64 pure, peu importe les méta-données
+      const pureBase64 = pdfDataUri.includes('base64,') ? pdfDataUri.split('base64,')[1] : pdfDataUri;
 
       // 4. Envoi réel des données au Webhook Make.com
       const response = await fetch(webhookUrl, { 

@@ -2142,15 +2142,11 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
         html2canvas: {
           scale: 1.5,
           useCORS: true,
+          scrollY: 0,
+          scrollX: 0,
           windowWidth: 1280,
           logging: false,
           onclone: (doc) => {
-            const container = doc.getElementById('report-printable');
-            if (container && container.parentNode) {
-               container.parentNode.style.position = 'relative';
-               container.parentNode.style.top = '0px';
-               container.parentNode.style.left = '0px';
-            }
             doc.querySelectorAll('textarea').forEach((el) => {
               const div = doc.createElement('div');
               div.style.cssText = window.getComputedStyle(el).cssText;
@@ -2234,21 +2230,16 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
       const opt = {
         margin: 0,
         filename: `Rapport_Financier_${data.nom || 'Client'}.pdf`,
-        image: { type: 'jpeg', quality: 0.8 }, 
+        image: { type: 'jpeg', quality: 0.95 }, 
         pagebreak: { mode: ['css', 'legacy'] },
         html2canvas: { 
-          scale: 1.2, 
+          scale: 1.5, 
           useCORS: true, 
+          scrollY: 0, 
+          scrollX: 0, 
           windowWidth: 1280, 
           logging: false,
           onclone: (doc) => {
-            // Remettre l'élément dans le flux normal pour la capture
-            const container = doc.getElementById('report-printable');
-            if (container && container.parentNode) {
-               container.parentNode.style.position = 'relative';
-               container.parentNode.style.top = '0px';
-               container.parentNode.style.left = '0px';
-            }
             // Remplacement des textareas uniquement dans le clone
             doc.querySelectorAll('textarea').forEach((el) => {
               const div = doc.createElement('div');

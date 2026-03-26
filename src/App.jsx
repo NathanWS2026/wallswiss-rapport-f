@@ -2230,14 +2230,14 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
 
       window.scrollTo(0, 0);
 
-      // 3. Génération avec la méthode onclone du CRM
+      // 3. Génération optimisée pour l'email (Évite la coupure par Make.com due au poids)
       const opt = {
         margin: 0,
         filename: `Rapport_Financier_${data.nom || 'Client'}.pdf`,
-        image: { type: 'jpeg', quality: 0.8 }, 
+        image: { type: 'jpeg', quality: 0.6 }, // <-- Modifié : Compression JPEG augmentée
         pagebreak: { mode: ['css', 'legacy'] },
         html2canvas: { 
-          scale: 1.2, 
+          scale: 0.8, // <-- Modifié : Baisse du zoom (divise drastiquement le poids du fichier final)
           useCORS: true, 
           windowWidth: 1280, 
           logging: false,
@@ -2267,12 +2267,23 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
         jsPDF: { unit: 'in', format: [13.33334, 7.5], orientation: 'landscape' }
       };
 
-      const rawPdfBase64 = await new Promise((resolve) => {
-        html2pdf().set(opt).from(element).toPdf().get('pdf').then((pdf) => resolve(pdf.output('datauristring')));
+      // Génération d'un BLOB (Fichier binaire exact) au lieu d'une chaîne de texte
+      // Cela garantit que le fichier est bit-pour-bit identique à celui téléchargé
+      const pdfBlob = await new Promise((resolve) => {
+        html2pdf().set(opt).from(element).toPdf().get('pdf').then((pdf) => resolve(pdf.output('blob')));
       });
 
-      // On isole proprement la base64 pure
-      const pureBase64 = rawPdfBase64.includes('base64,') ? rawPdfBase64.substring(rawPdfBase64.indexOf('base64,') + 7) : rawPdfBase64;
+      // Conversion du fichier binaire en Base64 pure de manière sécurisée
+      const pureBase64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const dataUrl = reader.result;
+          const base64 = dataUrl.includes('base64,') ? dataUrl.substring(dataUrl.indexOf('base64,') + 7) : dataUrl;
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(pdfBlob);
+      });
 
       // 4. Envoi réel des données au Webhook Make.com
       const response = await fetch(webhookUrl, { 

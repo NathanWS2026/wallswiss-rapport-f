@@ -2120,54 +2120,59 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
 
     await Promise.all(imagePromises);
 
-    try {
-      let html2pdf = window.html2pdf;
-      if (!html2pdf) {
-        html2pdf = await new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-            script.onload = () => resolve(window.html2pdf);
-            script.onerror = reject;
-            document.body.appendChild(script);
-        });
-      }
+    setTimeout(async () => {
+      const textareas = element.querySelectorAll('textarea');
+      const replacements = [];
+      textareas.forEach((textarea) => {
+        const div = document.createElement('div');
+        div.style.cssText = window.getComputedStyle(textarea).cssText;
+        div.style.height = 'auto';
+        div.style.whiteSpace = 'pre-wrap';
+        div.style.border = 'none';
+        div.style.background = 'transparent';
+        div.style.resize = 'none';
+        div.style.textAlign = 'justify'; 
+        div.innerText = textarea.value;
+        textarea.parentNode.insertBefore(div, textarea);
+        textarea.style.display = 'none';
+        replacements.push({ textarea, div });
+      });
 
-      window.scrollTo(0, 0);
-      
-      await html2pdf().set({
-        margin: 0,
-        filename: `Rapport_${data.nom || 'Client'}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
-        pagebreak: { mode: ['css', 'legacy'] },
-        html2canvas: {
-          scale: 1.5,
-          useCORS: true,
-          scrollY: 0,
-          scrollX: 0,
-          windowWidth: 1280,
-          logging: false,
-          onclone: (doc) => {
-            doc.querySelectorAll('textarea').forEach((el) => {
-              const div = doc.createElement('div');
-              div.style.cssText = window.getComputedStyle(el).cssText;
-              div.style.height = 'auto';
-              div.style.whiteSpace = 'pre-wrap';
-              div.style.border = 'none';
-              div.style.background = 'transparent';
-              div.style.resize = 'none';
-              div.style.textAlign = 'justify'; 
-              div.innerText = el.value;
-              el.parentNode.replaceChild(div, el);
-            });
-          }
-        },
-        jsPDF: { unit: 'in', format: [13.33334, 7.5], orientation: 'landscape' }
-      }).from(element).save();
-    } catch(e) {
-      console.error("Erreur PDF:", e);
-    } finally {
-      setIsPdfLoading(false);
-    }
+      try {
+        const html2pdf = await requireHtml2Pdf();
+        
+        window.scrollTo(0, 0);
+        
+        await html2pdf()
+          .set({
+            margin: 0,
+            filename: `Rapport_${data.nom || 'Client'}.pdf`,
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              scrollY: 0,
+              scrollX: 0,
+              x: 0, 
+              y: 0, 
+              windowWidth: 1280,
+              logging: false
+            },
+            pagebreak: { mode: ['css', 'legacy'] },
+            jsPDF: { unit: 'in', format: [13.33334, 7.5], orientation: 'landscape' }
+          })
+          .from(element)
+          .save();
+      } catch(e) {
+        console.error("Erreur PDF:", e);
+      } finally {
+        replacements.forEach(({ textarea, div }) => {
+          textarea.style.display = '';
+          div.remove();
+        });
+        setIsPdfLoading(false);
+      }
+    }, 500); 
   };
 
   const openEmailModal = () => {
@@ -2233,7 +2238,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
         image: { type: 'jpeg', quality: 0.95 }, 
         pagebreak: { mode: ['css', 'legacy'] },
         html2canvas: { 
-          scale: 1.5, 
+          scale: 2, 
           useCORS: true, 
           scrollY: 0, 
           scrollX: 0, 
@@ -2400,7 +2405,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
         ))}
       </div>
 
-      <div style={{ position: "absolute", top: "-15000px", left: "-15000px", zIndex: -1000, pointerEvents: "none" }}>
+      <div style={{ position: "fixed", top: 0, left: 0, zIndex: -1000, opacity: 0.001, pointerEvents: "none" }}>
         <div id="report-printable" style={{ width: "1280px", height: `${slides.length * 720}px`, display: "block", background: C.white, overflow: "hidden" }}>
           {slides.map((SlideComponent, index) => (
             <div key={index} className="pdf-slide" style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF", margin: 0, padding: 0, boxSizing: "border-box" }}>

@@ -2243,22 +2243,22 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
       // Sécurité anti-page blanche (scroll tout en haut avant capture)
       window.scrollTo(0, 0);
       
-      // 3. Génération du PDF en base64 en mémoire
-      const worker = html2pdf()
-        .set({
-          margin: 0,
-          filename: `Rapport_${data.nom || 'Client'}.pdf`,
-          image: { type: 'jpeg', quality: 0.8 }, 
-          html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, scrollX: 0, windowWidth: 1280, logging: false }, 
-          pagebreak: { mode: ['css', 'legacy'] },
-          jsPDF: { unit: 'in', format: [13.33334, 7.5], orientation: 'landscape' }
-        })
-        .from(element);
+      // 3. Génération du PDF en base64 en mémoire avec la méthode fiable
+      const opt = {
+        margin: 0,
+        filename: `Rapport_${data.nom || 'Client'}.pdf`,
+        image: { type: 'jpeg', quality: 0.8 }, 
+        html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, scrollX: 0, windowWidth: 1280, logging: false }, 
+        pagebreak: { mode: ['css', 'legacy'] },
+        jsPDF: { unit: 'in', format: [13.33334, 7.5], orientation: 'landscape' }
+      };
 
-      const pdfDataUri = await worker.output('datauristring');
+      const rawPdfBase64 = await new Promise((resolve) => {
+        html2pdf().set(opt).from(element).toPdf().get('pdf').then((pdf) => resolve(pdf.output('datauristring')));
+      });
 
-      // On isole proprement la base64 pure, peu importe les méta-données
-      const pureBase64 = pdfDataUri.includes('base64,') ? pdfDataUri.split('base64,')[1] : pdfDataUri;
+      // On isole proprement la base64 pure
+      const pureBase64 = rawPdfBase64.includes('base64,') ? rawPdfBase64.substring(rawPdfBase64.indexOf('base64,') + 7) : rawPdfBase64;
 
       // 4. Envoi réel des données au Webhook Make.com
       const response = await fetch(webhookUrl, { 

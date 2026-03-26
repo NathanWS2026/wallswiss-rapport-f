@@ -2216,40 +2216,50 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
     });
     await Promise.all(imagePromises);
 
-    // 2. Transformer les textareas en div le temps de la capture
-    const textareas = element.querySelectorAll('textarea');
-    const replacements = [];
-    textareas.forEach((textarea) => {
-      const div = document.createElement('div');
-      div.style.cssText = window.getComputedStyle(textarea).cssText;
-      div.style.height = 'auto';
-      div.style.whiteSpace = 'pre-wrap';
-      div.style.border = 'none';
-      div.style.background = 'transparent';
-      div.style.resize = 'none';
-      div.style.textAlign = 'justify'; 
-      div.innerText = textarea.value;
-      textarea.parentNode.insertBefore(div, textarea);
-      textarea.style.display = 'none';
-      replacements.push({ textarea, div });
-    });
-
-    // Pause de 500ms indispensable pour que le DOM se mette à jour correctement
-    await new Promise(resolve => setTimeout(resolve, 500));
-
     try {
-      const html2pdf = await requireHtml2Pdf();
-      
-      // Sécurité anti-page blanche (scroll tout en haut avant capture)
+      // Injection robuste de html2pdf (comme dans le CRM)
+      let html2pdf = window.html2pdf;
+      if (!html2pdf) {
+        html2pdf = await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            script.onload = () => resolve(window.html2pdf);
+            script.onerror = reject;
+            document.body.appendChild(script);
+        });
+      }
+
       window.scrollTo(0, 0);
-      
-      // 3. Génération du PDF en base64 en mémoire avec la méthode fiable
+
+      // 3. Génération avec la méthode onclone du CRM
       const opt = {
         margin: 0,
-        filename: `Rapport_${data.nom || 'Client'}.pdf`,
-        image: { type: 'jpeg', quality: 0.8 }, 
-        html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, scrollX: 0, windowWidth: 1280, logging: false }, 
+        filename: `Rapport_Financier_${data.nom || 'Client'}.pdf`,
+        image: { type: 'jpeg', quality: 0.95 }, 
         pagebreak: { mode: ['css', 'legacy'] },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true, 
+          scrollY: 0, 
+          scrollX: 0, 
+          windowWidth: 1280, 
+          logging: false,
+          onclone: (doc) => {
+            // Remplacement des textareas uniquement dans le clone
+            doc.querySelectorAll('textarea').forEach((el) => {
+              const div = doc.createElement('div');
+              div.style.cssText = window.getComputedStyle(el).cssText;
+              div.style.height = 'auto';
+              div.style.whiteSpace = 'pre-wrap';
+              div.style.border = 'none';
+              div.style.background = 'transparent';
+              div.style.resize = 'none';
+              div.style.textAlign = 'justify';
+              div.innerText = el.value;
+              el.parentNode.replaceChild(div, el);
+            });
+          }
+        }, 
         jsPDF: { unit: 'in', format: [13.33334, 7.5], orientation: 'landscape' }
       };
 
@@ -2284,11 +2294,6 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
       console.error("Erreur lors de l'envoi de l'email :", error);
       alert(`Une erreur est survenue lors de l'envoi : ${error.message || 'Vérifiez le lien du webhook.'}`);
     } finally {
-      // 5. Restauration de l'interface
-      replacements.forEach(({ textarea, div }) => {
-        textarea.style.display = '';
-        div.remove();
-      });
       setIsEmailing(false);
     }
   };

@@ -1136,6 +1136,157 @@ function SlideContact({ data, editMode, onTextChange }) {
 
 // ────────────────────── SLIDES PRÉVOYANCE 3A/3B ──────────────────────
 
+function SlidePrevoyanceIntro({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Le système des" highlight="3 piliers suisses" subtitle="PRÉVOYANCE" />
+        <div style={{ flex: 1, display: "flex", gap: 32, alignItems: "center" }}>
+          <div style={{ flex: 1, background: C.white, borderTop: `4px solid ${C.darkGray}`, padding: 24, boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: C.darkGray, marginBottom: 12 }}>1er Pilier (AVS/AI)</div>
+            <EditableText editMode={editMode} value={data.texts?.prevIntroP1} onChange={v => onTextChange("prevIntroP1", v)} style={{ fontSize: 13, color: C.gray, lineHeight: 1.6 }} />
+          </div>
+          <div style={{ flex: 1, background: C.white, borderTop: `4px solid ${C.primary}`, padding: 24, boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: C.primary, marginBottom: 12 }}>2ème Pilier (LPP)</div>
+            <EditableText editMode={editMode} value={data.texts?.prevIntroP2} onChange={v => onTextChange("prevIntroP2", v)} style={{ fontSize: 13, color: C.gray, lineHeight: 1.6 }} />
+          </div>
+          <div style={{ flex: 1, background: C.white, borderTop: `4px solid ${C.gold}`, padding: 24, boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: C.gold, marginBottom: 12 }}>3ème Pilier (3A/3B)</div>
+            <EditableText editMode={editMode} value={data.texts?.prevIntroP3} onChange={v => onTextChange("prevIntroP3", v)} style={{ fontSize: 13, color: C.gray, lineHeight: 1.6 }} />
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceAvantages({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Avantages de la" highlight="Prévoyance 3A/3B" subtitle="LEVIERS DE CRÉATION DE RICHESSE" />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px 48px", flex: 1, alignContent: "center" }}>
+          {[
+            { title: "Optimisation Fiscale Immédiate", desc: "Déduction des versements de votre revenu imposable (Pilier 3A) et exonération d'impôt sur la fortune et le rendement pendant toute la durée du contrat." },
+            { title: "Croissance du Capital", desc: "Rendement supérieur à l'épargne bancaire grâce à l'investissement sur les marchés financiers via des fonds de placement de premier plan." },
+            { title: "Couverture Risques (Assurance)", desc: "Protection financière de votre famille en cas de décès et libération du paiement des primes en cas d'incapacité de gain." },
+            { title: "Souplesse et Flexibilité", desc: "Possibilité d'adapter les versements selon l'évolution de vos revenus et d'utiliser le capital pour l'achat de votre résidence principale." },
+          ].map((a, i) => (
+            <div key={i} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+              <div style={{ color: C.gold, fontSize: 24, marginTop: -4 }}>•</div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.primaryDark, marginBottom: 4 }}>{a.title}</div>
+                <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.6, textAlign: "justify" }}>{a.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceSolution({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
+        <div>
+          <ReportTitle title="Solution — Prévoyance" highlight="& Assurance Vie" subtitle="STRATÉGIE" />
+          <EditableText editMode={editMode} value={data.texts?.prevoyanceSol1} onChange={v => onTextChange("prevoyanceSol1", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }} />
+          <EditableText editMode={editMode} value={data.texts?.prevoyanceSol2} onChange={v => onTextChange("prevoyanceSol2", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }} />
+          <EditableText editMode={editMode} value={data.texts?.prevoyanceSol3} onChange={v => onTextChange("prevoyanceSol3", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: 0, textAlign: "justify" }} />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 24, boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+            <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>Compagnie Partenaire</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: C.primaryDark }}>{data.compagniePrevoyance || "Liechtenstein Life"}</div>
+          </div>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 24, boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+            <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>Votre Mensualité</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: C.primaryDark }}>CHF {fmt(data.capaciteEpargne || 500)}.-</div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceCouvertures({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Couvertures de risque et" highlight="garanties" subtitle="PROTECTION" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 32, alignItems: "center" }}>
+          <div style={{ background: "rgba(105,33,2,0.05)", padding: 32, borderTop: `4px solid ${C.primary}`, height: "260px", display: "flex", flexDirection: "column" }}>
+            <div style={{ color: C.primary, marginBottom: 16 }}><Icons.Shield size={32} /></div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: C.primaryDark, marginBottom: 12 }}>Libération des primes</div>
+            <EditableText editMode={editMode} value={data.texts?.prevCouvP1} onChange={v => onTextChange("prevCouvP1", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, flex: 1 }} />
+          </div>
+          <div style={{ background: "rgba(165,149,104,0.1)", padding: 32, borderTop: `4px solid ${C.gold}`, height: "260px", display: "flex", flexDirection: "column" }}>
+            <div style={{ color: C.gold, marginBottom: 16 }}><Icons.User size={32} /></div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: C.primaryDark, marginBottom: 12 }}>Capital Décès</div>
+            <EditableText editMode={editMode} value={data.texts?.prevCouvP2} onChange={v => onTextChange("prevCouvP2", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, flex: 1 }} />
+          </div>
+          <div style={{ background: C.lightGray, padding: 32, borderTop: `4px solid ${C.gray}`, height: "260px", display: "flex", flexDirection: "column" }}>
+            <div style={{ color: C.gray, marginBottom: 16 }}><Icons.TrendUp size={32} /></div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: C.primaryDark, marginBottom: 12 }}>Rente Invalidité (Option)</div>
+            <EditableText editMode={editMode} value={data.texts?.prevCouvP3} onChange={v => onTextChange("prevCouvP3", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, flex: 1 }} />
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceFonds({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Stratégie :" highlight="Fonds de placement" subtitle="CROISSANCE DU CAPITAL" />
+        <div style={{ flex: 1, display: "flex", gap: 64, alignItems: "center" }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 16, color: C.primaryDark, fontWeight: 600, marginBottom: 16, lineHeight: 1.6 }}>
+              {data.texts?.prevFondsIntro} <strong style={{ color: C.gold }}>{data.compagniePrevoyance || "Liechtenstein Life"}</strong>.
+            </div>
+            <EditableText editMode={editMode} value={data.texts?.strategieFonds} onChange={v => onTextChange("strategieFonds", v)} style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.8, padding: 24, background: C.lightGray, borderLeft: `4px solid ${C.primary}` }} />
+          </div>
+          <div style={{ width: 380 }}>
+            <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}>
+              <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 700, marginBottom: 16 }}>Répartition Cible</div>
+              {["Liquidités : 0 - 10%", "Obligations : 10 - 40%", "Actions : 50 - 90%", "Immobilier : 0 - 10%"].map((item, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: i===2 ? C.primary : C.gold }} />
+                  <span style={{ fontSize: 14, color: C.darkGray, fontWeight: i===2 ? 700 : 500 }}>{item}</span>
+                </div>
+              ))}
+              <div style={{ marginTop: 24, paddingTop: 16, borderTop: `1px solid ${C.lightGray}`, fontSize: 12, color: C.gray, fontStyle: "italic" }}>
+                *La pondération exacte dépend du profil de risque choisi : <strong>{data.profilRisque || "Équilibré"}</strong>.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
 function SlideTOCPrevoyance({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   const items = [

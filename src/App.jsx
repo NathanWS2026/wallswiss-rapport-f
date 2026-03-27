@@ -149,10 +149,10 @@ function computeProjectionsLPP(data) {
   }));
 }
 
-function computeProjectionsAV(data) {
-  const initial = Number(data.montantInvestissement || 100000);
-  const monthly = Number(data.capaciteEpargne || 500);
-  const duration = Math.min(15, Math.max(1, Number(data.dureeProjectionAv || 15)));
+function computeProjectionsAV(data, index = 1) {
+  const initial = Number(index === 2 ? (data.montantInvestissement2 || 200000) : (data.montantInvestissement || 100000));
+  const monthly = Number(index === 2 ? (data.capaciteEpargne2 || 1000) : (data.capaciteEpargne || 500));
+  const duration = Math.min(30, Math.max(1, Number(data.dureeProjectionAv || 15))); // Permet d'aller jusqu'à 30 ans
   const fee = Number(data.fraisSouscription || 0) / 100;
   
   // Prise en compte financière stricte (frais d'entrée prélevés sur chaque versement)
@@ -164,7 +164,22 @@ function computeProjectionsAV(data) {
   const r3 = Number(data.tauxOptimiste || 9) / 100;
 
   const rows = [];
-  for (let y = 1; y <= duration; y++) {
+  
+  // Limite à 10 lignes maximum pour que le tableau reste lisible sur la slide
+  let yearsToShow = [];
+  if (duration <= 10) {
+    for(let i = 1; i <= duration; i++) yearsToShow.push(i);
+  } else {
+    yearsToShow.push(1);
+    const step = (duration - 1) / 9;
+    for(let i = 1; i < 9; i++) {
+       yearsToShow.push(Math.round(1 + step * i));
+    }
+    yearsToShow.push(duration);
+    yearsToShow = [...new Set(yearsToShow)].sort((a,b) => a - b);
+  }
+
+  for (let y of yearsToShow) {
     const months = y * 12;
     const versements = initial + (monthly * months);
     
@@ -2239,8 +2254,13 @@ function SlideTOCAssuranceVie({ data }) {
     { title: "La fiscalité de l'assurance-vie", page: 8 },
     { title: "Gestion de votre portefeuille", page: 9 },
     { title: "Projections financières", page: 10 },
-    { title: "Synthèse & Contact", page: 11 },
   ];
+  
+  let nextPage = 11;
+  if (data.hasProjectionsMultiples) {
+    items.push({ title: "Projections financières (Scénario 2)", page: nextPage++ });
+  }
+  items.push({ title: "Synthèse & Contact", page: nextPage });
 
   return (
     <div style={slideBase}>
@@ -2589,9 +2609,13 @@ function SlideAvGestion({ data }) {
   );
 }
 
-function SlideAvProjections({ data }) {
+function SlideAvProjections({ data, index = 1 }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
-  const rows = computeProjectionsAV(data);
+  const rows = computeProjectionsAV(data, index);
+  
+  const initial = index === 2 ? (data.montantInvestissement2 || 200000) : (data.montantInvestissement || 100000);
+  const monthly = index === 2 ? (data.capaciteEpargne2 || 1000) : (data.capaciteEpargne || 500);
+  const subtitle = index === 2 ? "ESTIMATION DE LA VALEUR DE VOTRE CONTRAT (SCÉNARIO 2)" : "ESTIMATION DE LA VALEUR DE VOTRE CONTRAT";
   
   const r1 = data.tauxPessimiste || 3;
   const r2 = data.tauxRealiste || 6;
@@ -2617,13 +2641,13 @@ function SlideAvProjections({ data }) {
       {accentBar()}
       {logoCorner()}
       <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
-        <ReportTitle title="Projections" highlight="financières" subtitle="ESTIMATION DE LA VALEUR DE VOTRE CONTRAT" />
+        <ReportTitle title="Projections" highlight="financières" subtitle={subtitle} />
         
         <div style={{ flex: 1, display: "grid", gridTemplateColumns: "360px 1fr", gap: 40, alignItems: "center" }}>
           
           <div style={{ display: "flex", flexDirection: "column" }}>
             <p style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, marginBottom: 20, textAlign: "justify" }}>
-              Cette projection personnalisée simule l'évolution de votre épargne sur <strong>{rows.length} ans</strong>, en tenant compte d'un versement initial de <strong>{fmt(data.montantInvestissement || 100000)} €</strong> et d'une mensualité de <strong>{fmt(data.capaciteEpargne || 500)} €</strong> (déduction faite des {data.fraisSouscription || 0}% de frais sur versement).
+              Cette projection personnalisée simule l'évolution de votre épargne sur <strong>{data.dureeProjectionAv || 15} ans</strong>, en tenant compte d'un versement initial de <strong>{fmt(initial)} €</strong> et d'une mensualité de <strong>{fmt(monthly)} €</strong> (déduction faite des {data.fraisSouscription || 0}% de frais sur versement).
             </p>
 
             <div style={{ width: svgW, height: svgH, background: C.white, border: `1px solid ${C.lightGray}`, marginBottom: 16 }}>
@@ -2993,9 +3017,14 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
     <SlidePERFonctionnement data={data} />,
     <SlideAvFiscalite data={data} />,
     <SlideAvGestion data={data} />,
-    <SlideAvProjections data={data} />,
-    <SlideContact data={data} editMode={editMode} onTextChange={handleTextChange} />
+    <SlideAvProjections data={data} index={1} />
   ];
+
+  if (data.hasProjectionsMultiples) {
+    slidesAssuranceVie.push(<SlideAvProjections data={data} index={2} />);
+  }
+  
+  slidesAssuranceVie.push(<SlideContact data={data} editMode={editMode} onTextChange={handleTextChange} />);
 
   const slides = data.templateId === "lpp" ? slidesLPP : data.templateId === "prevoyance" ? slidesPrevoyance : data.templateId === "assurance-vie" ? slidesAssuranceVie : slidesSwissquote;
 
@@ -3472,6 +3501,7 @@ export default function WallSwissApp() {
     objectifs: [], objectifCustom: "",
     assetManager: "NS Partners",
     montantInvestissement: "100000", fraisSouscription: "3",
+    hasProjectionsMultiples: false, montantInvestissement2: "200000", capaciteEpargne2: "1000",
     tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9",
     compagniePrevoyance: "Liechtenstein Life", optiFiscale: true,
     tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6",
@@ -3535,7 +3565,7 @@ export default function WallSwissApp() {
     }
   };
 
-  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", dureeProjectionAv: "15", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", lppActions: "", lppOblig: "", lppImmo: "", conseiller: `${appSettings.agentFirstName || "Elisa"} ${appSettings.agentLastName || "MARQUET"}`.trim() || "Conseiller", titreConseiller: appSettings.agentTitle || "Planificatrice financière | CGP", telephone: appSettings.agentPhone || "+41 76 762 90 32", email: appSettings.agentEmail || "e.marquet@wallswiss.ch", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
+  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", hasProjectionsMultiples: false, montantInvestissement2: "200000", capaciteEpargne2: "1000", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", dureeProjectionAv: "15", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", lppActions: "", lppOblig: "", lppImmo: "", conseiller: `${appSettings.agentFirstName || "Elisa"} ${appSettings.agentLastName || "MARQUET"}`.trim() || "Conseiller", titreConseiller: appSettings.agentTitle || "Planificatrice financière | CGP", telephone: appSettings.agentPhone || "+41 76 762 90 32", email: appSettings.agentEmail || "e.marquet@wallswiss.ch", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
 
   const handlePreviewUpdate = async (newData) => {
     setPreview(newData);
@@ -3741,7 +3771,20 @@ export default function WallSwissApp() {
               <>
                 <div style={S.fg}><label style={S.label}>Versement initial (€)</label><input style={S.input} type="number" value={form.montantInvestissement} onChange={e=>u("montantInvestissement",e.target.value)}/></div>
                 <div style={S.fg}><label style={S.label}>Mensualité (€)</label><input style={S.input} type="number" value={form.capaciteEpargne} onChange={e=>u("capaciteEpargne",e.target.value)}/></div>
-                <div style={S.fg}><label style={S.label}>Durée de projection (années, max 15)</label><input style={S.input} type="number" max="15" value={form.dureeProjectionAv} onChange={e=>u("dureeProjectionAv",e.target.value)}/></div>
+                <div style={S.fg}><label style={S.label}>Durée de projection (années)</label><input style={S.input} type="number" max="30" value={form.dureeProjectionAv} onChange={e=>u("dureeProjectionAv",e.target.value)}/></div>
+                
+                <div style={S.fg}>
+                  <label style={{...S.label, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: 8, color: C.primary}}>
+                    <input type="checkbox" checked={form.hasProjectionsMultiples} onChange={e=>u("hasProjectionsMultiples",e.target.checked)} style={{width: 16, height: 16}} /> 
+                    Ajouter une 2ème simulation (Scénario 2)
+                  </label>
+                </div>
+                {form.hasProjectionsMultiples && (
+                  <div style={{ background: "rgba(105,33,2,0.04)", padding: 16, marginBottom: 16, borderLeft: `3px solid ${C.primary}` }}>
+                    <div style={S.fg}><label style={S.label}>Versement initial 2 (€)</label><input style={S.input} type="number" value={form.montantInvestissement2} onChange={e=>u("montantInvestissement2",e.target.value)}/></div>
+                    <div style={{...S.fg, margin: 0}}><label style={S.label}>Mensualité 2 (€)</label><input style={S.input} type="number" value={form.capaciteEpargne2} onChange={e=>u("capaciteEpargne2",e.target.value)}/></div>
+                  </div>
+                )}
                 
                 <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
                 

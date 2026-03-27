@@ -149,6 +149,48 @@ function computeProjectionsLPP(data) {
   }));
 }
 
+function computeProjectionsAV(data) {
+  const initial = Number(data.montantInvestissement || 100000);
+  const monthly = Number(data.capaciteEpargne || 500);
+  const duration = Math.min(15, Math.max(1, Number(data.dureeProjectionAv || 15)));
+  const fee = Number(data.fraisSouscription || 0) / 100;
+  
+  // Prise en compte financière stricte (frais d'entrée prélevés sur chaque versement)
+  const netInitial = initial - (initial * fee);
+  const netMonthly = monthly - (monthly * fee);
+  
+  const r1 = Number(data.tauxPessimiste || 3) / 100;
+  const r2 = Number(data.tauxRealiste || 6) / 100;
+  const r3 = Number(data.tauxOptimiste || 9) / 100;
+
+  const rows = [];
+  for (let y = 1; y <= duration; y++) {
+    const months = y * 12;
+    const versements = initial + (monthly * months);
+    
+    const calc = (rate) => {
+      if (rate === 0) return versements; // Si taux nul, on simule sans intérêt
+      const rM = rate / 12;
+      const fvInitial = netInitial * Math.pow(1 + rM, months);
+      const fvMonthly = netMonthly * ((Math.pow(1 + rM, months) - 1) / rM);
+      return fvInitial + fvMonthly;
+    };
+
+    const val1 = Math.round(calc(r1));
+    const val2 = Math.round(calc(r2));
+    const val3 = Math.round(calc(r3));
+
+    rows.push({
+      year: y,
+      versements,
+      val1, pv1: val1 - versements,
+      val2, pv2: val2 - versements,
+      val3, pv3: val3 - versements
+    });
+  }
+  return rows;
+}
+
 function fmt(n) { return Number(n).toLocaleString("fr-CH"); }
 
 const getBase64Image = async (url) => {
@@ -1108,6 +1150,8 @@ function SlideTOCPrevoyance({ data }) {
   ];
   
   let nextPage = 12;
+  items.push({ title: "Comparatif banque commerciale & Assurance", page: nextPage++ });
+
   if (data.profilRisque === "Dynamique") {
       items.push({ title: "Détail Stratégie Dynamique & Performances", page: nextPage++ });
   }
@@ -1144,157 +1188,114 @@ function SlideTOCPrevoyance({ data }) {
   );
 }
 
-function SlidePrevoyanceIntro({ data, editMode, onTextChange }) {
+function SlidePrevoyanceComparatif({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
-  return (
-    <div style={slideBase}>
-      {logoCorner()}
-      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
-        <ReportTitle title="Le système des 3 piliers" highlight="en Suisse" subtitle="FONDATIONS DE VOTRE AVENIR" />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 32, flex: 1, alignItems: "center" }}>
-          <div style={{ background: C.lightGray, padding: 32, borderTop: `4px solid ${C.darkGray}`, height: "100%", borderRadius: "0px", display: "flex", flexDirection: "column" }}>
-            <div style={{ fontSize: 48, fontWeight: 900, color: C.darkGray, opacity: 0.2, marginBottom: -20 }}>1</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: C.primary, marginBottom: 16 }}>Prévoyance Étatique</div>
-            <div style={{ fontWeight: 700, color: C.darkGray, fontSize: 13, marginBottom: 8 }}>AVS / AI / APG</div>
-            <EditableText editMode={editMode} value={data.texts?.prevIntroP1} onChange={v => onTextChange("prevIntroP1", v)} style={{ fontSize: 12, color: C.gray, lineHeight: 1.6, textAlign: "justify", margin: 0 }} />
-          </div>
-          <div style={{ background: C.lightGray, padding: 32, borderTop: `4px solid ${C.gold}`, height: "100%", borderRadius: "0px", display: "flex", flexDirection: "column" }}>
-            <div style={{ fontSize: 48, fontWeight: 900, color: C.gold, opacity: 0.2, marginBottom: -20 }}>2</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: C.primary, marginBottom: 16 }}>Prévoyance Professionnelle</div>
-            <div style={{ fontWeight: 700, color: C.darkGray, fontSize: 13, marginBottom: 8 }}>LPP / LAA</div>
-            <EditableText editMode={editMode} value={data.texts?.prevIntroP2} onChange={v => onTextChange("prevIntroP2", v)} style={{ fontSize: 12, color: C.gray, lineHeight: 1.6, textAlign: "justify", margin: 0 }} />
-          </div>
-          <div style={{ background: "rgba(105,33,2,0.04)", padding: 32, borderTop: `4px solid ${C.primary}`, height: "100%", borderRadius: "0px", display: "flex", flexDirection: "column", boxShadow: "0 10px 30px rgba(105,33,2,0.1)" }}>
-            <div style={{ fontSize: 48, fontWeight: 900, color: C.primary, opacity: 0.2, marginBottom: -20 }}>3</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: C.primary, marginBottom: 16 }}>Prévoyance Privée</div>
-            <div style={{ fontWeight: 700, color: C.darkGray, fontSize: 13, marginBottom: 8 }}>Pilier 3A (lié) & 3B (libre)</div>
-            <EditableText editMode={editMode} value={data.texts?.prevIntroP3} onChange={v => onTextChange("prevIntroP3", v)} style={{ fontSize: 12, color: C.primaryDark, lineHeight: 1.6, textAlign: "justify", fontWeight: 500, margin: 0 }} />
-          </div>
-        </div>
-      </div>
-      {footer(fullName)}
-    </div>
-  );
-}
+  
+  const rP_bank = 0.001; // 0.10%
+  const rR_bank = 0.005; // 0.50%
+  const rO_bank = 0.01;  // 1%
+  
+  const rP_ass = Number(data.tauxPessimistePrev || 2) / 100;
+  const rR_ass = Number(data.tauxRealistePrev || 4) / 100;
+  const rO_ass = Number(data.tauxOptimistePrev || 6) / 100;
 
-function SlidePrevoyanceAvantages({ data }) {
-  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
-  return (
-    <div style={slideBase}>
-      {logoCorner()}
-      <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
-        <ReportTitle title="Avantages de la Prévoyance" highlight="3A et 3B" subtitle="VOS BÉNÉFICES DIRECTS" />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px 48px", flex: 1, alignContent: "center" }}>
-          {[
-            { title: "Économies d'impôts massives (3A)", desc: "Les versements au pilier 3A sont entièrement déductibles du revenu imposable, permettant d'économiser un mois de salaire en impôts sur quelques années." },
-            { title: "Sécurité et Protection de la famille", desc: "En cas de décès ou d'invalidité, le capital ou une rente est garanti pour protéger vos proches et maintenir leur niveau de vie." },
-            { title: "Rendement supérieur", desc: "Contrairement à un compte épargne classique, la prévoyance investie dans des fonds permet de lutter contre l'inflation et de capitaliser." },
-            { title: "Flexibilité du 3B", desc: "Le pilier 3B offre une épargne totally libre, sans plafond de versement, disponible pour financer un projet (immobilier, études, etc.)." },
-            { title: "Financement immobilier", desc: "Les avoirs du pilier 3A ou 3B peuvent être mis en nantissement ou retirés pour financer l'achat de votre résidence principale." },
-            { title: "Exonération fiscale (3B)", desc: "Les plus-values générées dans le cadre d'une assurance-vie 3B (sous conditions) sont souvent exonérées d'impôts sur le revenu." },
-          ].map((a, i) => (
-            <div key={i} style={{ display: "flex", gap: 16, alignItems: "flex-start", background: C.white, padding: "16px 20px", border: `1px solid ${C.lightGray}`, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
-              <div style={{ background: "rgba(165,149,104,0.15)", color: C.gold, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, flexShrink: 0 }}>✓</div>
-              <div>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: C.primary, marginBottom: 4 }}>{a.title}</div>
-                <div style={{ fontSize: 11.5, color: C.gray, lineHeight: 1.5, textAlign: "justify" }}>{a.desc}</div>
-              </div>
-            </div>
+  const fixedYears = [0, 5, 10, 15]; // Simulation standard sur 15 ans
+  const baseCapital = 100000;
+  
+  const calcLumpSum = (rate, y) => baseCapital * Math.pow(1 + rate, y);
+
+  const bankData = fixedYears.map(y => ({
+    year: y,
+    pessimiste: calcLumpSum(rP_bank, y),
+    realiste: calcLumpSum(rR_bank, y),
+    optimiste: calcLumpSum(rO_bank, y)
+  }));
+  
+  const assData = fixedYears.map(y => ({
+    year: y,
+    pessimiste: calcLumpSum(rP_ass, y),
+    realiste: calcLumpSum(rR_ass, y),
+    optimiste: calcLumpSum(rO_ass, y)
+  }));
+
+  const colors = ["#9CA3AF", C.gold, C.primaryDark];
+  const formatPct = (val) => (val * 100).toFixed(1).replace('.0', '') + "%";
+
+  const renderChart = (title, dataArr, labels, isBank) => {
+    const svgW = 440; const svgH = 260;
+    const padL = 60; const padR = 20; const padT = 20; const padB = 30;
+    const w = svgW - padL - padR; const h = svgH - padT - padB;
+    
+    let gridSteps = [];
+    let gridMax = 100000;
+    
+    if (isBank) {
+      gridMax = 140000;
+      for(let i=0; i<=140000; i+=20000) gridSteps.push(i);
+    } else {
+      const maxObj = dataArr[dataArr.length-1].optimiste;
+      gridMax = Math.ceil(maxObj / 100000) * 100000 || 500000;
+      if (gridMax < 500000) gridMax = 500000;
+      const step = gridMax / 5;
+      for(let i=0; i<=gridMax; i+=step) gridSteps.push(i);
+    }
+    
+    const getX = (i) => padL + (i / (dataArr.length - 1)) * w;
+    const getY = (val) => padT + h - (val / gridMax) * h;
+
+    const dP = dataArr.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.pessimiste)}`).join(' ');
+    const dR = dataArr.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.realiste)}`).join(' ');
+    const dO = dataArr.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.optimiste)}`).join(' ');
+
+    return (
+      <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
+        <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 20, fontWeight: 700, color: C.primaryDark, marginBottom: 16, textAlign: "center", textTransform: "uppercase" }}>{title}</div>
+        <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 20, fontSize: 12, fontWeight: 500 }}>
+           <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: colors[0] }} /> Pessimiste {labels[0]}</div>
+           <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: colors[1] }} /> Réaliste {labels[1]}</div>
+           <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: colors[2] }} /> Optimiste {labels[2]}</div>
+        </div>
+        <svg width="100%" viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
+          {gridSteps.map(val => {
+            const y = getY(val);
+            return (
+              <g key={val}>
+                <line x1={padL} y1={y} x2={svgW - padR} y2={y} stroke="#E5E7EB" strokeWidth="1" />
+                <text x={padL - 10} y={y + 4} fontSize="11" fill="#374151" textAnchor="end">{val}</text>
+              </g>
+            );
+          })}
+          <line x1={padL} y1={getY(0)} x2={svgW - padR} y2={getY(0)} stroke="#E5E7EB" strokeWidth="1" />
+          {dataArr.map((r, i) => (
+            <text key={i} x={getX(i)} y={svgH - 5} fontSize="12" fill="#374151" textAnchor="middle">N+{r.year}</text>
           ))}
-        </div>
+          <path d={dP} fill="none" stroke={colors[0]} strokeWidth="3" />
+          <path d={dR} fill="none" stroke={colors[1]} strokeWidth="3" />
+          <path d={dO} fill="none" stroke={colors[2]} strokeWidth="3" />
+          {dataArr.map((r, i) => (
+            <g key={i}>
+              <circle cx={getX(i)} cy={getY(r.pessimiste)} r="4" fill={colors[0]} />
+              <circle cx={getX(i)} cy={getY(r.realiste)} r="4" fill={colors[1]} />
+              <circle cx={getX(i)} cy={getY(r.optimiste)} r="4" fill={colors[2]} />
+            </g>
+          ))}
+        </svg>
       </div>
-      {footer(fullName)}
-    </div>
-  );
-}
+    );
+  };
 
-function SlidePrevoyanceSolution({ data, editMode, onTextChange }) {
-  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
-  return (
-    <div style={slideBase}>
-      {accentBar()}
-      {logoCorner()}
-      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
-        <div>
-          <ReportTitle title="La solution" highlight="Prévoyance" subtitle="STRATÉGIE RECOMMANDÉE" />
-          <EditableText editMode={editMode} value={data.texts?.prevoyanceSol1} onChange={v => onTextChange("prevoyanceSol1", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px" }} />
-          <EditableText editMode={editMode} value={data.texts?.prevoyanceSol2} onChange={v => onTextChange("prevoyanceSol2", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px" }} />
-          <EditableText editMode={editMode} value={data.texts?.prevoyanceSol3} onChange={v => onTextChange("prevoyanceSol3", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: 0 }} />
-        </div>
-        <div style={{ position: "relative", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-           <img src="/geneva.jpg" alt="Famille Suisse" className="pdf-image" style={{ width: "100%", height: "80%", objectFit: "cover", boxShadow: "0 10px 40px rgba(0,0,0,0.15)" }} />
-           <div style={{ position: "absolute", bottom: "5%", left: "-10%", background: C.primary, color: C.white, padding: "24px 32px", boxShadow: "0 8px 24px rgba(105,33,2,0.3)" }}>
-              <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>Sérénité absolue</div>
-              <div style={{ fontSize: 12, lineHeight: 1.5, opacity: 0.9 }}>Préparez votre avenir et celui<br/>de vos proches dès aujourd'hui.</div>
-           </div>
-        </div>
-      </div>
-      {footer(fullName)}
-    </div>
-  );
-}
-
-function SlidePrevoyanceCouvertures({ data, editMode, onTextChange }) {
-  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   return (
     <div style={slideBase}>
       {logoCorner()}
       <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
-        <ReportTitle title="Vos garanties &" highlight="Couvertures de risque" subtitle="PROTECTION DE LA FAMILLE ET DU PROJET" />
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 24 }}>
-          <div style={{ display: "flex", gap: 24, alignItems: "stretch" }}>
-            <div style={{ background: C.primary, width: 8, flexShrink: 0 }} />
-            <div style={{ background: C.lightGray, padding: 24, flex: 1, boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: C.primary, marginBottom: 8 }}>Libération du paiement des primes (LPP)</div>
-              <EditableText editMode={editMode} value={data.texts?.prevCouvP1} onChange={v => onTextChange("prevCouvP1", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.5, textAlign: "justify", margin: 0 }} />
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: 24, alignItems: "stretch" }}>
-            <div style={{ background: C.gold, width: 8, flexShrink: 0 }} />
-            <div style={{ background: C.lightGray, padding: 24, flex: 1, boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: C.gold, marginBottom: 8 }}>Capital en cas de décès</div>
-              <EditableText editMode={editMode} value={data.texts?.prevCouvP2} onChange={v => onTextChange("prevCouvP2", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.5, textAlign: "justify", margin: 0 }} />
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: 24, alignItems: "stretch" }}>
-            <div style={{ background: C.darkGray, width: 8, flexShrink: 0 }} />
-            <div style={{ background: C.lightGray, padding: 24, flex: 1, boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: C.darkGray, marginBottom: 8 }}>Rentes Invalidité & Couvertures complémentaires</div>
-              <EditableText editMode={editMode} value={data.texts?.prevCouvP3} onChange={v => onTextChange("prevCouvP3", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.5, textAlign: "justify", margin: 0 }} />
-            </div>
-          </div>
-        </div>
-      </div>
-      {footer(fullName)}
-    </div>
-  );
-}
-
-function SlidePrevoyanceFonds({ data, editMode, onTextChange }) {
-  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
-  const compagnie = data.compagniePrevoyance || "Liechtenstein Life";
-  return (
-    <div style={slideBase}>
-      {accentBar()}
-      {logoCorner()}
-      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
-        <ReportTitle title="Stratégie de placement :" highlight="Vos Fonds" subtitle={`PARTENAIRE : ${compagnie.toUpperCase()}`} />
-        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 40, alignItems: "center" }}>
-          <div>
-            <EditableText editMode={editMode} value={data.texts?.prevFondsIntro} onChange={v => onTextChange("prevFondsIntro", v)} style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.7, marginBottom: 24, textAlign: "justify" }} />
-            <div style={{ borderLeft: `3px solid ${C.gold}`, paddingLeft: 16, marginBottom: 24 }}>
-              <div style={{ fontWeight: 700, color: C.primary, fontSize: 15, marginBottom: 4 }}>Profil de gestion sélectionné</div>
-              <div style={{ color: C.gold, fontWeight: 600, fontSize: 13 }}>{data.profilRisque || "Équilibré"}</div>
-            </div>
-            <div style={{ color: C.primary, fontWeight: 700, fontSize: 13, marginBottom: 8, textTransform: "uppercase" }}>Votre stratégie d'investissement :</div>
-            <EditableText editMode={editMode} value={data.texts?.strategieFonds} onChange={v => onTextChange("strategieFonds", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6 }} />
-          </div>
-          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, boxShadow: "0 10px 30px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", minHeight: 280 }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: C.primary, marginBottom: 12 }}>{compagnie}</div>
-            <div style={{ fontSize: 12, color: C.gray, textAlign: "center", lineHeight: 1.5 }}>
-              Architecture ouverte et sélection<br/>des meilleurs gérants mondiaux.
-            </div>
-          </div>
+        <ReportTitle title="Comparatif banque commerciale &" highlight="ASSURANCE" />
+        <p style={{ fontSize: 14, color: C.darkGray, marginBottom: 40, lineHeight: 1.6 }}>
+          Ici, nous comparons le rendement actuel moyen des Prévoyances Individuelle en banque commerciale et en Assurance chez {data.compagniePrevoyance || "Liechtenstein"}. 3 scénarios de performances sont calculés pour chacune de ces solutions.
+        </p>
+        
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "flex-start" }}>
+          {renderChart("PROJECTIONS BANQUE COMMERCIALE*", bankData, ["0,10%", "0,50%", "1%"], true)}
+          {renderChart("PROJECTIONS ASSURANCE*", assData, [formatPct(rP_ass), formatPct(rR_ass), formatPct(rO_ass)], false)}
         </div>
       </div>
       {footer(fullName)}
@@ -2074,6 +2075,478 @@ function SlideLPPProjections({ data }) {
   );
 }
 
+// ────────────────────── SLIDES ASSURANCE VIE & PER ──────────────────────
+
+function SlideTOCAssuranceVie({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const items = [
+    { title: "Qui sommes-nous ? Notre philosophie", page: 3 },
+    { title: "Notre cabinet en chiffres", page: 4 },
+    { title: "Résumé de votre situation personnelle", page: 5 },
+    { title: "Les solutions de l'assurance-vie", page: 6 },
+    { title: "Le plan épargne retraite, son fonctionnement", page: 7 },
+    { title: "La fiscalité de l'assurance-vie", page: 8 },
+    { title: "Gestion de votre portefeuille", page: 9 },
+    { title: "Projections financières", page: 10 },
+    { title: "Synthèse & Contact", page: 11 },
+  ];
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Table des matières" subtitle="STRUCTURE DE VOTRE PRÉSENTATION" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 80, rowGap: 24, alignContent: "center", maxWidth: 1000, margin: "0" }}>
+          {items.map((item, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "flex-end", width: "100%", paddingBottom: 6 }}>
+              <span style={{ color: C.darkGray, fontSize: 15, fontWeight: 600, paddingBottom: 2 }}>
+                {item.title}
+              </span>
+              <div style={{ flex: 1, borderBottom: `2px dotted ${C.mediumGray}`, margin: "0 16px", position: "relative", top: -8 }} />
+              <span style={{ color: C.primary, fontSize: 16, fontWeight: 700, flexShrink: 0, paddingBottom: 2 }}>
+                {String(item.page).padStart(2, '0')}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideAvSolutions({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Les solutions de" highlight="l'assurance-vie" subtitle="LE PLACEMENT PRÉFÉRÉ DES FRANÇAIS" />
+        <div style={{ flex: 1, display: "flex", gap: 64, alignItems: "center" }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
+            <EditableText editMode={editMode} value={data.texts?.avSolutionsP1} onChange={v => onTextChange("avSolutionsP1", v)} style={{ fontSize: 14.5, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
+            <div style={{ width: 60, height: 3, background: C.gold }} />
+            <EditableText editMode={editMode} value={data.texts?.avSolutionsP2} onChange={v => onTextChange("avSolutionsP2", v)} style={{ fontSize: 14.5, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
+          </div>
+          <div style={{ width: 400, height: 300, background: C.lightGray, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.05)", position: "relative", overflow: "hidden" }}>
+            <img src="/image page3.jpg" alt="Assurance Vie" className="pdf-image" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.9 }} />
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(105,33,2,0.85)", color: C.white, padding: "16px", textAlign: "center", fontWeight: 700, fontSize: 14 }}>
+              + de 2 000 Milliards d'Euros d'encours
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePERFonctionnement({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {/* On retire l'accentBar pour laisser la bannière en bas s'afficher sur toute la largeur */}
+      {logoCorner()}
+      <div style={{ padding: "40px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Le plan épargne retraite," highlight="son fonctionnement" />
+
+        <div style={{ flex: 1, position: "relative", marginTop: 40 }}>
+           {/* SVG Graph de la ligne de temps et de l'arc */}
+           <svg viewBox="0 0 1000 300" style={{ position: "absolute", top: 0, left: -20, width: "1060px", height: "300px", overflow: "visible" }}>
+             {/* Arc principal */}
+             <path d="M 60 200 Q 500 -50 930 180" fill="none" stroke={C.gold} strokeWidth="5" />
+             <polygon points="920,172 940,185 918,190" fill={C.gold} />
+
+             {/* Ligne horizontale */}
+             <line x1="20" y1="220" x2="940" y2="220" stroke={C.gold} strokeWidth="5" />
+             <polygon points="930,210 950,220 930,230" fill={C.gold} />
+
+             {/* Grosse flèche de départ */}
+             <path d="M 30 120 L 70 120 L 70 180 L 90 180 L 50 220 L 10 180 L 30 180 Z" fill={C.primaryDark} />
+           </svg>
+
+           {/* Textes en surimpression (HTML pour faciliter le formatage) */}
+           <div style={{ position: "absolute", top: -20, width: "100%", textAlign: "center", fontSize: 20, color: C.black, fontWeight: 500 }}>
+             Hors droits de succession + insaisissable
+           </div>
+
+           <div style={{ position: "absolute", top: 230, left: 30, fontSize: 20, fontWeight: 500 }}>0</div>
+           <div style={{ position: "absolute", top: 260, left: 30, color: C.primaryDark, fontWeight: 800, fontSize: 16 }}>
+             + Garantie plancher décès
+           </div>
+
+           {/* Boîte 1 : Versements libres */}
+           <div style={{ position: "absolute", top: 100, left: 240 }}>
+             <div style={{ background: C.primaryDark, color: C.white, padding: "16px 32px", fontWeight: 700, fontSize: 16 }}>
+               Versement libres
+             </div>
+             <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 10px" }}>
+                <svg width="24" height="24" viewBox="0 0 100 100" style={{ transform: "rotate(-45deg)" }}>
+                  <path d="M 10 40 L 60 40 L 60 20 L 90 50 L 60 80 L 60 60 L 10 60 Z" fill="#9CA3AF" />
+                </svg>
+                <svg width="24" height="24" viewBox="0 0 100 100" style={{ transform: "rotate(45deg)", marginTop: 16 }}>
+                  <path d="M 10 40 L 60 40 L 60 20 L 90 50 L 60 80 L 60 60 L 10 60 Z" fill="#9CA3AF" />
+                </svg>
+             </div>
+           </div>
+
+           {/* Repère 8 ans */}
+           <div style={{ position: "absolute", top: 230, left: 500, transform: "translateX(-50%)", fontSize: 22, fontWeight: 500 }}>
+             8 ans
+           </div>
+
+           {/* Boîte 2 : Verser / Retirer librement */}
+           <div style={{ position: "absolute", top: 80, left: 600 }}>
+             <div style={{ background: C.primaryDark, color: C.white, padding: "16px 32px", fontWeight: 700, fontSize: 16, textAlign: "center", lineHeight: 1.4 }}>
+               Verser / retirer<br/>librement
+             </div>
+             <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 10px" }}>
+                <svg width="24" height="24" viewBox="0 0 100 100" style={{ transform: "rotate(-45deg)" }}>
+                  <path d="M 10 40 L 60 40 L 60 20 L 90 50 L 60 80 L 60 60 L 10 60 Z" fill="#9CA3AF" />
+                </svg>
+                <svg width="24" height="24" viewBox="0 0 100 100" style={{ transform: "rotate(45deg)", marginTop: 16 }}>
+                  <path d="M 10 40 L 60 40 L 60 20 L 90 50 L 60 80 L 60 60 L 10 60 Z" fill="#9CA3AF" />
+                </svg>
+             </div>
+           </div>
+
+           <div style={{ position: "absolute", top: 260, left: 570, color: C.primaryDark, fontWeight: 800, fontSize: 16, maxWidth: 220, lineHeight: 1.4 }}>
+             + Optimisation et avantages fiscaux sur les plus values
+           </div>
+
+           <div style={{ position: "absolute", top: 260, left: 810, color: C.primaryDark, fontWeight: 800, fontSize: 16, width: 250 }}>
+             + Disponibilité du capital
+             <ul style={{ color: C.primaryDark, fontWeight: 600, fontSize: 13, marginTop: 8, paddingLeft: 16, lineHeight: 1.6 }}>
+               <li>rachat partiel</li>
+               <li>rachat partiel programmé</li>
+               <li>rachat total</li>
+               <li>rentes viagères</li>
+             </ul>
+           </div>
+        </div>
+      </div>
+
+      {/* Bannière "Nos partenaires" (au dessus du footer) */}
+      <div style={{ position: "absolute", bottom: 40, left: 0, right: 0, height: 70, background: "#9CA3AF", display: "flex", alignItems: "center", padding: "0 80px", gap: 32 }}>
+        <div style={{ fontSize: 22, color: C.white, fontWeight: 500 }}>Nos partenaires</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Logo vectorisé d'approximation de SwissLife pour éviter les problèmes d'import d'image dans le PDF */}
+          <svg width="32" height="32" viewBox="0 0 100 100">
+             <path d="M 10 90 Q 50 10 90 10 Q 70 50 100 90 Z" fill="#E3000F" />
+             <rect x="55" y="45" width="20" height="6" fill="white" />
+             <rect x="62" y="38" width="6" height="20" fill="white" />
+          </svg>
+          <div style={{ color: C.darkGray, fontSize: 20, fontWeight: 500, fontFamily: "Arial, sans-serif" }}>SwissLife</div>
+        </div>
+      </div>
+
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideAvFiscalite({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const blueTitle = "#4A5C8C"; // Couleur bleue spécifique à cette slide d'après l'image
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "40px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="La fiscalité de" highlight="l'assurance-vie" />
+
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 32, marginTop: 10 }}>
+
+          {/* BLOC 1 : Avant 2017 */}
+          <div>
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <div style={{ color: blueTitle, fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Fiscalité sur les intérêts des sommes versées :</div>
+              <div style={{ color: blueTitle, fontSize: 24, fontWeight: 800 }}>Avant le 27 Septembre 2017</div>
+            </div>
+
+            <div style={{ position: "relative", height: 100 }}>
+              <svg viewBox="0 0 1000 100" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", overflow: "visible" }}>
+                <line x1="50" y1="50" x2="940" y2="50" stroke={C.gold} strokeWidth="6" />
+                <polygon points="930,40 950,50 930,60" fill={C.gold} />
+
+                <polygon points="50,50 64,50 57,30" fill={C.primaryDark} />
+                <polygon points="300,50 314,50 307,30" fill={C.primaryDark} />
+                <polygon points="550,50 564,50 557,30" fill={C.primaryDark} />
+              </svg>
+              
+              <div style={{ position: "absolute", top: 10, left: 230, fontSize: 13, color: C.black }}>Date d'ouverture 4 ans</div>
+
+              <div style={{ position: "absolute", top: 60, left: 130, fontSize: 13, color: C.black }}>35% (ou IR) + 17,2%</div>
+              <div style={{ position: "absolute", top: 60, left: 350, fontSize: 13, color: C.black }}>15% (ou IR) + 17,2%</div>
+              <div style={{ position: "absolute", top: 60, left: 565, fontSize: 13, color: C.black, lineHeight: 1.5 }}>
+                7,5% (après abattement de 9200 € pour un couple ou<br/>
+                4600€ pour une personne seule sur la base imposable)<br/>
+                + 17,2 PS ( sans abattement )
+              </div>
+            </div>
+          </div>
+
+          {/* BLOC 2 : Après 2017 */}
+          <div>
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <div style={{ color: blueTitle, fontSize: 24, fontWeight: 800 }}>Après le 27 Septembre 2017</div>
+            </div>
+
+            {/* Timeline > 150k */}
+            <div style={{ position: "relative", height: 90 }}>
+              <div style={{ position: "absolute", top: 0, left: 50, fontSize: 13, color: C.black }}>Date d'ouverture</div>
+              <svg viewBox="0 0 1000 90" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", overflow: "visible" }}>
+                <polygon points="50,45 64,45 57,25" fill={C.primaryDark} />
+                <line x1="50" y1="45" x2="940" y2="45" stroke={C.gold} strokeWidth="6" />
+                <polygon points="930,35 950,45 930,55" fill={C.gold} />
+              </svg>
+              <div style={{ position: "absolute", top: 25, left: 50, background: C.primaryDark, color: C.white, padding: "12px 24px", fontWeight: 700, fontSize: 15 }}>
+                &gt; 150 000€
+              </div>
+              <div style={{ position: "absolute", top: 55, left: 400, fontSize: 14, color: C.black, textAlign: "center", lineHeight: 1.5 }}>
+                Flat tax 30% ( 17,2 PS+ 12,8 IR )<br/>sur la base imposable
+              </div>
+            </div>
+
+            {/* Timeline < 150k */}
+            <div style={{ position: "relative", height: 120 }}>
+              <div style={{ position: "absolute", top: 0, left: 50, fontSize: 13, color: C.black }}>Date d'ouverture</div>
+              <div style={{ position: "absolute", top: 0, left: 530, fontSize: 13, color: C.black }}>8 ans</div>
+
+              <svg viewBox="0 0 1000 120" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", overflow: "visible" }}>
+                <polygon points="50,45 64,45 57,25" fill={C.primaryDark} />
+                <polygon points="530,45 544,45 537,25" fill={C.primaryDark} />
+                <line x1="50" y1="45" x2="940" y2="45" stroke={C.gold} strokeWidth="6" />
+                <polygon points="930,35 950,45 930,55" fill={C.gold} />
+              </svg>
+              <div style={{ position: "absolute", top: 25, left: 50, background: C.primaryDark, color: C.white, padding: "12px 24px", fontWeight: 700, fontSize: 15 }}>
+                &lt; 150 000€
+              </div>
+              <div style={{ position: "absolute", top: 55, left: 260, fontSize: 14, color: C.black }}>
+                Flat tax 30%
+              </div>
+              <div style={{ position: "absolute", top: 55, left: 545, fontSize: 13, color: C.black, lineHeight: 1.6 }}>
+                7,5 % (jusqu'à 150 000 € de versements)<br/>
+                12,8 % (pour les versements nets supérieurs à 150 000 €)<br/>
+                4 600 € pour une personne seule<br/>
+                9 200 € pour un couple soumis à une imposition commune
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideAvGestion({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  
+  const funds = [
+    { nom: "Axiom European Banks Equity RC EUR(v)", isin: "LU1876459303", poids: "20%", p1c: "63.10%", p3c: "210.01%", p3a: "45.81%", p10c: "314.20%", p10a: "15.27%" },
+    { nom: "Alken Euro Opportunities A", isin: "LU0524465977", poids: "20%", p1c: "54.33%", p3c: "90.53%", p3a: "23.97%", p10c: "145.09%", p10a: "9.38%" },
+    { nom: "AXA Or et Matières Premières C", isin: "FR0010011171", poids: "20%", p1c: "76.63%", p3c: "89.13%", p3a: "23.67%", p10c: "377.33%", p10a: "16.92%" },
+    { nom: "DNCA Invest Archer Mid-Cap Europe A EUR", isin: "LU1366712435", poids: "20%", p1c: "17.07%", p3c: "42.18%", p3a: "12.45%", p10c: "n/a*", p10a: "n/a*" },
+    { nom: "AXA Amérique Actions AC", isin: "FR0000447807", poids: "20%", p1c: "4.09%", p3c: "56.24%", p3a: "16.04%", p10c: "183.92%", p10a: "11.00%" }
+  ];
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "32px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Gestion de votre" highlight="portefeuille" subtitle="ALLOCATION ET PERFORMANCES HISTORIQUES" />
+        
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16, marginTop: 4 }}>
+          <p style={{ fontSize: 13.5, color: C.darkGray, margin: 0, lineHeight: 1.6 }}>
+            Une sélection rigoureuse de fonds pour diversifier vos avoirs et viser une croissance pérenne. Les performances passées sont présentées à titre indicatif pour illustrer la solidité de ces supports sur différentes périodes.
+          </p>
+
+          {/* Main Table */}
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, textAlign: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+            <thead>
+              <tr style={{ background: C.primaryDark, color: C.white }}>
+                <th style={{ padding: "8px 10px", textAlign: "left" }}>Fonds (ISIN)</th>
+                <th style={{ padding: "8px 10px" }}>Poids</th>
+                <th style={{ padding: "8px 10px" }}>Perf 1 an<br/>(cumulée)</th>
+                <th style={{ padding: "8px 10px" }}>Perf 3 ans<br/>(cumulée)</th>
+                <th style={{ padding: "8px 10px" }}>Perf 3 ans<br/>(annualisée)</th>
+                <th style={{ padding: "8px 10px" }}>Perf 10 ans<br/>(cumulée)</th>
+                <th style={{ padding: "8px 10px" }}>Perf 10 ans<br/>(annualisée)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {funds.map((f, i) => (
+                <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white, borderBottom: `1px solid ${C.mediumGray}` }}>
+                  <td style={{ padding: "8px 10px", textAlign: "left" }}>
+                    <div style={{ fontWeight: 700, color: C.primary, marginBottom: 2 }}>{f.nom}</div>
+                    <div style={{ fontSize: 9, color: C.gray }}>{f.isin}</div>
+                  </td>
+                  <td style={{ padding: "8px 10px", fontWeight: 700, color: C.darkGray }}>{f.poids}</td>
+                  <td style={{ padding: "8px 10px", color: C.darkGray }}>{f.p1c}</td>
+                  <td style={{ padding: "8px 10px", color: C.darkGray }}>{f.p3c}</td>
+                  <td style={{ padding: "8px 10px", color: C.darkGray }}>{f.p3a}</td>
+                  <td style={{ padding: "8px 10px", color: C.darkGray }}>{f.p10c}</td>
+                  <td style={{ padding: "8px 10px", color: C.darkGray }}>{f.p10a}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 4 }}>
+            {/* Summary Table */}
+            <table style={{ width: "50%", borderCollapse: "collapse", fontSize: 12, textAlign: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+              <thead>
+                <tr style={{ background: C.primaryDark, color: C.white }}>
+                  <th style={{ padding: "6px 10px" }}>Horizon</th>
+                  <th style={{ padding: "6px 10px" }}>Cumulé</th>
+                  <th style={{ padding: "6px 10px" }}>Annualisé</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style={{ background: C.lightGray, borderBottom: `1px solid ${C.mediumGray}` }}>
+                  <td style={{ padding: "6px 10px", fontWeight: 600, color: C.darkGray }}>1 an</td>
+                  <td style={{ padding: "6px 10px", color: C.primary, fontWeight: 700 }}>43.04%</td>
+                  <td style={{ padding: "6px 10px", color: C.primary, fontWeight: 700 }}>43.04%</td>
+                </tr>
+                <tr style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}` }}>
+                  <td style={{ padding: "6px 10px", fontWeight: 600, color: C.darkGray }}>3 ans</td>
+                  <td style={{ padding: "6px 10px", color: C.primary, fontWeight: 700 }}>97.62%</td>
+                  <td style={{ padding: "6px 10px", color: C.primary, fontWeight: 700 }}>25.49%</td>
+                </tr>
+                <tr style={{ background: C.lightGray }}>
+                  <td style={{ padding: "6px 10px", fontWeight: 600, color: C.darkGray }}>10 ans</td>
+                  <td style={{ padding: "6px 10px", color: C.primary, fontWeight: 700 }}>239.33%**</td>
+                  <td style={{ padding: "6px 10px", color: C.primary, fontWeight: 700 }}>13.00%**</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p style={{ fontSize: 9, color: C.gray, marginTop: 4, fontStyle: "italic", textAlign: "center" }}>
+            * Fonds créé il y a moins de 10 ans. ** Moyenne calculée sur les fonds existants sur la période de 10 ans.<br/>
+            Les performances passées ne préjugent pas des performances futures.
+          </p>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideAvProjections({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const rows = computeProjectionsAV(data);
+  
+  const r1 = data.tauxPessimiste || 3;
+  const r2 = data.tauxRealiste || 6;
+  const r3 = data.tauxOptimiste || 9;
+
+  // Small graph variables
+  const svgW = 320; const svgH = 180;
+  const padL = 50; const padR = 10; const padT = 10; const padB = 20;
+  const w = svgW - padL - padR; const h = svgH - padT - padB;
+  const maxVal = rows.length > 0 ? Math.max(rows[rows.length-1].val3, rows[rows.length-1].versements) : 1;
+  const gridMax = Math.ceil(maxVal / 20000) * 20000 || 50000;
+  
+  const getX = (i) => padL + (i / (rows.length - 1)) * w;
+  const getY = (val) => padT + h - (val / gridMax) * h;
+
+  const dP = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.val1)}`).join(' ');
+  const dR = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.val2)}`).join(' ');
+  const dO = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.val3)}`).join(' ');
+  const dV = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.versements)}`).join(' ');
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Projections" highlight="financières" subtitle="ESTIMATION DE LA VALEUR DE VOTRE CONTRAT" />
+        
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "360px 1fr", gap: 40, alignItems: "center" }}>
+          
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <p style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, marginBottom: 20, textAlign: "justify" }}>
+              Cette projection personnalisée simule l'évolution de votre épargne sur <strong>{rows.length} ans</strong>, en tenant compte d'un versement initial de <strong>{fmt(data.montantInvestissement || 100000)} €</strong> et d'une mensualité de <strong>{fmt(data.capaciteEpargne || 500)} €</strong> (déduction faite des {data.fraisSouscription || 0}% de frais sur versement).
+            </p>
+
+            <div style={{ width: svgW, height: svgH, background: C.white, border: `1px solid ${C.lightGray}`, marginBottom: 16 }}>
+              <svg width={svgW} height={svgH} style={{ overflow: "visible" }}>
+                {[0, 0.5, 1].map(pct => {
+                  const y = padT + h - (pct * h);
+                  return (
+                    <g key={pct}>
+                      <line x1={padL} y1={y} x2={svgW - padR} y2={y} stroke="#E5E7EB" strokeDasharray="2 2" />
+                      <text x={padL - 8} y={y + 4} fontSize="10" fill={C.gray} textAnchor="end">{fmt(Math.round(gridMax * pct))}</text>
+                    </g>
+                  );
+                })}
+                <path d={dV} fill="none" stroke={C.gray} strokeWidth="2" strokeDasharray="4 4" />
+                <path d={dP} fill="none" stroke="#9CA3AF" strokeWidth="2" />
+                <path d={dR} fill="none" stroke={C.primary} strokeWidth="3" />
+                <path d={dO} fill="none" stroke={C.gold} strokeWidth="2" />
+              </svg>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 4px", fontSize: 11, fontWeight: 600 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 2, borderBottom: "2px dashed", borderColor: C.gray }} /> Versements</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: "#9CA3AF" }} /> Scénario 1 ({r1}%)</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: C.primary }} /> Scénario 2 ({r2}%)</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: C.gold }} /> Scénario 3 ({r3}%)</div>
+            </div>
+          </div>
+
+          <div style={{ overflow: "hidden", borderRadius: "0px", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10, textAlign: "center", background: C.white }}>
+              <thead>
+                <tr style={{ background: C.primaryDark, color: C.white }}>
+                  <th rowSpan="2" style={{ padding: "6px", borderRight: `1px solid rgba(255,255,255,0.2)` }}>Année</th>
+                  <th rowSpan="2" style={{ padding: "6px", borderRight: `1px solid rgba(255,255,255,0.2)` }}>Versements<br/>cumulés</th>
+                  <th colSpan="2" style={{ padding: "6px", borderRight: `1px solid rgba(255,255,255,0.2)`, background: "#6B7280" }}>Scénario 1 ({r1}%)</th>
+                  <th colSpan="2" style={{ padding: "6px", borderRight: `1px solid rgba(255,255,255,0.2)`, background: C.primary }}>Scénario 2 ({r2}%)</th>
+                  <th colSpan="2" style={{ padding: "6px", background: "#8A7950" }}>Scénario 3 ({r3}%)</th>
+                </tr>
+                <tr style={{ background: C.primary, color: C.white }}>
+                  <th style={{ padding: "6px", fontSize: 9, background: "#9CA3AF" }}>Capital Est.</th>
+                  <th style={{ padding: "6px", fontSize: 9, background: "#9CA3AF", borderRight: `1px solid rgba(255,255,255,0.2)` }}>Plus-value</th>
+                  <th style={{ padding: "6px", fontSize: 9 }}>Capital Est.</th>
+                  <th style={{ padding: "6px", fontSize: 9, borderRight: `1px solid rgba(255,255,255,0.2)` }}>Plus-value</th>
+                  <th style={{ padding: "6px", fontSize: 9, background: C.gold }}>Capital Est.</th>
+                  <th style={{ padding: "6px", fontSize: 9, background: C.gold }}>Plus-value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white, borderBottom: `1px solid ${C.mediumGray}` }}>
+                    <td style={{ padding: "6px", fontWeight: 700, color: C.primary }}>N+{r.year}</td>
+                    <td style={{ padding: "6px", color: C.darkGray }}>{fmt(r.versements)} €</td>
+                    
+                    <td style={{ padding: "6px", color: C.darkGray }}>{fmt(r.val1)} €</td>
+                    <td style={{ padding: "6px", color: r.pv1 >= 0 ? "#10B981" : "#EF4444", fontWeight: 600, borderRight: `1px solid ${C.lightGray}` }}>{r.pv1 >= 0 ? "+" : ""}{fmt(r.pv1)} €</td>
+                    
+                    <td style={{ padding: "6px", fontWeight: 700, color: C.primary }}>{fmt(r.val2)} €</td>
+                    <td style={{ padding: "6px", color: r.pv2 >= 0 ? "#10B981" : "#EF4444", fontWeight: 700, borderRight: `1px solid ${C.lightGray}` }}>{r.pv2 >= 0 ? "+" : ""}{fmt(r.pv2)} €</td>
+                    
+                    <td style={{ padding: "6px", fontWeight: 700, color: C.gold }}>{fmt(r.val3)} €</td>
+                    <td style={{ padding: "6px", color: r.pv3 >= 0 ? "#10B981" : "#EF4444", fontWeight: 600 }}>{r.pv3 >= 0 ? "+" : ""}{fmt(r.pv3)} €</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
 // ────────────────────── PREVIEW MODAL ──────────────────────
 
 function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
@@ -2329,6 +2802,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
     <SlidePrevoyanceSolution data={data} editMode={editMode} onTextChange={handleTextChange} />,
     <SlidePrevoyanceCouvertures data={data} editMode={editMode} onTextChange={handleTextChange} />,
     <SlidePrevoyanceFonds data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlidePrevoyanceComparatif data={data} />,
   ];
 
   if (data.profilRisque === "Dynamique") {
@@ -2358,7 +2832,21 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
     <SlideContact data={data} editMode={editMode} onTextChange={handleTextChange} />,
   ];
 
-  const slides = data.templateId === "lpp" ? slidesLPP : data.templateId === "prevoyance" ? slidesPrevoyance : slidesSwissquote;
+  const slidesAssuranceVie = [
+    <SlideCover data={data} />,
+    <SlideTOCAssuranceVie data={data} />,
+    <SlidePhilosophy data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlideAbout data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlideSituation data={data} />,
+    <SlideAvSolutions data={data} editMode={editMode} onTextChange={handleTextChange} />,
+    <SlidePERFonctionnement data={data} />,
+    <SlideAvFiscalite data={data} />,
+    <SlideAvGestion data={data} />,
+    <SlideAvProjections data={data} />,
+    <SlideContact data={data} editMode={editMode} onTextChange={handleTextChange} />
+  ];
+
+  const slides = data.templateId === "lpp" ? slidesLPP : data.templateId === "prevoyance" ? slidesPrevoyance : data.templateId === "assurance-vie" ? slidesAssuranceVie : slidesSwissquote;
 
   return (
     <div className="preview-modal-container" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 200, overflow: "hidden", display: "flex", flexDirection: "column" }}>
@@ -2533,7 +3021,9 @@ export default function WallSwissApp() {
     lppAdminP1: "Pour sécuriser et gérer vos avoirs de libre passage, nous nous appuyons sur une fondation institutionnelle de premier plan en Suisse.",
     lppAdminP2: "La fondation agit comme le gardien légal de vos avoirs, garantissant que ceux-ci restent insaisissables, séparés du bilan de la banque dépositaire, et investis strictement selon les directives fédérales (OPP2).",
     lppAvantagesP1: "Investir son Libre Passage permet de viser des rendements historiques nettement supérieurs à ceux d'un compte de fondation classique ou d'une caisse de pension standard.",
-    lppAvantagesP2: "Vous bénéficiez d'une architecture ouverte : vos avoirs sont gérés par des experts mondiaux, tout en profitant d'avantages fiscaux majeurs."
+    lppAvantagesP2: "Vous bénéficiez d'une architecture ouverte : vos avoirs sont gérés par des experts mondiaux, tout en profitant d'avantages fiscaux majeurs.",
+    avSolutionsP1: "Le placement préféré des français ( 2 000 MDS € ), l'assurance vie peut se révéler pertinente, que vous souhaitiez : Financer un projet, acheter un bien ou transmettre à vos proches.",
+    avSolutionsP2: "L'assurance vie présente de nombreux avantages après 8 ans. Succession, exonération et abattements fiscaux sur les plus-values."
   };
 
   const [activeModule, setActiveModule] = useState("hub"); 
@@ -2834,6 +3324,7 @@ export default function WallSwissApp() {
     tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9",
     compagniePrevoyance: "Liechtenstein Life", optiFiscale: true,
     tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6",
+    dureeProjectionAv: "15",
     capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1",
     lppActions: "", lppOblig: "", lppImmo: "",
     conseiller: `${appSettings.agentFirstName || "Elisa"} ${appSettings.agentLastName || "MARQUET"}`.trim() || "Conseiller", 
@@ -2893,7 +3384,7 @@ export default function WallSwissApp() {
     }
   };
 
-  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", lppActions: "", lppOblig: "", lppImmo: "", conseiller: `${appSettings.agentFirstName || "Elisa"} ${appSettings.agentLastName || "MARQUET"}`.trim() || "Conseiller", titreConseiller: appSettings.agentTitle || "Planificatrice financière | CGP", telephone: appSettings.agentPhone || "+41 76 762 90 32", email: appSettings.agentEmail || "e.marquet@wallswiss.ch", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
+  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", dureeProjectionAv: "15", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", lppActions: "", lppOblig: "", lppImmo: "", conseiller: `${appSettings.agentFirstName || "Elisa"} ${appSettings.agentLastName || "MARQUET"}`.trim() || "Conseiller", titreConseiller: appSettings.agentTitle || "Planificatrice financière | CGP", telephone: appSettings.agentPhone || "+41 76 762 90 32", email: appSettings.agentEmail || "e.marquet@wallswiss.ch", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
 
   const handlePreviewUpdate = async (newData) => {
     setPreview(newData);
@@ -2957,6 +3448,7 @@ export default function WallSwissApp() {
               { id: "swissquote", title: "Compte Titre", desc: "Stratégie d'investissement flexible et performante en Suisse.", active: true },
               { id: "prevoyance", title: "Prévoyance (3A/3B)", desc: "Optimisation fiscale et préparation retraite avec assurance vie.", active: true },
               { id: "lpp", title: "2ème Pilier LPP", desc: "Analyse et dynamisation du Libre passage institutionnel.", active: true },
+              { id: "assurance-vie", title: "Assurance Vie & PER", desc: "Solutions de placement et retraite (France).", active: true },
               { id: "immobilier", title: "Immobilier", desc: "Investissements et rendements immobiliers (Bientôt disponible).", active: false },
             ].map(tpl => (
               <div key={tpl.id} onClick={() => tpl.active && u("templateId", tpl.id)} style={{ border: `2px solid ${form.templateId === tpl.id ? C.primary : C.mediumGray}`, padding: 20, cursor: tpl.active ? "pointer" : "not-allowed", opacity: tpl.active ? 1 : 0.5, background: form.templateId === tpl.id ? "rgba(105,33,2,0.04)" : C.white, display: "flex", flexDirection: "column", gap: 8, borderRadius: "0px" }}>
@@ -3094,6 +3586,17 @@ export default function WallSwissApp() {
                   <div><label style={S.label}>Immo/Liq</label><input style={S.input} type="number" value={form.lppImmo} onChange={e=>u("lppImmo",e.target.value)} placeholder="Ex: 10" /></div>
                 </div>
               </>
+            ) : form.templateId === "assurance-vie" ? (
+              <>
+                <div style={S.fg}><label style={S.label}>Versement initial (€)</label><input style={S.input} type="number" value={form.montantInvestissement} onChange={e=>u("montantInvestissement",e.target.value)}/></div>
+                <div style={S.fg}><label style={S.label}>Mensualité (€)</label><input style={S.input} type="number" value={form.capaciteEpargne} onChange={e=>u("capaciteEpargne",e.target.value)}/></div>
+                <div style={S.fg}><label style={S.label}>Durée de projection (années, max 15)</label><input style={S.input} type="number" max="15" value={form.dureeProjectionAv} onChange={e=>u("dureeProjectionAv",e.target.value)}/></div>
+                
+                <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
+                
+                <div style={S.fg}><label style={S.label}>Frais sur versements (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscription} onChange={e=>u("fraisSouscription",e.target.value)}/></div>
+                <div style={{...S.fg, margin: 0}}><label style={S.label}>Profil de risque</label><select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>{["Prudent", "Équilibré", "Dynamique", "Offensif"].map(s=><option key={s}>{s}</option>)}</select></div>
+              </>
             ) : (
               <>
                 <div style={S.fg}>
@@ -3129,12 +3632,12 @@ export default function WallSwissApp() {
               </div>
             ) : (
               <>
-                <div style={S.fg}><label style={S.label}>Taux pessimiste (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxPessimiste} onChange={e=>u("tauxPessimiste",e.target.value)}/></div>
-                <div style={S.fg}><label style={S.label}>Taux réaliste (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxRealiste} onChange={e=>u("tauxRealiste",e.target.value)}/></div>
-                <div style={S.fg}><label style={S.label}>Taux optimiste (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxOptimiste} onChange={e=>u("tauxOptimiste",e.target.value)}/></div>
+                <div style={S.fg}><label style={S.label}>Taux cible 1 (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxPessimiste} onChange={e=>u("tauxPessimiste",e.target.value)}/></div>
+                <div style={S.fg}><label style={S.label}>Taux cible 2 (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxRealiste} onChange={e=>u("tauxRealiste",e.target.value)}/></div>
+                <div style={S.fg}><label style={S.label}>Taux cible 3 (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxOptimiste} onChange={e=>u("tauxOptimiste",e.target.value)}/></div>
                 <div style={{ background: C.lightGray, padding: 14, marginTop: 16, borderRadius: "0px" }}>
-                  <div style={{ fontSize: 11, color: C.gray, marginBottom: 4 }}>Montant net investi</div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: C.primary }}>CHF {fmt((form.montantInvestissement||0)-(form.montantInvestissement||0)*(form.fraisSouscription||0)/100)}.-</div>
+                  <div style={{ fontSize: 11, color: C.gray, marginBottom: 4 }}>Montant net initial investi</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: C.primary }}>{form.templateId === "assurance-vie" ? "€" : "CHF"} {fmt((form.montantInvestissement||0)-(form.montantInvestissement||0)*(form.fraisSouscription||0)/100)}.-</div>
                 </div>
               </>
             )}
@@ -3259,6 +3762,17 @@ export default function WallSwissApp() {
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppAdminP1} onChange={e=>uText("lppAdminP1", e.target.value)} /></div>
                 <div style={S.fg}><label style={S.label}>Sécurité et gouvernance</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppAdminP2} onChange={e=>uText("lppAdminP2", e.target.value)} /></div>
+              </>
+            )}
+
+            {form.templateId === "assurance-vie" && (
+              <>
+                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "SOLUTIONS ASSURANCE VIE"</div>
+                <div style={S.fg}><label style={S.label}>Paragraphe 1 (Contexte)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.avSolutionsP1} onChange={e=>uText("avSolutionsP1", e.target.value)} /></div>
+                <div style={S.fg}><label style={S.label}>Paragraphe 2 (Avantages)</label>
+                <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.avSolutionsP2} onChange={e=>uText("avSolutionsP2", e.target.value)} /></div>
               </>
             )}
 
@@ -3913,7 +4427,8 @@ export default function WallSwissApp() {
                     {[
                       { id: "swissquote", title: "Compte Titre" }, 
                       { id: "prevoyance", title: "Prévoyance (3A/3B)" }, 
-                      { id: "lpp", title: "2ème Pilier LPP" }
+                      { id: "lpp", title: "2ème Pilier LPP" },
+                      { id: "assurance-vie", title: "Assurance Vie & PER" }
                     ].map(cat => {
                       const catReports = reports.filter(r => r.templateId === cat.id);
                       if (catReports.length === 0) return null;
@@ -3936,7 +4451,7 @@ export default function WallSwissApp() {
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 16, borderTop: `1px solid ${C.lightGray}` }}>
                                   <div>
                                     <div style={{ fontSize: 10, color: C.gray, marginBottom: 2 }}>
-                                      {r.templateId === "prevoyance" ? "Épargne simulée" : r.templateId === "lpp" ? "Libre Passage" : "Montant simulé"}
+                                      {r.templateId === "prevoyance" ? "Épargne simulée" : r.templateId === "lpp" ? "Libre Passage" : r.templateId === "assurance-vie" ? "Assurance Vie" : "Montant simulé"}
                                     </div>
                                     <div style={{ fontSize: 13, color: C.primary, fontWeight: 600 }}>
                                       {r.templateId === "prevoyance" 

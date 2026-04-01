@@ -408,7 +408,7 @@ function SlideAbout({ data, editMode, onTextChange }) {
   const stats = [
     { val: "+2000", label: "CLIENTS" },
     { val: "ACCRÉDITÉ", label: "FINMA" },
-    { val: "+280M CHF", label: "SOUS GESTION" },
+    { val: "+10M CHF", label: "SOUS GESTION" },
     { val: "+20", label: "COLLABORATEURS" },
     { val: "+50", label: "PARTENAIRES" },
     { val: "100%", label: "SOLUTIONS PRAGMATIQUES" },
@@ -456,11 +456,12 @@ function SlideSituation({ data }) {
               <div style={{ background: C.primary, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Civilité & Statut</div>
               <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
                 {[
-                  ["Âge", data.age ? `${data.age} ans` : "-"],
-                  ["Profession", data.profession || "-"],
-                  ["Nationalité", data.nationalite || "-"],
-                  ["Statut civil", data.statut || "-"],
-                ].map(([k, v], i, arr) => (
+                  ["Âge", data.age ? `${data.age} ans` : null],
+                  ["Profession", data.profession || null],
+                  ["Nationalité", data.nationalite || null],
+                  ["Statut civil", data.statut || null],
+                  ...(data.customClientFields || []).filter(f => f.label && f.value).map(f => [f.label, f.value])
+                ].filter(([k, v]) => v && v !== "-" && String(v).trim() !== "").map(([k, v], i, arr) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < arr.length - 1 ? `1px solid ${C.lightGray}` : "none", fontSize: 12.5 }}>
                     <span style={{ color: C.gray, fontWeight: 500 }}>{k}</span>
                     <span style={{ fontWeight: 700, color: C.primary }}>{v}</span>
@@ -473,10 +474,10 @@ function SlideSituation({ data }) {
               <div style={{ background: C.primary, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Données Financières</div>
               <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
                 {[
-                  ["Revenus annuels bruts", data.revenus ? `CHF ${fmt(data.revenus)}.-` : "-"],
-                  ["Capacité d'épargne", data.capaciteEpargne ? `CHF ${fmt(data.capaciteEpargne)}.- / mois` : "-"],
-                  ["Fortune globale estimée", data.fortuneGlobale ? `CHF ${fmt(data.fortuneGlobale)}.-` : "-"],
-                ].map(([k, v], i, arr) => (
+                  ["Revenus annuels bruts", data.revenus ? `CHF ${fmt(data.revenus)}.-` : null],
+                  ["Capacité d'épargne", data.capaciteEpargne ? `CHF ${fmt(data.capaciteEpargne)}.- / mois` : null],
+                  ["Fortune globale estimée", data.fortuneGlobale ? `CHF ${fmt(data.fortuneGlobale)}.-` : null],
+                ].filter(([k, v]) => v && v !== "-" && String(v).trim() !== "").map(([k, v], i, arr) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < arr.length - 1 ? `1px solid ${C.lightGray}` : "none", fontSize: 12.5 }}>
                     <span style={{ color: C.gray, fontWeight: 500 }}>{k}</span>
                     <span style={{ fontWeight: 700, color: C.primary }}>{v}</span>
@@ -1316,7 +1317,9 @@ function SlideTOCPrevoyance({ data }) {
   ];
   
   let nextPage = 12;
-  items.push({ title: "Comparatif banque commerciale & Assurance", page: nextPage++ });
+  if (data.showPrevoyanceComparatif !== false) {
+      items.push({ title: "Comparatif banque commerciale & Assurance", page: nextPage++ });
+  }
 
   if (data.profilRisque === "Dynamique") {
       items.push({ title: "Détail Stratégie Dynamique & Performances", page: nextPage++ });
@@ -2977,8 +2980,11 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
     <SlidePrevoyanceSolution data={data} editMode={editMode} onTextChange={handleTextChange} />,
     <SlidePrevoyanceCouvertures data={data} editMode={editMode} onTextChange={handleTextChange} />,
     <SlidePrevoyanceFonds data={data} editMode={editMode} onTextChange={handleTextChange} />,
-    <SlidePrevoyanceComparatif data={data} />,
   ];
+
+  if (data.showPrevoyanceComparatif !== false) {
+      slidesPrevoyance.push(<SlidePrevoyanceComparatif data={data} />);
+  }
 
   if (data.profilRisque === "Dynamique") {
       slidesPrevoyance.push(<SlidePrevoyanceFondsDynamique data={data} />);
@@ -3176,9 +3182,9 @@ export default function WallSwissApp() {
     dividerQuote: "« L'investissement est un voyage à long terme. La clé est de rester concentré sur sa destination finale et de s'entourer des meilleurs partenaires. »",
     appP1: "Effectuez des opérations de trading, d'investissement et bancaires en toute sécurité et à des tarifs avantageux, grâce au principal acteur suisse de la banque en ligne.",
     appP2: "Nos plateformes intuitives vous invitent à explorer un monde riche en opportunités. Et accédez à une vaste gamme d'informations et de programmes de formation.",
-    prevIntroP1: "Couvre les besoins vitaux. Obligatoire pour toute personne domiciliée ou exerçant une activité lucrative en Suisse.",
-    prevIntroP2: "Maintien du niveau de vie antérieur. Obligatoire pour les salariés dépassant un certain seuil de revenu.",
-    prevIntroP3: "Comble les lacunes de prévoyance (qui s'élèvent souvent à 40% du dernier salaire) et permet de réaliser des économies d'impôts majeures.",
+    prevIntroP1: "L'AVS couvre les besoins vitaux. Elle est obligatoire pour toute personne domiciliée ou exerçant une activité lucrative en Suisse.",
+    prevIntroP2: "La LPP vise le maintien du niveau de vie antérieur. Ensemble, ces deux premiers piliers ne couvrent en moyenne que 60% du dernier salaire de carrière.",
+    prevIntroP3: "Le 3ème pilier est donc indispensable pour combler ces lacunes, viser les 100% du salaire à la retraite, et réaliser des économies d'impôts majeures.",
     prevCouvP1: "En cas d'incapacité de gain (maladie ou accident), la compagnie prend le relais et paie vos primes. Votre capital retraite continue de se construire sans que vous n'ayez à débourser un centime.",
     prevCouvP2: "En cas de coup dur prématuré, un capital garanti est immédiatement versé à vos bénéficiaires (conjoint, enfants) pour les mettre à l'abri du besoin et assumer les charges courantes (hypothèque, études).",
     prevCouvP3: "Selon vos besoins, il est possible d'ajouter des rentes en cas d'invalidité pour compenser la perte de revenus, garantissant le maintien absolu de votre niveau de vie.",
@@ -3495,12 +3501,12 @@ export default function WallSwissApp() {
     dateRapport: new Date().toISOString().split('T')[0],
     nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "",
     capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)",
-    objectifs: [], objectifCustom: "",
+    objectifs: [], objectifCustom: "", customClientFields: [],
     assetManager: "NS Partners",
     montantInvestissement: "100000", fraisSouscription: "3",
     hasProjectionsMultiples: false, montantInvestissement2: "200000", capaciteEpargne2: "1000",
     tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9",
-    compagniePrevoyance: "Liechtenstein Life", optiFiscale: true,
+    compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, showPrevoyanceComparatif: true,
     tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6",
     dureeProjectionAv: "15",
     capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1",
@@ -3562,7 +3568,7 @@ export default function WallSwissApp() {
     }
   };
 
-  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", hasProjectionsMultiples: false, montantInvestissement2: "200000", capaciteEpargne2: "1000", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", dureeProjectionAv: "15", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", lppActions: "", lppOblig: "", lppImmo: "", conseiller: `${appSettings.agentFirstName || "Elisa"} ${appSettings.agentLastName || "MARQUET"}`.trim() || "Conseiller", titreConseiller: appSettings.agentTitle || "Planificatrice financière | CGP", telephone: appSettings.agentPhone || "+41 76 762 90 32", email: appSettings.agentEmail || "e.marquet@wallswiss.ch", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
+  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", customClientFields: [], assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", hasProjectionsMultiples: false, montantInvestissement2: "200000", capaciteEpargne2: "1000", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, showPrevoyanceComparatif: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", dureeProjectionAv: "15", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", lppActions: "", lppOblig: "", lppImmo: "", conseiller: `${appSettings.agentFirstName || "Elisa"} ${appSettings.agentLastName || "MARQUET"}`.trim() || "Conseiller", titreConseiller: appSettings.agentTitle || "Planificatrice financière | CGP", telephone: appSettings.agentPhone || "+41 76 762 90 32", email: appSettings.agentEmail || "e.marquet@wallswiss.ch", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
 
   const handlePreviewUpdate = async (newData) => {
     setPreview(newData);
@@ -3656,6 +3662,17 @@ export default function WallSwissApp() {
               <div style={S.fg}><label style={S.label}>Date du rapport</label><input style={S.input} type="date" value={form.dateRapport || ""} onChange={e=>u("dateRapport",e.target.value)}/></div>
               <div style={S.fg}><label style={S.label}>Nationalité</label><input style={S.input} value={form.nationalite} onChange={e=>u("nationalite",e.target.value)}/></div>
             </div>
+            
+            <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.primary, marginBottom: 8, textTransform: "uppercase" }}>Informations personnalisées supplémentaires</div>
+            {(form.customClientFields || []).map((f, i) => (
+              <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                <input style={{...S.input, flex: 1}} placeholder="Objet (ex: Domicile)" value={f.label} onChange={e => { const newF = [...(form.customClientFields||[])]; newF[i].label = e.target.value; u("customClientFields", newF); }} />
+                <input style={{...S.input, flex: 2}} placeholder="Texte (ex: Genève)" value={f.value} onChange={e => { const newF = [...(form.customClientFields||[])]; newF[i].value = e.target.value; u("customClientFields", newF); }} />
+                <button onClick={() => u("customClientFields", (form.customClientFields||[]).filter((_, idx) => idx !== i))} style={{ background: "transparent", color: "#EF4444", border: "none", cursor: "pointer", fontWeight: "bold" }}>X</button>
+              </div>
+            ))}
+            <button onClick={() => u("customClientFields", [...(form.customClientFields||[]), {label: "", value: ""}])} style={{...S.btnS, padding: "6px 12px", fontSize: 11}}>+ Ajouter une information</button>
           </div>
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Situation Financière</div>
@@ -3724,8 +3741,24 @@ export default function WallSwissApp() {
                     Inclure la slide Optimisation Fiscale (3A)
                   </label>
                 </div>
+                <div style={S.fg}>
+                  <label style={{...S.label, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: 8, color: C.primary}}>
+                    <input type="checkbox" checked={form.showPrevoyanceComparatif !== false} onChange={e=>u("showPrevoyanceComparatif",e.target.checked)} style={{width: 16, height: 16}} /> 
+                    Inclure la slide Comparatif Banque / Assurance
+                  </label>
+                </div>
                 
                 <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
+                
+                <div style={S.fg}>
+                  <label style={S.label}>Horizon de placement</label>
+                  <input list="horizon-options" style={S.input} value={form.horizonPlacement} onChange={e=>u("horizonPlacement",e.target.value)} placeholder="Sélectionnez ou saisissez..." />
+                  <datalist id="horizon-options">
+                    <option value="Court terme (< 3 ans)" />
+                    <option value="Moyen terme (3 - 8 ans)" />
+                    <option value="Long terme (> 8 ans)" />
+                  </datalist>
+                </div>
                 
                 <div style={{...S.fg, margin: 0}}>
                   <label style={S.label}>Profil de risque du portefeuille</label>
@@ -3802,7 +3835,15 @@ export default function WallSwissApp() {
                 
                 <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
                 
-                <div style={S.fg}><label style={S.label}>Horizon de placement</label><select style={S.select} value={form.horizonPlacement} onChange={e=>u("horizonPlacement",e.target.value)}>{["Court terme (< 3 ans)", "Moyen terme (3 - 8 ans)", "Long terme (> 8 ans)"].map(s=><option key={s}>{s}</option>)}</select></div>
+                <div style={S.fg}>
+                  <label style={S.label}>Horizon de placement</label>
+                  <input list="horizon-options" style={S.input} value={form.horizonPlacement} onChange={e=>u("horizonPlacement",e.target.value)} placeholder="Sélectionnez ou saisissez..." />
+                  <datalist id="horizon-options">
+                    <option value="Court terme (< 3 ans)" />
+                    <option value="Moyen terme (3 - 8 ans)" />
+                    <option value="Long terme (> 8 ans)" />
+                  </datalist>
+                </div>
                 <div style={{...S.fg, margin: 0}}><label style={S.label}>Profil de risque</label><select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>{["Prudent", "Équilibré", "Dynamique", "Offensif"].map(s=><option key={s}>{s}</option>)}</select></div>
               </>
             )}

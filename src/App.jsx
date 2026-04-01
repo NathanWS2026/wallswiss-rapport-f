@@ -408,7 +408,7 @@ function SlideAbout({ data, editMode, onTextChange }) {
   const stats = [
     { val: "+2000", label: "CLIENTS" },
     { val: "ACCRÉDITÉ", label: "FINMA" },
-    { val: "+10M CHF", label: "SOUS GESTION" },
+    { val: "+280M CHF", label: "SOUS GESTION" },
     { val: "+20", label: "COLLABORATEURS" },
     { val: "+50", label: "PARTENAIRES" },
     { val: "100%", label: "SOLUTIONS PRAGMATIQUES" },

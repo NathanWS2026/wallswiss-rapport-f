@@ -1164,7 +1164,7 @@ function SlidePrevoyanceIntro({ data, editMode, onTextChange }) {
       <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Le système des" highlight="3 piliers suisses" subtitle="PRÉVOYANCE" />
         
-        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 48, alignItems: "center" }}>
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 60, alignItems: "center" }}>
           
           {/* Colonne de gauche : Explications des piliers */}
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -1194,30 +1194,30 @@ function SlidePrevoyanceIntro({ data, editMode, onTextChange }) {
           </div>
 
           {/* Colonne de droite : Graphique empilé des 100% */}
-          <div style={{ display: "flex", justifyContent: "center", height: "100%", padding: "10px 0" }}>
-            <div style={{ position: "relative", width: 280, height: "100%", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", justifyContent: "center", height: "100%", padding: "30px 0 10px 0" }}>
+            <div style={{ position: "relative", width: "100%", maxWidth: 300, height: "100%", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
               
               {/* Ligne cible 100% */}
-              <div style={{ position: "absolute", top: 0, left: -20, right: -40, borderTop: `2px dashed ${C.gray}` }}>
-                 <div style={{ position: "absolute", top: -20, right: 0, fontSize: 14, fontWeight: 800, color: C.darkGray }}>100% du salaire</div>
+              <div style={{ position: "absolute", top: 0, left: -20, right: -20, borderTop: `2px dashed ${C.gray}` }}>
+                 <div style={{ position: "absolute", top: -22, right: 0, fontSize: 13, fontWeight: 800, color: C.darkGray }}>100% du salaire</div>
               </div>
 
               {/* Ligne cible 60% */}
-              <div style={{ position: "absolute", bottom: "60%", left: -20, right: -40, borderTop: `2px dashed ${C.primary}` }}>
-                 <div style={{ position: "absolute", top: -20, right: 0, fontSize: 14, fontWeight: 800, color: C.primary }}>~60% du salaire</div>
+              <div style={{ position: "absolute", bottom: "60%", left: -20, right: -20, borderTop: `2px dashed ${C.primary}` }}>
+                 <div style={{ position: "absolute", top: -22, right: 0, fontSize: 13, fontWeight: 800, color: C.primary }}>~60% du salaire</div>
               </div>
               
               {/* Blocs du graphique */}
               <div style={{ height: "40%", background: C.gold, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid white", borderBottom: "none", zIndex: 2, boxShadow: "0 -4px 10px rgba(0,0,0,0.05)" }}>
-                <div style={{ color: C.white, fontWeight: 800, fontSize: 18, textAlign: "center" }}>3ème Pilier<br/><span style={{fontSize: 12, fontWeight: 600}}>Prévoyance privée</span></div>
+                <div style={{ color: C.white, fontWeight: 800, fontSize: 16, textAlign: "center" }}>3ème Pilier<br/><span style={{fontSize: 12, fontWeight: 600}}>Prévoyance privée</span></div>
               </div>
               
               <div style={{ height: "30%", background: C.primary, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid white", borderBottom: "none", zIndex: 2, boxShadow: "0 -4px 10px rgba(0,0,0,0.05)" }}>
-                <div style={{ color: C.white, fontWeight: 800, fontSize: 18, textAlign: "center" }}>2ème Pilier<br/><span style={{fontSize: 12, fontWeight: 600}}>LPP</span></div>
+                <div style={{ color: C.white, fontWeight: 800, fontSize: 16, textAlign: "center" }}>2ème Pilier<br/><span style={{fontSize: 12, fontWeight: 600}}>LPP</span></div>
               </div>
               
               <div style={{ height: "30%", background: C.darkGray, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid white", zIndex: 2, boxShadow: "0 -4px 10px rgba(0,0,0,0.05)" }}>
-                <div style={{ color: C.white, fontWeight: 800, fontSize: 18, textAlign: "center" }}>1er Pilier<br/><span style={{fontSize: 12, fontWeight: 600}}>AVS/AI</span></div>
+                <div style={{ color: C.white, fontWeight: 800, fontSize: 16, textAlign: "center" }}>1er Pilier<br/><span style={{fontSize: 12, fontWeight: 600}}>AVS/AI</span></div>
               </div>
               
             </div>
@@ -1346,6 +1346,45 @@ function SlidePrevoyanceFonds({ data, editMode, onTextChange }) {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceComparatif({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Comparatif 3A :" highlight="Banque vs Assurance" subtitle="SÉCURITÉ & PERFORMANCE" />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
+            <thead>
+              <tr>
+                <th style={{ padding: "16px 20px", textAlign: "left", color: C.primary, fontWeight: 700, borderBottom: `2px solid ${C.primary}`, background: C.white, width: "25%" }}>Critères</th>
+                <th style={{ padding: "16px 20px", textAlign: "left", color: C.primary, fontWeight: 700, borderBottom: `2px solid ${C.primary}`, background: C.lightGray, width: "35%" }}>Banque Commerciale (3A)</th>
+                <th style={{ padding: "16px 20px", textAlign: "left", color: C.white, fontWeight: 700, borderBottom: `2px solid ${C.gold}`, background: C.primary, width: "40%" }}>Compagnie d'Assurance (3A)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { critere: "Objectif principal", banque: "Épargne simple", assurance: "Protection de la famille & Épargne" },
+                { critere: "Couverture décès", banque: "Capital accumulé uniquement", assurance: "Capital cible garanti dès le 1er jour" },
+                { critere: "Incapacité de gain (Maladie/Accident)", banque: "Arrêt des versements", assurance: "La compagnie paie vos primes à votre place" },
+                { critere: "Obligation de versement", banque: "Libre", assurance: "Régulier (avec flexibilité)" },
+                { critere: "Exonération successorale", banque: "Standard", assurance: "Privilégiée (hors masse successorale)" },
+              ].map((r, i) => (
+                <tr key={i} style={{ background: C.white }}>
+                  <td style={{ padding: "16px 20px", fontWeight: 700, color: C.darkGray, borderBottom: `1px solid ${C.lightGray}` }}>{r.critere}</td>
+                  <td style={{ padding: "16px 20px", color: C.gray, borderBottom: `1px solid ${C.lightGray}`, background: C.lightGray }}>{r.banque}</td>
+                  <td style={{ padding: "16px 20px", color: C.primaryDark, fontWeight: 600, borderBottom: `1px solid ${C.lightGray}`, background: "rgba(105,33,2,0.05)" }}>{r.assurance}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
       {footer(fullName)}
@@ -3077,26 +3116,54 @@ const fetchFundByISIN = async (isin) => {
   const cleanIsin = isin.trim().toUpperCase();
 
   try {
-    // 1. Recherche du Ticker via Yahoo Finance Search
-    // On essaie avec un autre proxy (allorigins) qui est parfois moins bloqué
-    const ALT_PROXY = "https://api.allorigins.win/raw?url=";
-    const searchUrl = encodeURIComponent(`https://query2.finance.yahoo.com/v1/finance/search?q=${cleanIsin}`);
+    // Liste de proxys pour contourner les blocages du navigateur (CORS)
+    const PROXIES = [
+      "https://api.allorigins.win/raw?url=",
+      "https://api.codetabs.com/v1/proxy?quest=",
+      "https://corsproxy.io/?"
+    ];
     
-    const searchRes = await fetch(ALT_PROXY + searchUrl);
-    if (!searchRes.ok) throw new Error(`Erreur de recherche Yahoo (${searchRes.status})`);
-    const searchData = await searchRes.json();
+    let searchData = null;
+    let ticker = null;
+    let bestQuote = null;
+
+    // 1. Recherche du Ticker via Yahoo Finance Search
+    const searchUrl = `https://query2.finance.yahoo.com/v1/finance/search?q=${cleanIsin}`;
+    
+    for (const proxy of PROXIES) {
+      try {
+        const searchRes = await fetch(proxy + encodeURIComponent(searchUrl));
+        if (searchRes.ok) {
+          searchData = await searchRes.json();
+          break; // On a réussi, on sort de la boucle !
+        }
+      } catch (e) { console.warn(`Proxy ${proxy} échoué pour la recherche.`); }
+    }
+
+    if (!searchData) throw new Error(`Aucun proxy n'a pu joindre Yahoo Finance pour ${cleanIsin}`);
     
     const quotes = searchData?.quotes || [];
     if (quotes.length === 0) throw new Error(`Aucun instrument trouvé pour l'ISIN ${cleanIsin}`);
     
-    const bestQuote = quotes.find(q => ["ETF", "MUTUALFUND", "EQUITY"].includes(q.quoteType)) || quotes[0];
-    const ticker = bestQuote.symbol;
+    bestQuote = quotes.find(q => ["ETF", "MUTUALFUND", "EQUITY"].includes(q.quoteType)) || quotes[0];
+    ticker = bestQuote.symbol;
 
     // 2. Récupération de l'historique (Chart)
-    const yahooUrl = encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1mo&range=10y`);
-    const yahooRes = await fetch(ALT_PROXY + yahooUrl);
-    if (!yahooRes.ok) throw new Error(`Erreur Chart Yahoo ${yahooRes.status} pour ${ticker}`);
-    const yahooData = await yahooRes.json();
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1mo&range=10y`;
+    let yahooData = null;
+
+    for (const proxy of PROXIES) {
+      try {
+        const yahooRes = await fetch(proxy + encodeURIComponent(yahooUrl));
+        if (yahooRes.ok) {
+          yahooData = await yahooRes.json();
+          break;
+        }
+      } catch (e) { console.warn(`Proxy ${proxy} échoué pour l'historique.`); }
+    }
+
+    if (!yahooData) throw new Error(`Impossible de récupérer l'historique pour ${ticker}`);
+
     const result = yahooData?.chart?.result?.[0];
     if (!result) throw new Error(`Pas de données historiques pour ${ticker}`);
 
@@ -4144,6 +4211,15 @@ export default function WallSwissApp() {
             style={{ width: "100%", textAlign: "left", background: activeModule === "ressources" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "ressources" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "ressources" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "ressources" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
           >
             <Icons.FileText size={16} /> Ressources Documents
+          </button>
+          
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700, letterSpacing: "0.1em", padding: "0 24px", margin: "16px 0 8px", textTransform: "uppercase" }}>Liens Rapides</div>
+          
+          <button 
+            onClick={() => window.open("https://wallswiss.my.salesforce.com/", "_blank")} 
+            style={{ width: "100%", textAlign: "left", background: "transparent", color: "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid transparent`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 500, transition: "0.2s", display: "flex", alignItems: "center", gap: 10 }}
+          >
+            <Icons.ExternalLink size={16} /> Salesforce CRM
           </button>
         </nav>
 

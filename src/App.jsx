@@ -304,8 +304,8 @@ function SlideCover({ data }) {
           Rapport<br /><em style={{ color: C.gold, fontStyle: "italic" }}>Financier</em>
         </div>
         <div style={{ marginTop: 48, borderLeft: `3px solid rgba(255,255,255,0.2)`, paddingLeft: 24, position: "relative", zIndex: 2 }}>
-          <div style={{ color: C.white, fontSize: 22, fontWeight: 600 }}>{data.conseiller || "Elisa MARQUET"}</div>
-          <div style={{ color: C.gold, fontSize: 14, fontWeight: 500, marginTop: 6 }}>{data.titreConseiller || "Planificatrice financière | CGP"}</div>
+          <div style={{ color: C.white, fontSize: 22, fontWeight: 600 }}>{data.conseiller || "Votre Conseiller"}</div>
+          <div style={{ color: C.gold, fontSize: 14, fontWeight: 500, marginTop: 6 }}>{data.titreConseiller || "Conseiller en Gestion de Patrimoine"}</div>
         </div>
       </div>
       {footer(fullName)}
@@ -1125,13 +1125,17 @@ function SlideContact({ data, editMode, onTextChange }) {
             VOTRE INTERLOCUTEUR DÉDIÉ
           </div>
           
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 6 }}>{data.conseiller || "Elisa MARQUET"}</div>
-          <div style={{ color: C.gray, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 40 }}>{data.titreConseiller || "Planificatrice financière | CGP"}</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 6 }}>{data.conseiller || "Votre Conseiller"}</div>
+          <div style={{ color: C.gray, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 40 }}>{data.titreConseiller || "Conseiller en Gestion de Patrimoine"}</div>
           
           <div style={{ display: "grid", gap: 24 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
               <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>T</div>
-              <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>{data.telephone || "+41 76 762 90 32"}</span>
+              <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>{data.telephone || "+41 XX XXX XX XX"}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>E</div>
+              <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>{data.email || "contact@wallswiss.ch"}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
               <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>E</div>
@@ -1159,18 +1163,64 @@ function SlidePrevoyanceIntro({ data, editMode, onTextChange }) {
       {logoCorner()}
       <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Le système des" highlight="3 piliers suisses" subtitle="PRÉVOYANCE" />
-        <div style={{ flex: 1, display: "flex", gap: 32, alignItems: "center" }}>
-          <div style={{ flex: 1, background: C.white, borderTop: `4px solid ${C.darkGray}`, padding: 24, boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: C.darkGray, marginBottom: 12 }}>1er Pilier (AVS/AI)</div>
-            <EditableText editMode={editMode} value={data.texts?.prevIntroP1} onChange={v => onTextChange("prevIntroP1", v)} style={{ fontSize: 13, color: C.gray, lineHeight: 1.6 }} />
+        
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 48, alignItems: "center" }}>
+          
+          {/* Colonne de gauche : Explications des piliers */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div style={{ background: C.white, borderLeft: `4px solid ${C.darkGray}`, padding: "16px 24px", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: C.darkGray }}>1er Pilier (AVS/AI)</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.gray, textTransform: "uppercase", letterSpacing: "0.05em" }}>Besoins vitaux</div>
+              </div>
+              <EditableText editMode={editMode} value={data.texts?.prevIntroP1} onChange={v => onTextChange("prevIntroP1", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, margin: 0 }} />
+            </div>
+            
+            <div style={{ background: C.white, borderLeft: `4px solid ${C.primary}`, padding: "16px 24px", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: C.primary }}>2ème Pilier (LPP)</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: "0.05em", opacity: 0.8 }}>Maintien niveau de vie</div>
+              </div>
+              <EditableText editMode={editMode} value={data.texts?.prevIntroP2} onChange={v => onTextChange("prevIntroP2", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, margin: 0 }} />
+            </div>
+            
+            <div style={{ background: C.white, borderLeft: `4px solid ${C.gold}`, padding: "16px 24px", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: C.gold }}>3ème Pilier (3A/3B)</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.gold, textTransform: "uppercase", letterSpacing: "0.05em" }}>Combler les lacunes</div>
+              </div>
+              <EditableText editMode={editMode} value={data.texts?.prevIntroP3} onChange={v => onTextChange("prevIntroP3", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, margin: 0 }} />
+            </div>
           </div>
-          <div style={{ flex: 1, background: C.white, borderTop: `4px solid ${C.primary}`, padding: 24, boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: C.primary, marginBottom: 12 }}>2ème Pilier (LPP)</div>
-            <EditableText editMode={editMode} value={data.texts?.prevIntroP2} onChange={v => onTextChange("prevIntroP2", v)} style={{ fontSize: 13, color: C.gray, lineHeight: 1.6 }} />
-          </div>
-          <div style={{ flex: 1, background: C.white, borderTop: `4px solid ${C.gold}`, padding: 24, boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: C.gold, marginBottom: 12 }}>3ème Pilier (3A/3B)</div>
-            <EditableText editMode={editMode} value={data.texts?.prevIntroP3} onChange={v => onTextChange("prevIntroP3", v)} style={{ fontSize: 13, color: C.gray, lineHeight: 1.6 }} />
+
+          {/* Colonne de droite : Graphique empilé des 100% */}
+          <div style={{ display: "flex", justifyContent: "center", height: "100%", padding: "10px 0" }}>
+            <div style={{ position: "relative", width: 280, height: "100%", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+              
+              {/* Ligne cible 100% */}
+              <div style={{ position: "absolute", top: 0, left: -20, right: -40, borderTop: `2px dashed ${C.gray}` }}>
+                 <div style={{ position: "absolute", top: -20, right: 0, fontSize: 14, fontWeight: 800, color: C.darkGray }}>100% du salaire</div>
+              </div>
+
+              {/* Ligne cible 60% */}
+              <div style={{ position: "absolute", bottom: "60%", left: -20, right: -40, borderTop: `2px dashed ${C.primary}` }}>
+                 <div style={{ position: "absolute", top: -20, right: 0, fontSize: 14, fontWeight: 800, color: C.primary }}>~60% du salaire</div>
+              </div>
+              
+              {/* Blocs du graphique */}
+              <div style={{ height: "40%", background: C.gold, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid white", borderBottom: "none", zIndex: 2, boxShadow: "0 -4px 10px rgba(0,0,0,0.05)" }}>
+                <div style={{ color: C.white, fontWeight: 800, fontSize: 18, textAlign: "center" }}>3ème Pilier<br/><span style={{fontSize: 12, fontWeight: 600}}>Prévoyance privée</span></div>
+              </div>
+              
+              <div style={{ height: "30%", background: C.primary, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid white", borderBottom: "none", zIndex: 2, boxShadow: "0 -4px 10px rgba(0,0,0,0.05)" }}>
+                <div style={{ color: C.white, fontWeight: 800, fontSize: 18, textAlign: "center" }}>2ème Pilier<br/><span style={{fontSize: 12, fontWeight: 600}}>LPP</span></div>
+              </div>
+              
+              <div style={{ height: "30%", background: C.darkGray, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid white", zIndex: 2, boxShadow: "0 -4px 10px rgba(0,0,0,0.05)" }}>
+                <div style={{ color: C.white, fontWeight: 800, fontSize: 18, textAlign: "center" }}>1er Pilier<br/><span style={{fontSize: 12, fontWeight: 600}}>AVS/AI</span></div>
+              </div>
+              
+            </div>
           </div>
         </div>
       </div>
@@ -3301,11 +3351,11 @@ export default function WallSwissApp() {
       campaignWebhookUrl: "",
       emailSubject: "Votre Analyse Patrimoniale - WallSwiss",
       emailBody: "Bonjour {{prenom}} {{nom}},\n\nVeuillez trouver ci-joint votre rapport d'analyse patrimoniale personnalisé suite à notre entretien.\n\nRestant à votre entière disposition pour toute question.\n\nCordialement,\n{{conseiller}}",
-      agentFirstName: "Elisa",
-      agentLastName: "MARQUET",
-      agentTitle: "Planificatrice financière | CGP",
-      agentPhone: "+41 76 762 90 32",
-      agentEmail: "e.marquet@wallswiss.ch",
+      agentFirstName: "",
+      agentLastName: "",
+      agentTitle: "",
+      agentPhone: "",
+      agentEmail: "",
       defaultLogo: "",
       defaultCover: "",
       defaultPhilosophy: ""
@@ -3511,10 +3561,10 @@ export default function WallSwissApp() {
     dureeProjectionAv: "15",
     capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1",
     lppActions: "", lppOblig: "", lppImmo: "",
-    conseiller: `${appSettings.agentFirstName || "Elisa"} ${appSettings.agentLastName || "MARQUET"}`.trim() || "Conseiller", 
-    titreConseiller: appSettings.agentTitle || "Planificatrice financière | CGP",
-    telephone: appSettings.agentPhone || "+41 76 762 90 32", 
-    email: appSettings.agentEmail || "e.marquet@wallswiss.ch",
+    conseiller: `${appSettings.agentFirstName || ""} ${appSettings.agentLastName || ""}`.trim() || "", 
+    titreConseiller: appSettings.agentTitle || "",
+    telephone: appSettings.agentPhone || "", 
+    email: appSettings.agentEmail || "",
     customLogo: appSettings.defaultLogo || "", 
     customCoverImage: appSettings.defaultCover || "", 
     customPhilosophyImage: appSettings.defaultPhilosophy || "",
@@ -3568,7 +3618,7 @@ export default function WallSwissApp() {
     }
   };
 
-  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", customClientFields: [], assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", hasProjectionsMultiples: false, montantInvestissement2: "200000", capaciteEpargne2: "1000", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, showPrevoyanceComparatif: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", dureeProjectionAv: "15", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", lppActions: "", lppOblig: "", lppImmo: "", conseiller: `${appSettings.agentFirstName || "Elisa"} ${appSettings.agentLastName || "MARQUET"}`.trim() || "Conseiller", titreConseiller: appSettings.agentTitle || "Planificatrice financière | CGP", telephone: appSettings.agentPhone || "+41 76 762 90 32", email: appSettings.agentEmail || "e.marquet@wallswiss.ch", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
+  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", customClientFields: [], assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", hasProjectionsMultiples: false, montantInvestissement2: "200000", capaciteEpargne2: "1000", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, showPrevoyanceComparatif: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", dureeProjectionAv: "15", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", lppActions: "", lppOblig: "", lppImmo: "", conseiller: `${appSettings.agentFirstName || ""} ${appSettings.agentLastName || ""}`.trim() || "", titreConseiller: appSettings.agentTitle || "", telephone: appSettings.agentPhone || "", email: appSettings.agentEmail || "", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
 
   const handlePreviewUpdate = async (newData) => {
     setPreview(newData);
@@ -4094,7 +4144,7 @@ export default function WallSwissApp() {
 
       {/* ────────────────── MENU LATÉRAL (SIDEBAR) ────────────────── */}
       <aside className="no-print" style={{ width: "260px", background: C.sidebar, color: C.white, display: "flex", flexDirection: "column", flexShrink: 0, boxShadow: "2px 0 10px rgba(0,0,0,0.1)", zIndex: 110 }}>
-        <div style={{ padding: "32px 24px", display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <div style={{ padding: "32px 24px", display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
           <div style={{ background: C.white, padding: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <img src={appSettings.defaultLogo || LOGO_URL} alt="WallSwiss" style={{ height: "20px", filter: "invert(1) sepia(1) saturate(5) hue-rotate(345deg) brightness(0.5)" }} />
           </div>
@@ -4104,7 +4154,7 @@ export default function WallSwissApp() {
           </div>
         </div>
 
-        <nav style={{ flex: 1, padding: "24px 0", display: "flex", flexDirection: "column", gap: 8 }}>
+        <nav style={{ flex: 1, padding: "24px 0", display: "flex", flexDirection: "column", gap: 8, overflowY: "auto", minHeight: 0 }}>
           <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700, letterSpacing: "0.1em", padding: "0 24px", marginBottom: 8, textTransform: "uppercase" }}>Général</div>
           
           <button 
@@ -4124,10 +4174,9 @@ export default function WallSwissApp() {
           </button>
           
           <button 
-            onClick={() => setActiveModule("mailing")} 
-            style={{ width: "100%", textAlign: "left", background: activeModule === "mailing" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "mailing" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "mailing" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "mailing" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
+            style={{ width: "100%", textAlign: "left", background: "transparent", color: "rgba(255,255,255,0.4)", border: "none", borderLeft: `3px solid transparent`, padding: "12px 24px", cursor: "not-allowed", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
           >
-            <Icons.Mail size={16} /> Mailing & Séquences
+            <Icons.Mail size={16} /> Mailing & Séquences <span style={{ fontSize: 10, fontStyle: "italic", opacity: 0.8 }}>(à venir)</span>
           </button>
 
           <button 
@@ -4138,10 +4187,9 @@ export default function WallSwissApp() {
           </button>
 
           <button 
-            onClick={() => setActiveModule("boite-a-outils")} 
-            style={{ width: "100%", textAlign: "left", background: activeModule === "boite-a-outils" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "boite-a-outils" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "boite-a-outils" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "boite-a-outils" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
+            style={{ width: "100%", textAlign: "left", background: "transparent", color: "rgba(255,255,255,0.4)", border: "none", borderLeft: `3px solid transparent`, padding: "12px 24px", cursor: "not-allowed", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
           >
-            <Icons.Settings size={16} /> Boîte à outils
+            <Icons.Settings size={16} /> Boîte à outils <span style={{ fontSize: 10, fontStyle: "italic", opacity: 0.8 }}>(à venir)</span>
           </button>
 
           <button 
@@ -4150,18 +4198,9 @@ export default function WallSwissApp() {
           >
             <Icons.FileText size={16} /> Ressources Documents
           </button>
-
-          {user?.email === ADMIN_EMAIL && (
-            <button 
-              onClick={() => setActiveModule("admin")} 
-              style={{ width: "100%", textAlign: "left", background: activeModule === "admin" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "admin" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "admin" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "admin" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
-            >
-              <Icons.Shield size={16} /> Gestion des accès
-            </button>
-          )}
         </nav>
 
-        <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+        <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
           <button 
             onClick={() => setActiveModule("settings")} 
             style={{ width: "100%", textAlign: "left", background: activeModule === "settings" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "settings" ? C.white : "rgba(255,255,255,0.6)", border: "none", padding: "8px 0", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: activeModule === "settings" ? 600 : 500, transition: "0.2s", display: "flex", alignItems: "center", gap: 10 }}
@@ -4170,7 +4209,7 @@ export default function WallSwissApp() {
           </button>
         </div>
 
-        <div style={{ padding: "24px", borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
+        <div style={{ padding: "24px", borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: 11, color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>
           <div style={{ marginBottom: 12, color: C.gold, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}><Icons.User size={14} /> {user?.email || "Mode Démo"}</div>
           <button onClick={handleLogout} style={{ background: "transparent", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.2)", padding: "4px 8px", cursor: "pointer", fontSize: 10, width: "100%", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 16 }}>Déconnexion</button>
           <div>{APP_VERSION}</div>
@@ -4202,17 +4241,14 @@ export default function WallSwissApp() {
               </div>
 
               <div 
-                onClick={() => setActiveModule("mailing")}
-                style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s", borderRadius: 0 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.06)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+                style={{ background: "rgba(255,255,255,0.5)", border: `1px dashed ${C.mediumGray}`, padding: 32, cursor: "not-allowed", opacity: 0.6, borderRadius: 0 }}
               >
-                <div style={{ background: "rgba(105,33,2,0.06)", color: C.primary, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+                <div style={{ background: C.lightGray, color: C.darkGray, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
                   <Icons.Mail size={28} />
                 </div>
-                <h3 style={{ fontSize: 18, color: C.primary, marginBottom: 8, marginTop: 0 }}>Mailing & Séquences</h3>
+                <h3 style={{ fontSize: 18, color: C.darkGray, marginBottom: 8, marginTop: 0 }}>Mailing & Séquences <span style={{ fontSize: 12, fontWeight: "normal", fontStyle: "italic" }}>(à venir)</span></h3>
                 <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Importez vos contacts en masse et envoyez des campagnes d'e-mails personnalisées.</p>
-                <span style={{ color: C.gold, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ouvrir le module &rarr;</span>
+                <span style={{ color: C.gray, fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", background: C.mediumGray, padding: "4px 8px" }}>Bientôt disponible</span>
               </div>
 
               <div 
@@ -4230,17 +4266,14 @@ export default function WallSwissApp() {
               </div>
 
               <div 
-                onClick={() => setActiveModule("boite-a-outils")}
-                style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s", borderRadius: 0 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.06)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+                style={{ background: "rgba(255,255,255,0.5)", border: `1px dashed ${C.mediumGray}`, padding: 32, cursor: "not-allowed", opacity: 0.6, borderRadius: 0 }}
               >
-                <div style={{ background: "rgba(105,33,2,0.06)", color: C.primary, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+                <div style={{ background: C.lightGray, color: C.darkGray, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
                   <Icons.Settings size={28} />
                 </div>
-                <h3 style={{ fontSize: 18, color: C.primary, marginBottom: 8, marginTop: 0 }}>Boîte à outils</h3>
+                <h3 style={{ fontSize: 18, color: C.darkGray, marginBottom: 8, marginTop: 0 }}>Boîte à outils <span style={{ fontSize: 12, fontWeight: "normal", fontStyle: "italic" }}>(à venir)</span></h3>
                 <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Accédez rapidement à Salesforce, Lemania, Liechtenstein Life et SwissQuote.</p>
-                <span style={{ color: C.gold, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ouvrir le module &rarr;</span>
+                <span style={{ color: C.gray, fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", background: C.mediumGray, padding: "4px 8px" }}>Bientôt disponible</span>
               </div>
 
               <div 

@@ -2783,6 +2783,9 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailForm, setEmailForm] = useState({ to: "", subject: "", body: "" });
 
+  const typeMap = { "swissquote": "Compte_Titre", "prevoyance": "Prevoyance", "lpp": "LPP", "assurance-vie": "Assurance_Vie" };
+  const pdfFilename = `Rapport_${typeMap[data.templateId] || "Financier"}_${data.prenom ? data.prenom.trim() + "_" : ""}${(data.nom || 'Client').trim()}.pdf`.replace(/\s+/g, '_');
+
   const handleTextChange = (key, value) => {
     onUpdateData({ ...data, texts: { ...data.texts, [key]: value } });
   };
@@ -2843,7 +2846,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
         await html2pdf()
           .set({
             margin: 0,
-            filename: `Rapport_${data.nom || 'Client'}.pdf`,
+            filename: pdfFilename,
             image: { type: 'jpeg', quality: 1 },
             html2canvas: {
               scale: 2,
@@ -2943,7 +2946,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
       // 3. Génération du PDF en base64 en mémoire avec la méthode fiable
       const opt = {
         margin: 0,
-        filename: `Rapport_${data.nom || 'Client'}.pdf`,
+        filename: pdfFilename,
         image: { type: 'jpeg', quality: 0.8 }, 
         html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, scrollX: 0, windowWidth: 1280, logging: false }, 
         pagebreak: { mode: ['css', 'legacy'] },
@@ -2966,7 +2969,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
           subject: emailForm.subject, 
           body: emailForm.body, 
           pdfBase64: pureBase64,
-          filename: `Rapport_Financier_${data.nom || 'Client'}.pdf`
+          filename: pdfFilename
         }) 
       });
 
@@ -3085,6 +3088,9 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
       <div className="no-print" style={{ background: C.black, padding: "10px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <span style={{ color: C.white, fontSize: 12, fontWeight: 600, letterSpacing: "0.06em" }}>APERCU — {data.prenom} {(data.nom||"").toUpperCase()}</span>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <button onClick={handleDownloadPDF} disabled={isPdfLoading || isEmailing} style={{ background: "transparent", color: C.white, border: `1px solid ${C.white}`, padding: "6px 12px", cursor: (isPdfLoading || isEmailing) ? "wait" : "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", opacity: (isPdfLoading || isEmailing) ? 0.7 : 1, transition: "0.2s" }}>
+            {isPdfLoading ? "⏳ GÉNÉRATION..." : "📥 TÉLÉCHARGER LE PDF"}
+          </button>
           <button onClick={openEmailModal} disabled={isPdfLoading || isEmailing} style={{ background: emailSuccess ? "#10B981" : C.gold, color: C.white, border: "none", padding: "6px 12px", cursor: (isPdfLoading || isEmailing) ? "wait" : "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", opacity: (isPdfLoading || isEmailing) ? 0.7 : 1, transition: "0.2s" }}>
             {isEmailing ? "⏳ ENVOI..." : emailSuccess ? "✅ ENVOYÉ !" : "📧 ENVOYER PAR EMAIL"}
           </button>

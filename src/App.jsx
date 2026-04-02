@@ -1138,10 +1138,6 @@ function SlideContact({ data, editMode, onTextChange }) {
               <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>{data.email || "contact@wallswiss.ch"}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-              <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>E</div>
-              <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>{data.email || "e.marquet@wallswiss.ch"}</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
               <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>A</div>
               <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>Rue Kleberg 14, 1201 Genève</span>
             </div>
@@ -3206,8 +3202,7 @@ const PREDEFINED_AGENTS = [
   { prenom: "Baptiste", nom: "HAENSLER", tel: "077 209 29 08", email: "b.haensler@wallswiss.ch", genre: "M" },
   { prenom: "Louis", nom: "BORNE", tel: "076 231 92 75", email: "l.borne@wallswiss.ch", genre: "M" },
   { prenom: "Badis", nom: "TOUIHRI", tel: "", email: "b.touihri@wallswiss.ch", genre: "M" },
-  { prenom: "Cloé", nom: "BESNARD", tel: "", email: "c.besnard@wallswiss.ch", genre: "F" },
-  { prenom: "Elisa", nom: "MARQUET", tel: "+41 76 762 90 32", email: "e.marquet@wallswiss.ch", genre: "F" }
+  { prenom: "Cloé", nom: "BESNARD", tel: "", email: "c.besnard@wallswiss.ch", genre: "F" }
 ];
 
 export default function WallSwissApp() {
@@ -4174,9 +4169,10 @@ export default function WallSwissApp() {
           </button>
           
           <button 
-            style={{ width: "100%", textAlign: "left", background: "transparent", color: "rgba(255,255,255,0.4)", border: "none", borderLeft: `3px solid transparent`, padding: "12px 24px", cursor: "not-allowed", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
+            onClick={() => window.open("https://wallswiss.my.salesforce.com/", "_blank")} 
+            style={{ width: "100%", textAlign: "left", background: "transparent", color: "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid transparent`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
           >
-            <Icons.Mail size={16} /> Mailing & Séquences <span style={{ fontSize: 10, fontStyle: "italic", opacity: 0.8 }}>(à venir)</span>
+            <Icons.Users size={16} /> CRM Salesforce
           </button>
 
           <button 
@@ -4184,12 +4180,6 @@ export default function WallSwissApp() {
             style={{ width: "100%", textAlign: "left", background: activeModule === "annuaire" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "annuaire" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "annuaire" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "annuaire" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
           >
             <Icons.BookContacts size={16} /> Annuaire Partenaires
-          </button>
-
-          <button 
-            style={{ width: "100%", textAlign: "left", background: "transparent", color: "rgba(255,255,255,0.4)", border: "none", borderLeft: `3px solid transparent`, padding: "12px 24px", cursor: "not-allowed", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
-          >
-            <Icons.Settings size={16} /> Boîte à outils <span style={{ fontSize: 10, fontStyle: "italic", opacity: 0.8 }}>(à venir)</span>
           </button>
 
           <button 
@@ -4241,17 +4231,6 @@ export default function WallSwissApp() {
               </div>
 
               <div 
-                style={{ background: "rgba(255,255,255,0.5)", border: `1px dashed ${C.mediumGray}`, padding: 32, cursor: "not-allowed", opacity: 0.6, borderRadius: 0 }}
-              >
-                <div style={{ background: C.lightGray, color: C.darkGray, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                  <Icons.Mail size={28} />
-                </div>
-                <h3 style={{ fontSize: 18, color: C.darkGray, marginBottom: 8, marginTop: 0 }}>Mailing & Séquences <span style={{ fontSize: 12, fontWeight: "normal", fontStyle: "italic" }}>(à venir)</span></h3>
-                <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Importez vos contacts en masse et envoyez des campagnes d'e-mails personnalisées.</p>
-                <span style={{ color: C.gray, fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", background: C.mediumGray, padding: "4px 8px" }}>Bientôt disponible</span>
-              </div>
-
-              <div 
                 onClick={() => setActiveModule("annuaire")}
                 style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s", borderRadius: 0 }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.06)"; }}
@@ -4266,14 +4245,17 @@ export default function WallSwissApp() {
               </div>
 
               <div 
-                style={{ background: "rgba(255,255,255,0.5)", border: `1px dashed ${C.mediumGray}`, padding: 32, cursor: "not-allowed", opacity: 0.6, borderRadius: 0 }}
+                onClick={() => window.open("https://wallswiss.my.salesforce.com/", "_blank")}
+                style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s", borderRadius: 0 }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.06)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
               >
-                <div style={{ background: C.lightGray, color: C.darkGray, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                  <Icons.Settings size={28} />
+                <div style={{ background: "rgba(105,33,2,0.06)", color: C.primary, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+                  <Icons.Users size={28} />
                 </div>
-                <h3 style={{ fontSize: 18, color: C.darkGray, marginBottom: 8, marginTop: 0 }}>Boîte à outils <span style={{ fontSize: 12, fontWeight: "normal", fontStyle: "italic" }}>(à venir)</span></h3>
-                <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Accédez rapidement à Salesforce, Lemania, Liechtenstein Life et SwissQuote.</p>
-                <span style={{ color: C.gray, fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", background: C.mediumGray, padding: "4px 8px" }}>Bientôt disponible</span>
+                <h3 style={{ fontSize: 18, color: C.primary, marginBottom: 8, marginTop: 0 }}>CRM Salesforce</h3>
+                <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Accédez à votre espace CRM pour gérer vos prospects et clients.</p>
+                <span style={{ color: C.gold, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ouvrir Salesforce &rarr;</span>
               </div>
 
               <div 
@@ -4289,20 +4271,6 @@ export default function WallSwissApp() {
                 <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Téléchargez facilement les documents, PDF et mandats officiels pour vos clients.</p>
                 <span style={{ color: C.gold, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ouvrir le module &rarr;</span>
               </div>
-
-              {[
-                { title: "Simulateurs Financiers", desc: "Calculez des projections d'assurance vie, prévoyance et immobilier.", icon: <Icons.PieChart size={28} /> },
-                { title: "CRM Clients", desc: "Gérez votre portefeuille clients et suivez l'historique de vos rendez-vous.", icon: <Icons.Users size={28} /> }
-              ].map((mod, i) => (
-                <div key={i} style={{ background: "rgba(255,255,255,0.5)", border: `1px dashed ${C.mediumGray}`, padding: 32, cursor: "not-allowed", opacity: 0.6 }}>
-                  <div style={{ background: C.lightGray, color: C.darkGray, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                    {mod.icon}
-                  </div>
-                  <h3 style={{ fontSize: 18, color: C.darkGray, marginBottom: 8, marginTop: 0 }}>{mod.title}</h3>
-                  <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>{mod.desc}</p>
-                  <span style={{ color: C.gray, fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", background: C.mediumGray, padding: "4px 8px" }}>Bientôt disponible</span>
-                </div>
-              ))}
             </div>
           </div>
         )}
@@ -4587,13 +4555,13 @@ export default function WallSwissApp() {
                     <p style={{ color: C.gray, fontSize: 13, marginBottom: 24, marginTop: 0 }}>Ces informations seront utilisées par défaut comme variables dans vos rapports et vos campagnes d'e-mailing.</p>
 
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-                      <div><label style={S.label}>Prénom</label><input style={S.input} value={appSettings.agentFirstName || ""} onChange={e => setAppSettings({...appSettings, agentFirstName: e.target.value})} placeholder="Elisa" /></div>
-                      <div><label style={S.label}>Nom</label><input style={S.input} value={appSettings.agentLastName || ""} onChange={e => setAppSettings({...appSettings, agentLastName: e.target.value})} placeholder="MARQUET" /></div>
+                      <div><label style={S.label}>Prénom</label><input style={S.input} value={appSettings.agentFirstName || ""} onChange={e => setAppSettings({...appSettings, agentFirstName: e.target.value})} placeholder="Prénom" /></div>
+                      <div><label style={S.label}>Nom</label><input style={S.input} value={appSettings.agentLastName || ""} onChange={e => setAppSettings({...appSettings, agentLastName: e.target.value})} placeholder="Nom" /></div>
                     </div>
                     <div style={S.fg}><label style={S.label}>Titre / Fonction</label><input style={S.input} value={appSettings.agentTitle || ""} onChange={e => setAppSettings({...appSettings, agentTitle: e.target.value})} placeholder="Planificatrice financière | CGP" /></div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
                       <div><label style={S.label}>Téléphone</label><input style={S.input} value={appSettings.agentPhone || ""} onChange={e => setAppSettings({...appSettings, agentPhone: e.target.value})} placeholder="+41 76..." /></div>
-                      <div><label style={S.label}>Email de contact</label><input style={S.input} value={appSettings.agentEmail || ""} onChange={e => setAppSettings({...appSettings, agentEmail: e.target.value})} placeholder="e.marquet@wallswiss.ch" /></div>
+                      <div><label style={S.label}>Email de contact</label><input style={S.input} value={appSettings.agentEmail || ""} onChange={e => setAppSettings({...appSettings, agentEmail: e.target.value})} placeholder="contact@wallswiss.ch" /></div>
                     </div>
                   </div>
                 )}
@@ -4863,4 +4831,3 @@ export default function WallSwissApp() {
     </div>
   );
 }
-

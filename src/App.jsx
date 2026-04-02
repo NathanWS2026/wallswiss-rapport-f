@@ -4173,13 +4173,6 @@ export default function WallSwissApp() {
           >
             <Icons.FileText size={16} /> Rapport Financier
           </button>
-          
-          <button 
-            onClick={() => window.open("https://wallswiss.my.salesforce.com/", "_blank")} 
-            style={{ width: "100%", textAlign: "left", background: "transparent", color: "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid transparent`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
-          >
-            <Icons.Users size={16} /> CRM Salesforce
-          </button>
 
           <button 
             onClick={() => setActiveModule("annuaire")} 
@@ -4193,6 +4186,15 @@ export default function WallSwissApp() {
             style={{ width: "100%", textAlign: "left", background: activeModule === "ressources" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "ressources" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "ressources" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "ressources" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
           >
             <Icons.FileText size={16} /> Ressources Documents
+          </button>
+
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700, letterSpacing: "0.1em", padding: "0 24px", margin: "16px 0 8px", textTransform: "uppercase" }}>Liens rapides</div>
+
+          <button 
+            onClick={() => window.open("https://wallswiss.my.salesforce.com/", "_blank")} 
+            style={{ width: "100%", textAlign: "left", background: "transparent", color: "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid transparent`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 500, transition: "0.2s", display: "flex", alignItems: "center", gap: 10 }}
+          >
+            <Icons.Users size={16} /> CRM Salesforce
           </button>
         </nav>
 

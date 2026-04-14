@@ -4500,32 +4500,67 @@ export default function WallSwissApp() {
                   <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Téléchargez directement les documents officiels dont vous avez besoin pour vos rendez-vous.</p>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
-                  {[
-                    { nom: "Recherche Centrale LPP", desc: "Formulaire de recherche du 2ème Pilier", fichier: "/Centrale 2P.pdf" },
-                    { nom: "Mandat de gestion 2026", desc: "Mandat officiel WallSwiss", fichier: "/Mandat de gestion Wallswiss 2026.pdf" }
-                  ].map((doc, i) => (
-                    <div key={i} style={{ ...S.card, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 20, transition: "transform 0.2s" }} onMouseEnter={(e)=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={(e)=>e.currentTarget.style.transform="translateY(0)"}>
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-                        <div style={{ background: "rgba(165,149,104,0.1)", color: C.gold, width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px", flexShrink: 0 }}>
-                          <Icons.FileText size={24} />
+                {[
+                  {
+                    titre: "Général",
+                    docs: [
+                      { nom: "Mandat de gestion 2026", desc: "Mandat officiel WallSwiss", fichier: "/Mandat de gestion Wallswiss 2026.pdf" }
+                    ]
+                  },
+                  {
+                    titre: "Modèles de courriers",
+                    docs: [
+                      { nom: "Lettre envoi postal", desc: "Modèle The WallSwiss Partner", fichier: "/WS The WallSwiss Partner lettre envoi postal.docx" },
+                      { nom: "Demande valeur rachat", desc: "Modèle de demande de rachat", fichier: "/Modèle - demande de valeur de rachat.docx" },
+                      { nom: "Récupération de fonds", desc: "Modèle de récupération de fonds", fichier: "/Modèle - demande de récupération de fonds.docx" },
+                      { nom: "Suppression Garantie", desc: "Lettre suppression garantie select", fichier: "/LETTRE SUPPRESSION GARANTIE SELECT.docx" },
+                      { nom: "Libération de primes", desc: "Lettre demande de libération", fichier: "/Lettre demande de libération de primes .docx" }
+                    ]
+                  },
+                  {
+                    titre: "LPP",
+                    docs: [
+                      { nom: "Recherche Centrale LPP", desc: "Formulaire de recherche du 2ème Pilier", fichier: "/Centrale 2P.pdf" },
+                      { nom: "Liste Documents Retrait", desc: "Documents à fournir pour retrait EPL", fichier: "/1._Liste_Documents_A_Fournir_Retrait_Epl.pdf" },
+                      { nom: "Demande de Retrait EPL", desc: "Formulaire de demande de retrait FLLP", fichier: "/Demande_de_Retrait_Epl_FLLP_Fr.pdf" },
+                      { nom: "Déblocage LPP Lemania", desc: "Formulaire de déblocage LPP LEMANIA", fichier: "/Formulaire de déblocage LPP LEMANIA.pdf" }
+                    ]
+                  }
+                ].map((categorie, indexCat) => (
+                  <div key={indexCat} style={{ marginBottom: 40 }}>
+                    <h3 style={{ fontSize: 14, color: C.gray, textTransform: "uppercase", letterSpacing: "0.1em", borderBottom: `2px solid ${C.mediumGray}`, paddingBottom: 8, marginBottom: 20 }}>
+                      {categorie.titre}
+                    </h3>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                      {categorie.docs.map((doc, i) => (
+                        <div 
+                          key={i} 
+                          style={{ background: C.white, border: `1px solid ${C.lightGray}`, borderLeft: `4px solid transparent`, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all 0.2s", borderRadius: "0px" }} 
+                          onMouseEnter={(e)=> { e.currentTarget.style.borderLeftColor = C.gold; e.currentTarget.style.background = "rgba(165,149,104,0.02)"; e.currentTarget.style.boxShadow = "0 4px 15px rgba(0,0,0,0.03)"; }} 
+                          onMouseLeave={(e)=> { e.currentTarget.style.borderLeftColor = "transparent"; e.currentTarget.style.background = C.white; e.currentTarget.style.boxShadow = "none"; }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+                            <div style={{ background: "rgba(105,33,2,0.04)", color: C.primary, width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px", flexShrink: 0 }}>
+                              <Icons.FileText size={24} />
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 16, fontWeight: 700, color: C.primaryDark, marginBottom: 4 }}>{doc.nom}</div>
+                              <div style={{ fontSize: 13, color: C.gray }}>{doc.desc}</div>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => window.open(doc.fichier, "_blank")} 
+                            style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primaryDark, padding: "10px 24px", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 10, borderRadius: "0px" }}
+                            onMouseEnter={(e)=> { e.currentTarget.style.background = C.primary; e.currentTarget.style.color = C.white; e.currentTarget.style.borderColor = C.primary; }}
+                            onMouseLeave={(e)=> { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.primaryDark; e.currentTarget.style.borderColor = C.mediumGray; }}
+                          >
+                            Télécharger / Ouvrir <span style={{ fontSize: 14 }}>&rarr;</span>
+                          </button>
                         </div>
-                        <div>
-                          <div style={{ fontSize: 16, fontWeight: 800, color: C.primaryDark, marginBottom: 4 }}>{doc.nom}</div>
-                          <div style={{ fontSize: 12, color: C.gray, lineHeight: 1.5 }}>{doc.desc}</div>
-                        </div>
-                      </div>
-                      <button 
-                        onClick={() => window.open(doc.fichier, "_blank")} 
-                        style={{ width: "100%", background: C.white, border: `2px solid ${C.primary}`, color: C.primary, padding: "10px 0", cursor: "pointer", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", transition: "all 0.2s", display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}
-                        onMouseEnter={(e)=> { e.currentTarget.style.background = C.primary; e.currentTarget.style.color = C.white; }}
-                        onMouseLeave={(e)=> { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.primary; }}
-                      >
-                        Télécharger le PDF &darr;
-                      </button>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
             </main>
           </div>

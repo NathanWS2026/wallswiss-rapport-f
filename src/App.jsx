@@ -5630,27 +5630,6 @@ export default function WallSwissApp() {
                   </div>
                 ) : (
                   <div style={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
-                    {user?.email === ADMIN_EMAIL && (
-                      <div style={{ background: C.white, border: `2px solid ${C.gold}`, padding: 24, marginBottom: 32, display: "flex", gap: 32, alignItems: "center" }}>
-                        <div>
-                          <div style={{ fontSize: 11, color: C.gold, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>👑 Vue Administrateur</div>
-                          <div style={{ fontSize: 24, fontWeight: 800, color: C.primary }}>Statistiques Globales</div>
-                        </div>
-                        <div style={{ height: 40, width: 1, background: C.mediumGray }}></div>
-                        <div>
-                          <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 600 }}>Total Rapports</div>
-                          <div style={{ fontSize: 20, fontWeight: 700, color: C.primaryDark }}>{reports.length}</div>
-                        </div>
-                        <div style={{ height: 40, width: 1, background: C.mediumGray }}></div>
-                        <div>
-                          <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 600 }}>Agents Actifs</div>
-                          <div style={{ fontSize: 20, fontWeight: 700, color: C.primaryDark }}>
-                            {new Set(reports.map(r => r.agentEmail)).size}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
                       <div>
                         <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>

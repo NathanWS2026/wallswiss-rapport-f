@@ -2773,7 +2773,7 @@ function SlideAvProjections({ data, index = 1 }) {
 
 // ────────────────────── PREVIEW MODAL ──────────────────────
 
-function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
+function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDelete }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [editMode, setEditMode] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
@@ -2782,6 +2782,15 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
   
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailForm, setEmailForm] = useState({ to: "", subject: "", body: "" });
+
+  useEffect(() => {
+    if (data._autoDownload) {
+      const timer = setTimeout(() => {
+        handleDownloadPDF();
+      }, 800); // Laisse le temps au DOM de se générer avant le snapshot PDF
+      return () => clearTimeout(timer);
+    }
+  }, [data._autoDownload]);
 
   const typeMap = { "swissquote": "Compte_Titre", "prevoyance": "Prevoyance", "lpp": "LPP", "assurance-vie": "Assurance_Vie" };
   const pdfFilename = `Rapport_${typeMap[data.templateId] || "Financier"}_${data.prenom ? data.prenom.trim() + "_" : ""}${(data.nom || 'Client').trim()}.pdf`.replace(/\s+/g, '_');
@@ -3087,18 +3096,28 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings }) {
     <div className="preview-modal-container" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 200, overflow: "hidden", display: "flex", flexDirection: "column" }}>
       <div className="no-print" style={{ background: C.black, padding: "10px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <span style={{ color: C.white, fontSize: 12, fontWeight: 600, letterSpacing: "0.06em" }}>APERCU — {data.prenom} {(data.nom||"").toUpperCase()}</span>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <button onClick={handleDownloadPDF} disabled={isPdfLoading || isEmailing} style={{ background: "transparent", color: C.white, border: `1px solid ${C.white}`, padding: "6px 12px", cursor: (isPdfLoading || isEmailing) ? "wait" : "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", opacity: (isPdfLoading || isEmailing) ? 0.7 : 1, transition: "0.2s" }}>
-            {isPdfLoading ? "⏳ GÉNÉRATION..." : "📥 TÉLÉCHARGER LE PDF"}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <button onClick={onEdit} style={{ background: "rgba(255,255,255,0.1)", color: C.white, border: "none", padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 600, borderRadius: "0px", transition: "0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.2)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
+            ✎ PARAMÉTRAGE
+          </button>
+          <button onClick={() => setEditMode(!editMode)} style={{ background: editMode ? C.gold : "transparent", border: `1px solid ${editMode ? C.gold : "rgba(255,255,255,0.3)"}`, color: C.white, padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 600, borderRadius: "0px", transition: "0.2s" }}>
+            {editMode ? "✓ TERMINER TEXTES" : "✎ TEXTES LIBRES"}
+          </button>
+          <button onClick={onDelete} style={{ background: "transparent", color: "#FCA5A5", border: "1px solid rgba(252,165,165,0.3)", padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 600, borderRadius: "0px", transition: "0.2s" }} onMouseEnter={e=>{e.currentTarget.style.background="rgba(239,68,68,0.2)";e.currentTarget.style.color="#FFF"}} onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color="#FCA5A5"}}>
+            🗑️ SUPPRIMER
+          </button>
+          
+          <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)", margin: "0 4px" }} />
+          
+          <button onClick={handleDownloadPDF} disabled={isPdfLoading || isEmailing} style={{ background: C.white, color: C.primaryDark, border: "none", padding: "6px 12px", cursor: (isPdfLoading || isEmailing) ? "wait" : "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", opacity: (isPdfLoading || isEmailing) ? 0.7 : 1, transition: "0.2s" }}>
+            {isPdfLoading ? "⏳ GÉNÉRATION..." : "📥 TÉLÉCHARGER PDF"}
           </button>
           <button onClick={openEmailModal} disabled={isPdfLoading || isEmailing} style={{ background: emailSuccess ? "#10B981" : C.gold, color: C.white, border: "none", padding: "6px 12px", cursor: (isPdfLoading || isEmailing) ? "wait" : "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", opacity: (isPdfLoading || isEmailing) ? 0.7 : 1, transition: "0.2s" }}>
-            {isEmailing ? "⏳ ENVOI..." : emailSuccess ? "✅ ENVOYÉ !" : "📧 ENVOYER PAR EMAIL"}
+            {isEmailing ? "⏳ ENVOI..." : emailSuccess ? "✅ ENVOYÉ !" : "📧 EMAIL"}
           </button>
-          <button onClick={() => setEditMode(!editMode)} style={{ background: editMode ? C.gold : "transparent", border: `1px solid ${C.gold}`, color: editMode ? C.white : C.gold, padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", transition: "0.2s" }}>
-            {editMode ? "✓ TERMINER L'ÉDITION" : "✎ ÉDITER LES TEXTES"}
-          </button>
-          <span style={{ color: C.gold, fontSize: 11, marginLeft: 8 }}>{currentSlide + 1} / {slides.length}</span>
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.1)", color: C.white, border: "none", padding: "6px 16px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 11, fontWeight: 600 }}>FERMER</button>
+          
+          <span style={{ color: C.gold, fontSize: 11, marginLeft: 4 }}>{currentSlide + 1} / {slides.length}</span>
+          <button onClick={onClose} style={{ background: "transparent", color: C.gray, border: "none", padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 11, fontWeight: 600 }}>FERMER ✕</button>
         </div>
       </div>
       <div className="no-print" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 60px", position: "relative", minHeight: 0 }}>
@@ -4860,10 +4879,11 @@ export default function WallSwissApp() {
                                       }
                                     </div>
                                   </div>
-                                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                                    <button onClick={(e) => handleEditReport(e, r)} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primary, padding: "4px 8px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s" }} onMouseEnter={e=>{e.currentTarget.style.background=C.primary;e.currentTarget.style.color=C.white}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color=C.primary}}>ÉDITER</button>
-                                    <button onClick={(e) => handleDeleteReport(e, r.id)} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: "#EF4444", padding: "4px 8px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s" }} onMouseEnter={e=>{e.currentTarget.style.background="#EF4444";e.currentTarget.style.color=C.white}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color="#EF4444"}}>SUPPRIMER</button>
-                                    <span style={{ fontSize: 11, color: C.gold, fontWeight: 700, background: "rgba(165,149,104,0.1)", padding: "5px 10px", display: "flex", alignItems: "center", height: "100%", boxSizing: "border-box" }}>OUVRIR &rarr;</span>
+                                  <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end", maxWidth: "230px" }}>
+                                    <button onClick={(e) => handleEditReport(e, r)} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primary, padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%" }} onMouseEnter={e=>{e.currentTarget.style.background=C.primary;e.currentTarget.style.color=C.white;e.currentTarget.style.borderColor=C.primary}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color=C.primary;e.currentTarget.style.borderColor=C.mediumGray}}>✎ ÉDITER</button>
+                                    <button onClick={(e) => handleDeleteReport(e, r.id)} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: "#EF4444", padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%" }} onMouseEnter={e=>{e.currentTarget.style.background="#EF4444";e.currentTarget.style.color=C.white;e.currentTarget.style.borderColor="#EF4444"}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color="#EF4444";e.currentTarget.style.borderColor=C.mediumGray}}>🗑️ SUPPRIMER</button>
+                                    <button onClick={(e) => { e.stopPropagation(); setPreview({...r, _autoDownload: true}); }} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primaryDark, padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%" }} onMouseEnter={e=>{e.currentTarget.style.background=C.primaryDark;e.currentTarget.style.color=C.white;e.currentTarget.style.borderColor=C.primaryDark}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color=C.primaryDark;e.currentTarget.style.borderColor=C.mediumGray}}>📥 PDF</button>
+                                    <button onClick={(e) => { e.stopPropagation(); setPreview(r); }} style={{ background: C.gold, border: `1px solid ${C.gold}`, color: C.white, padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%", display: "flex", justifyContent: "center", alignItems: "center" }} onMouseEnter={e=>{e.currentTarget.style.opacity=0.8}} onMouseLeave={e=>{e.currentTarget.style.opacity=1}}>👁️ APERÇU</button>
                                   </div>
                                 </div>
                               </div>
@@ -4902,7 +4922,7 @@ export default function WallSwissApp() {
         )}
       </div>
 
-      {preview && <ReportPreview data={preview} onClose={()=>setPreview(null)} onUpdateData={handlePreviewUpdate} appSettings={appSettings} />}
+      {preview && <ReportPreview data={preview} onClose={()=>setPreview(null)} onUpdateData={handlePreviewUpdate} appSettings={appSettings} onEdit={(e)=>{handleEditReport(e, preview); setPreview(null);}} onDelete={(e)=>{handleDeleteReport(e, preview.id); setPreview(null);}} />}
     </div>
   );
 }

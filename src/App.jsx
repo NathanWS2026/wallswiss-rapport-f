@@ -62,11 +62,69 @@ const Icons = {
   Phone: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>,
   BookContacts: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path><path d="M8 7h6"></path><path d="M8 11h8"></path></svg>,
   Copy: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>,
-  Inbox: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>
+  Inbox: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>,
+  Target: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+  ImageIcon: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>,
+  PhoneCall: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/><path d="M14.05 2a9 9 0 0 1 8 7.94"/><path d="M14.05 6A5 5 0 0 1 18 10"/></svg>,
+  Crosshair: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="22" x2="18" y1="12" y2="12"/><line x1="6" x2="2" y1="12" y2="12"/><line x1="12" x2="12" y1="6" y2="2"/><line x1="12" x2="12" y1="22" y2="18"/></svg>,
+  CheckSquare: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>,
+  Smile: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>,
+  Frown: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>,
+  CheckCircle: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+  XCircle: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" x2="9" y1="9" y2="15"/><line x1="9" x2="15" y1="9" y2="15"/></svg>,
+  Check: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+  Layers: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
 };
 
 const LOGO_URL = "/logo blanc sans texte.png";
 const APP_VERSION = "v2.1.0 (Secured)";
+
+const CAMPAIGNS_DATA = {
+  '3p-meta': {
+      id: '3p-meta',
+      name: '3P Meta',
+      title: 'Leads 3P (Optimisation)',
+      subtitle: 'Campagne : "Aide Suisse - Optimisation Fiscale"',
+      scripts: {
+          intro: "« Bonjour [Prénom], c'est [Votre Prénom], je suis partenaire de Aide Suisse. Je vous contacte car nous avons bien reçu votre demande effectuée sur Facebook et/ou Instagram par rapport à la simulation pour la récupération des 4'800 CHF d'impôts sur Genève. Je vous appelle simplement pour vous communiquer les résultats de votre test d'éligibilité. Vous avez 2 minutes ? »",
+          transition: "« Bonne nouvelle, votre profil montre un potentiel d'économie intéressant. Afin de mieux comprendre votre situation, j'aurais besoin de valider quelques points avec vous sur votre contexte professionnel et personnel actuel (Imposé à la source ? 3ème pilier ? Famille ?). »",
+          closing: "« C’est très clair. Pour vous donner un chiffre final et surtout voir s'il y a des leviers intéressants pour optimiser votre situation, il est nécessaire de fixer un rendez-vous téléphonique pour une évaluation complète. On bloque un créneau ensemble pour ce rendez-vous demain soir ou jeudi midi ? »"
+      }
+  },
+  'meta-lpp': {
+      id: 'meta-lpp',
+      name: 'LPP META',
+      title: 'Leads LPP (Avoirs Oubliés)',
+      subtitle: 'Campagne : "Pilah - Recherche 2ème Pilier"',
+      scripts: {
+          intro: "« Bonjour [Prénom], c'est [Votre Prénom] de la plateforme Pilah. Je vous appelle suite à votre demande sur Facebook concernant la recherche de vos avoirs LPP. Vous avez utilisé notre outil pour savoir si vous aviez des fonds de 2ème pilier oubliés en Suisse. Vous avez 2 minutes ? »",
+          transition: "« Super. Pour vous expliquer, il y a des milliards de francs qui dorment actuellement dans les caisses de pension suisses. En moyenne, nos utilisateurs récupèrent 8'000 CHF. Pour savoir si vous êtes concerné, j'ai besoin de comprendre votre parcours. Vous avez travaillé environ combien de temps en Suisse jusqu'à présent ? »",
+          closing: "« C’est très clair. Comme expliqué dans la vidéo, notre service s'occupe de toute la paperasse pour retrouver cet argent. Pour lancer la recherche 100% sécurisée, je vous propose de prendre un rendez-vous téléphonique d'une dizaine de minutes. Qu'est-ce qui vous arrange pour ce rendez-vous, demain soir ou jeudi midi ? »"
+      }
+  },
+  'cmu-lamal-meta': {
+      id: 'cmu-lamal-meta',
+      name: 'CMU LAMal META',
+      title: 'Leads Assurance (CMU/LAMal)',
+      subtitle: 'Campagne : "Optimisation Assurance Frontalier"',
+      scripts: {
+          intro: "« Bonjour [Prénom], c'est [Votre Prénom], partenaire expert pour les frontaliers. Je vous contacte suite à votre simulation sur notre site concernant l'optimisation de votre assurance maladie. Vous cherchiez à savoir si vous payiez trop cher. Vous avez 2 minutes ? »",
+          transition: "« Super. Beaucoup de frontaliers paient trop cher chaque mois sans le savoir, parfois jusqu'à 200 CHF de trop, car ils ont fait le mauvais choix initial ou n'ont pas révisé leur situation. Le but de mon appel est de valider votre situation actuelle (salarié, canton, composition familiale) pour voir de quel côté vous êtes le plus avantagé. »",
+          closing: "« C'est très clair. Le droit d'option est un choix décisif. Pour faire un comparatif chiffré exact et vous montrer combien vous pourriez économiser, le mieux est de prendre un rendez-vous téléphonique avec l'un de nos experts. On fixe ce rendez-vous pour demain soir ou jeudi midi ? »"
+      }
+  },
+  'compte-ch-meta': {
+      id: 'compte-ch-meta',
+      name: 'COMPTE CH META',
+      title: 'Leads Change (Compte CH)',
+      subtitle: 'Campagne : "Optimisation Taux de Change Frontalier"',
+      scripts: {
+          intro: "« Bonjour [Prénom], c'est [Votre Prénom], partenaire expert pour les frontaliers. Je vous appelle suite à votre demande sur Facebook concernant notre solution pour arrêter de vous faire plumer sur le taux de change de votre salaire. Vous avez 2 minutes ? »",
+          transition: "« Parfait. Comme expliqué dans la vidéo, la majorité des frontaliers perdent de l'argent chaque mois à cause des marges cachées et des mauvais taux des banques classiques. Pour voir si notre solution de taux préférentiel s'applique à vous, vous percevez actuellement votre salaire sur un compte suisse ou directement en euros ? »",
+          closing: "« C'est très clair. Pour vous montrer concrètement comment mettre en place ce taux préférentiel transparent et faire une simulation exacte sur votre salaire, le mieux est de prendre un rendez-vous téléphonique avec l'un de nos experts. On bloque un créneau pour demain soir ou jeudi midi ? »"
+      }
+  }
+};
 
 const MAILS_TYPES = [
   {
@@ -3483,10 +3541,24 @@ export default function WallSwissApp() {
   const [toastMsg, setToastMsg] = useState("");
   const [selectedMail, setSelectedMail] = useState(null);
 
+  // --- STATE MARKETING MODULE ---
+  const [marketingCampaign, setMarketingCampaign] = useState('3p-meta');
+  const [marketingTab, setMarketingTab] = useState('context');
+  const [marketingCopied, setMarketingCopied] = useState(false);
+  const [compteChIdx, setCompteChIdx] = useState(0);
+
   const handleCopy = (text, msg) => {
     navigator.clipboard.writeText(text);
     setToastMsg(msg);
     setTimeout(() => setToastMsg(""), 3000);
+  };
+
+  const handleCopyScript = () => {
+    const campaignData = CAMPAIGNS_DATA[marketingCampaign];
+    const scriptText = `1. Introduction :\n${campaignData.scripts.intro}\n\n2. Transition :\n${campaignData.scripts.transition}\n\n3. Closing :\n${campaignData.scripts.closing}`;
+    navigator.clipboard.writeText(scriptText);
+    setMarketingCopied(true);
+    setTimeout(() => setMarketingCopied(false), 2500);
   };
 
   const handleImageUpload = async (file, path) => {
@@ -4423,6 +4495,13 @@ export default function WallSwissApp() {
             <Icons.Inbox size={16} /> Mails Types
           </button>
 
+          <button 
+            onClick={() => setActiveModule("marketing")} 
+            style={{ width: "100%", textAlign: "left", background: activeModule === "marketing" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "marketing" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "marketing" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "marketing" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
+          >
+            <Icons.Target size={16} /> Hub Marketing
+          </button>
+
           <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700, letterSpacing: "0.1em", padding: "0 24px", margin: "16px 0 8px", textTransform: "uppercase" }}>Liens rapides</div>
 
           <button 
@@ -4518,296 +4597,523 @@ export default function WallSwissApp() {
           </div>
         )}
 
-        {/* VUE MODULE ANNUAIRE */}
-        {activeModule === "annuaire" && (
-          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        {/* VUE MODULE MARKETING */}
+        {activeModule === "marketing" && (
+          <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#fafaf9" }}>
             <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
               <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Annuaire Partenaires</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Hub Marketing Leads</div>
                 </div>
               </div>
             </header>
 
-            <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto", textAlign: "left" }}>
-              <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
-                <div style={{ marginBottom: 32 }}>
-                  <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Contacts & Partenaires</h2>
-                  <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Retrouvez les informations de contact de nos principaux partenaires.</p>
-                </div>
-                
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
-                  {[
-                    { nom: "Swissquote", type: "Banque / Dépôt", contact: "Desk B2B", tel: "+41 44 825 89 90", email: "b2b-desk@swissquote.ch", url: "https://trade.swissquote.ch/my.policy" },
-                    { nom: "ParFinance", type: "Asset Manager", contact: "Desk Gestion", tel: "+41 22 989 55 55", email: "info@parfinance.ch", url: "https://www.parfinance.ch/" },
-                    { nom: "NS Partners", type: "Asset Manager", contact: "Relation Partenaires", tel: "+41 22 906 52 50", email: "geneva@nspgroup.com", url: "https://nspartners.com/" },
-                    { nom: "Liechtenstein Life", type: "Prévoyance & Assurance", contact: "Support Courtier", tel: "+423 265 34 40", email: "info@liechtensteinlife.com", url: "https://partner.life.li/fr/my/dashboard" },
-                    { nom: "Pictet", type: "Fondation LPP", contact: "Service LPP", tel: "+41 58 323 23 23", email: "lpp@pictet.com", url: "https://www.am.pictet/" },
-                    { nom: "Lemania", type: "Fondation LPP", contact: "Administration", tel: "+41 21 311 11 11", email: "info@lemania-lpp.ch", url: "https://www.hublemania.ch/" }
-                  ].map((partenaire, i) => (
-                    <div key={i} style={{ ...S.card, padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
-                      <div>
-                        <span style={{ background: "rgba(165,149,104,0.1)", color: C.gold, fontSize: 10, fontWeight: 700, padding: "4px 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{partenaire.type}</span>
-                      </div>
-                      <h3 style={{ fontSize: 18, fontWeight: 800, color: C.primaryDark, margin: 0 }}>{partenaire.nom}</h3>
-                      
-                      <div style={{ display: "grid", gap: 12 }}>
-                        {partenaire.contact && (
-                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                            <div style={{ color: C.gray }}><Icons.User size={16} /></div>
-                            <span style={{ fontSize: 13, color: C.darkGray, fontWeight: 500 }}>{partenaire.contact}</span>
-                          </div>
-                        )}
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <div style={{ color: C.gray }}><Icons.Phone size={16} /></div>
-                          <span style={{ fontSize: 13, color: C.darkGray, fontWeight: 500 }}>{partenaire.tel}</span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <div style={{ color: C.gray }}><Icons.Mail size={16} /></div>
-                          <span style={{ fontSize: 13, color: C.primary, fontWeight: 500 }}>{partenaire.email}</span>
-                        </div>
-                      </div>
-                      {partenaire.url && (
-                        <button 
-                          onClick={() => window.open(partenaire.url, "_blank")} 
-                          style={{ marginTop: 20, width: "100%", background: "transparent", border: `1px solid ${C.mediumGray}`, color: C.primary, padding: "10px 0", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", transition: "0.2s", display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}
-                          onMouseEnter={(e)=>e.currentTarget.style.background="rgba(105,33,2,0.04)"}
-                          onMouseLeave={(e)=>e.currentTarget.style.background="transparent"}
-                        >
-                          Accéder au portail <Icons.ExternalLink size={14} />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </main>
-          </div>
-        )}
-
-        {/* VUE MODULE RESSOURCES */}
-        {activeModule === "ressources" && (
-          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-            <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
-              <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div>
-                  <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Ressources Documents</div>
-                </div>
-              </div>
-            </header>
-
-            <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto", textAlign: "left" }}>
-              <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
-                <div style={{ marginBottom: 32 }}>
-                  <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Documents & Formulaires</h2>
-                  <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Téléchargez directement les documents officiels dont vous avez besoin pour vos rendez-vous.</p>
-                </div>
-
-                {[
-                  {
-                    titre: "Général",
-                    docs: [
-                      { nom: "Mandat de gestion 2026", desc: "Mandat officiel WallSwiss", fichier: "/Mandat de gestion Wallswiss 2026.pdf" }
-                    ]
-                  },
-                  {
-                    titre: "Modèles de courriers",
-                    docs: [
-                      { nom: "Lettre envoi postal", desc: "Modèle The WallSwiss Partner", fichier: "/WS The WallSwiss Partner lettre envoi postal.docx" },
-                      { nom: "Demande valeur rachat", desc: "Modèle de demande de rachat", fichier: "/Modèle - demande de valeur de rachat.docx" },
-                      { nom: "Récupération de fonds", desc: "Modèle de récupération de fonds", fichier: "/Modèle - demande de récupération de fonds.docx" },
-                      { nom: "Suppression Garantie", desc: "Lettre suppression garantie select", fichier: "/LETTRE SUPPRESSION GARANTIE SELECT.docx" },
-                      { nom: "Libération de primes", desc: "Lettre demande de libération", fichier: "/Lettre demande de libération de primes .docx" }
-                    ]
-                  },
-                  {
-                    titre: "LPP",
-                    docs: [
-                      { nom: "Recherche Centrale LPP", desc: "Formulaire de recherche du 2ème Pilier", fichier: "/Centrale 2P.pdf" },
-                      { nom: "Liste Documents Retrait", desc: "Documents à fournir pour retrait EPL", fichier: "/1._Liste_Documents_A_Fournir_Retrait_Epl.pdf" },
-                      { nom: "Demande de Retrait EPL", desc: "Formulaire de demande de retrait FLLP", fichier: "/Demande_de_Retrait_Epl_FLLP_Fr.pdf" },
-                      { nom: "Déblocage LPP Lemania", desc: "Formulaire de déblocage LPP LEMANIA", fichier: "/Formulaire de déblocage LPP LEMANIA.pdf" }
-                    ]
-                  }
-                ].map((categorie, indexCat) => (
-                  <div key={indexCat} style={{ marginBottom: 40, textAlign: "left" }}>
-                    <h3 style={{ fontSize: 14, color: C.gray, textTransform: "uppercase", letterSpacing: "0.1em", borderBottom: `2px solid ${C.mediumGray}`, paddingBottom: 8, marginBottom: 20 }}>
-                      {categorie.titre}
-                    </h3>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                      {categorie.docs.map((doc, i) => (
-                        <div 
-                          key={i} 
-                          style={{ background: C.white, border: `1px solid ${C.lightGray}`, borderLeft: `4px solid transparent`, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all 0.2s", borderRadius: "0px" }} 
-                          onMouseEnter={(e)=> { e.currentTarget.style.borderLeftColor = C.gold; e.currentTarget.style.background = "rgba(165,149,104,0.02)"; e.currentTarget.style.boxShadow = "0 4px 15px rgba(0,0,0,0.03)"; }} 
-                          onMouseLeave={(e)=> { e.currentTarget.style.borderLeftColor = "transparent"; e.currentTarget.style.background = C.white; e.currentTarget.style.boxShadow = "none"; }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-                            <div style={{ background: "rgba(105,33,2,0.04)", color: C.primary, width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px", flexShrink: 0 }}>
-                              <Icons.FileText size={24} />
+            <main style={{ flex: 1, padding: "0", boxSizing: "border-box", overflowY: "auto", background: "#fafaf9" }}>
+                <nav style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+                    <div style={{ maxWidth: 1152, margin: "0 auto", padding: "0 24px" }}>
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                            <div style={{ padding: "16px 24px 16px 0", borderRight: `1px solid ${C.mediumGray}`, display: "flex", alignItems: "center", gap: 12, color: C.gray, flexShrink: 0 }}>
+                                <Icons.Layers size={20} color={C.primary} style={{ opacity: 0.6 }} />
+                                <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }} className="hidden sm:inline-block">Campagnes</span>
                             </div>
-                            <div style={{ textAlign: "left" }}>
-                              <div style={{ fontSize: 16, fontWeight: 700, color: C.primaryDark, marginBottom: 4 }}>{doc.nom}</div>
-                              <div style={{ fontSize: 13, color: C.gray }}>{doc.desc}</div>
+                            <div style={{ display: "flex", overflowX: "auto", paddingLeft: 8 }} className="hide-scrollbar">
+                                {Object.values(CAMPAIGNS_DATA).map(camp => (
+                                    <button 
+                                        key={camp.id}
+                                        onClick={() => {
+                                            setMarketingCampaign(camp.id);
+                                            setMarketingTab('context');
+                                        }}
+                                        style={{
+                                            padding: "16px 24px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap", transition: "all 0.2s", border: "none", cursor: "pointer", outline: "none",
+                                            borderBottom: `2px solid ${marketingCampaign === camp.id ? C.primary : "transparent"}`,
+                                            color: marketingCampaign === camp.id ? C.primary : C.gray,
+                                            background: marketingCampaign === camp.id ? "rgba(105,33,2,0.05)" : "transparent"
+                                        }}
+                                        onMouseEnter={(e) => { if(marketingCampaign !== camp.id) { e.currentTarget.style.color = C.primary; e.currentTarget.style.background = "#f5f5f4"; } }}
+                                        onMouseLeave={(e) => { if(marketingCampaign !== camp.id) { e.currentTarget.style.color = C.gray; e.currentTarget.style.background = "transparent"; } }}
+                                    >
+                                        {camp.name}
+                                    </button>
+                                ))}
                             </div>
-                          </div>
-                          <button 
-                            onClick={(e) => {
-                              e.preventDefault();
-                              const link = document.createElement('a');
-                              link.href = doc.fichier;
-                              link.download = doc.fichier.split('/').pop();
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                            }} 
-                            style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primaryDark, padding: "10px 24px", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 10, borderRadius: "0px" }}
-                            onMouseEnter={(e)=> { e.currentTarget.style.background = C.primary; e.currentTarget.style.color = C.white; e.currentTarget.style.borderColor = C.primary; }}
-                            onMouseLeave={(e)=> { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.primaryDark; e.currentTarget.style.borderColor = C.mediumGray; }}
-                          >
-                            Télécharger / Ouvrir <span style={{ fontSize: 14 }}>&rarr;</span>
-                          </button>
                         </div>
-                      ))}
                     </div>
-                  </div>
-                ))}
-              </div>
-            </main>
-          </div>
-        )}
-
-        {/* VUE MODULE MAILING */}
-        {activeModule === "mailing" && (
-          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-            <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
-              <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div>
-                  <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Mailing & Séquences</div>
-                </div>
-                <nav style={{ display: "flex", gap: 8 }}>
-                  {[["contacts","Base de Contacts"],["campaigns","Créer une Campagne"]].map(([p,l]) => (
-                    <button 
-                      key={p} 
-                      onClick={() => setMailingTab(p)} 
-                      style={{ background: mailingTab===p ? "rgba(105,33,2,0.06)" : "transparent", color: mailingTab===p ? C.primary : C.gray, border: "none", padding: "8px 16px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: mailingTab===p?700:500, borderRadius: "0px", transition: "0.2s" }}
-                    >
-                      {l}
-                    </button>
-                  ))}
                 </nav>
-              </div>
-            </header>
 
-            <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto" }}>
-              {mailingTab === "contacts" && (
-                <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
-                    <div>
-                      <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Gestion des Contacts</h2>
-                      <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>{mailingClients.length} contact(s) dans votre base de données.</p>
-                    </div>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 40 }}>
-                    <div style={S.card}>
-                      <div style={S.cardTitle}><div style={S.dot} /> Ajouter un contact manuel</div>
-                      <form onSubmit={handleAddMailingClient} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                        <div style={{ display: "flex", gap: 12 }}>
-                          <div style={{ flex: 1 }}><input required style={S.input} placeholder="Prénom" value={newClient.prenom} onChange={e=>setNewClient({...newClient, prenom: e.target.value})} /></div>
-                          <div style={{ flex: 1 }}><input required style={S.input} placeholder="Nom" value={newClient.nom} onChange={e=>setNewClient({...newClient, nom: e.target.value})} /></div>
-                        </div>
-                        <input type="email" required style={S.input} placeholder="Email" value={newClient.email} onChange={e=>setNewClient({...newClient, email: e.target.value})} />
-                        <button type="submit" style={S.btnP}>Ajouter</button>
-                      </form>
-                    </div>
-                    
-                    <div style={S.card}>
-                      <div style={S.cardTitle}><div style={S.dot} /> Import en masse (Copier/Coller)</div>
-                      <p style={{ fontSize: 11, color: C.gray, marginTop: 0, marginBottom: 8 }}>Format attendu par ligne: <code>Prénom Nom Email</code> (séparés par un espace, une virgule ou une tabulation).</p>
-                      <textarea style={{...S.input, minHeight: 80, resize: "vertical", marginBottom: 12, fontFamily: "monospace", fontSize: 11}} placeholder="Jean Dupont jean@email.com&#10;Marie Curie marie@email.com" value={bulkImport} onChange={e=>setBulkImport(e.target.value)} />
-                      <button onClick={handleBulkImport} style={{...S.btnS, width: "100%"}}>Importer la liste</button>
-                    </div>
-                  </div>
-
-                  <div style={S.card}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                      <thead>
-                        <tr style={{ borderBottom: `2px solid ${C.mediumGray}`, color: C.gray }}>
-                          <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600 }}>Prénom</th>
-                          <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600 }}>Nom</th>
-                          <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600 }}>Email</th>
-                          <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 600 }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {mailingClients.map(c => (
-                          <tr key={c.id} style={{ borderBottom: `1px solid ${C.lightGray}` }}>
-                            <td style={{ padding: "12px 16px" }}>{c.prenom}</td>
-                            <td style={{ padding: "12px 16px" }}>{c.nom}</td>
-                            <td style={{ padding: "12px 16px", color: C.primary, fontWeight: 500 }}>{c.email}</td>
-                            <td style={{ padding: "12px 16px", textAlign: "right" }}>
-                              <button onClick={()=>handleDeleteMailingClient(c.id)} style={{ background: "transparent", border: "none", color: "#EF4444", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Supprimer</button>
-                            </td>
-                          </tr>
-                        ))}
-                        {mailingClients.length === 0 && <tr><td colSpan="4" style={{ padding: "32px", textAlign: "center", color: C.gray }}>Aucun contact. Ajoutez-en ou importez une liste.</td></tr>}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {mailingTab === "campaigns" && (
-                <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 340px", gap: 32 }}>
-                  <div>
-                    <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: "0 0 8px" }}>Créer une campagne</h2>
-                    <p style={{ color: C.gray, fontSize: 13, marginBottom: 32 }}>Rédigez votre email et sélectionnez vos cibles.</p>
-
-                    <div style={S.card}>
-                      <div style={S.fg}>
-                        <label style={S.label}>Objet de l'email</label>
-                        <input style={S.input} value={campaign.subject} onChange={e=>setCampaign({...campaign, subject: e.target.value})} placeholder="Sujet de votre email..." />
-                      </div>
-                      <div style={S.fg}>
-                        <label style={S.label}>Corps du message</label>
-                        <p style={{ fontSize: 11, color: C.gray, marginTop: 0, marginBottom: 8 }}>Variables disponibles : <code>{"{{prenom}}"}</code>, <code>{"{{nom}}"}</code></p>
-                        <textarea style={{...S.input, minHeight: 300, resize: "vertical"}} value={campaign.body} onChange={e=>setCampaign({...campaign, body: e.target.value})} />
-                      </div>
-                      
-                      <button onClick={handleSendCampaign} disabled={isSendingCampaign} style={{...S.btnP, width: "100%", background: campaignSuccess ? "#10B981" : C.primary, marginTop: 16 }}>
-                        {isSendingCampaign ? "Envoi en cours..." : campaignSuccess ? "Campagne Envoyée !" : `Envoyer à ${campaign.selectedIds.length} contact(s)`}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{...S.card, padding: "20px 16px", position: "sticky", top: 120 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: C.primary, textTransform: "uppercase" }}>Destinataires</div>
-                        <span style={{ fontSize: 11, color: C.gold, fontWeight: 700 }}>{campaign.selectedIds.length} / {mailingClients.length}</span>
-                      </div>
-                      <button onClick={handleSelectAllRecipients} style={{...S.btnS, width: "100%", padding: "6px 12px", fontSize: 11, marginBottom: 16}}>
-                        {campaign.selectedIds.length === mailingClients.length ? "Tout désélectionner" : "Tout sélectionner"}
-                      </button>
-                      <div style={{ maxHeight: "400px", overflowY: "auto" }}>
-                        {mailingClients.map(c => (
-                          <label key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${C.lightGray}`, cursor: "pointer", fontSize: 12 }}>
-                            <input type="checkbox" checked={campaign.selectedIds.includes(c.id)} onChange={()=>handleToggleRecipient(c.id)} />
-                            <div>
-                              <div style={{ fontWeight: 600, color: C.darkGray }}>{c.prenom} {c.nom}</div>
-                              <div style={{ color: C.gray, fontSize: 10 }}>{c.email}</div>
+                <div style={{ background: C.white, borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingTop: 40, paddingBottom: 32 }}>
+                    <div style={{ maxWidth: 1152, margin: "0 auto", padding: "0 24px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                            <div style={{ width: 56, height: 56, background: C.primary, display: "flex", alignItems: "center", justifyContent: "center", color: C.white, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", flexShrink: 0 }}>
+                                <Icons.Target size={28} />
                             </div>
-                          </label>
-                        ))}
-                      </div>
+                            <div>
+                                <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 12px", background: "#f5f5f4", border: `1px solid ${C.mediumGray}`, color: C.darkGray, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>
+                                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#EF4444", animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}></span>
+                                    Usage Interne
+                                </div>
+                                <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 30, color: C.primary, margin: "0 0 4px 0" }}>
+                                    Guide de Traitement <span style={{ fontWeight: 700 }}>{CAMPAIGNS_DATA[marketingCampaign].title.split(' ')[1]}</span>
+                                </h2>
+                                <p style={{ color: C.gray, fontSize: 14, fontStyle: "italic", fontFamily: "'Times New Roman', Times, serif", margin: 0 }}>{CAMPAIGNS_DATA[marketingCampaign].subtitle}</p>
+                            </div>
+                        </div>
                     </div>
-                  </div>
                 </div>
-              )}
+
+                <div style={{ maxWidth: 1152, margin: "0 auto", padding: "40px 24px" }}>
+                    <div style={{ display: "flex", flexWrap: "nowrap", overflowX: "auto", borderBottom: `1px solid ${C.mediumGray}`, marginBottom: 48 }} className="hide-scrollbar">
+                        {[
+                            { id: 'context', icon: Icons.ImageIcon, label: '1. Origine' },
+                            { id: 'mindset', icon: Icons.Users, label: '2. Psychologie' },
+                            { id: 'script', icon: Icons.PhoneCall, label: '3. Script Appel' }
+                        ].map(tab => (
+                            <button 
+                                key={tab.id}
+                                onClick={() => setMarketingTab(tab.id)}
+                                style={{
+                                    display: "flex", alignItems: "center", gap: 8, padding: "20px 32px", fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap", transition: "all 0.2s", border: "none", outline: "none", cursor: "pointer",
+                                    borderBottom: `2px solid ${marketingTab === tab.id ? C.primary : "transparent"}`,
+                                    color: marketingTab === tab.id ? C.primary : "#9ca3af",
+                                    background: marketingTab === tab.id ? C.white : "transparent"
+                                }}
+                                onMouseEnter={(e) => { if(marketingTab !== tab.id) { e.currentTarget.style.color = C.darkGray; e.currentTarget.style.background = "#fafaf9"; } }}
+                                onMouseLeave={(e) => { if(marketingTab !== tab.id) { e.currentTarget.style.color = "#9ca3af"; e.currentTarget.style.background = "transparent"; } }}
+                            >
+                                <tab.icon size={16} /> {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {marketingCampaign === '3p-meta' && (
+                        <div style={{ animation: "fadeIn 0.6s ease-in-out forwards" }}>
+                            {marketingTab === 'context' && (
+                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 48 }}>
+                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 40 }}>
+                                        <div style={{ position: "relative", width: "100%", maxWidth: 280, border: "6px solid #1c1917", borderRadius: 32, background: "#1c1917", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", padding: 6, overflow: "hidden" }}>
+                                            <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 128, height: 24, background: "#1c1917", borderBottomLeftRadius: 12, borderBottomRightRadius: 12, zIndex: 20 }}></div>
+                                            <div style={{ background: C.white, borderRadius: 24, overflow: "hidden", position: "relative", width: "100%", height: "100%" }}>
+                                                <img src="https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-19-a-17.38.02.png" alt="Publicité Facebook 3P" style={{ width: "100%", height: "auto", display: "block" }} />
+                                            </div>
+                                        </div>
+                                        <div style={{ position: "relative", width: "100%", maxWidth: 280, border: "6px solid #1c1917", borderRadius: 32, background: "#1c1917", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", padding: 6, overflow: "hidden" }}>
+                                            <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 128, height: 24, background: "#1c1917", borderBottomLeftRadius: 12, borderBottomRightRadius: 12, zIndex: 20 }}></div>
+                                            <div style={{ background: "#1c1917", borderRadius: 24, overflow: "hidden", position: "relative", width: "100%", aspectRatio: "9/19", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                                <video className="w-full h-full object-cover block" controls muted loop playsInline poster="https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-19-a-17.38.02.png" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}>
+                                                    <source src="https://leadpartner.ch/wp-content/uploads/2026/02/1-Geneve.mp4" type="video/mp4" />
+                                                </video>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+                                        <div style={{ borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingBottom: 24 }}>
+                                            <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
+                                            <p style={{ color: C.darkGray, lineHeight: 1.6, textAlign: "justify", margin: 0 }}>Le prospect a visionné cette annonce vidéo sur son fil d'actualité <strong>Facebook et/ou Instagram</strong>. Il a cliqué pour vérifier s'il pouvait prétendre à une économie d'impôts. Comprendre ce qu'il a en tête est la clé de votre conversion.</p>
+                                        </div>
+                                        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                                            <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
+                                                <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.Crosshair size={24} /></div>
+                                                <div>
+                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>Accroche Hyper-Locale</h4>
+                                                    <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>Le lead est interpellé directement comme <strong>"Travailleur Genevois"</strong>. À noter que cette approche est 100% personnalisée : nous avons tourné <strong>8 versions différentes</strong> de cette vidéo pour couvrir chaque canton romand.</p>
+                                                </div>
+                                            </div>
+                                            <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
+                                                <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.TrendUp size={24} /></div>
+                                                <div>
+                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>La Promesse de Gain</h4>
+                                                    <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>Économiser jusqu'à <strong style={{ color: C.primary }}>4'800 CHF par an</strong> via des solutions "légales". C'est l'argument rationnel qui l'a poussé à cliquer. Il cherche activement à optimiser sa charge fiscale.</p>
+                                                </div>
+                                            </div>
+                                            <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
+                                                <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.CheckSquare size={24} /></div>
+                                                <div>
+                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>L'Engagement par le Test</h4>
+                                                    <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>Le prospect a pris le temps de remplir un <strong>test d'éligibilité</strong>. L'approche idéale est donc de l'aborder sous l'angle du <strong>résultat à ce test</strong>.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {marketingTab === 'mindset' && (
+                                <div style={{ maxWidth: 896, margin: "0 auto" }}>
+                                    <div style={{ textAlign: "center", marginBottom: 48 }}>
+                                        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 36, color: C.primary, marginBottom: 16, marginTop: 0 }}>Dans la tête de votre prospect</h2>
+                                        <p style={{ color: C.gray, fontSize: 18, margin: 0 }}>Comprendre ses attentes pour éviter de lever ses boucliers commerciaux.</p>
+                                    </div>
+                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 32 }}>
+                                        <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, boxShadow: "0 1px 3px rgba(0,0,0,0.05)", position: "relative" }}>
+                                            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#059669" }}></div>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
+                                                <div style={{ width: 48, height: 48, background: "#ecfdf5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Smile size={24} /></div>
+                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il attend</h3>
+                                            </div>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Connaître le <strong>résultat concret et chiffré</strong> de son test d'éligibilité rempli sur internet.</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Parler à un <strong>"expert partenaire"</strong> d'Aide Suisse, tel que promis.</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Bénéficier d'une approche consultative, <strong>sans engagement immédiat</strong>.</span></div>
+                                            </div>
+                                        </div>
+                                        <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, boxShadow: "0 1px 3px rgba(0,0,0,0.05)", position: "relative" }}>
+                                            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#dc2626" }}></div>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
+                                                <div style={{ width: 48, height: 48, background: "#fef2f2", color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Frown size={24} /></div>
+                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il redoute</h3>
+                                            </div>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>L'entendre dire "Vous avez demandé un devis". <em>(Attention: il a fait un test pour impôts)</em>.</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Subir une tentative de <strong>vente forcée</strong> dès les premières minutes.</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Devoir répéter des informations auxquelles il a déjà répondu dans le formulaire.</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {marketingCampaign === 'meta-lpp' && (
+                        <div style={{ animation: "fadeIn 0.6s ease-in-out forwards" }}>
+                            {marketingTab === 'context' && (
+                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 48 }}>
+                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 40 }}>
+                                        <div style={{ position: "relative", width: "100%", maxWidth: 280, border: "6px solid #1c1917", borderRadius: 32, background: "#1c1917", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", padding: 6, overflow: "hidden" }}>
+                                            <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 128, height: 24, background: "#1c1917", borderBottomLeftRadius: 12, borderBottomRightRadius: 12, zIndex: 20 }}></div>
+                                            <div style={{ background: C.white, borderRadius: 24, overflow: "hidden", position: "relative", width: "100%", height: "100%" }}>
+                                                <img src="https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-25-a-11.26.31.png" alt="Publicité Facebook LPP" style={{ width: "100%", height: "auto", display: "block" }} />
+                                            </div>
+                                        </div>
+                                        <div style={{ position: "relative", width: "100%", maxWidth: 280, border: "6px solid #1c1917", borderRadius: 32, background: "#1c1917", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", padding: 6, overflow: "hidden" }}>
+                                            <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 128, height: 24, background: "#1c1917", borderBottomLeftRadius: 12, borderBottomRightRadius: 12, zIndex: 20 }}></div>
+                                            <div style={{ background: "#1c1917", borderRadius: 24, overflow: "hidden", position: "relative", width: "100%", aspectRatio: "9/19", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                                <video className="w-full h-full object-cover block" controls muted loop playsInline poster="https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-25-a-11.26.31.png" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}>
+                                                    <source src="https://leadpartner.ch/wp-content/uploads/2026/02/1-pilah-2-fini.mp4" type="video/mp4" />
+                                                </video>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+                                        <div style={{ borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingBottom: 24 }}>
+                                            <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
+                                            <p style={{ color: C.darkGray, lineHeight: 1.6, textAlign: "justify", margin: 0 }}>Le prospect a réagi à une publicité vidéo de la marque <strong>Pilah</strong>. Le message est clair : des milliards dorment dans les caisses de pension en Suisse et il pourrait récupérer en moyenne <strong>8'000 CHF</strong> de son 2ème pilier oublié.</p>
+                                        </div>
+                                        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                                            <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
+                                                <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.Target size={24} /></div>
+                                                <div>
+                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>L'Accroche</h4>
+                                                    <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>« Tu as déjà travaillé en Suisse, ou tu y es encore ? ». Cette phrase cible directement les travailleurs frontaliers ou résidents qui ont pu changer d'employeur et "perdre" la trace de leurs avoirs LPP.</p>
+                                                </div>
+                                            </div>
+                                            <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
+                                                <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.TrendUp size={24} /></div>
+                                                <div>
+                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>La Solution Promise</h4>
+                                                    <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>Le prospect a été attiré par la rentrée d'argent inattendue. La publicité le rassure : <strong>l'outil de vérification est gratuit</strong>, 100% sécurisé et <strong>Pilah s'occupe de toute la paperasse</strong>.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {marketingTab === 'mindset' && (
+                                <div style={{ maxWidth: 896, margin: "0 auto" }}>
+                                    <div style={{ textAlign: "center", marginBottom: 48 }}>
+                                        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 36, color: C.primary, marginBottom: 16, marginTop: 0 }}>Dans la tête de votre prospect LPP</h2>
+                                        <p style={{ color: C.gray, fontSize: 18, margin: 0 }}>Comprendre les motivations et les craintes face à la promesse de retrouver de l'argent.</p>
+                                    </div>
+                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 32 }}>
+                                        <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, boxShadow: "0 1px 3px rgba(0,0,0,0.05)", position: "relative" }}>
+                                            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#059669" }}></div>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
+                                                <div style={{ width: 48, height: 48, background: "#ecfdf5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Smile size={24} /></div>
+                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il attend</h3>
+                                            </div>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Savoir <strong>si oui ou non</strong> il a de l'argent qui l'attend quelque part en Suisse.</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Que vous teniez la promesse : <strong>vous gérez toute la paperasse</strong> administrative à sa place.</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Être rassuré sur la <strong>sécurité et la gratuité</strong> de la démarche initiale.</span></div>
+                                            </div>
+                                        </div>
+                                        <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, boxShadow: "0 1px 3px rgba(0,0,0,0.05)", position: "relative" }}>
+                                            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#dc2626" }}></div>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
+                                                <div style={{ width: 48, height: 48, background: "#fef2f2", color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Frown size={24} /></div>
+                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il redoute</h3>
+                                            </div>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Avoir affaire à une <strong>arnaque d'internet</strong> ("c'est trop beau pour être vrai").</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Devoir fournir des <strong>informations sensibles</strong> avant même d'avoir confiance.</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Qu'on lui demande de <strong>payer des frais cachés</strong> pour lancer la recherche.</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {marketingCampaign === 'cmu-lamal-meta' && (
+                        <div style={{ animation: "fadeIn 0.6s ease-in-out forwards" }}>
+                            {marketingTab === 'context' && (
+                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 48 }}>
+                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 40 }}>
+                                        <div style={{ position: "relative", width: "100%", maxWidth: 280, border: "6px solid #1c1917", borderRadius: 32, background: "#1c1917", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", padding: 6, overflow: "hidden" }}>
+                                            <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 128, height: 24, background: "#1c1917", borderBottomLeftRadius: 12, borderBottomRightRadius: 12, zIndex: 20 }}></div>
+                                            <div style={{ background: C.white, borderRadius: 24, overflow: "hidden", position: "relative", width: "100%", height: "100%" }}>
+                                                <img src="https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-25-a-11.50.31.png" alt="Publicité CMU LAMal" style={{ width: "100%", height: "auto", display: "block" }} />
+                                            </div>
+                                        </div>
+                                        <div style={{ position: "relative", width: "100%", maxWidth: 280, border: "6px solid #1c1917", borderRadius: 32, background: "#1c1917", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", padding: 6, overflow: "hidden" }}>
+                                            <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 128, height: 24, background: "#1c1917", borderBottomLeftRadius: 12, borderBottomRightRadius: 12, zIndex: 20 }}></div>
+                                            <div style={{ background: "#1c1917", borderRadius: 24, overflow: "hidden", position: "relative", width: "100%", aspectRatio: "9/19", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                                <video className="w-full h-full object-cover block" controls muted loop playsInline poster="https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-25-a-11.50.31.png" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}>
+                                                    <source src="https://leadpartner.ch/wp-content/uploads/2026/02/cmu-laml.mp4" type="video/mp4" />
+                                                </video>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+                                        <div style={{ borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingBottom: 24 }}>
+                                            <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
+                                            <p style={{ color: C.darkGray, lineHeight: 1.6, textAlign: "justify", margin: 0 }}>Le prospect a réagi à une publicité vidéo très immersive ciblant les frontaliers. Le message joue sur la confidence : un frontalier explique comment il perdait de l'argent chaque mois à cause d'un mauvais choix entre la <strong>CMU et la LAMal</strong>.</p>
+                                        </div>
+                                        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                                            <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
+                                                <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.Target size={24} /></div>
+                                                <div>
+                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>L'Accroche Confidentielle</h4>
+                                                    <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>« Tu es salarié en Suisse ? Alors cette astuce est pour toi... » susurré face caméra. Cette approche capte l'attention et donne l'impression d'accéder à un "secret d'initié".</p>
+                                                </div>
+                                            </div>
+                                            <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
+                                                <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.TrendUp size={24} /></div>
+                                                <div>
+                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>La Douleur & La Solution</h4>
+                                                    <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>Le prospect se reconnaît dans la phrase "Je me suis fait avoir". La promesse de récupérer 200 CHF par mois l'a poussé à remplir le formulaire gratuit.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {marketingTab === 'mindset' && (
+                                <div style={{ maxWidth: 896, margin: "0 auto" }}>
+                                    <div style={{ textAlign: "center", marginBottom: 48 }}>
+                                        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 36, color: C.primary, marginBottom: 16, marginTop: 0 }}>Dans la tête de votre prospect Frontalier</h2>
+                                        <p style={{ color: C.gray, fontSize: 18, margin: 0 }}>Comprendre ses motivations réelles et ses craintes concernant son assurance maladie.</p>
+                                    </div>
+                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 32 }}>
+                                        <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, boxShadow: "0 1px 3px rgba(0,0,0,0.05)", position: "relative" }}>
+                                            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#059669" }}></div>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
+                                                <div style={{ width: 48, height: 48, background: "#ecfdf5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Smile size={24} /></div>
+                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il attend</h3>
+                                            </div>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Savoir <strong>combien il peut économiser</strong> exactement.</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Comprendre <strong>de manière simple</strong> son droit d'option sans jargon.</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Être accompagné de A à Z s'il doit faire un changement administratif.</span></div>
+                                            </div>
+                                        </div>
+                                        <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, boxShadow: "0 1px 3px rgba(0,0,0,0.05)", position: "relative" }}>
+                                            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#dc2626" }}></div>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
+                                                <div style={{ width: 48, height: 48, background: "#fef2f2", color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Frown size={24} /></div>
+                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il redoute</h3>
+                                            </div>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Qu'on essaie de lui vendre une <strong>complémentaire santé hors de prix</strong>.</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Faire le mauvais choix et se retrouver bloqué.</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Perdre ses avantages actuels de couverture.</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {marketingCampaign === 'compte-ch-meta' && (
+                        <div style={{ animation: "fadeIn 0.6s ease-in-out forwards" }}>
+                            {marketingTab === 'context' && (
+                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 48 }}>
+                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
+                                        <div style={{ position: "relative", width: "100%", maxWidth: 320, border: `1px solid ${C.mediumGray}`, borderRadius: 12, background: C.white, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", padding: 8, overflow: "hidden" }}>
+                                            <div style={{ background: "#fafaf9", borderRadius: 8, overflow: "hidden", position: "relative", width: "100%", aspectRatio: "4/5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                                <img src={[
+                                                    "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_argent_brule.png",
+                                                    "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_diagnostic.png",
+                                                    "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_tableau_fache.png",
+                                                    "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_peage_douane.png",
+                                                    "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_cadeau_banque.png"
+                                                ][compteChIdx]} alt={`Créative Compte CH ${compteChIdx + 1}`} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+                                            </div>
+                                        </div>
+                                        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", maxWidth: 320 }}>
+                                            {[
+                                                "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_argent_brule.png",
+                                                "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_diagnostic.png",
+                                                "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_tableau_fache.png",
+                                                "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_peage_douane.png",
+                                                "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_cadeau_banque.png"
+                                            ].map((img, idx) => (
+                                                <button key={idx} onClick={() => setCompteChIdx(idx)} style={{ width: 56, height: 56, borderRadius: 8, overflow: "hidden", border: `2px solid ${compteChIdx === idx ? C.primary : C.mediumGray}`, transition: "all 0.2s", cursor: "pointer", padding: 0 }}>
+                                                    <img src={img} alt={`Miniature ${idx + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+                                        <div style={{ borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingBottom: 24 }}>
+                                            <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
+                                            <p style={{ color: C.darkGray, lineHeight: 1.6, textAlign: "justify", margin: 0 }}>Le prospect a réagi à l'une de nos <strong>5 créatives statiques</strong> ciblant une douleur forte des frontaliers : <strong>la perte d'argent sur le taux de change</strong> lors du rapatriement du salaire.</p>
+                                        </div>
+                                        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                                            <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
+                                                <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.Target size={24} /></div>
+                                                <div>
+                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>L'Accroche Visuelle & Émotionnelle</h4>
+                                                    <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>L'utilisateur a été interpellé par une image choc illustrant le fait qu'il "donne" littéralement une partie de son salaire à sa banque chaque mois.</p>
+                                                </div>
+                                            </div>
+                                            <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
+                                                <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.TrendUp size={24} /></div>
+                                                <div>
+                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>La Promesse de Transparence</h4>
+                                                    <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>L'annonce offre un "vrai bon plan" : changer ses francs avec un <strong>taux préférentiel</strong> et arrêter les frais abusifs.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {marketingTab === 'mindset' && (
+                                <div style={{ maxWidth: 896, margin: "0 auto" }}>
+                                    <div style={{ textAlign: "center", marginBottom: 48 }}>
+                                        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 36, color: C.primary, marginBottom: 16, marginTop: 0 }}>Dans la tête de votre prospect Frontalier</h2>
+                                        <p style={{ color: C.gray, fontSize: 18, margin: 0 }}>Comprendre ses attentes financières et ses craintes vis-à-vis des banques.</p>
+                                    </div>
+                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 32 }}>
+                                        <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, boxShadow: "0 1px 3px rgba(0,0,0,0.05)", position: "relative" }}>
+                                            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#059669" }}></div>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
+                                                <div style={{ width: 48, height: 48, background: "#ecfdf5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Smile size={24} /></div>
+                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il attend</h3>
+                                            </div>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Voir <strong>concrètement la différence</strong> de taux par rapport à sa banque actuelle.</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Que la solution soit <strong>facile et rapide</strong> à mettre en place.</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Une <strong>transparence totale</strong> sur les frais, comme promis.</span></div>
+                                            </div>
+                                        </div>
+                                        <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, boxShadow: "0 1px 3px rgba(0,0,0,0.05)", position: "relative" }}>
+                                            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#dc2626" }}></div>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
+                                                <div style={{ width: 48, height: 48, background: "#fef2f2", color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Frown size={24} /></div>
+                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il redoute</h3>
+                                            </div>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Découvrir qu'il y a des <strong>"frais de tenue de compte" cachés</strong> qui annulent l'économie.</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Que l'argent mette <strong>plusieurs jours à arriver</strong> sur son compte.</span></div>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Devoir changer de banque principale et faire des démarches compliquées.</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {marketingTab === 'script' && (
+                        <div style={{ maxWidth: 896, margin: "0 auto", animation: "fadeIn 0.6s ease-in-out forwards" }}>
+                            <div style={{ background: "linear-gradient(135deg, #292524 0%, #44403c 50%, #292524 100%)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", position: "relative", overflow: "hidden" }}>
+                                <div style={{ position: "absolute", top: 0, right: 0, width: 384, height: 384, background: C.primary, borderRadius: "50%", filter: "blur(120px)", opacity: 0.3, pointerEvents: "none" }}></div>
+                                <div style={{ position: "absolute", bottom: 0, left: 0, width: 384, height: 384, background: "#d97706", borderRadius: "50%", filter: "blur(120px)", opacity: 0.2, pointerEvents: "none" }}></div>
+                                
+                                <button 
+                                    onClick={handleCopyScript} 
+                                    style={{
+                                        position: "absolute", top: 24, right: 24, zIndex: 20, display: "flex", alignItems: "center", gap: 8, padding: "12px 24px", borderRadius: 9999, border: `1px solid ${marketingCopied ? "rgba(16,185,129,0.5)" : "rgba(255,255,255,0.2)"}`, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", transition: "all 0.2s", cursor: "pointer",
+                                        background: marketingCopied ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.1)",
+                                        color: marketingCopied ? "#34d399" : C.white,
+                                        transform: marketingCopied ? "scale(0.95)" : "scale(1)"
+                                    }}
+                                >
+                                    {marketingCopied ? <Icons.Check size={16} /> : <Icons.Copy size={16} />}
+                                    <span>{marketingCopied ? 'Copié !' : 'Copier le script'}</span>
+                                </button>
+
+                                <div style={{ padding: "48px", position: "relative", zIndex: 10, color: "#e7e5e4" }}>
+                                    <div style={{ marginBottom: 56 }}>
+                                        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 16px", borderRadius: 9999, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: C.white, fontSize: 10, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 24, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+                                            <span style={{ position: "relative", display: "flex", height: 8, width: 8 }}>
+                                                <span style={{ animation: "ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite", position: "absolute", display: "inline-flex", height: "100%", width: "100%", borderRadius: "50%", background: C.primary, opacity: 0.75 }}></span>
+                                                <span style={{ position: "relative", display: "inline-flex", borderRadius: "50%", height: 8, width: 8, background: "#8c3d1e" }}></span>
+                                            </span>
+                                            Script Partenaire - {CAMPAIGNS_DATA[marketingCampaign].name}
+                                        </div>
+                                        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 48, color: C.white, margin: "0 0 12px 0", textShadow: "0 10px 15px rgba(0,0,0,0.1)" }}>Discours de Qualification</h2>
+                                        <p style={{ color: "#d6d3d1", fontWeight: 300, fontSize: 14, margin: 0 }}>Lisez ce script de manière naturelle et posée. N'hésitez pas à marquer des pauses.</p>
+                                    </div>
+
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+                                        {/* Etape 1 */}
+                                        <div style={{ position: "relative", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 16, padding: 32, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", transition: "background 0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.15)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
+                                            <div style={{ position: "absolute", left: -12, top: 32, width: 24, height: 24, borderRadius: "50%", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.5)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 15px rgba(239,68,68,0.3)" }}>
+                                                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }}></div>
+                                            </div>
+                                            <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.2em", color: "#f87171", margin: "0 0 16px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                                                <span>1. Introduction</span>
+                                                <span style={{ width: 48, height: 1, background: "rgba(248,113,113,0.3)" }}></span>
+                                            </p>
+                                            <div style={{ fontSize: 20, lineHeight: 1.6, fontWeight: 300, color: "#f5f5f4", marginLeft: 16 }}>
+                                                {CAMPAIGNS_DATA[marketingCampaign].scripts.intro}
+                                            </div>
+                                        </div>
+
+                                        {/* Etape 2 */}
+                                        <div style={{ position: "relative", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 16, padding: 32, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", transition: "background 0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.15)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
+                                            <div style={{ position: "absolute", left: -12, top: 32, width: 24, height: 24, borderRadius: "50%", background: "rgba(59,130,246,0.2)", border: "1px solid rgba(59,130,246,0.5)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 15px rgba(59,130,246,0.3)" }}>
+                                                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#60a5fa" }}></div>
+                                            </div>
+                                            <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.2em", color: "#60a5fa", margin: "0 0 16px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                                                <span>2. Transition</span>
+                                                <span style={{ width: 48, height: 1, background: "rgba(96,165,250,0.3)" }}></span>
+                                            </p>
+                                            <div style={{ fontSize: 20, lineHeight: 1.6, fontWeight: 300, color: "#f5f5f4", marginLeft: 16 }}>
+                                                {CAMPAIGNS_DATA[marketingCampaign].scripts.transition}
+                                            </div>
+                                        </div>
+
+                                        {/* Etape 3 */}
+                                        <div style={{ position: "relative", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 16, padding: 32, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", transition: "background 0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.15)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
+                                            <div style={{ position: "absolute", left: -12, top: 32, width: 24, height: 24, borderRadius: "50%", background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.5)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 15px rgba(16,185,129,0.3)" }}>
+                                                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#34d399" }}></div>
+                                            </div>
+                                            <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.2em", color: "#34d399", margin: "0 0 16px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                                                <span>3. Closing</span>
+                                                <span style={{ width: 48, height: 1, background: "rgba(52,211,153,0.3)" }}></span>
+                                            </p>
+                                            <div style={{ fontSize: 20, lineHeight: 1.6, fontWeight: 300, color: "#f5f5f4", marginLeft: 16 }}>
+                                                {CAMPAIGNS_DATA[marketingCampaign].scripts.closing}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.2)", textAlign: "center" }}>
+                                        <p style={{ fontSize: 10, color: "#a8a29e", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700, margin: 0 }}>* Ce script est fourni à titre indicatif. Il doit être adapté selon vos préférences.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </main>
           </div>
         )}

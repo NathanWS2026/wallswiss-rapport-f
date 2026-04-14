@@ -3578,13 +3578,13 @@ export default function WallSwissApp() {
   const addCustomObj = () => { if (form.objectifCustom.trim()) { setForm(p => ({ ...p, objectifs: [...p.objectifs, p.objectifCustom.trim()], objectifCustom: "" })); } };
   
   const handleSave = async () => {
-    const newId = Date.now();
+    const newId = form.id || Date.now();
     const newReport = { 
       ...form, 
       id: newId,
       agentId: user ? user.uid : "demo",
       agentEmail: user ? user.email : "demo@wallswiss.ch",
-      dateCreation: new Date().toISOString()
+      dateCreation: form.dateCreation || new Date().toISOString()
     };
     
     if (user && db) {
@@ -3620,6 +3620,26 @@ export default function WallSwissApp() {
   };
 
   const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", customClientFields: [], assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", hasProjectionsMultiples: false, montantInvestissement2: "200000", capaciteEpargne2: "1000", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, showPrevoyanceComparatif: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", dureeProjectionAv: "15", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", lppActions: "", lppOblig: "", lppImmo: "", conseiller: `${appSettings.agentFirstName || ""} ${appSettings.agentLastName || ""}`.trim() || "", titreConseiller: appSettings.agentTitle || "", telephone: appSettings.agentPhone || "", email: appSettings.agentEmail || "", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
+
+  const handleDeleteReport = async (e, id) => {
+    e.stopPropagation();
+    if (user && db) {
+      try {
+        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reports', id.toString()));
+      } catch (err) {
+        console.error("Erreur lors de la suppression", err);
+      }
+    } else {
+      setReports(prev => prev.filter(r => r.id !== id));
+    }
+  };
+
+  const handleEditReport = (e, report) => {
+    e.stopPropagation();
+    setForm(report);
+    setStep(0);
+    setRapportPage("create");
+  };
 
   const handlePreviewUpdate = async (newData) => {
     setPreview(newData);
@@ -4840,7 +4860,11 @@ export default function WallSwissApp() {
                                       }
                                     </div>
                                   </div>
-                                  <span style={{ fontSize: 11, color: C.gold, fontWeight: 700, background: "rgba(165,149,104,0.1)", padding: "6px 12px" }}>OUVRIR &rarr;</span>
+                                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                                    <button onClick={(e) => handleEditReport(e, r)} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primary, padding: "4px 8px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s" }} onMouseEnter={e=>{e.currentTarget.style.background=C.primary;e.currentTarget.style.color=C.white}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color=C.primary}}>ÉDITER</button>
+                                    <button onClick={(e) => handleDeleteReport(e, r.id)} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: "#EF4444", padding: "4px 8px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s" }} onMouseEnter={e=>{e.currentTarget.style.background="#EF4444";e.currentTarget.style.color=C.white}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color="#EF4444"}}>SUPPRIMER</button>
+                                    <span style={{ fontSize: 11, color: C.gold, fontWeight: 700, background: "rgba(165,149,104,0.1)", padding: "5px 10px", display: "flex", alignItems: "center", height: "100%", boxSizing: "border-box" }}>OUVRIR &rarr;</span>
+                                  </div>
                                 </div>
                               </div>
                             ))}

@@ -60,11 +60,188 @@ const Icons = {
   PieChart: ({ size = 24, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>,
   ExternalLink: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>,
   Phone: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>,
-  BookContacts: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path><path d="M8 7h6"></path><path d="M8 11h8"></path></svg>
+  BookContacts: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path><path d="M8 7h6"></path><path d="M8 11h8"></path></svg>,
+  Copy: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>,
+  Inbox: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>
 };
 
 const LOGO_URL = "/logo blanc sans texte.png";
 const APP_VERSION = "v2.1.0 (Secured)";
+
+const MAILS_TYPES = [
+  {
+    id: "m1",
+    titre: "Après un rendez-vous",
+    categorie: "Rendez-vous",
+    objet: "Suite à notre échange – WallSwiss",
+    corps: `Chère Madame …, Cher Monsieur …,\n\nJe vous transfère ce mail à la suite de notre rendez-vous ensemble.\nC'était un réel plaisir d'avoir pu discuter avec vous de votre situation et d'explorer les potentielles améliorations à envisager.\nComme convenu, vous trouverez ci-dessous un récapitulatif de notre rendez-vous :\n- Planification financière\n- Fiscalité\n\nJe vous souhaite une excellente journée et me tiens à votre entière disposition pour toute information complémentaire.\n\nBien cordialement,`
+  },
+  {
+    id: "m2",
+    titre: "Documents manquants",
+    categorie: "Suivi",
+    objet: "Documents manquants – WallSwiss",
+    corps: `Cher Monsieur,\nChère Madame,\n\nJ'espère que mon mail vous trouvera en pleine forme.\nJe me permets de revenir vers vous car il me manque certains documents / certaines informations par rapport à votre situation.\n\nPouvez-vous me faire parvenir les informations suivantes / les documents suivants s'il vous plait :\n- Copie de votre permis de travail (avec signature sous votre photo)\n- Certificat de salaire 2024\n- Numéro AVS\n- Numéro fiscal français\n- Copie de votre contrat de travail`
+  },
+  {
+    id: "m3",
+    titre: "Proposition de rendez-vous",
+    categorie: "Rendez-vous",
+    objet: "Proposition de rendez-vous – WallSwiss",
+    corps: `[VERSION PRÉSENTIEL]\nJe vous confirme notre prochain échange le Jeudi 31 Juillet 2024 à 11h00 directement dans locaux situés au :\nRue Kléberg 14\n1201 Genève\nSuisse\n\n--- OU ---\n\n[VERSION VISIO]\nJe vous confirme notre prochain échange le Jeudi 31 Juillet 2023 à 11h00 directement par visioconférence Teams. Vous recevrez un lien de rendez-vous quelques minutes avant notre séance.`
+  },
+  {
+    id: "m4",
+    titre: "Présentation WallSwiss",
+    categorie: "Divers",
+    objet: "Présentation WallSwiss à destination des entreprises",
+    pieceJointe: "Flyer présentation entreprise",
+    corps: `Chère Madame…, Cher Monsieur…,\n\nJ'ai plaisir de vous faire parvenir ci-dessous un e-mail récapitulatif sur les solutions que nous pouvons vous proposer ainsi qu'à vos collaborateurs.\nN'hésitez pas à aller consulter notre site internet www.wallswiss.ch, pour vous apporter une vision complète des solutions que nous pouvons apporter.\n\nWallSwiss a décidé de mettre en place une campagne d'information au sein des entreprises de Suisse Romande, sous forme de permanences directement mise en place au sein de vos bureaux.\nCes permanences offrent l'opportunité à chacun de vos collaborateurs de pouvoir, sans même se déplacer, avoir un premier rendez-vous d'analyse personnalisé de leur situation.\n\nSuite aux nouvelles lois mises en place depuis le 1er Janvier 2023, de nombreuses nouvelles possibilités d'optimisation sont disponibles, notamment sur les différents points ci-dessous :\n- Déclaration fiscale Suisse et Française (imposition ordinaire, rectification simple, quasi-résident, LMNP, CMU ou CNTFS)\n- LPP (Libre-Passage)\n- Planification financière\n- Assurances choses/maladies\n- Investissements financiers (Private Equity, Crypto-monnaies, Compte Titres)\n- Stratégie immobilière\n\nNos permanences entreprises sont sans frais d'honoraires !\nChaque personne intéressée, suivant leur situation, aura la possibilité d'avoir un second rendez-vous individuel soit à notre cabinet, via visio-conférence ou directement à son domicile (sans frais d'honoraire également).\n\nBien évidemment, j'aurai le plaisir de répondre à toutes vos questions.`
+  },
+  {
+    id: "m5",
+    titre: "Contrôle CMU",
+    categorie: "CMU / Fiscalité",
+    objet: "Contrôle CMU – WallSwiss",
+    corps: `Concernant les cotisations précédemment versées lors de votre affiliation à la CMU/CNTFS, nous pouvons revenir sur les 3 dernières années de manière rétroactive si vous avez trop payé :\n3 années de manière certaine, la 4ème et 5ème année au bon vouloir de la personne qui recevra votre dossier de rectification.\n\nCette vérification est entièrement gratuite.\n\nAfin de l'effectuer, il faut me faire parvenir vos 5 derniers avis d'imposition français ainsi que vos 5 derniers appels de cotisations CMU/CNTFS (ou tableau récapitulatif disponible dans votre espace personnel de l'URSSAF en ligne : onglet « mon compte » et « historique des déclarations »).\nUne fois que j'aurai réceptionné ces documents, je pourrai les analyser et vous faire un retour.`
+  },
+  {
+    id: "m6",
+    titre: "Modification IMPÔTS pour CMU",
+    categorie: "CMU / Fiscalité",
+    objet: "Correction CMU sur impôts FR – WallSwiss",
+    corps: `Après vérification de vos documents concernant votre CMU, il y a plusieurs erreurs qui se sont glissées…\n\nPremière étape : vous connecter à votre espace Impot.gouv.fr et leur faire un message depuis votre messagerie privée leur indiquant que vous avez oublié de déclarer en case 6DD le montant de vos cotisations depuis vos revenus de 2020 ET leur joindre les attestations/appels de cotisations de votre CMU en tant que document justificatif pour chaque année afin qu'ils puissent vous faire parvenir des avis d'impôts français rectifiés.\nA noter : la règlementation du FISC français permet de rectifier uniquement les deux derniers avis d'impôts français.\n\nDeuxième étape : une fois les avis d'impôts français rectifiés reçus, me les faire parvenir par mail s'il vous plait, afin que je puisse vous indiquer précisément quel montant nous pourrons récupérer pour chaque année.`
+  },
+  {
+    id: "m7",
+    titre: "Rectification CMU — Facture",
+    categorie: "CMU / Fiscalité",
+    objet: "Correction CMU – WallSwiss",
+    corps: `Après vérification de vos documents concernant votre CMU, il y a plusieurs erreurs qui se sont glissées…\nPour l'année :\n- Avis d'impôts 2023 sur revenus de 2023 : environ EUR ….-, qui vient directement réduire l'échéancier restant de l'année en cours\n- Avis d'impôts 2022 sur revenus de 2021 : environ EUR ….-\n- Avis d'impôts 2021 sur revenus de 2020 : environ EUR ….-\n- Avis d'impôts 2020 sur revenus de 2019 : environ EUR ….-\n- Avis d'impôts 2019 sur revenus de 2018 : environ EUR ….-\n\nSOIT UN TOTAL DE : EUR ….- d'erreurs.\n\nAttention : le calcul du retour est une estimation basée sur les documents et informations que vous nous avez transmis et sous réserve d'acceptation de l'URSAFF.\nConcernant le traitement du dossier cela peut varier entre 1 et 6 mois auprès de l'URSSAF. Le remboursement intervient directement sur votre compte de CMU/CNTFS et épongera quelques futures cotisations.\n\nVous trouverez ci-joint toutes les informations bancaires afin de réaliser le paiement des honoraires appliqués pour le traitement de votre rectification de CMU de CHF ….-/ par année rectifiée soit :\nYUH – Pierrick PEREIRA - ….- CHF\nCHXX XXX XXXX XXXX XXX\n\nVous pouvez également régler en espèce directement dans nos locaux également, auquel cas, merci de me prévenir de votre passage par avance.`
+  },
+  {
+    id: "m8",
+    titre: "Correction CSG-CRDS — 6DD",
+    categorie: "CMU / Fiscalité",
+    objet: "Correction CSG/CRDS – WallSwiss",
+    corps: `Madame, Monsieur …,\n\nComme expliqué ce jour en étant affilié au CNTFS/LAMal, vous n'êtes pas redevable de la CSG-CRDS sur vos revenus du patrimoine à hauteur de vos parts de propriété.\n\nAfin de corriger cela, voici la marche à suivre :\n(A noter : vous pouvez rectifier uniquement les 2 derniers avis d'impôts français.)\n\n- Se connecter sur Accueil | impots.gouv.fr\n- Onglet messagerie\n- Ecrire\n- Je signale une erreur sur le calcul de mon impôt\n- Ma demande concerne l'impôt sur le revenu et les prélèvements sociaux\n- Sélectionner l'année concernée puis inscrire ce message :\n« Bonjour, J'ai oublié d'indiquer que je n'étais pas assujetti à un système de sécurité sociale Français, de ce fait je ne suis pas redevable de la CSG CRDS. En effet en tant que frontalier je suis affilié au CNTFS/LAMal. Vous trouverez en pièce jointe ma cotisation de l'année 20__. Merci de bien vouloir procéder à cette modification. »\n- Joindre en pièce jointe votre cotisation CMU/LAMal de l'année concernée + une copie de l'acte notarié pour le bien concerné si vous n'êtes pas propriétaire de celui-ci à 100%.\n\nJe reste naturellement à votre disposition si besoin,`
+  },
+  {
+    id: "m9",
+    titre: "3ème pilier — Simulation",
+    categorie: "Prévoyance",
+    objet: "3ème pilier – Simulation – WallSwiss",
+    corps: `3A - PILIER\nConcernant le 3ème pilier A auprès de la compagnie LiechtensteinLife : Il est imposable à la sortie à 6,75%. La stratégie d'investissement est 100% modulable. Le capital décès est d'office toujours plus élevé que les primes cotisées pour votre ascendance/descendance sans testament particulier. C'est un placement de prévoyance Suisse qui fonctionne tel qu'une assurance vie pour la personne qui l'ouvre. Le capital est bloqué jusqu'à l'âge légal de la retraite mais il peut être retiré de manière anticipée pour 4 possibilités (attention, il faut le garder un certain temps pour avoir le rendement escompté bien évidement).\nIl est défiscalisable de vos impôts Suisses dans tous les cantons en tant que résident Suisse et dans certains cas en statut Quasi-Résident pour les frontaliers à hauteur de CHF 7'056.- par année. Il est indispensable pour combler les lacunes de votre retraite.\nUne fois la demande d'ouverture acceptée, la compagnie d'assurance vous communiquera par SMS votre identifiant et mot de passe pour activer votre police et avoir un accès à votre compte H24 comme un compte bancaire en toute transparence à travers l'application PROSPERITY.\nPour de plus amples informations : (Lien vers la brochure)\n\n3B - PILIER\nConcernant le 3ème pilier B auprès de la compagnie LiechtensteinLife : c'est un placement de prévoyance Suisse qui fonctionne tel qu'une assurance vie pour la personne qui l'ouvre. Il est entièrement flexible et peut-être retiré à tout moment (attention, il faut le garder un certain temps pour avoir le rendement escompté bien évidement). La stratégie d'investissement est 100% modulable. Le capital décès est d'office toujours plus élevé que les primes cotisées.\n(Il est défiscalisable de vos impôts Suisse dans certains cas en statut Quasi-Résident sur le Canton de Genève à hauteur de CHF 2'200.- pour une personne célibataire, CHF 3'300.- pour une personne mariée, auquel s'ajoute CHF 900.- par année par enfant. Il est indispensable pour combler les lacunes de votre retraite.) 🡪 INCLURE DANS LE MAIL UNIQUEMENT SI ELIGIBLE DEFISCALISATION\nUne fois la demande d'ouverture acceptée, la compagnie d'assurance vous communiquera par SMS votre identifiant et mot de passe pour activer votre police et avoir un accès à votre compte H24 comme un compte bancaire en toute transparence à travers l'application PROSPERITY.\nPour de plus amples informations : (Lien vers la brochure)\n\nEn terme de projection sur … années (vos 65 ans) en stratégie défensive, équilibrée et stratégie croissante avec une mensualité de CHF … .- :\n- Rendement 3.3% – Primes cotisées CHF 115'200.00 – Capital de sortie 65 ans CHF 169'108.10\n- Rendement 6% – Primes cotisées CHF 115'200.00 – Capital de sortie 65 ans CHF 269'991.55\n- Rendement 8.7% – Primes cotisées CHF 115'200.00 – Capital de sortie 65 ans CHF 444'587.15\n\n3P - KIDS\nConcernant le 3ème pilier Junior auprès de la compagnie LiechtensteinLife : c'est un placement de prévoyance suisse qui vous permet d'offrir à vos enfants un socle financier pour leur avenir. Vous pouvez le mettre en place jusqu'à ce que votre enfant atteigne 15 ans. Vous pouvez choisir librement le montant de vos contributions sans limitation maximale, ainsi que la durée jusqu'au 18 ou 25 ans de votre enfant et la fréquence des versements lors de sa mise en place.\nPour de plus amples informations : (Lien vers la brochure)\nUne fois la demande d'ouverture acceptée, la compagnie d'assurance vous communiquera par SMS votre identifiant et mot de passe pour activer votre police et accéder à votre compte 24h/24 via l'application PROSPERITY, comme pour un compte bancaire, en toute transparence.\nEn terme de projection sur … années en stratégie défensive, équilibrée et stratégie croissante avec une mensualité de CHF … .- :\n- Rendement 3.3% – Primes cotisées CHF 115'200.00 – Capital de sortie 65 ans CHF 169'108.10\n- Rendement 6% – Primes cotisées CHF 115'200.00 – Capital de sortie 65 ans CHF 269'991.55\n- Rendement 8.7% – Primes cotisées CHF 115'200.00 – Capital de sortie 65 ans CHF 444'587.15`
+  },
+  {
+    id: "m10",
+    titre: "3ème pilier — Documents ouverture",
+    categorie: "Prévoyance",
+    objet: "3ème pilier – Documents d'ouverture – WallSwiss",
+    corps: `Pour la demande d'ouverture sont nécessaires les documents suivants :\n\n- Copie permis de travail/permis de séjour/carte d'identité Suisse,\n- Numéro AVS,\n- IBAN Suisse commençant par CH si mise en place d'une LSV,\n- Numéro fiscal français si frontalier.`
+  },
+  {
+    id: "m11",
+    titre: "Mise en place OP ou LSV",
+    categorie: "Prévoyance",
+    objet: "Mise en place cotisations 3ème pilier – WallSwiss",
+    pieceJointe: "Formulaire LSV/OP",
+    corps: `Cher Monsieur, Chère Madame,\n\nSuite à la demande d'ouverture de votre prévoyance individuelle réalisée ce jour, vous trouverez, ci-joint, les QR IBAN en deuxième page de la pièce jointe pour mettre en place depuis vos espaces e-Banking, l'ordre automatique de ….- CHF vers votre 3ème pilier B du 01 Septembre 2024.\n\nSi vous souhaitez mettre en place un prélèvement automatique : il suffit de le compléter, le signer de manière manuscrite et de renvoyer une copie par mail, à votre banque et à moi également. Nous pouvons parfois rencontrer des difficultés lors du premier prélèvement, auquel cas, je vous contacterai.\n\nJe vous souhaite une excellente journée et me tiens à votre entière disposition pour toute information complémentaire.\n\nBien cordialement,`
+  },
+  {
+    id: "m12",
+    titre: "3ème pilier — Confirmation maintien",
+    categorie: "Prévoyance",
+    objet: "Maintien 3ème pilier – WallSwiss",
+    pieceJointe: "Mandat de gestion + copie pièce d'identité client",
+    corps: `Cher Monsieur …,\n\nLa compagnie Liechtenstein Life me demande une validation de votre part concernant l'activation de votre 3ème pilier, pouvez-vous simplement me faire parvenir un mail avec un copié/collé du message ci-dessous, ainsi qu'une copie du mandat de gestion complété et signé de votre part que vous trouverez en pièce jointe s'il vous plait.\n\n« Bonjour,\nJe, soussignée …, affirme que je souhaite maintenir les mensualités de mon 3ème pilier A/B auprès de Liechtenstein Life que je possède actuellement et que le 3ème pilier A/B est fait de manière complémentaire aujourd'hui.\nMerci par avance de prendre en considération ma demande,\nMr Mme … »`
+  },
+  {
+    id: "m13",
+    titre: "Recherche LPP",
+    categorie: "LPP",
+    objet: "Recherche avoirs 2ème pilier – WallSwiss",
+    pieceJointe: "Mandat de gestion WS + formulaire recherche à Berne + formulaire extrait compte Zurich",
+    corps: `[VERSION 1]\nChère Madame …, Cher Monsieur …,\nLors de notre échange, vous m'avez fait part de votre désir de retrouver vos avoirs de deuxième pilier.\nA cet effet, je vous prie de me retourner les 3 documents ci-joint complétés et signés de votre part s'il vous plait ainsi qu'une copie de votre pièce d'identité.\nUne fois les formulaires réceptionnés, je me chargerai personnellement de traiter votre recherche d'avoirs.\nLe délai avant d'avoir un retour sur vos avoirs de 2ème pilier peut prendre jusqu'à 3 mois maximum. Je vous reviendrai dès réception du résultat.\nSi vous avez des questions ou besoin d'informations complémentaires, je suis à votre entière disposition !\n\n--- OU ---\n\n[VERSION 2]\nCher Julien,\nSuite à notre agréable entretien téléphonique, nous allons vous accompagner dans la recherche de l'ensemble de vos avoirs de 2ᵉ pilier.\nAfin que je puisse lancer officiellement la procédure, je vous remercie de bien vouloir me retourner les deux documents ci-joints, dûment complétés et signés, ainsi qu'une copie de votre pièce d'identité (ou une photographie lisible).\nPar ailleurs, si d'ici là vous retrouvez d'anciens relevés de caisse de pension ou attestations LPP, n'hésitez pas à m'en envoyer une simple photo par e-mail ou via WhatsApp. Ces éléments peuvent parfois accélérer ou faciliter la recherche.\nDès réception des documents, je me chargerai personnellement de traiter votre demande auprès des différentes institutions. Le délai de réponse pour retrouver vos avoirs de 2ᵉ pilier peut aller jusqu'à un mois. Je reviendrai vers vous dès que j'aurai obtenu les premiers résultats.\n\nÀ l'issue de cette recherche, nous prévoyons un appel afin :\n- de vérifier que vos périodes AVS ont été correctement cotisées ;\n- et de voir comment sécuriser vos avoirs LPP sur un compte nominatif (compte de libre passage), afin qu'ils soient clairement identifiés, suivis et optimisés pour la suite.`
+  },
+  {
+    id: "m14",
+    titre: "Recommandations",
+    categorie: "Divers",
+    objet: "Recommandations – WallSwiss",
+    corps: `Cher Monsieur …, Chère Madame …,\n\nOffrez la possibilité à vos proches d'optimiser leur situation en leur partageant la philosophie WallSwiss !\nLaissez-nous ci-dessous leurs coordonnées afin que l'on puisse leur apporter les meilleurs conseils selon leur situation.\nVoici un petit aperçu condensé pour les recommandations qui sont notre plus belle rémunération :\n- Déclaration fiscale Suisse et Française (imposition ordinaire, rectification simple, quasi-résident, LMNP, CMU ou CNTFS)\n- LPP (Libre-Passage)\n- Prévoyance (1, 2, et 3 piliers)\n- Assurances choses/maladies\n- Investissements (Private Equity, Compte Titres, Gestion de fortune, Trust, CryptoMonnaie)\n- Financement immobilier / Stratégie immobilière\n\nChaque personne intéressée, suivant leur situation, aura la possibilité d'avoir un rendez-vous individuel soit à notre cabinet ou via visio-conférence (sans frais d'honoraire également).\n\nJe compte sur vous pour me faire un retour !\nJe vous souhaite une excellente journée et me tiens à votre entière disposition pour toute information complémentaire.\n\nBien cordialement,`
+  },
+  {
+    id: "m15",
+    titre: "Changement CMU vers LAMal",
+    categorie: "CMU / Fiscalité",
+    objet: "Changement vers la LAMal – WallSwiss",
+    corps: `Bonjour Madame…, Bonjour Monsieur…,\n\nAfin de pouvoir réouvrir votre droit d'option, il vous faut soit bénéficier d'une période de chômage indemnisé en France (attention délai de carence) ou bien effectivement devenir résident Suisse pendant une période minimum de 6 mois.\nConcernant cette dernière démarche, il vous faudra obtenir une adresse en Suisse, puis se rendre à l'OCPM, afin de se déclarer en Suisse et faire une demande de Permis B sauf si vous êtes de nationalité Suisse, auquel cas vous ferez une demande de document d'entrée sur le territoire.\nD'un autre côté, il vous faudra déposer une demande de souscription LAMal résidente dont la prime s'élève en moyenne à CHF350/450.- mensuel pendant le délai d'instruction du dossier (environ 6 mois).\nVous pourrez ensuite faire une demande de radiation CMU/CNTFS, avec l'attestation de résidence Suisse + la police d'assurance LAMal. La CMU vous remboursera de manière rétroactive les sommes trop perçues pendant la période d'instruction du dossier, soit depuis votre 1er d'entrée sur le territoire Suisse.\n\nSi vous souhaitez revenir en France, il vous faut retourner à l'OCPM pour annoncer votre départ du territoire Suisse et récupérer le formulaire qui prouve votre départ du territoire.\nLa LAMal résidente sera ensuite basculée LAMal frontalière à l'aide d'un formulaire et le formulaire comme quoi vous avez quitté le territoire Suisse.\n\nJ'espère avoir pu répondre à vos interrogations et vous souhaite une excellente journée.\nJe me tiens à votre entière disposition pour toute information complémentaire.`
+  },
+  {
+    id: "m16",
+    titre: "Confirmation RDV — Call",
+    categorie: "Rendez-vous",
+    objet: "Confirmation rendez-vous – WallSwiss",
+    corps: `Bonjour Madame…, Bonjour Monsieur …,\n\nComme convenu par téléphone, j'ai le plaisir de vous confirmer votre rendez-vous du Vendredi 15 Septembre 2024 à 13:00 à notre cabinet WallSwiss situé au :\nRue Kléberg, 14\n1201 Genève\nSuisse\n\nVous trouverez à votre disposition un parking extérieur avec des places bleues à disque (juste devant l'immeuble), des places blanches vers la gare routières et le parking souterrain de Manor si besoin.\nAfin de préparer votre échange dans les meilleures conditions, merci de préparer les éléments suivants :\n- Carte AVS,\n- Permis de travail/Pièce d'identité,\n- Dernier certificat de salaire,\n- Dernier certificat de prévoyance,\n- Dernière déclaration fiscale suisse et/ou française,\n- Et tout document nous permettant de faire un point sur vos différentes questions.\n\nUn de nos bureaux vous a été réservé par votre planificateur financier, Pierrick PEREIRA qui vous accueillera.\nAu besoin, vous pourrez directement joindre par mail votre conseillère à p.pereira@wallswiss.ch ou par téléphone au +41 77 941 18 77.\n\nNous comptons sur votre présence lors de ce premier rendez-vous sans honoraires !\nJe vous souhaite une excellente journée et me tiens à votre entière disposition pour toute information complémentaire.\nSi vous avez des personnes de votre entourage à qui vous souhaitez faire bénéficier de nos services, n'hésitez pas à nous les recommander, nous nous ferons un plaisir de les conseiller !`
+  },
+  {
+    id: "m17",
+    titre: "Confirmation RDV — Agent",
+    categorie: "Rendez-vous",
+    objet: "Confirmation rendez-vous – WallSwiss",
+    corps: `Bonjour Madame…, Bonjour Monsieur …,\n\nComme convenu par téléphone, j'ai le plaisir de vous confirmer votre rendez-vous du Vendredi 15 Septembre 2024 à 13:00 à notre cabinet WallSwiss situé au :\nRue Kléberg, 14\n1201 Genève\nSuisse\n\nVous trouverez à votre disposition un parking extérieur avec des places bleues à disque (juste devant l'immeuble), des places blanches vers la gare routières et le parking souterrain de Manor si besoin.\nAfin de préparer notre échange dans les meilleures conditions, merci de préparer les éléments suivants :\n- Carte AVS,\n- Permis de travail/Pièce d'identité,\n- Dernier certificat de salaire,\n- Dernier certificat de prévoyance,\n- Dernière déclaration fiscale suisse et/ou française,\n- Et tout document nous permettant de faire un point sur vos différentes questions.\n\nAu besoin, vous pourrez directement joindre par mail votre conseillère à p.pereira@wallswiss.ch ou par téléphone au +41 77 941 18 77.\nNous comptons sur votre présence lors de ce premier rendez-vous sans honoraires !\nJe vous contacterai 24h avant le rendez-vous. En cas d'empêchement, merci de m'en avertir au plus tôt afin de permettre à une autre personne de disposer de ce créneau.\nJe vous souhaite une excellente journée et me tiens à votre entière disposition pour toute information complémentaire.`
+  },
+  {
+    id: "m18",
+    titre: "Confirmation traitement dossier",
+    categorie: "CMU / Fiscalité",
+    objet: "Confirmation traitement dossier – WallSwiss",
+    corps: `Cher Monsieur …,\nChère Madame …,\n\nNous sommes ravis de vous confirmer le traitement et l'envoi, le …/…/2024, de votre dossier de rectification d'impôt par voie postale. Nous vous invitons également à faire la demande d'ouverture de votre espace e-démarche sur le site des impôts de Genève pour les prochaines années : https://ge.ch/ginainscriptions_pp/identity\n\n--- OU ---\n\nNous sommes ravis de vous confirmer le traitement, le …/…/2024, de votre dossier de rectification en ligne à travers votre espace e-démarche.\n\nConcernant le traitement du dossier par l'administration fiscale, cela sera probablement assez long (peut être supérieur à une année) mais vous pourrez consulter l'état de celui-ci sur votre espace e-démarche -> espace e-démarches fiscales.\nSi vous recevez une demande d'information complémentaire ou document complémentaire de la part de l'AFC, merci de nous transmettre le courrier afin que l'on puisse le traiter le plus rapidement possible.\n\nVous trouverez ci-joint toutes les informations bancaires afin de réaliser le paiement des honoraires appliqués pour le traitement de votre rectification d'impôt 2023 :\nBanque – Prénom NOM - ….- CHF\nCHXX XXXX XXXX XXXX XXXX X (IBAN SUISSE OBLIGATOIRE)\nVous pouvez également régler en espèce directement dans nos locaux également, auquel cas, merci de me prévenir de votre passage par avance (à inclure dans le mail si pas encore payé par le client)\n\nNous vous remercions pour la confiance accordée et restons à votre disposition pour toute demande complémentaire,`
+  },
+  {
+    id: "m19",
+    titre: "Relance documents — 1ère",
+    categorie: "Suivi",
+    objet: "Documents manquants – 1ère relance – WallSwiss",
+    corps: `PREMIERE RELANCE – Déclaration fiscale Suisse 2023\n\nCher Monsieur …,\nChère Madame …,\n\nDans le cadre de la prise en charge de votre dossier d'impôts Suisse au sein de notre cabinet SwissKap, celui reste incomplet et ne nous permet pas d'avancer dans vos démarches.\nPourriez-vous nous faire parvenir dans les plus brefs délais les documents suivants s'il vous plait : (supprimer ce qui n'est pas nécessaire)\n\n- Formulaire original DRIS/TOU reçu par voie postale / Identifiant et mot de passe à votre espace e-démarche,\n- Certificat de salaire 2023, de tous vos employeurs suisses, (pour vous et votre conjoint(e)),\n- Toutes les fiches de paies françaises de 2023 de Mr/Mme,\n- IBAN Suisse commençant par CH,\n- Copie de toutes les pages de votre livret de famille si vous avez des enfants à charge,\n- Montant exact des allocations familiales perçues en Suisse en 2023,\n- Copie de votre permis de travail ou pièce d'identité,\n- Justifications des frais de perfectionnement ou de reconversion professionnelle\n- Attestations de primes payées à des institutions de prévoyance (3ème pilier)\n- Justificatifs des primes d'assurance maladie, complémentaire/mutuelle et frais médicaux importants/EMS\n- Justificatifs des frais de garde de vos enfants par des tiers\n- Attestations d'intérêts et soldes de tous vos comptes bancaires, postaux, garantie de loyer, portefeuille titres, cryptomonnaies et autres éléments de la fortune au 31.12.2023\n- Acte notarié\n- Taxe foncière\n- Décompte de charges PPE/charges de copropriété et justificatifs des frais d'entretien d'immeuble\n- Factures de travaux d'embellissements ou rénovation\n- Assurance habitation\n- Attestations des intérêts passifs et des soldes vos dettes au 31.12.2023 / Tableaux d'amortissement\n\nDans l'attente de votre retour, je reste à votre disposition pour toute question et vous souhaite une belle journée.`
+  },
+  {
+    id: "m20",
+    titre: "Relance documents — 2ème",
+    categorie: "Suivi",
+    objet: "Documents manquants – 2ème relance – WallSwiss",
+    corps: `DEUXIEME RELANCE – Déclaration fiscale Suisse 2023\n\nCher Monsieur …,\nChère Madame …,\n\nDans le cadre de la prise en charge de votre dossier d'impôts Suisse au sein de notre cabinet WallSwiss, celui reste incomplet et ne nous permet pas d'avancer dans vos démarches.\nPourriez-vous nous faire parvenir dans les plus brefs délais les documents suivants s'il vous plait : (supprimer ce qui n'est pas nécessaire)\n\n- Formulaire original DRIS/TOU reçu par voie postale / Identifiant et mot de passe à votre espace e-démarche,\n- Certificat de salaire 2023, de tous vos employeurs suisses, (pour vous et votre conjoint(e)),\n- Toutes les fiches de paies françaises de 2023 de Mr/Mme,\n- IBAN Suisse commençant par CH,\n- Copie de toutes les pages de votre livret de famille si vous avez des enfants à charge,\n- Montant exact des allocations familiales perçues en Suisse en 2023,\n- Copie de votre permis de travail ou pièce d'identité,\n- Justifications des frais de perfectionnement ou de reconversion professionnelle\n- Attestations de primes payées à des institutions de prévoyance (3ème pilier)\n- Justificatifs des primes d'assurance maladie, complémentaire/mutuelle et frais médicaux importants/EMS\n- Justificatifs des frais de garde de vos enfants par des tiers\n- Attestations d'intérêts et soldes de tous vos comptes bancaires, postaux, garantie de loyer, portefeuille titres, cryptomonnaies et autres éléments de la fortune au 31.12.2023\n- Acte notarié\n- Taxe foncière\n- Décompte de charges PPE/charges de copropriété et justificatifs des frais d'entretien d'immeuble\n- Factures de travaux d'embellissements ou rénovation\n- Assurance habitation\n- Attestations des intérêts passifs et des soldes vos dettes au 31.12.2023 / Tableaux d'amortissement\n\nDans l'attente de votre retour, je reste à votre disposition pour toute question et vous souhaite une belle journée.`
+  },
+  {
+    id: "m21",
+    titre: "IMPÔT — Après RDV Rectification Simple",
+    categorie: "CMU / Fiscalité",
+    objet: "Documents nécessaires pour la rectification d'impôt",
+    corps: `Cher Monsieur M'Barek,\n\nSuite à notre agréable rendez-vous de lundi à 18h00, je vous transmets la liste des documents nécessaires pour la constitution de votre dossier de rectification d'impôt suisse 2025 (revenus 2024), ce qui permettra une récupération d'imposition :\n\n- Formulaire original DRIS/TOU (si vous l'avez déjà reçu par voie postale),\n- Certificat de salaire 2024 de tous vos employeurs suisses, pour vous et votre conjoint(e),\n- Toutes les fiches de paie françaises de 2024 de Monsieur/Madame,\n- IBAN suisse (commençant par CH),\n- Copie de toutes les pages de votre livret de famille si vous avez des enfants à charge,\n- Montant exact des allocations familiales perçues en Suisse en 2024,\n- Copie de votre permis de travail ou pièce d'identité.\n\nVous pouvez réserver un créneau directement sur mon agenda via ce lien : Calendly - Pierrick Pereira, ou m'envoyer un e-mail dès que votre dossier est complet. Nous pourrons alors fixer un rendez-vous pour finaliser et transmettre votre dossier le jour même.\nPar ailleurs, nous pourrons également revoir la question de prévoyance individuelle abordée brièvement lors de notre échange, si nécessaire.\n\nEnfin, si vous avez des collègues dans le doute concernant leur fiscalité, pensez à moi ! C'est toujours un plaisir de recevoir des recommandations.\n\nBien à vous,\nPierrick Pereira`
+  },
+  {
+    id: "m22",
+    titre: "3ème pilier — Changement stratégie Dynamique",
+    categorie: "Investissements",
+    objet: "WallSwiss - Mise à jour sans frais de votre portefeuille de prévoyance (3e pilier)",
+    corps: `Bonjour [Prénom Nom],\n\nComme nous tenons à cœur de suivre nos clients dans la durée, et que les promesses d'accompagnement n'ont de valeur que lorsqu'il y a accompagnement, nous vous proposons une mise à jour sans frais de votre portefeuille de prévoyance (3e pilier) afin de mieux traverser le contexte actuel (concentration « Mega-Tech » US, rotations sectorielles en Europe, volatilité des devises).\n\nCe qui change (simple et efficace)\nNous remplaçons votre poche thématique (eau) et le fonds résiduel par une construction plus robuste pour ce contexte :\n- 30 % iShares Core S&P 500 (USD, Acc)\n- 25 % iShares NASDAQ-100 (USD, Acc)\n- 15 % iShares Swiss Dividend (CHF)\n- 15 % Xetra-Gold (EUR)\n- 15 % Xtrackers STOXX Europe 600 (EUR)\n\nPourquoi c'est mieux pour votre 3e pilier\n- Diversification renforcée : ajout d'Europe « large/mid/small caps » et d'un ballast or pour amortir les chocs, tout en conservant les moteurs US et les défensifs suisses.\n- Moins de concentration thématique : on sort de la niche « eau » pour un panier Europe plus équilibré.\n- Coûts maîtrisés & liquidité élevée : ETFs UCITS en réplication physique, clairs et transparents.\n- Sans frais d'arbitrage dans votre enveloppe 3P et sans impact fiscal au sein du contrat.\n\nComment valider (en 10 secondes)\nRépondez simplement à cet e-mail :\n« Je confirme l'arbitrage vers la stratégie proposée pour mon 3e pilier. »\nÀ réception, vous recevrez une notification dans votre application de suivi pour valider, et nous exécuterons l'arbitrage immédiatement.\nN'hésitez pas à suivre l'actualités économiques sur : Articles | WallSwiss\n\nEnvie d'un check-up avant ?\nVotre conseiller est disponible pour un point de 15–20 minutes (téléphone/visio) afin de répondre à vos questions et, si besoin, ajuster finement les pondérations selon vos projets de prévoyance.\n\nMerci de votre confiance, nous restons à vos côtés.\nChaleureusement,`
+  },
+  {
+    id: "m23",
+    titre: "Webconférence — Invitation",
+    categorie: "Événements",
+    objet: "🎯 Intéressé par le Private Equity ? – Webconférence WallSwiss × Altaroc",
+    corps: `🎯 Intéressé par le Private Equity ?\nParticipez à notre webconférence exclusive avec Altaroc, leader du Private Equity accessible.\n\n📅 Mercredi 9 avril à 18h\n💻 En ligne – Participation anonyme possible\n\n🔍 Lors de cette session, vous découvrirez :\n- Comment fonctionne le Private Equity\n- Pourquoi de plus en plus d'investisseurs privés s'y intéressent\n- Comment y accéder simplement grâce à Altaroc\n\n🎙️ Avec la participation de :\n- Antoine Duchiron, CFA – Senior Sales & Product Specialist chez Altaroc Suisse\n- Pierrick Pereira – Fondateur de WallSwiss\n\n👉 Inscription gratuite ici : https://app.livestorm.co/altaroc/webinar-private-equity-altaroc-wallswiss`
+  },
+  {
+    id: "m24",
+    titre: "Relance compte titre",
+    categorie: "Investissements",
+    objet: "Suivi chiffré – Évolution du compte-titres – WallSwiss",
+    corps: `Madame XXXX,\n\nJe me permets de revenir vers vous afin de faire suite à notre dernier échange de juillet et de vous transmettre un suivi chiffré concernant l'évolution du compte-titres sur la période récente. L'idée est de vous montrer l'impact qu'aurait eu votre investissement si nous avions pu avancer dès le début du mois de juillet sur le projet d'accès à la gestion de fortune. Il s'agit simplement de vous illustrer, de façon factuelle, les retombées possibles si vous aviez investi votre capital de 250 000 CHF au 1er juillet 2025.\n\nJ'ai donc réalisé une simulation entre le 1er juillet 2025 et le 1er octobre 2025 : le point d'entrée était de 124,540 et le point de sortie de 135,820, soit une progression de 11,28 points, correspondant à +11,28 % sur trois mois.\n\nEn appliquant cette performance à votre projet d'investissement initial :\nPour votre placement envisagé de 250 000 CHF, après déduction des 3 % de frais d'entrée (7 500 CHF), soit un capital investi de 242 500 CHF, la valorisation au 1er octobre aurait atteint 269 854 CHF, soit une plus-value potentielle de 19 854 CHF en trois mois.\n\nVeuillez trouver ci-joint la fact sheet de la stratégie Dynamique : 51136809 | 135.96 / 137.33 USD\n\nCes résultats illustrent concrètement la dynamique positive du support que nous avions évoqué cet été. Je pense sincèrement qu'il serait dommage de passer à côté d'une opportunité aussi porteuse dans le contexte actuel.\n\nJe reste bien entendu à votre disposition pour en discuter, adapter la stratégie si besoin et répondre à toutes vos questions.\n\nBien cordialement,`
+  }
+];
 
 const fontLink = document.createElement("link");
 fontLink.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap";
@@ -3300,6 +3477,18 @@ export default function WallSwissApp() {
   const [campaignSuccess, setCampaignSuccess] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  // --- STATE MAILS TYPES ---
+  const [mailSearch, setMailSearch] = useState("");
+  const [mailCat, setMailCat] = useState("Toutes");
+  const [toastMsg, setToastMsg] = useState("");
+  const [selectedMail, setSelectedMail] = useState(null);
+
+  const handleCopy = (text, msg) => {
+    navigator.clipboard.writeText(text);
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(""), 3000);
+  };
+
   const handleImageUpload = async (file, path) => {
     if (!file || !storage) return null;
     setUploadingImage(true);
@@ -4227,6 +4416,13 @@ export default function WallSwissApp() {
             <Icons.FileText size={16} /> Ressources Documents
           </button>
 
+          <button 
+            onClick={() => setActiveModule("mails")} 
+            style={{ width: "100%", textAlign: "left", background: activeModule === "mails" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "mails" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "mails" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "mails" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
+          >
+            <Icons.Inbox size={16} /> Mails Types
+          </button>
+
           <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700, letterSpacing: "0.1em", padding: "0 24px", margin: "16px 0 8px", textTransform: "uppercase" }}>Liens rapides</div>
 
           <button 
@@ -4455,161 +4651,161 @@ export default function WallSwissApp() {
           </div>
         )}
 
-        {/* VUE MODULE ANNUAIRE */}
-        {activeModule === "annuaire" && (
+        {/* VUE MODULE MAILS TYPES */}
+        {activeModule === "mails" && (
           <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
             <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
               <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Annuaire Partenaires</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Mails Types</div>
                 </div>
               </div>
             </header>
 
-            <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto" }}>
+            <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto", position: "relative" }}>
               <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
-                <div style={{ marginBottom: 32 }}>
-                  <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Contacts Partenaires</h2>
-                  <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Retrouvez les coordonnées directes de nos partenaires institutionnels.</p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
+                  <div>
+                    <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Modèles de communication</h2>
+                    <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Centralisation de vos emails types pour un envoi rapide en un clic.</p>
+                  </div>
+                  <div style={{ width: "300px" }}>
+                    <input 
+                      style={{ ...S.input, borderRadius: "20px", padding: "10px 20px" }} 
+                      placeholder="Rechercher un mail..." 
+                      value={mailSearch}
+                      onChange={(e) => setMailSearch(e.target.value)}
+                    />
+                  </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-                  {[
-                    { nom: "Swissquote", type: "Banque / Dépôt", contact: "Desk B2B", tel: "+41 44 825 89 90", email: "b2b-desk@swissquote.ch", url: "https://trade.swissquote.ch/my.policy" },
-                    { nom: "ParFinance", type: "Asset Manager", contact: "Desk Gestion", tel: "+41 22 989 55 55", email: "info@parfinance.ch", url: "https://www.parfinance.ch/" },
-                    { nom: "NS Partners", type: "Asset Manager", contact: "Relation Partenaires", tel: "+41 22 906 52 50", email: "geneva@nspgroup.com", url: "https://nspartners.com/" },
-                    { nom: "Liechtenstein Life", type: "Prévoyance & Assurance", contact: "Support Courtier", tel: "+423 265 34 40", email: "info@liechtensteinlife.com", url: "https://partner.life.li/fr/my/dashboard" },
-                    { nom: "Pictet", type: "Fondation LPP", contact: "Service LPP", tel: "+41 58 323 23 23", email: "lpp@pictet.com", url: "https://www.am.pictet/" },
-                    { nom: "Lemania", type: "Fondation LPP", contact: "Administration", tel: "+41 21 311 11 11", email: "info@lemania-lpp.ch", url: "https://www.hublemania.ch/" }
-                  ].map((p, i) => (
-                    <div key={i} style={S.card}>
-                      <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>{p.type}</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: C.primary, marginBottom: 16 }}>{p.nom}</div>
-                      
-                      <div style={{ display: "grid", gap: 12 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <div style={{ color: C.gray }}><Icons.User size={16} /></div>
-                          <span style={{ fontSize: 13, color: C.darkGray, fontWeight: 500 }}>{p.contact}</span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <div style={{ color: C.gray }}><Icons.Phone size={16} /></div>
-                          <span style={{ fontSize: 13, color: C.darkGray, fontWeight: 500 }}>{p.tel}</span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <div style={{ color: C.gray }}><Icons.Mail size={16} /></div>
-                          <span style={{ fontSize: 13, color: C.primary, fontWeight: 500 }}>{p.email}</span>
-                        </div>
-                      </div>
-                      
-                      {p.url && (
-                        <button 
-                          onClick={() => window.open(p.url, "_blank")} 
-                          style={{ marginTop: 20, width: "100%", background: "transparent", border: `1px solid ${C.mediumGray}`, color: C.primary, padding: "10px 0", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", transition: "0.2s", display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}
-                          onMouseEnter={(e)=>e.currentTarget.style.background="rgba(105,33,2,0.04)"}
-                          onMouseLeave={(e)=>e.currentTarget.style.background="transparent"}
-                        >
-                          Accéder au portail <Icons.ExternalLink size={14} />
-                        </button>
-                      )}
-                    </div>
+                {/* Filtres par catégorie */}
+                <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 16, marginBottom: 16 }}>
+                  {["Toutes", "Rendez-vous", "CMU / Fiscalité", "Prévoyance", "LPP", "Suivi", "Investissements", "Événements", "Divers"].map(cat => (
+                    <button 
+                      key={cat}
+                      onClick={() => setMailCat(cat)}
+                      style={{
+                        background: mailCat === cat ? C.primary : C.white,
+                        color: mailCat === cat ? C.white : C.darkGray,
+                        border: `1px solid ${mailCat === cat ? C.primary : C.mediumGray}`,
+                        padding: "8px 16px",
+                        borderRadius: "20px",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        transition: "0.2s"
+                      }}
+                    >
+                      {cat}
+                    </button>
                   ))}
                 </div>
-              </div>
-            </main>
-          </div>
-        )}
 
-        {/* VUE MODULE RESSOURCES */}
-        {activeModule === "ressources" && (
-          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-            <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
-              <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div>
-                  <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Ressources Documents</div>
-                </div>
-              </div>
-            </header>
-
-            <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto" }}>
-              <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
-                <div style={{ marginBottom: 32 }}>
-                  <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Documents & Formulaires</h2>
-                  <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Téléchargez directement les documents officiels dont vous avez besoin pour vos rendez-vous.</p>
-                </div>
-
-                {[
-                  {
-                    titre: "Général",
-                    docs: [
-                      { nom: "Mandat de gestion 2026", desc: "Mandat officiel WallSwiss", fichier: "/Mandat de gestion Wallswiss 2026.pdf" }
-                    ]
-                  },
-                  {
-                    titre: "Modèles de courriers",
-                    docs: [
-                      { nom: "Lettre envoi postal", desc: "Modèle The WallSwiss Partner", fichier: "/WS The WallSwiss Partner lettre envoi postal.docx" },
-                      { nom: "Demande valeur rachat", desc: "Modèle de demande de rachat", fichier: "/Modèle - demande de valeur de rachat.docx" },
-                      { nom: "Récupération de fonds", desc: "Modèle de récupération de fonds", fichier: "/Modèle - demande de récupération de fonds.docx" },
-                      { nom: "Suppression Garantie", desc: "Lettre suppression garantie select", fichier: "/LETTRE SUPPRESSION GARANTIE SELECT.docx" },
-                      { nom: "Libération de primes", desc: "Lettre demande de libération", fichier: "/Lettre demande de libération de primes .docx" }
-                    ]
-                  },
-                  {
-                    titre: "LPP",
-                    docs: [
-                      { nom: "Recherche Centrale LPP", desc: "Formulaire de recherche du 2ème Pilier", fichier: "/Centrale 2P.pdf" },
-                      { nom: "Liste Documents Retrait", desc: "Documents à fournir pour retrait EPL", fichier: "/1._Liste_Documents_A_Fournir_Retrait_Epl.pdf" },
-                      { nom: "Demande de Retrait EPL", desc: "Formulaire de demande de retrait FLLP", fichier: "/Demande_de_Retrait_Epl_FLLP_Fr.pdf" },
-                      { nom: "Déblocage LPP Lemania", desc: "Formulaire de déblocage LPP LEMANIA", fichier: "/Formulaire de déblocage LPP LEMANIA.pdf" }
-                    ]
-                  }
-                ].map((categorie, indexCat) => (
-                  <div key={indexCat} style={{ marginBottom: 40 }}>
-                    <h3 style={{ fontSize: 14, color: C.gray, textTransform: "uppercase", letterSpacing: "0.1em", borderBottom: `2px solid ${C.mediumGray}`, paddingBottom: 8, marginBottom: 20 }}>
-                      {categorie.titre}
-                    </h3>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                      {categorie.docs.map((doc, i) => (
-                        <div 
-                          key={i} 
-                          style={{ background: C.white, border: `1px solid ${C.lightGray}`, borderLeft: `4px solid transparent`, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all 0.2s", borderRadius: "0px" }} 
-                          onMouseEnter={(e)=> { e.currentTarget.style.borderLeftColor = C.gold; e.currentTarget.style.background = "rgba(165,149,104,0.02)"; e.currentTarget.style.boxShadow = "0 4px 15px rgba(0,0,0,0.03)"; }} 
-                          onMouseLeave={(e)=> { e.currentTarget.style.borderLeftColor = "transparent"; e.currentTarget.style.background = C.white; e.currentTarget.style.boxShadow = "none"; }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-                            <div style={{ background: "rgba(105,33,2,0.04)", color: C.primary, width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px", flexShrink: 0 }}>
-                              <Icons.FileText size={24} />
-                            </div>
-                            <div style={{ textAlign: "left" }}>
-                              <div style={{ fontSize: 16, fontWeight: 700, color: C.primaryDark, marginBottom: 4 }}>{doc.nom}</div>
-                              <div style={{ fontSize: 13, color: C.gray }}>{doc.desc}</div>
-                            </div>
-                          </div>
-                          <button 
-                            onClick={(e) => {
-                              e.preventDefault();
-                              const link = document.createElement('a');
-                              link.href = doc.fichier;
-                              link.download = doc.fichier.split('/').pop(); // Force le téléchargement avec le nom du fichier
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                            }} 
-                            style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primaryDark, padding: "10px 24px", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 10, borderRadius: "0px" }}
-                            onMouseEnter={(e)=> { e.currentTarget.style.background = C.primary; e.currentTarget.style.color = C.white; e.currentTarget.style.borderColor = C.primary; }}
-                            onMouseLeave={(e)=> { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.primaryDark; e.currentTarget.style.borderColor = C.mediumGray; }}
-                          >
-                            Télécharger / Ouvrir <span style={{ fontSize: 14 }}>&rarr;</span>
+                {/* Grille des mails */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
+                  {MAILS_TYPES.filter(m => {
+                    const matchCat = mailCat === "Toutes" || m.categorie === mailCat;
+                    const matchSearch = m.titre.toLowerCase().includes(mailSearch.toLowerCase()) || m.objet.toLowerCase().includes(mailSearch.toLowerCase());
+                    return matchCat && matchSearch;
+                  }).map(mail => (
+                    <div key={mail.id} style={{ ...S.card, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 16, padding: "20px 24px" }}>
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                          <span style={{ background: "rgba(105,33,2,0.06)", color: C.primary, fontSize: 10, fontWeight: 700, padding: "4px 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                            {mail.categorie}
+                          </span>
+                          {mail.pieceJointe && <span title="Pièce jointe requise" style={{ color: C.gold }}><Icons.FileText size={16} /></span>}
+                        </div>
+                        <h3 style={{ fontSize: 16, fontWeight: 800, color: C.primaryDark, margin: "0 0 8px 0", lineHeight: 1.4 }}>{mail.titre}</h3>
+                        <p style={{ fontSize: 12, color: C.gray, margin: 0, fontStyle: "italic", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Objet : {mail.objet}</p>
+                        <p style={{ fontSize: 12, color: C.darkGray, marginTop: 12, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                          {mail.corps}
+                        </p>
+                      </div>
+                      
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={() => handleCopy(mail.objet, "Objet copié !")} style={{ flex: 1, background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primaryDark, padding: "8px 0", fontSize: 11, fontWeight: 700, cursor: "pointer", transition: "0.2s", display: "flex", justifyContent: "center", alignItems: "center", gap: 6 }} onMouseEnter={e=>{e.currentTarget.style.background=C.lightGray}} onMouseLeave={e=>{e.currentTarget.style.background=C.white}}>
+                            <Icons.Copy size={14} /> OBJET
+                          </button>
+                          <button onClick={() => handleCopy(mail.corps, "Corps copié !")} style={{ flex: 1, background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primaryDark, padding: "8px 0", fontSize: 11, fontWeight: 700, cursor: "pointer", transition: "0.2s", display: "flex", justifyContent: "center", alignItems: "center", gap: 6 }} onMouseEnter={e=>{e.currentTarget.style.background=C.lightGray}} onMouseLeave={e=>{e.currentTarget.style.background=C.white}}>
+                            <Icons.Copy size={14} /> CORPS
                           </button>
                         </div>
-                      ))}
+                        <button onClick={() => setSelectedMail(mail)} style={{ width: "100%", background: C.primary, color: C.white, border: "none", padding: "8px 0", fontSize: 11, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.05em", transition: "0.2s" }} onMouseEnter={e=>{e.currentTarget.style.opacity=0.9}} onMouseLeave={e=>{e.currentTarget.style.opacity=1}}>
+                          VOIR LES DÉTAILS
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                  {MAILS_TYPES.filter(m => (mailCat === "Toutes" || m.categorie === mailCat) && (m.titre.toLowerCase().includes(mailSearch.toLowerCase()) || m.objet.toLowerCase().includes(mailSearch.toLowerCase()))).length === 0 && (
+                    <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "40px", color: C.gray, fontSize: 14 }}>
+                      Aucun mail trouvé pour cette recherche ou catégorie.
+                    </div>
+                  )}
+                </div>
               </div>
             </main>
+
+            {/* Modal Détail du Mail */}
+            {selectedMail && (
+              <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+                <div style={{ background: C.white, width: "100%", maxWidth: 800, maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 20px 40px rgba(0,0,0,0.2)" }}>
+                  <div style={{ padding: "24px 32px", borderBottom: `1px solid ${C.mediumGray}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: C.lightGray }}>
+                    <div>
+                      <div style={{ fontSize: 10, color: C.primary, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{selectedMail.categorie}</div>
+                      <h2 style={{ fontSize: 20, fontWeight: 800, color: C.primaryDark, margin: 0 }}>{selectedMail.titre}</h2>
+                    </div>
+                    <button onClick={() => setSelectedMail(null)} style={{ background: "transparent", border: "none", fontSize: 24, color: C.gray, cursor: "pointer" }}>&times;</button>
+                  </div>
+                  
+                  <div style={{ padding: "32px", overflowY: "auto", flex: 1 }}>
+                    {selectedMail.pieceJointe && (
+                      <div style={{ background: "rgba(165,149,104,0.1)", borderLeft: `4px solid ${C.gold}`, padding: "12px 16px", marginBottom: 24, fontSize: 13, color: C.darkGray, display: "flex", alignItems: "center", gap: 12 }}>
+                        <Icons.FileText size={20} color={C.gold} />
+                        <strong>Pièce(s) jointe(s) recommandée(s) :</strong> {selectedMail.pieceJointe}
+                      </div>
+                    )}
+                    
+                    <div style={{ marginBottom: 24 }}>
+                      <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Objet du mail</div>
+                      <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: "12px 16px", fontSize: 14, fontWeight: 600, color: C.primaryDark, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        {selectedMail.objet}
+                        <button onClick={() => handleCopy(selectedMail.objet, "Objet copié !")} style={{ background: "transparent", border: "none", color: C.primary, cursor: "pointer" }} title="Copier l'objet"><Icons.Copy size={18}/></button>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Corps du message</div>
+                      <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: "20px", fontSize: 13, color: C.darkGray, whiteSpace: "pre-wrap", lineHeight: 1.6, position: "relative" }}>
+                        <button onClick={() => handleCopy(selectedMail.corps, "Corps copié !")} style={{ position: "absolute", top: 12, right: 12, background: C.lightGray, border: `1px solid ${C.mediumGray}`, padding: "6px 10px", color: C.primary, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600 }} title="Copier le corps">
+                          <Icons.Copy size={14}/> Copier
+                        </button>
+                        {selectedMail.corps}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style={{ padding: "20px 32px", borderTop: `1px solid ${C.mediumGray}`, display: "flex", justifyContent: "flex-end", gap: 16 }}>
+                    <button onClick={() => handleCopy(`${selectedMail.objet}\n\n${selectedMail.corps}`, "Objet et Corps copiés !")} style={{ ...S.btnP, background: C.gold, display: "flex", alignItems: "center", gap: 8 }}>
+                      <Icons.Copy size={16}/> Tout Copier (Objet + Corps)
+                    </button>
+                    <button onClick={() => setSelectedMail(null)} style={S.btnS}>Fermer</button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Toast Notification */}
+            {toastMsg && (
+              <div style={{ position: "fixed", bottom: 40, right: 40, background: "#10B981", color: C.white, padding: "12px 24px", fontSize: 14, fontWeight: 600, boxShadow: "0 10px 25px rgba(16, 185, 129, 0.3)", zIndex: 2000, display: "flex", alignItems: "center", gap: 10, animation: "fadeIn 0.3s ease-out" }}>
+                <span style={{ fontSize: 18 }}>✓</span> {toastMsg}
+              </div>
+            )}
+            <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }`}</style>
           </div>
         )}
 

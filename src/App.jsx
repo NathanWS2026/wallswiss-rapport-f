@@ -5118,6 +5118,167 @@ export default function WallSwissApp() {
           </div>
         )}
 
+        {/* VUE MODULE ANNUAIRE */}
+        {activeModule === "annuaire" && (
+          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+            <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
+              <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Annuaire Partenaires</div>
+                </div>
+              </div>
+            </header>
+
+            <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto", textAlign: "left" }}>
+              <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
+                <div style={{ marginBottom: 32 }}>
+                  <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Contacts & Partenaires</h2>
+                  <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Retrouvez les informations de contact de nos principaux partenaires.</p>
+                </div>
+                
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
+                  {[
+                    { nom: "Swissquote", type: "Banque / Dépôt", contact: "Desk B2B", tel: "+41 44 825 89 90", email: "b2b-desk@swissquote.ch", url: "https://trade.swissquote.ch/my.policy" },
+                    { nom: "ParFinance", type: "Asset Manager", contact: "Desk Gestion", tel: "+41 22 989 55 55", email: "info@parfinance.ch", url: "https://www.parfinance.ch/" },
+                    { nom: "NS Partners", type: "Asset Manager", contact: "Relation Partenaires", tel: "+41 22 906 52 50", email: "geneva@nspgroup.com", url: "https://nspartners.com/" },
+                    { nom: "Liechtenstein Life", type: "Prévoyance & Assurance", contact: "Support Courtier", tel: "+423 265 34 40", email: "info@liechtensteinlife.com", url: "https://partner.life.li/fr/my/dashboard" },
+                    { nom: "Pictet", type: "Fondation LPP", contact: "Service LPP", tel: "+41 58 323 23 23", email: "lpp@pictet.com", url: "https://www.am.pictet/" },
+                    { nom: "Lemania", type: "Fondation LPP", contact: "Administration", tel: "+41 21 311 11 11", email: "info@lemania-lpp.ch", url: "https://www.hublemania.ch/" }
+                  ].map((partenaire, i) => (
+                    <div key={i} style={{ ...S.card, padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
+                      <div>
+                        <span style={{ background: "rgba(165,149,104,0.1)", color: C.gold, fontSize: 10, fontWeight: 700, padding: "4px 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{partenaire.type}</span>
+                      </div>
+                      <h3 style={{ fontSize: 18, fontWeight: 800, color: C.primaryDark, margin: 0 }}>{partenaire.nom}</h3>
+                      
+                      <div style={{ display: "grid", gap: 12 }}>
+                        {partenaire.contact && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            <div style={{ color: C.gray }}><Icons.User size={16} /></div>
+                            <span style={{ fontSize: 13, color: C.darkGray, fontWeight: 500 }}>{partenaire.contact}</span>
+                          </div>
+                        )}
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <div style={{ color: C.gray }}><Icons.Phone size={16} /></div>
+                          <span style={{ fontSize: 13, color: C.darkGray, fontWeight: 500 }}>{partenaire.tel}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <div style={{ color: C.gray }}><Icons.Mail size={16} /></div>
+                          <span style={{ fontSize: 13, color: C.primary, fontWeight: 500 }}>{partenaire.email}</span>
+                        </div>
+                      </div>
+                      {partenaire.url && (
+                        <button 
+                          onClick={() => window.open(partenaire.url, "_blank")} 
+                          style={{ marginTop: 20, width: "100%", background: "transparent", border: `1px solid ${C.mediumGray}`, color: C.primary, padding: "10px 0", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", transition: "0.2s", display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}
+                          onMouseEnter={(e)=>e.currentTarget.style.background="rgba(105,33,2,0.04)"}
+                          onMouseLeave={(e)=>e.currentTarget.style.background="transparent"}
+                        >
+                          Accéder au portail <Icons.ExternalLink size={14} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </main>
+          </div>
+        )}
+
+        {/* VUE MODULE RESSOURCES */}
+        {activeModule === "ressources" && (
+          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+            <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
+              <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Ressources Documents</div>
+                </div>
+              </div>
+            </header>
+
+            <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto", textAlign: "left" }}>
+              <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
+                <div style={{ marginBottom: 32 }}>
+                  <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Documents & Formulaires</h2>
+                  <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Téléchargez directement les documents officiels dont vous avez besoin pour vos rendez-vous.</p>
+                </div>
+
+                {[
+                  {
+                    titre: "Général",
+                    docs: [
+                      { nom: "Mandat de gestion 2026", desc: "Mandat officiel WallSwiss", fichier: "/Mandat de gestion Wallswiss 2026.pdf" }
+                    ]
+                  },
+                  {
+                    titre: "Modèles de courriers",
+                    docs: [
+                      { nom: "Lettre envoi postal", desc: "Modèle The WallSwiss Partner", fichier: "/WS The WallSwiss Partner lettre envoi postal.docx" },
+                      { nom: "Demande valeur rachat", desc: "Modèle de demande de rachat", fichier: "/Modèle - demande de valeur de rachat.docx" },
+                      { nom: "Récupération de fonds", desc: "Modèle de récupération de fonds", fichier: "/Modèle - demande de récupération de fonds.docx" },
+                      { nom: "Suppression Garantie", desc: "Lettre suppression garantie select", fichier: "/LETTRE SUPPRESSION GARANTIE SELECT.docx" },
+                      { nom: "Libération de primes", desc: "Lettre demande de libération", fichier: "/Lettre demande de libération de primes .docx" }
+                    ]
+                  },
+                  {
+                    titre: "LPP",
+                    docs: [
+                      { nom: "Recherche Centrale LPP", desc: "Formulaire de recherche du 2ème Pilier", fichier: "/Centrale 2P.pdf" },
+                      { nom: "Liste Documents Retrait", desc: "Documents à fournir pour retrait EPL", fichier: "/1._Liste_Documents_A_Fournir_Retrait_Epl.pdf" },
+                      { nom: "Demande de Retrait EPL", desc: "Formulaire de demande de retrait FLLP", fichier: "/Demande_de_Retrait_Epl_FLLP_Fr.pdf" },
+                      { nom: "Déblocage LPP Lemania", desc: "Formulaire de déblocage LPP LEMANIA", fichier: "/Formulaire de déblocage LPP LEMANIA.pdf" }
+                    ]
+                  }
+                ].map((categorie, indexCat) => (
+                  <div key={indexCat} style={{ marginBottom: 40, textAlign: "left" }}>
+                    <h3 style={{ fontSize: 14, color: C.gray, textTransform: "uppercase", letterSpacing: "0.1em", borderBottom: `2px solid ${C.mediumGray}`, paddingBottom: 8, marginBottom: 20 }}>
+                      {categorie.titre}
+                    </h3>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                      {categorie.docs.map((doc, i) => (
+                        <div 
+                          key={i} 
+                          style={{ background: C.white, border: `1px solid ${C.lightGray}`, borderLeft: `4px solid transparent`, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all 0.2s", borderRadius: "0px" }} 
+                          onMouseEnter={(e)=> { e.currentTarget.style.borderLeftColor = C.gold; e.currentTarget.style.background = "rgba(165,149,104,0.02)"; e.currentTarget.style.boxShadow = "0 4px 15px rgba(0,0,0,0.03)"; }} 
+                          onMouseLeave={(e)=> { e.currentTarget.style.borderLeftColor = "transparent"; e.currentTarget.style.background = C.white; e.currentTarget.style.boxShadow = "none"; }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+                            <div style={{ background: "rgba(105,33,2,0.04)", color: C.primary, width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px", flexShrink: 0 }}>
+                              <Icons.FileText size={24} />
+                            </div>
+                            <div style={{ textAlign: "left" }}>
+                              <div style={{ fontSize: 16, fontWeight: 700, color: C.primaryDark, marginBottom: 4 }}>{doc.nom}</div>
+                              <div style={{ fontSize: 13, color: C.gray }}>{doc.desc}</div>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const link = document.createElement('a');
+                              link.href = doc.fichier;
+                              link.download = doc.fichier.split('/').pop();
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }} 
+                            style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primaryDark, padding: "10px 24px", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 10, borderRadius: "0px" }}
+                            onMouseEnter={(e)=> { e.currentTarget.style.background = C.primary; e.currentTarget.style.color = C.white; e.currentTarget.style.borderColor = C.primary; }}
+                            onMouseLeave={(e)=> { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.primaryDark; e.currentTarget.style.borderColor = C.mediumGray; }}
+                          >
+                            Télécharger / Ouvrir <span style={{ fontSize: 14 }}>&rarr;</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </main>
+          </div>
+        )}
+
         {/* VUE MODULE MAILS TYPES */}
         {activeModule === "mails" && (
           <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>

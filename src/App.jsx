@@ -4543,13 +4543,21 @@ export default function WallSwissApp() {
                             <div style={{ background: "rgba(105,33,2,0.04)", color: C.primary, width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px", flexShrink: 0 }}>
                               <Icons.FileText size={24} />
                             </div>
-                            <div>
+                            <div style={{ textAlign: "left" }}>
                               <div style={{ fontSize: 16, fontWeight: 700, color: C.primaryDark, marginBottom: 4 }}>{doc.nom}</div>
                               <div style={{ fontSize: 13, color: C.gray }}>{doc.desc}</div>
                             </div>
                           </div>
                           <button 
-                            onClick={() => window.open(doc.fichier, "_blank")} 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const link = document.createElement('a');
+                              link.href = doc.fichier;
+                              link.download = doc.fichier.split('/').pop(); // Force le téléchargement avec le nom du fichier
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }} 
                             style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primaryDark, padding: "10px 24px", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 10, borderRadius: "0px" }}
                             onMouseEnter={(e)=> { e.currentTarget.style.background = C.primary; e.currentTarget.style.color = C.white; e.currentTarget.style.borderColor = C.primary; }}
                             onMouseLeave={(e)=> { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.primaryDark; e.currentTarget.style.borderColor = C.mediumGray; }}

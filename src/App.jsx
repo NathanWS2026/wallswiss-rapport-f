@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInWithCustomToken, signInAnonymously, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, addDoc, deleteDoc } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // ────────────────────── FIREBASE SETUP ──────────────────────
-let app, auth, db, appId = "wallswiss-app";
+let app, auth, db, storage, appId = "wallswiss-app";
 
 // 👑 EMAIL DE L'ADMINISTRATEUR (Mettez votre propre email ici)
 const ADMIN_EMAIL = "admin@wallswiss.ch";
@@ -27,6 +28,7 @@ try {
     app = initializeApp(finalConfig);
     auth = getAuth(app);
     db = getFirestore(app);
+    storage = getStorage(app);
     if (isCanvasEnv && typeof __app_id !== 'undefined') appId = __app_id;
   }
 } catch (error) {
@@ -3639,7 +3641,8 @@ export default function WallSwissApp() {
       agentEmail: "",
       defaultLogo: "",
       defaultCover: "",
-      defaultPhilosophy: ""
+      defaultPhilosophy: "",
+      marketingMedia: {}
     };
     try {
       const local = localStorage.getItem('wallswiss_settings');
@@ -3652,6 +3655,41 @@ export default function WallSwissApp() {
   const [reports, setReports] = useState([]);
   const [preview, setPreview] = useState(null);
   
+  // --- ETAT D'ÉDITION HUB MARKETING ---
+  const [isEditingMarketing, setIsEditingMarketing] = useState(false);
+  
+  const onMarketingMediaChange = async (file, mediaKey) => {
+    if (!file) return;
+    const url = await handleImageUpload(file, `marketing/${user?.uid || 'global'}/${mediaKey}_${Date.now()}`);
+    if (url) {
+      const newSettings = { ...appSettings, marketingMedia: { ...(appSettings.marketingMedia || {}), [mediaKey]: url } };
+      updateSettings(newSettings);
+    }
+  };
+
+  const EditableMedia = ({ mediaKey, defaultUrl, isVideo, posterUrl }) => {
+    const currentUrl = appSettings.marketingMedia?.[mediaKey] || defaultUrl;
+    return (
+      <div style={{ position: "relative", width: "100%", height: "100%" }}>
+        {isVideo ? (
+          <video key={currentUrl} className="w-full h-full object-cover block" controls muted loop playsInline poster={posterUrl} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}>
+            <source src={currentUrl} type={currentUrl.includes('.webm') ? 'video/webm' : 'video/mp4'} />
+          </video>
+        ) : (
+          <img src={currentUrl} alt="Créative Marketing" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        )}
+        {isEditingMarketing && (
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 30 }}>
+            <label style={{ background: C.primary, color: C.white, padding: "8px 16px", borderRadius: 4, cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", gap: 8, alignItems: "center", transition: "0.2s" }} onMouseEnter={e=>e.currentTarget.style.opacity=0.9} onMouseLeave={e=>e.currentTarget.style.opacity=1}>
+              <input type="file" accept={isVideo ? "video/*" : "image/*"} style={{ display: "none" }} onChange={(e) => onMarketingMediaChange(e.target.files[0], mediaKey)} />
+              <Icons.Copy size={16} /> Changer {isVideo ? "Vidéo" : "Image"}
+            </label>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   useEffect(() => {
     if (!user || !db) return;
 
@@ -4606,6 +4644,12 @@ export default function WallSwissApp() {
                   <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
                   <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Hub Marketing Leads</div>
                 </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                  {uploadingImage && <span style={{ fontSize: 12, color: C.gold, fontWeight: 700 }}>⏳ Upload en cours...</span>}
+                  <button onClick={() => setIsEditingMarketing(!isEditingMarketing)} style={{ background: isEditingMarketing ? "#10B981" : C.white, color: isEditingMarketing ? C.white : C.primary, border: `1px solid ${isEditingMarketing ? "#10B981" : C.primary}`, padding: "8px 16px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: 700, borderRadius: 4, transition: "0.2s" }}>
+                    {isEditingMarketing ? "✅ Terminer l'édition" : "✏️ Éditer les publicités"}
+                  </button>
+                </div>
               </div>
             </header>
 
@@ -4694,15 +4738,13 @@ export default function WallSwissApp() {
                                         <div style={{ position: "relative", width: "100%", maxWidth: 280, border: "6px solid #1c1917", borderRadius: 32, background: "#1c1917", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", padding: 6, overflow: "hidden" }}>
                                             <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 128, height: 24, background: "#1c1917", borderBottomLeftRadius: 12, borderBottomRightRadius: 12, zIndex: 20 }}></div>
                                             <div style={{ background: C.white, borderRadius: 24, overflow: "hidden", position: "relative", width: "100%", height: "100%" }}>
-                                                <img src="https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-19-a-17.38.02.png" alt="Publicité Facebook 3P" style={{ width: "100%", height: "auto", display: "block" }} />
+                                                <EditableMedia mediaKey="3p-meta_img" defaultUrl="https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-19-a-17.38.02.png" isVideo={false} />
                                             </div>
                                         </div>
                                         <div style={{ position: "relative", width: "100%", maxWidth: 280, border: "6px solid #1c1917", borderRadius: 32, background: "#1c1917", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", padding: 6, overflow: "hidden" }}>
                                             <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 128, height: 24, background: "#1c1917", borderBottomLeftRadius: 12, borderBottomRightRadius: 12, zIndex: 20 }}></div>
                                             <div style={{ background: "#1c1917", borderRadius: 24, overflow: "hidden", position: "relative", width: "100%", aspectRatio: "9/19", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                                <video className="w-full h-full object-cover block" controls muted loop playsInline poster="https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-19-a-17.38.02.png" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}>
-                                                    <source src="https://leadpartner.ch/wp-content/uploads/2026/02/1-Geneve.mp4" type="video/mp4" />
-                                                </video>
+                                                <EditableMedia mediaKey="3p-meta_vid" defaultUrl="https://leadpartner.ch/wp-content/uploads/2026/02/1-Geneve.mp4" isVideo={true} posterUrl={appSettings.marketingMedia?.['3p-meta_img'] || "https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-19-a-17.38.02.png"} />
                                             </div>
                                         </div>
                                     </div>
@@ -4783,15 +4825,13 @@ export default function WallSwissApp() {
                                         <div style={{ position: "relative", width: "100%", maxWidth: 280, border: "6px solid #1c1917", borderRadius: 32, background: "#1c1917", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", padding: 6, overflow: "hidden" }}>
                                             <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 128, height: 24, background: "#1c1917", borderBottomLeftRadius: 12, borderBottomRightRadius: 12, zIndex: 20 }}></div>
                                             <div style={{ background: C.white, borderRadius: 24, overflow: "hidden", position: "relative", width: "100%", height: "100%" }}>
-                                                <img src="https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-25-a-11.26.31.png" alt="Publicité Facebook LPP" style={{ width: "100%", height: "auto", display: "block" }} />
+                                                <EditableMedia mediaKey="meta-lpp_img" defaultUrl="https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-25-a-11.26.31.png" isVideo={false} />
                                             </div>
                                         </div>
                                         <div style={{ position: "relative", width: "100%", maxWidth: 280, border: "6px solid #1c1917", borderRadius: 32, background: "#1c1917", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", padding: 6, overflow: "hidden" }}>
                                             <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 128, height: 24, background: "#1c1917", borderBottomLeftRadius: 12, borderBottomRightRadius: 12, zIndex: 20 }}></div>
                                             <div style={{ background: "#1c1917", borderRadius: 24, overflow: "hidden", position: "relative", width: "100%", aspectRatio: "9/19", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                                <video className="w-full h-full object-cover block" controls muted loop playsInline poster="https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-25-a-11.26.31.png" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}>
-                                                    <source src="https://leadpartner.ch/wp-content/uploads/2026/02/1-pilah-2-fini.mp4" type="video/mp4" />
-                                                </video>
+                                                <EditableMedia mediaKey="meta-lpp_vid" defaultUrl="https://leadpartner.ch/wp-content/uploads/2026/02/1-pilah-2-fini.mp4" isVideo={true} posterUrl={appSettings.marketingMedia?.['meta-lpp_img'] || "https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-25-a-11.26.31.png"} />
                                             </div>
                                         </div>
                                     </div>
@@ -4865,15 +4905,13 @@ export default function WallSwissApp() {
                                         <div style={{ position: "relative", width: "100%", maxWidth: 280, border: "6px solid #1c1917", borderRadius: 32, background: "#1c1917", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", padding: 6, overflow: "hidden" }}>
                                             <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 128, height: 24, background: "#1c1917", borderBottomLeftRadius: 12, borderBottomRightRadius: 12, zIndex: 20 }}></div>
                                             <div style={{ background: C.white, borderRadius: 24, overflow: "hidden", position: "relative", width: "100%", height: "100%" }}>
-                                                <img src="https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-25-a-11.50.31.png" alt="Publicité CMU LAMal" style={{ width: "100%", height: "auto", display: "block" }} />
+                                                <EditableMedia mediaKey="cmu-lamal-meta_img" defaultUrl="https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-25-a-11.50.31.png" isVideo={false} />
                                             </div>
                                         </div>
                                         <div style={{ position: "relative", width: "100%", maxWidth: 280, border: "6px solid #1c1917", borderRadius: 32, background: "#1c1917", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", padding: 6, overflow: "hidden" }}>
                                             <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 128, height: 24, background: "#1c1917", borderBottomLeftRadius: 12, borderBottomRightRadius: 12, zIndex: 20 }}></div>
                                             <div style={{ background: "#1c1917", borderRadius: 24, overflow: "hidden", position: "relative", width: "100%", aspectRatio: "9/19", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                                <video className="w-full h-full object-cover block" controls muted loop playsInline poster="https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-25-a-11.50.31.png" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}>
-                                                    <source src="https://leadpartner.ch/wp-content/uploads/2026/02/cmu-laml.mp4" type="video/mp4" />
-                                                </video>
+                                                <EditableMedia mediaKey="cmu-lamal-meta_vid" defaultUrl="https://leadpartner.ch/wp-content/uploads/2026/02/cmu-laml.mp4" isVideo={true} posterUrl={appSettings.marketingMedia?.['cmu-lamal-meta_img'] || "https://leadpartner.ch/wp-content/uploads/2026/02/Capture-decran-2026-02-25-a-11.50.31.png"} />
                                             </div>
                                         </div>
                                     </div>
@@ -4946,13 +4984,17 @@ export default function WallSwissApp() {
                                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
                                         <div style={{ position: "relative", width: "100%", maxWidth: 320, border: `1px solid ${C.mediumGray}`, borderRadius: 12, background: C.white, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", padding: 8, overflow: "hidden" }}>
                                             <div style={{ background: "#fafaf9", borderRadius: 8, overflow: "hidden", position: "relative", width: "100%", aspectRatio: "4/5", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                                <img src={[
-                                                    "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_argent_brule.png",
-                                                    "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_diagnostic.png",
-                                                    "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_tableau_fache.png",
-                                                    "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_peage_douane.png",
-                                                    "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_cadeau_banque.png"
-                                                ][compteChIdx]} alt={`Créative Compte CH ${compteChIdx + 1}`} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+                                                <EditableMedia 
+                                                    mediaKey={`compte-ch-meta_img_${compteChIdx}`} 
+                                                    defaultUrl={[
+                                                        "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_argent_brule.png",
+                                                        "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_diagnostic.png",
+                                                        "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_tableau_fache.png",
+                                                        "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_peage_douane.png",
+                                                        "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_cadeau_banque.png"
+                                                    ][compteChIdx]} 
+                                                    isVideo={false} 
+                                                />
                                             </div>
                                         </div>
                                         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", maxWidth: 320 }}>
@@ -4962,11 +5004,14 @@ export default function WallSwissApp() {
                                                 "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_tableau_fache.png",
                                                 "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_peage_douane.png",
                                                 "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_cadeau_banque.png"
-                                            ].map((img, idx) => (
-                                                <button key={idx} onClick={() => setCompteChIdx(idx)} style={{ width: 56, height: 56, borderRadius: 8, overflow: "hidden", border: `2px solid ${compteChIdx === idx ? C.primary : C.mediumGray}`, transition: "all 0.2s", cursor: "pointer", padding: 0 }}>
-                                                    <img src={img} alt={`Miniature ${idx + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                                </button>
-                                            ))}
+                                            ].map((defImg, idx) => {
+                                                const currentImg = appSettings.marketingMedia?.[`compte-ch-meta_img_${idx}`] || defImg;
+                                                return (
+                                                    <button key={idx} onClick={() => setCompteChIdx(idx)} style={{ width: 56, height: 56, borderRadius: 8, overflow: "hidden", border: `2px solid ${compteChIdx === idx ? C.primary : C.mediumGray}`, transition: "all 0.2s", cursor: "pointer", padding: 0 }}>
+                                                        <img src={currentImg} alt={`Miniature ${idx + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                                    </button>
+                                                )
+                                            })}
                                         </div>
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>

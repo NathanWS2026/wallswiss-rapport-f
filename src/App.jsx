@@ -291,8 +291,8 @@ const MAILS_TYPES = [
     id: "m23",
     titre: "Webconférence — Invitation",
     categorie: "Événements",
-    objet: "🎯 Intéressé par le Private Equity ? – Webconférence WallSwiss × Altaroc",
-    corps: `🎯 Intéressé par le Private Equity ?\nParticipez à notre webconférence exclusive avec Altaroc, leader du Private Equity accessible.\n\n📅 Mercredi 9 avril à 18h\n💻 En ligne – Participation anonyme possible\n\n🔍 Lors de cette session, vous découvrirez :\n- Comment fonctionne le Private Equity\n- Pourquoi de plus en plus d'investisseurs privés s'y intéressent\n- Comment y accéder simplement grâce à Altaroc\n\n🎙️ Avec la participation de :\n- Antoine Duchiron, CFA – Senior Sales & Product Specialist chez Altaroc Suisse\n- Pierrick Pereira – Fondateur de WallSwiss\n\n👉 Inscription gratuite ici : https://app.livestorm.co/altaroc/webinar-private-equity-altaroc-wallswiss`
+    objet: "Intéressé par le Private Equity ? – Webconférence WallSwiss × Altaroc",
+    corps: `Intéressé par le Private Equity ?\nParticipez à notre webconférence exclusive avec Altaroc, leader du Private Equity accessible.\n\nMercredi 9 avril à 18h\nEn ligne – Participation anonyme possible\n\nLors de cette session, vous découvrirez :\n- Comment fonctionne le Private Equity\n- Pourquoi de plus en plus d'investisseurs privés s'y intéressent\n- Comment y accéder simplement grâce à Altaroc\n\nAvec la participation de :\n- Antoine Duchiron, CFA – Senior Sales & Product Specialist chez Altaroc Suisse\n- Pierrick Pereira – Fondateur de WallSwiss\n\nInscription gratuite ici : https://app.livestorm.co/altaroc/webinar-private-equity-altaroc-wallswiss`
   },
   {
     id: "m24",
@@ -577,33 +577,37 @@ function SlideCover({ data }) {
 function SlideTOC({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   const isParFinance = data.assetManager === "ParFinance";
+  const hidden = data.hiddenSlides || [];
+  const getPage = (origIdx) => { let count = 0; for(let i=0; i<=origIdx; i++) if(!hidden.includes(i)) count++; return count; };
   
   let items = [
-    { title: "Qui sommes-nous ? Notre philosophie", page: 3 },
-    { title: "Notre cabinet en chiffres", page: 4 },
-    { title: "Résumé de votre situation personnelle", page: 5 },
-    { title: "Pourquoi Swissquote est une banque fiable", page: 6 },
-    { title: "Avantages WallSwiss BY Swissquote", page: 7 },
-    { title: "Solution — Compte Titre", page: 9 },
+    { title: "Qui sommes-nous ? Notre philosophie", origIdx: 2 },
+    { title: "Notre cabinet en chiffres", origIdx: 3 },
+    { title: "Résumé de votre situation personnelle", origIdx: 4 },
+    { title: "Pourquoi Swissquote est une banque fiable", origIdx: 5 },
+    { title: "Avantages WallSwiss BY Swissquote", origIdx: 6 },
+    { title: "Solution — Compte-titres", origIdx: 8 },
   ];
   
-  let nextPage = 10;
+  let nextIdx = 9;
   
   if (isParFinance) {
-    items.push({ title: "Votre Asset Manager : ParFinance", page: nextPage++ });
-    items.push({ title: "Factsheet | Aries Portfolio", page: nextPage++ });
-    items.push({ title: "Stratégie : Les principales positions", page: nextPage++ });
+    items.push({ title: "Votre Asset Manager : ParFinance", origIdx: nextIdx++ });
+    items.push({ title: "Factsheet | Aries Portfolio", origIdx: nextIdx++ });
+    items.push({ title: "Stratégie : Les principales positions", origIdx: nextIdx++ });
   } else {
-    items.push({ title: "Fonds NS (CH) Swiss Excellence DPM", page: nextPage++ });
+    items.push({ title: "Fonds NS (CH) Swiss Excellence DPM", origIdx: nextIdx++ });
   }
   
   items.push(
-    { title: "Projections financières", page: nextPage++ },
-    { title: "Avantages tarifaires WS Premium", page: nextPage++ },
-    { title: "Comparatif bancaire", page: nextPage++ },
-    { title: "Votre application de suivi", page: nextPage++ },
-    { title: "Synthèse & Contact", page: nextPage }
+    { title: "Projections financières", origIdx: nextIdx++ },
+    { title: "Avantages tarifaires WS Premium", origIdx: nextIdx++ },
+    { title: "Comparatif bancaire", origIdx: nextIdx++ },
+    { title: "Votre application de suivi", origIdx: nextIdx++ },
+    { title: "Synthèse & Contact", origIdx: nextIdx }
   );
+
+  items = items.filter(item => !hidden.includes(item.origIdx));
 
   return (
     <div style={slideBase}>
@@ -619,7 +623,7 @@ function SlideTOC({ data }) {
               </span>
               <div style={{ flex: 1, borderBottom: `2px dotted ${C.mediumGray}`, margin: "0 16px", position: "relative", top: -8 }} />
               <span style={{ color: C.primary, fontSize: 16, fontWeight: 700, flexShrink: 0, paddingBottom: 2 }}>
-                {String(item.page).padStart(2, '0')}
+                {String(getPage(item.origIdx)).padStart(2, '0')}
               </span>
             </div>
           ))}
@@ -888,7 +892,7 @@ function SlideDivider({ data, number, title, editMode, onTextChange }) {
   );
 }
 
-// Slide 9 — La solution compte titre
+// Slide 9 — La solution compte-titres
 function SlideCompteTitre({ data, editMode, onTextChange }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   const bubbles = ["Épargne en cas de coup dur", "Financer un projet", "Disponibilité de l'épargne", "Complément de revenu pour la retraite", "Cadre fiscal avantageux", "Optimisation de la transmission"];
@@ -898,7 +902,7 @@ function SlideCompteTitre({ data, editMode, onTextChange }) {
       {logoCorner()}
       <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
         <div>
-          <ReportTitle title="La solution" highlight="compte titre" subtitle="STRATÉGIE" />
+          <ReportTitle title="La solution" highlight="compte-titres" subtitle="STRATÉGIE" />
           <EditableText editMode={editMode} value={data.texts?.solution1} onChange={v => onTextChange("solution1", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px" }} />
           <EditableText editMode={editMode} value={data.texts?.solution2} onChange={v => onTextChange("solution2", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px" }} />
           <EditableText editMode={editMode} value={data.texts?.solution3} onChange={v => onTextChange("solution3", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: 0 }} />
@@ -1185,11 +1189,11 @@ function SlideProjections({ data }) {
       {accentBar()}
       {logoCorner()}
       <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
-        <ReportTitle title="Vos objectifs sur le" highlight="compte titre" subtitle="SIMULATION FINANCIÈRE" />
+        <ReportTitle title="Vos objectifs sur le" highlight="compte-titres" subtitle="SIMULATION FINANCIÈRE" />
         <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 40, alignItems: "center", minHeight: 0 }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", paddingRight: 20 }}>
             <p style={{ fontSize: 13, lineHeight: 1.6, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }}>
-              Ici, nous vous conseillons d'optimiser votre trésorerie actuelle avec un compte titre chez <strong>SwissQuote</strong> sur la solution de placement avec un dépôt initial de <strong>CHF {fmt(montant)}.-</strong>
+              Ici, nous vous conseillons d'optimiser votre trésorerie actuelle avec un compte-titres chez <strong>SwissQuote</strong> sur la solution de placement avec un dépôt initial de <strong>CHF {fmt(montant)}.-</strong>
             </p>
             <p style={{ fontSize: 13, color: C.gray, margin: "0 0 32px", textAlign: "justify" }}>
               Nous appliquons des droits d'entrée de {frais}% du montant investi soit {fmt(montant * frais / 100)}.-
@@ -1613,32 +1617,37 @@ function SlidePrevoyanceFonds({ data, editMode, onTextChange }) {
 
 function SlideTOCPrevoyance({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
-  const items = [
-    { title: "Qui sommes-nous ? Notre philosophie", page: 3 },
-    { title: "Notre cabinet en chiffres", page: 4 },
-    { title: "Résumé de votre situation personnelle", page: 5 },
-    { title: "Le système des 3 piliers suisses", page: 6 },
-    { title: "Avantages de la Prévoyance 3A/3B", page: 7 },
-    { title: "Solution — Prévoyance & Assurance Vie", page: 9 }, 
-    { title: "Couvertures de risque et garanties", page: 10 },
-    { title: "Stratégie : Fonds de placement", page: 11 },
+  const hidden = data.hiddenSlides || [];
+  const getPage = (origIdx) => { let count = 0; for(let i=0; i<=origIdx; i++) if(!hidden.includes(i)) count++; return count; };
+
+  let items = [
+    { title: "Qui sommes-nous ? Notre philosophie", origIdx: 2 },
+    { title: "Notre cabinet en chiffres", origIdx: 3 },
+    { title: "Résumé de votre situation personnelle", origIdx: 4 },
+    { title: "Le système des 3 piliers suisses", origIdx: 5 },
+    { title: "Avantages de la Prévoyance 3A/3B", origIdx: 6 },
+    { title: "Solution — Prévoyance & Assurance Vie", origIdx: 8 }, 
+    { title: "Couvertures de risque et garanties", origIdx: 9 },
+    { title: "Stratégie : Fonds de placement", origIdx: 10 },
   ];
   
-  let nextPage = 12;
+  let nextIdx = 11;
   if (data.showPrevoyanceComparatif !== false) {
-      items.push({ title: "Comparatif banque commerciale & Assurance", page: nextPage++ });
+      items.push({ title: "Comparatif banque commerciale & Assurance", origIdx: nextIdx++ });
   }
 
   if (data.profilRisque === "Dynamique") {
-      items.push({ title: "Détail Stratégie Dynamique & Performances", page: nextPage++ });
+      items.push({ title: "Détail Stratégie Dynamique & Performances", origIdx: nextIdx++ });
   }
-  items.push({ title: "Comprendre la Valeur de Rachat", page: nextPage++ });
+  items.push({ title: "Comprendre la Valeur de Rachat", origIdx: nextIdx++ });
   
   if(data.optiFiscale) {
-      items.push({ title: "Impact & Optimisation Fiscale", page: nextPage++ });
+      items.push({ title: "Impact & Optimisation Fiscale", origIdx: nextIdx++ });
   }
-  items.push({ title: "Projections financières et capitalisation", page: nextPage++ });
-  items.push({ title: "Synthèse & Contact", page: nextPage });
+  items.push({ title: "Projections financières et capitalisation", origIdx: nextIdx++ });
+  items.push({ title: "Synthèse & Contact", origIdx: nextIdx });
+
+  items = items.filter(item => !hidden.includes(item.origIdx));
 
   return (
     <div style={slideBase}>
@@ -1654,7 +1663,7 @@ function SlideTOCPrevoyance({ data }) {
               </span>
               <div style={{ flex: 1, borderBottom: `2px dotted ${C.mediumGray}`, margin: "0 16px", position: "relative", top: -8 }} />
               <span style={{ color: C.primary, fontSize: 16, fontWeight: 700, flexShrink: 0, paddingBottom: 2 }}>
-                {String(item.page).padStart(2, '0')}
+                {String(getPage(item.origIdx)).padStart(2, '0')}
               </span>
             </div>
           ))}
@@ -1871,7 +1880,7 @@ function SlidePrevoyanceFondsDynamique({ data }) {
           
           {!fundPerformanceAPI ? (
             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.gray, fontSize: 14 }}>
-              ⏳ Chargement des performances du marché en cours...
+              Chargement des performances du marché en cours...
             </div>
           ) : (
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, textAlign: "left", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
@@ -2118,19 +2127,22 @@ function SlideProjectionsPrevoyance({ data }) {
 
 function SlideTOCLPP({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const hidden = data.hiddenSlides || [];
+  const getPage = (origIdx) => { let count = 0; for(let i=0; i<=origIdx; i++) if(!hidden.includes(i)) count++; return count; };
+
   const items = [
-    { title: "Qui sommes-nous ? Notre philosophie", page: 3 },
-    { title: "Notre cabinet en chiffres", page: 4 },
-    { title: "Résumé de votre situation personnelle", page: 5 },
-    { title: "Les enjeux du 2ème Pilier (LPP)", page: 6 },
-    { title: "Fonctionnement du Libre Passage", page: 7 },
-    { title: "Votre Compte de Libre Passage", page: 8 }, 
-    { title: `Votre Administrateur : ${data.administrateurLpp || "Pictet"}`, page: 9 },
-    { title: "Avantages de l'investissement", page: 10 },
-    { title: "Allocation d'actifs recommandée", page: 11 },
-    { title: "Projections : Classique vs Investi", page: 12 },
-    { title: "Synthèse & Contact", page: 13 },
-  ];
+    { title: "Qui sommes-nous ? Notre philosophie", origIdx: 2 },
+    { title: "Notre cabinet en chiffres", origIdx: 3 },
+    { title: "Résumé de votre situation personnelle", origIdx: 4 },
+    { title: "Les enjeux du 2ème Pilier (LPP)", origIdx: 5 },
+    { title: "Fonctionnement du Libre Passage", origIdx: 6 },
+    { title: "Votre Compte de Libre Passage", origIdx: 7 }, 
+    { title: `Votre Administrateur : ${data.administrateurLpp || "Pictet"}`, origIdx: 8 },
+    { title: "Avantages de l'investissement", origIdx: 9 },
+    { title: "Allocation d'actifs recommandée", origIdx: 10 },
+    { title: "Projections : Classique vs Investi", origIdx: 11 },
+    { title: "Synthèse & Contact", origIdx: 12 },
+  ].filter(item => !hidden.includes(item.origIdx));
 
   return (
     <div style={slideBase}>
@@ -2146,7 +2158,7 @@ function SlideTOCLPP({ data }) {
               </span>
               <div style={{ flex: 1, borderBottom: `2px dotted ${C.mediumGray}`, margin: "0 16px", position: "relative", top: -8 }} />
               <span style={{ color: C.primary, fontSize: 16, fontWeight: 700, flexShrink: 0, paddingBottom: 2 }}>
-                {String(item.page).padStart(2, '0')}
+                {String(getPage(item.origIdx)).padStart(2, '0')}
               </span>
             </div>
           ))}
@@ -2556,22 +2568,27 @@ function SlideLPPProjections({ data }) {
 
 function SlideTOCAssuranceVie({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
-  const items = [
-    { title: "Qui sommes-nous ? Notre philosophie", page: 3 },
-    { title: "Notre cabinet en chiffres", page: 4 },
-    { title: "Résumé de votre situation personnelle", page: 5 },
-    { title: "Les solutions de l'assurance-vie", page: 6 },
-    { title: "Le plan épargne retraite, son fonctionnement", page: 7 },
-    { title: "La fiscalité de l'assurance-vie", page: 8 },
-    { title: "Gestion de votre portefeuille", page: 9 },
-    { title: "Projections financières", page: 10 },
+  const hidden = data.hiddenSlides || [];
+  const getPage = (origIdx) => { let count = 0; for(let i=0; i<=origIdx; i++) if(!hidden.includes(i)) count++; return count; };
+
+  let items = [
+    { title: "Qui sommes-nous ? Notre philosophie", origIdx: 2 },
+    { title: "Notre cabinet en chiffres", origIdx: 3 },
+    { title: "Résumé de votre situation personnelle", origIdx: 4 },
+    { title: "Les solutions de l'assurance-vie", origIdx: 5 },
+    { title: "Le plan épargne retraite, son fonctionnement", origIdx: 6 },
+    { title: "La fiscalité de l'assurance-vie", origIdx: 7 },
+    { title: "Gestion de votre portefeuille", origIdx: 8 },
+    { title: "Projections financières", origIdx: 9 },
   ];
   
-  let nextPage = 11;
+  let nextIdx = 10;
   if (data.hasProjectionsMultiples) {
-    items.push({ title: "Projections financières (Scénario 2)", page: nextPage++ });
+    items.push({ title: "Projections financières (Scénario 2)", origIdx: nextIdx++ });
   }
-  items.push({ title: "Synthèse & Contact", page: nextPage });
+  items.push({ title: "Synthèse & Contact", origIdx: nextIdx });
+
+  items = items.filter(item => !hidden.includes(item.origIdx));
 
   return (
     <div style={slideBase}>
@@ -2587,7 +2604,7 @@ function SlideTOCAssuranceVie({ data }) {
               </span>
               <div style={{ flex: 1, borderBottom: `2px dotted ${C.mediumGray}`, margin: "0 16px", position: "relative", top: -8 }} />
               <span style={{ color: C.primary, fontSize: 16, fontWeight: 700, flexShrink: 0, paddingBottom: 2 }}>
-                {String(item.page).padStart(2, '0')}
+                {String(getPage(item.origIdx)).padStart(2, '0')}
               </span>
             </div>
           ))}
@@ -3045,6 +3062,22 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailForm, setEmailForm] = useState({ to: "", subject: "", body: "" });
 
+  const isCurrentHidden = (data.hiddenSlides || []).includes(currentSlide);
+  
+  const toggleHideSlide = () => {
+    const hidden = data.hiddenSlides || [];
+    const newHidden = isCurrentHidden ? hidden.filter(idx => idx !== currentSlide) : [...hidden, currentSlide];
+    onUpdateData({ ...data, hiddenSlides: newHidden });
+  };
+
+  const getPrintedPageNumber = (origIdx) => {
+    let count = 0;
+    for(let i=0; i<=origIdx; i++) {
+      if (!(data.hiddenSlides || []).includes(i)) count++;
+    }
+    return count;
+  };
+
   useEffect(() => {
     if (data._autoDownload) {
       const timer = setTimeout(() => {
@@ -3054,7 +3087,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
     }
   }, [data._autoDownload]);
 
-  const typeMap = { "swissquote": "Compte_Titre", "prevoyance": "Prevoyance", "lpp": "LPP", "assurance-vie": "Assurance_Vie" };
+  const typeMap = { "swissquote": "Compte_Titres", "prevoyance": "Prevoyance", "lpp": "LPP", "assurance-vie": "Assurance_Vie" };
   const pdfFilename = `Rapport_${typeMap[data.templateId] || "Financier"}_${data.prenom ? data.prenom.trim() + "_" : ""}${(data.nom || 'Client').trim()}.pdf`.replace(/\s+/g, '_');
 
   const handleTextChange = (key, value) => {
@@ -3272,7 +3305,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
     <SlideSituation data={data} />,
     <SlideSwissquote data={data} editMode={editMode} onTextChange={handleTextChange} />,
     <SlideAdvantages data={data} />,
-    <SlideDivider data={data} number={8} title="Compte Titre" editMode={editMode} onTextChange={handleTextChange} />,
+    <SlideDivider data={data} number={8} title="Compte-titres" editMode={editMode} onTextChange={handleTextChange} />,
     <SlideCompteTitre data={data} editMode={editMode} onTextChange={handleTextChange} />,
     ...(data.assetManager === "ParFinance" ? [
       <SlideParFinanceIntro data={data} editMode={editMode} onTextChange={handleTextChange} />,
@@ -3360,22 +3393,25 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
         <span style={{ color: C.white, fontSize: 12, fontWeight: 600, letterSpacing: "0.06em" }}>APERCU — {data.prenom} {(data.nom||"").toUpperCase()}</span>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <button onClick={onEdit} style={{ background: "rgba(255,255,255,0.1)", color: C.white, border: "none", padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 600, borderRadius: "0px", transition: "0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.2)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
-            ✎ PARAMÉTRAGE
+            PARAMÉTRAGE
           </button>
           <button onClick={() => setEditMode(!editMode)} style={{ background: editMode ? C.gold : "transparent", border: `1px solid ${editMode ? C.gold : "rgba(255,255,255,0.3)"}`, color: C.white, padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 600, borderRadius: "0px", transition: "0.2s" }}>
-            {editMode ? "✓ TERMINER TEXTES" : "✎ TEXTES LIBRES"}
+            {editMode ? "TERMINER TEXTES" : "TEXTES LIBRES"}
+          </button>
+          <button onClick={toggleHideSlide} style={{ background: isCurrentHidden ? "rgba(239,68,68,0.2)" : "transparent", color: isCurrentHidden ? "#FCA5A5" : C.white, border: `1px solid ${isCurrentHidden ? "rgba(252,165,165,0.3)" : "rgba(255,255,255,0.3)"}`, padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 600, borderRadius: "0px", transition: "0.2s" }}>
+            {isCurrentHidden ? "RÉAFFICHER" : "MASQUER SLIDE"}
           </button>
           <button onClick={onDelete} style={{ background: "transparent", color: "#FCA5A5", border: "1px solid rgba(252,165,165,0.3)", padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 600, borderRadius: "0px", transition: "0.2s" }} onMouseEnter={e=>{e.currentTarget.style.background="rgba(239,68,68,0.2)";e.currentTarget.style.color="#FFF"}} onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color="#FCA5A5"}}>
-            🗑️ SUPPRIMER
+            SUPPRIMER
           </button>
           
           <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)", margin: "0 4px" }} />
           
           <button onClick={handleDownloadPDF} disabled={isPdfLoading || isEmailing} style={{ background: C.white, color: C.primaryDark, border: "none", padding: "6px 12px", cursor: (isPdfLoading || isEmailing) ? "wait" : "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", opacity: (isPdfLoading || isEmailing) ? 0.7 : 1, transition: "0.2s" }}>
-            {isPdfLoading ? "⏳ GÉNÉRATION..." : "📥 TÉLÉCHARGER PDF"}
+            {isPdfLoading ? "GÉNÉRATION..." : "TÉLÉCHARGER PDF"}
           </button>
           <button onClick={openEmailModal} disabled={isPdfLoading || isEmailing} style={{ background: emailSuccess ? "#10B981" : C.gold, color: C.white, border: "none", padding: "6px 12px", cursor: (isPdfLoading || isEmailing) ? "wait" : "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", opacity: (isPdfLoading || isEmailing) ? 0.7 : 1, transition: "0.2s" }}>
-            {isEmailing ? "⏳ ENVOI..." : emailSuccess ? "✅ ENVOYÉ !" : "📧 EMAIL"}
+            {isEmailing ? "ENVOI..." : emailSuccess ? "ENVOYÉ !" : "EMAIL"}
           </button>
           
           <span style={{ color: C.gold, fontSize: 11, marginLeft: 4 }}>{currentSlide + 1} / {slides.length}</span>
@@ -3386,34 +3422,45 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
         <button onClick={() => setCurrentSlide(s => Math.max(0, s - 1))} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: currentSlide === 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", color: currentSlide === 0 ? "rgba(255,255,255,0.2)" : C.white, border: "none", width: 40, height: 40, cursor: currentSlide === 0 ? "default" : "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>&#8249;</button>
         
         <div style={{ width: 960, height: 540, position: "relative", boxShadow: "0 8px 40px rgba(0,0,0,0.5)", overflow: "hidden", backgroundColor: C.white }}>
-          <div style={{ width: 1280, height: 720, transform: "scale(0.75)", transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}>
+          <div style={{ width: 1280, height: 720, transform: "scale(0.75)", transformOrigin: "top left", position: "absolute", top: 0, left: 0, opacity: isCurrentHidden ? 0.3 : 1, filter: isCurrentHidden ? "grayscale(100%)" : "none", transition: "all 0.3s" }}>
             {slides[currentSlide]}
             <div style={{ position: "absolute", bottom: 0, right: 40, height: 40, display: "flex", alignItems: "center", zIndex: 20 }}>
-              <span style={{ color: C.white, fontSize: 11, fontWeight: 700 }}>{currentSlide + 1}</span>
+              <span style={{ color: C.white, fontSize: 11, fontWeight: 700 }}>{isCurrentHidden ? "-" : getPrintedPageNumber(currentSlide)}</span>
             </div>
           </div>
+          {isCurrentHidden && (
+             <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "rgba(0,0,0,0.8)", color: "#FCA5A5", padding: "16px 32px", fontSize: 20, fontWeight: 700, borderRadius: 8, zIndex: 50, pointerEvents: "none", border: "2px solid #FCA5A5" }}>
+               MASQUÉE DE L'IMPRESSION
+             </div>
+          )}
         </div>
 
         <button onClick={() => setCurrentSlide(s => Math.min(slides.length - 1, s + 1))} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: currentSlide === slides.length - 1 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", color: currentSlide === slides.length - 1 ? "rgba(255,255,255,0.2)" : C.white, border: "none", width: 40, height: 40, cursor: currentSlide === slides.length - 1 ? "default" : "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>&#8250;</button>
       </div>
       <div className="no-print" style={{ background: C.black, padding: "8px 24px", display: "flex", gap: 4, overflowX: "auto", flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-        {slides.map((_, i) => (
-          <div key={i} onClick={() => setCurrentSlide(i)} style={{ width: 48, height: 28, background: i === currentSlide ? C.primary : "rgba(255,255,255,0.06)", border: i === currentSlide ? `1px solid ${C.gold}` : "1px solid rgba(255,255,255,0.04)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: i === currentSlide ? C.white : "rgba(255,255,255,0.35)", fontWeight: 600, flexShrink: 0 }}>
-            {i + 1}
-          </div>
-        ))}
+        {slides.map((_, i) => {
+          const isHid = (data.hiddenSlides || []).includes(i);
+          return (
+            <div key={i} onClick={() => setCurrentSlide(i)} style={{ width: 48, height: 28, background: i === currentSlide ? C.primary : "rgba(255,255,255,0.06)", border: i === currentSlide ? `1px solid ${C.gold}` : "1px solid rgba(255,255,255,0.04)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: i === currentSlide ? C.white : isHid ? "#EF4444" : "rgba(255,255,255,0.35)", fontWeight: 600, flexShrink: 0, textDecoration: isHid ? "line-through" : "none" }}>
+              {i + 1}
+            </div>
+          );
+        })}
       </div>
 
       <div style={{ position: "fixed", top: 0, left: 0, zIndex: -1000, opacity: 0.001, pointerEvents: "none" }}>
-        <div id="report-printable" style={{ width: "1280px", height: `${slides.length * 720}px`, display: "block", background: C.white, overflow: "hidden" }}>
-          {slides.map((SlideComponent, index) => (
-            <div key={index} className="pdf-slide" style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF", margin: 0, padding: 0, boxSizing: "border-box" }}>
-              {SlideComponent}
-              <div style={{ position: "absolute", bottom: 0, right: 40, height: 40, display: "flex", alignItems: "center", zIndex: 20 }}>
-                <span style={{ color: C.white, fontSize: 11, fontWeight: 700 }}>{index + 1}</span>
+        <div id="report-printable" style={{ width: "1280px", height: `${slides.filter((_, i) => !(data.hiddenSlides || []).includes(i)).length * 720}px`, display: "block", background: C.white, overflow: "hidden" }}>
+          {slides.map((SlideComponent, index) => {
+            if ((data.hiddenSlides || []).includes(index)) return null;
+            return (
+              <div key={index} className="pdf-slide" style={{ width: "1280px", height: "720px", position: "relative", overflow: "hidden", backgroundColor: "#FFFFFF", margin: 0, padding: 0, boxSizing: "border-box" }}>
+                {SlideComponent}
+                <div style={{ position: "absolute", bottom: 0, right: 40, height: 40, display: "flex", alignItems: "center", zIndex: 20 }}>
+                  <span style={{ color: C.white, fontSize: 11, fontWeight: 700 }}>{getPrintedPageNumber(index)}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -3892,6 +3939,7 @@ export default function WallSwissApp() {
 
   const [form, setForm] = useState({
     templateId: "swissquote",
+    hiddenSlides: [],
     dateRapport: new Date().toISOString().split('T')[0],
     isCouple: false, nomConjoint: "", prenomConjoint: "", ageConjoint: "", professionConjoint: "",
     nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "",
@@ -3939,7 +3987,7 @@ export default function WallSwissApp() {
         console.error("Erreur de sauvegarde", e);
       }
     } else {
-      alert("⚠️ Attention : Le rapport est créé temporairement mais ne sera pas sauvegardé sur Firebase car vos clés de connexion sont manquantes dans le code.");
+      alert("Attention : Le rapport est créé temporairement mais ne sera pas sauvegardé sur Firebase car vos clés de connexion sont manquantes dans le code.");
       setReports(p => [...p, newReport]);
     }
     
@@ -3952,7 +4000,7 @@ export default function WallSwissApp() {
     setAppSettings(newSettings);
     
     if (!db || !user) {
-      alert("🚨 Firebase n'est pas connecté.\n\nPour que la sauvegarde s'effectue sur app.wallswiss.ch, vous devez remplacer les valeurs 'VOTRE_API_KEY' par vos vraies clés Firebase tout en haut du code source.");
+      alert("Firebase n'est pas connecté.\n\nPour que la sauvegarde s'effectue sur app.wallswiss.ch, vous devez remplacer les valeurs 'VOTRE_API_KEY' par vos vraies clés Firebase tout en haut du code source.");
       return;
     }
 
@@ -3964,7 +4012,7 @@ export default function WallSwissApp() {
     }
   };
 
-  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], isCouple: false, nomConjoint: "", prenomConjoint: "", ageConjoint: "", professionConjoint: "", nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", anneesProjection: "", objectifs: [], objectifCustom: "", customClientFields: [], assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", hasProjectionsMultiples: false, montantInvestissement2: "200000", capaciteEpargne2: "1000", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, showPrevoyanceComparatif: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", dureeProjectionAv: "15", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", lppActions: "", lppOblig: "", lppImmo: "", conseiller: `${appSettings.agentFirstName || ""} ${appSettings.agentLastName || ""}`.trim() || "", titreConseiller: appSettings.agentTitle || "", telephone: appSettings.agentPhone || "", email: appSettings.agentEmail || "", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
+  const resetForm = () => setForm({ templateId: "swissquote", hiddenSlides: [], dateRapport: new Date().toISOString().split('T')[0], isCouple: false, nomConjoint: "", prenomConjoint: "", ageConjoint: "", professionConjoint: "", nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", anneesProjection: "", objectifs: [], objectifCustom: "", customClientFields: [], assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", hasProjectionsMultiples: false, montantInvestissement2: "200000", capaciteEpargne2: "1000", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, showPrevoyanceComparatif: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", dureeProjectionAv: "15", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", lppActions: "", lppOblig: "", lppImmo: "", conseiller: `${appSettings.agentFirstName || ""} ${appSettings.agentLastName || ""}`.trim() || "", titreConseiller: appSettings.agentTitle || "", telephone: appSettings.agentPhone || "", email: appSettings.agentEmail || "", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
 
   const handleDeleteReport = async (e, id) => {
     e.stopPropagation();
@@ -4024,7 +4072,6 @@ export default function WallSwissApp() {
     return (
       <div style={{ display: "flex", height: "100vh", width: "100vw", alignItems: "center", justifyContent: "center", background: C.lightGray, fontFamily: "'Montserrat', sans-serif" }}>
         <div style={{ background: C.white, padding: "48px", width: "100%", maxWidth: "500px", boxShadow: "0 10px 40px rgba(0,0,0,0.1)", textAlign: "center" }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
           <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.primary, marginBottom: 8, marginTop: 0 }}>Compte en attente</h2>
           <p style={{ color: C.gray, fontSize: 14, lineHeight: 1.6, marginBottom: 32 }}>
             Votre compte a bien été créé, mais il nécessite l'approbation d'un administrateur avant de pouvoir accéder à l'outil de génération de rapports.
@@ -4045,7 +4092,7 @@ export default function WallSwissApp() {
           <div style={S.cardTitle}><div style={S.dot} /> Choix du modèle de présentation</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             {[
-              { id: "swissquote", title: "Compte Titre", desc: "Stratégie d'investissement flexible et performante en Suisse.", active: true },
+              { id: "swissquote", title: "Compte-titres", desc: "Stratégie d'investissement flexible et performante en Suisse.", active: true },
               { id: "prevoyance", title: "Prévoyance (3A/3B)", desc: "Optimisation fiscale et préparation retraite avec assurance vie.", active: true },
               { id: "lpp", title: "2ème Pilier LPP", desc: "Analyse et dynamisation du Libre passage institutionnel.", active: true },
               { id: "assurance-vie", title: "Assurance Vie & PER", desc: "Solutions de placement et retraite (France).", active: true },
@@ -4357,7 +4404,7 @@ export default function WallSwissApp() {
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.swissquoteIntro} onChange={e=>uText("swissquoteIntro", e.target.value)} /></div>
 
                 <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
-                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "SOLUTION COMPTE TITRE"</div>
+                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "SOLUTION COMPTE-TITRES"</div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 1 (Introduction)</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.solution1} onChange={e=>uText("solution1", e.target.value)} /></div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 2 (Avantages)</label>
@@ -4693,9 +4740,9 @@ export default function WallSwissApp() {
                   <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Hub Marketing Leads</div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                  {uploadingImage && <span style={{ fontSize: 12, color: C.gold, fontWeight: 700 }}>⏳ Upload en cours...</span>}
+                  {uploadingImage && <span style={{ fontSize: 12, color: C.gold, fontWeight: 700 }}>Upload en cours...</span>}
                   <button onClick={() => setIsEditingMarketing(!isEditingMarketing)} style={{ background: isEditingMarketing ? "#10B981" : C.white, color: isEditingMarketing ? C.white : C.primary, border: `1px solid ${isEditingMarketing ? "#10B981" : C.primary}`, padding: "8px 16px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: 700, borderRadius: 4, transition: "0.2s" }}>
-                    {isEditingMarketing ? "✅ Terminer l'édition" : "✏️ Éditer les publicités"}
+                    {isEditingMarketing ? "Terminer l'édition" : "Éditer les publicités"}
                   </button>
                 </div>
               </div>
@@ -5616,7 +5663,7 @@ export default function WallSwissApp() {
                         }} style={{ fontSize: 12, fontFamily: "'Montserrat', sans-serif" }} />
                       </div>
                     </div>
-                    {uploadingImage && <div style={{ fontSize: 12, color: C.gold, fontWeight: 700, marginTop: 8 }}>⏳ Upload de l'image en cours vers Firebase...</div>}
+                    {uploadingImage && <div style={{ fontSize: 12, color: C.gold, fontWeight: 700, marginTop: 8 }}>Upload de l'image en cours vers Firebase...</div>}
                   </div>
                 )}
 
@@ -5738,7 +5785,7 @@ export default function WallSwissApp() {
                     </div>
                     
                     {[
-                      { id: "swissquote", title: "Compte Titre" }, 
+                      { id: "swissquote", title: "Compte-titres" }, 
                       { id: "prevoyance", title: "Prévoyance (3A/3B)" }, 
                       { id: "lpp", title: "2ème Pilier LPP" },
                       { id: "assurance-vie", title: "Assurance Vie & PER" }
@@ -5776,10 +5823,10 @@ export default function WallSwissApp() {
                                     </div>
                                   </div>
                                   <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end", maxWidth: "230px" }}>
-                                    <button onClick={(e) => handleEditReport(e, r)} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primary, padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%" }} onMouseEnter={e=>{e.currentTarget.style.background=C.primary;e.currentTarget.style.color=C.white;e.currentTarget.style.borderColor=C.primary}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color=C.primary;e.currentTarget.style.borderColor=C.mediumGray}}>✎ ÉDITER</button>
-                                    <button onClick={(e) => handleDeleteReport(e, r.id)} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: "#EF4444", padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%" }} onMouseEnter={e=>{e.currentTarget.style.background="#EF4444";e.currentTarget.style.color=C.white;e.currentTarget.style.borderColor="#EF4444"}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color="#EF4444";e.currentTarget.style.borderColor=C.mediumGray}}>🗑️ SUPPRIMER</button>
-                                    <button onClick={(e) => { e.stopPropagation(); setPreview({...r, _autoDownload: true}); }} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primaryDark, padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%" }} onMouseEnter={e=>{e.currentTarget.style.background=C.primaryDark;e.currentTarget.style.color=C.white;e.currentTarget.style.borderColor=C.primaryDark}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color=C.primaryDark;e.currentTarget.style.borderColor=C.mediumGray}}>📥 PDF</button>
-                                    <button onClick={(e) => { e.stopPropagation(); setPreview(r); }} style={{ background: C.gold, border: `1px solid ${C.gold}`, color: C.white, padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%", display: "flex", justifyContent: "center", alignItems: "center" }} onMouseEnter={e=>{e.currentTarget.style.opacity=0.8}} onMouseLeave={e=>{e.currentTarget.style.opacity=1}}>👁️ APERÇU</button>
+                                    <button onClick={(e) => handleEditReport(e, r)} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primary, padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%" }} onMouseEnter={e=>{e.currentTarget.style.background=C.primary;e.currentTarget.style.color=C.white;e.currentTarget.style.borderColor=C.primary}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color=C.primary;e.currentTarget.style.borderColor=C.mediumGray}}>ÉDITER</button>
+                                    <button onClick={(e) => handleDeleteReport(e, r.id)} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: "#EF4444", padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%" }} onMouseEnter={e=>{e.currentTarget.style.background="#EF4444";e.currentTarget.style.color=C.white;e.currentTarget.style.borderColor="#EF4444"}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color="#EF4444";e.currentTarget.style.borderColor=C.mediumGray}}>SUPPRIMER</button>
+                                    <button onClick={(e) => { e.stopPropagation(); setPreview({...r, _autoDownload: true}); }} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primaryDark, padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%" }} onMouseEnter={e=>{e.currentTarget.style.background=C.primaryDark;e.currentTarget.style.color=C.white;e.currentTarget.style.borderColor=C.primaryDark}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color=C.primaryDark;e.currentTarget.style.borderColor=C.mediumGray}}>PDF</button>
+                                    <button onClick={(e) => { e.stopPropagation(); setPreview(r); }} style={{ background: C.gold, border: `1px solid ${C.gold}`, color: C.white, padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%", display: "flex", justifyContent: "center", alignItems: "center" }} onMouseEnter={e=>{e.currentTarget.style.opacity=0.8}} onMouseLeave={e=>{e.currentTarget.style.opacity=1}}>APERÇU</button>
                                   </div>
                                 </div>
                               </div>

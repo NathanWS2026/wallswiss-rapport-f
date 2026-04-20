@@ -315,7 +315,13 @@ function computeProjections(data) {
   const rP = Number(data.tauxPessimiste || 3) / 100;
   const rR = Number(data.tauxRealiste || 6) / 100;
   const rO = Number(data.tauxOptimiste || 9) / 100;
-  const years = [0, 3, 5, 8, 10, 15];
+  
+  let years = [0, 3, 5, 8, 10, 15];
+  if (data.anneesProjection && data.anneesProjection.trim() !== "") {
+    years = data.anneesProjection.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n >= 0);
+    years = [...new Set(years)].sort((a,b) => a - b);
+  }
+  
   return years.map(y => ({
     year: y,
     pessimiste: Math.round(net * Math.pow(1 + rP, y)),
@@ -335,11 +341,17 @@ function computeProjectionsPrevoyance(data) {
   const rO = Number(data.tauxOptimistePrev || 6) / 100;
   const taxMarginalRate = 0.30; 
   
-  const step = Math.max(1, Math.floor(duration / 4));
-  let years = [];
-  for(let i = 0; i <= duration; i+=step) { years.push(i); }
-  if (years[years.length-1] !== duration) years.push(duration);
-  const uniqueYears = [...new Set(years)].sort((a,b) => a - b);
+  let uniqueYears;
+  if (data.anneesProjection && data.anneesProjection.trim() !== "") {
+    uniqueYears = data.anneesProjection.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n >= 0);
+    uniqueYears = [...new Set(uniqueYears)].sort((a,b) => a - b);
+  } else {
+    const step = Math.max(1, Math.floor(duration / 4));
+    let years = [];
+    for(let i = 0; i <= duration; i+=step) { years.push(i); }
+    if (years[years.length-1] !== duration) years.push(duration);
+    uniqueYears = [...new Set(years)].sort((a,b) => a - b);
+  }
   
   return uniqueYears.map(y => {
     const invested = annual * y;
@@ -373,7 +385,13 @@ function computeProjectionsLPP(data) {
   const rateSupletive = 0.0005; // 0.05% pour la Fondation Institutionnelle Supplétive
   const rateCLP = Number(data.tauxClp || 4) / 100; 
   
-  const uniqueYears = [...new Set([0, Math.round(duration*0.2), Math.round(duration*0.4), Math.round(duration*0.6), Math.round(duration*0.8), duration])].sort((a,b) => a - b);
+  let uniqueYears;
+  if (data.anneesProjection && data.anneesProjection.trim() !== "") {
+    uniqueYears = data.anneesProjection.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n >= 0);
+    uniqueYears = [...new Set(uniqueYears)].sort((a,b) => a - b);
+  } else {
+    uniqueYears = [...new Set([0, Math.round(duration*0.2), Math.round(duration*0.4), Math.round(duration*0.6), Math.round(duration*0.8), duration])].sort((a,b) => a - b);
+  }
   
   return uniqueYears.map(y => ({
     year: y,
@@ -392,7 +410,7 @@ function computeProjectionsAV(data, index = 1) {
   const duration = Math.min(30, Math.max(1, Number(data.dureeProjectionAv || 15))); // Permet d'aller jusqu'à 30 ans
   const fee = Number(data.fraisSouscription || 0) / 100;
   
-  // Prise en compte financière stricte (frais d'entrée prélevés sur chaque versement)
+  // Prise en compte financière stricte (droits d'entrée prélevés sur chaque versement)
   const netInitial = initial - (initial * fee);
   const netMonthly = monthly - (monthly * fee);
   
@@ -404,7 +422,10 @@ function computeProjectionsAV(data, index = 1) {
   
   // Limite à 10 lignes maximum pour que le tableau reste lisible sur la slide
   let yearsToShow = [];
-  if (duration <= 10) {
+  if (data.anneesProjection && data.anneesProjection.trim() !== "") {
+    yearsToShow = data.anneesProjection.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0);
+    yearsToShow = [...new Set(yearsToShow)].sort((a,b) => a - b);
+  } else if (duration <= 10) {
     for(let i = 1; i <= duration; i++) yearsToShow.push(i);
   } else {
     yearsToShow.push(1);
@@ -519,7 +540,9 @@ const EditableText = ({ value, onChange, editMode, style }) => {
 
 // Slide 1 — Cover
 function SlideCover({ data }) {
-  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const fullName = data.isCouple && data.prenomConjoint 
+    ? `${data.prenom} ${(data.nom || "").toUpperCase()} & ${data.prenomConjoint} ${(data.nomConjoint || "").toUpperCase()}`
+    : `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   const dateObj = data.dateRapport ? new Date(data.dateRapport) : new Date();
   const formattedDate = dateObj.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
   return (
@@ -644,8 +667,8 @@ function SlideAbout({ data, editMode, onTextChange }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   const stats = [
     { val: "+2000", label: "CLIENTS" },
-    { val: "ACCRÉDITÉ", label: "FINMA" },
-    { val: "+10M CHF", label: "SOUS GESTION" },
+    { val: "ACCRÉDITÉ", label: <>FINMA : F01496591<br/>ORIAS : 24004947</> },
+    { val: "+300M CHF", label: "SOUS GESTION" },
     { val: "+20", label: "COLLABORATEURS" },
     { val: "+50", label: "PARTENAIRES" },
     { val: "100%", label: "SOLUTIONS PRAGMATIQUES" },
@@ -679,7 +702,9 @@ function SlideAbout({ data, editMode, onTextChange }) {
 
 // Slide 5 — Situation personnelle
 function SlideSituation({ data }) {
-  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const fullName = data.isCouple && data.prenomConjoint 
+    ? `${data.prenom} ${(data.nom || "").toUpperCase()} & ${data.prenomConjoint} ${(data.nomConjoint || "").toUpperCase()}`
+    : `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   return (
     <div style={slideBase}>
       {accentBar()}
@@ -693,8 +718,8 @@ function SlideSituation({ data }) {
               <div style={{ background: C.primary, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Civilité & Statut</div>
               <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
                 {[
-                  ["Âge", data.age ? `${data.age} ans` : null],
-                  ["Profession", data.profession || null],
+                  ["Âge", data.age ? (data.isCouple && data.ageConjoint ? `${data.age} ans / ${data.ageConjoint} ans` : `${data.age} ans`) : null],
+                  ["Profession", data.isCouple && data.professionConjoint ? `${data.profession} / ${data.professionConjoint}` : (data.profession || null)],
                   ["Nationalité", data.nationalite || null],
                   ["Statut civil", data.statut || null],
                   ...(data.customClientFields || []).filter(f => f.label && f.value).map(f => [f.label, f.value])
@@ -1167,7 +1192,7 @@ function SlideProjections({ data }) {
               Ici, nous vous conseillons d'optimiser votre trésorerie actuelle avec un compte titre chez <strong>SwissQuote</strong> sur la solution de placement avec un dépôt initial de <strong>CHF {fmt(montant)}.-</strong>
             </p>
             <p style={{ fontSize: 13, color: C.gray, margin: "0 0 32px", textAlign: "justify" }}>
-              Nous appliquons des frais de souscription de {frais}% du montant investi soit {fmt(montant * frais / 100)}.-
+              Nous appliquons des droits d'entrée de {frais}% du montant investi soit {fmt(montant * frais / 100)}.-
             </p>
             
             <div style={{ display: "flex", gap: 20, marginBottom: 20, alignSelf: "center", fontSize: 12, fontWeight: 600 }}>
@@ -2436,7 +2461,7 @@ function SlideLPPProjections({ data }) {
              <p style={{ fontSize: 12.5, lineHeight: 1.6, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }}>
               Comparaison de l'évolution de votre capital de <strong>CHF {fmt(initial)}.-</strong> s'il est placé sur une Fondation Institutionnelle Supplétive (~0.05% net/an), s'il reste sur un compte de fondation classique (~1% net/an) ou s'il est investi sur les marchés via un <strong>Compte de libre passage WallSwiss</strong> (profil <strong>{data.profilRisque || "Dynamique"}</strong>, ~{rateCLPDisplay}% net/an).<br/>
               <span style={{ fontSize: 11, color: C.primary, fontWeight: 600 }}>
-                *Des frais d'entrée de {fee}% (soit CHF {fmt(initial * fee / 100)}.-) sont déduits du capital initial, portant le montant net investi à CHF {fmt(netInitial)}.- pour la simulation WallSwiss.
+                *Des droits d'entrée de {fee}% (soit CHF {fmt(initial * fee / 100)}.-) sont déduits du capital initial, portant le montant net investi à CHF {fmt(netInitial)}.- pour la simulation WallSwiss.
               </span>
             </p>
 
@@ -2933,7 +2958,7 @@ function SlideAvProjections({ data, index = 1 }) {
           
           <div style={{ display: "flex", flexDirection: "column" }}>
             <p style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, marginBottom: 20, textAlign: "justify" }}>
-              Cette projection personnalisée simule l'évolution de votre épargne sur <strong>{data.dureeProjectionAv || 15} ans</strong>, en tenant compte d'un versement initial de <strong>{fmt(initial)} €</strong> et d'une mensualité de <strong>{fmt(monthly)} €</strong> (déduction faite des {data.fraisSouscription || 0}% de frais sur versement).
+              Cette projection personnalisée simule l'évolution de votre épargne sur <strong>{data.dureeProjectionAv || 15} ans</strong>, en tenant compte d'un versement initial de <strong>{fmt(initial)} €</strong> et d'une mensualité de <strong>{fmt(monthly)} €</strong> (déduction faite des {data.fraisSouscription || 0}% de droits d'entrée).
             </p>
 
             <div style={{ width: svgW, height: svgH, background: C.white, border: `1px solid ${C.lightGray}`, marginBottom: 16 }}>
@@ -3868,8 +3893,10 @@ export default function WallSwissApp() {
   const [form, setForm] = useState({
     templateId: "swissquote",
     dateRapport: new Date().toISOString().split('T')[0],
+    isCouple: false, nomConjoint: "", prenomConjoint: "", ageConjoint: "", professionConjoint: "",
     nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "",
     capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)",
+    anneesProjection: "",
     objectifs: [], objectifCustom: "", customClientFields: [],
     assetManager: "NS Partners",
     montantInvestissement: "100000", fraisSouscription: "3",
@@ -3937,7 +3964,7 @@ export default function WallSwissApp() {
     }
   };
 
-  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", objectifs: [], objectifCustom: "", customClientFields: [], assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", hasProjectionsMultiples: false, montantInvestissement2: "200000", capaciteEpargne2: "1000", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, showPrevoyanceComparatif: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", dureeProjectionAv: "15", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", lppActions: "", lppOblig: "", lppImmo: "", conseiller: `${appSettings.agentFirstName || ""} ${appSettings.agentLastName || ""}`.trim() || "", titreConseiller: appSettings.agentTitle || "", telephone: appSettings.agentPhone || "", email: appSettings.agentEmail || "", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
+  const resetForm = () => setForm({ templateId: "swissquote", dateRapport: new Date().toISOString().split('T')[0], isCouple: false, nomConjoint: "", prenomConjoint: "", ageConjoint: "", professionConjoint: "", nom: "", prenom: "", emailClient: "", age: "", profession: "", nationalite: "France", statut: "Célibataire", revenus: "", capaciteEpargne: "", fortuneGlobale: "", profilRisque: "Équilibré", horizonPlacement: "Moyen terme (3 - 8 ans)", anneesProjection: "", objectifs: [], objectifCustom: "", customClientFields: [], assetManager: "NS Partners", montantInvestissement: "100000", fraisSouscription: "3", hasProjectionsMultiples: false, montantInvestissement2: "200000", capaciteEpargne2: "1000", tauxPessimiste: "3", tauxRealiste: "6", tauxOptimiste: "9", compagniePrevoyance: "Liechtenstein Life", optiFiscale: true, showPrevoyanceComparatif: true, tauxPessimistePrev: "2", tauxRealistePrev: "4", tauxOptimistePrev: "6", dureeProjectionAv: "15", capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1", lppActions: "", lppOblig: "", lppImmo: "", conseiller: `${appSettings.agentFirstName || ""} ${appSettings.agentLastName || ""}`.trim() || "", titreConseiller: appSettings.agentTitle || "", telephone: appSettings.agentPhone || "", email: appSettings.agentEmail || "", customLogo: appSettings.defaultLogo || "", customCoverImage: appSettings.defaultCover || "", customPhilosophyImage: appSettings.defaultPhilosophy || "", texts: initialTexts });
 
   const handleDeleteReport = async (e, id) => {
     e.stopPropagation();
@@ -4038,14 +4065,34 @@ export default function WallSwissApp() {
       case 1: return (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
           <div style={S.card}>
-            <div style={S.cardTitle}><div style={S.dot} /> Identité</div>
+            <div style={S.cardTitle}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={S.dot} /> Identité</div>
+                <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, cursor: "pointer", textTransform: "none", color: C.darkGray }}>
+                  <input type="checkbox" checked={form.isCouple || false} onChange={e=>u("isCouple", e.target.checked)} />
+                  Mode Couple
+                </label>
+              </div>
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <div style={S.fg}><label style={S.label}>Prénom</label><input style={S.input} value={form.prenom} onChange={e=>u("prenom",e.target.value)} placeholder="Philippe"/></div>
               <div style={S.fg}><label style={S.label}>Nom</label><input style={S.input} value={form.nom} onChange={e=>u("nom",e.target.value)} placeholder="EVEQUE"/></div>
             </div>
+            {form.isCouple && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, background: "rgba(165,149,104,0.05)", padding: 12, border: `1px dashed ${C.gold}`, marginBottom: 16 }}>
+                <div style={{...S.fg, margin:0}}><label style={S.label}>Prénom Conjoint</label><input style={S.input} value={form.prenomConjoint || ""} onChange={e=>u("prenomConjoint",e.target.value)} placeholder="Marie"/></div>
+                <div style={{...S.fg, margin:0}}><label style={S.label}>Nom Conjoint</label><input style={S.input} value={form.nomConjoint || ""} onChange={e=>u("nomConjoint",e.target.value)} placeholder="EVEQUE"/></div>
+              </div>
+            )}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <div style={S.fg}><label style={S.label}>Email Client</label><input style={S.input} type="email" value={form.emailClient || ""} onChange={e=>u("emailClient",e.target.value)} placeholder="client@email.com"/></div>
-              <div style={S.fg}><label style={S.label}>Âge</label><input style={S.input} type="number" value={form.age} onChange={e=>u("age",e.target.value)} placeholder="40"/></div>
+              <div style={S.fg}>
+                <label style={S.label}>{form.isCouple ? "Âges (ex: 40 / 38)" : "Âge"}</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input style={S.input} type="number" value={form.age} onChange={e=>u("age",e.target.value)} placeholder="40"/>
+                  {form.isCouple && <input style={S.input} type="number" value={form.ageConjoint || ""} onChange={e=>u("ageConjoint",e.target.value)} placeholder="38"/>}
+                </div>
+              </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <div style={S.fg}><label style={S.label}>Date du rapport</label><input style={S.input} type="date" value={form.dateRapport || ""} onChange={e=>u("dateRapport",e.target.value)}/></div>
@@ -4066,7 +4113,13 @@ export default function WallSwissApp() {
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Situation Financière</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div style={S.fg}><label style={S.label}>Profession</label><input style={S.input} value={form.profession} onChange={e=>u("profession",e.target.value)} placeholder="Caméraman"/></div>
+              <div style={S.fg}>
+                <label style={S.label}>{form.isCouple ? "Professions" : "Profession"}</label>
+                <div style={{ display: "flex", gap: 8, flexDirection: form.isCouple ? "column" : "row" }}>
+                  <input style={S.input} value={form.profession} onChange={e=>u("profession",e.target.value)} placeholder="Caméraman"/>
+                  {form.isCouple && <input style={S.input} value={form.professionConjoint || ""} onChange={e=>u("professionConjoint",e.target.value)} placeholder="Enseignante"/>}
+                </div>
+              </div>
               <div style={S.fg}><label style={S.label}>Statut</label><select style={S.select} value={form.statut} onChange={e=>u("statut",e.target.value)}>{["Célibataire","Marié(e)","Divorcé(e)","Veuf/Veuve","Pacsé(e)","Union libre"].map(s=><option key={s}>{s}</option>)}</select></div>
             </div>
             <div style={S.fg}><label style={S.label}>Revenus annuels bruts (CHF)</label><input style={S.input} type="number" value={form.revenus} onChange={e=>u("revenus",e.target.value)} placeholder="120000"/></div>
@@ -4115,6 +4168,11 @@ export default function WallSwissApp() {
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Paramètres d'investissement</div>
             
+            <div style={S.fg}>
+              <label style={S.label}>Années présentées (projections)</label>
+              <input style={S.input} value={form.anneesProjection || ""} onChange={e=>u("anneesProjection",e.target.value)} placeholder="Laisser vide pour auto (ex: 3, 5, 10, 15)"/>
+            </div>
+
             {form.templateId === "prevoyance" ? (
               <>
                 <div style={S.fg}>
@@ -4141,12 +4199,7 @@ export default function WallSwissApp() {
                 
                 <div style={S.fg}>
                   <label style={S.label}>Horizon de placement</label>
-                  <input list="horizon-options" style={S.input} value={form.horizonPlacement} onChange={e=>u("horizonPlacement",e.target.value)} placeholder="Sélectionnez ou saisissez..." />
-                  <datalist id="horizon-options">
-                    <option value="Court terme (< 3 ans)" />
-                    <option value="Moyen terme (3 - 8 ans)" />
-                    <option value="Long terme (> 8 ans)" />
-                  </datalist>
+                  <input style={S.input} value={form.horizonPlacement} onChange={e=>u("horizonPlacement",e.target.value)} placeholder="Ex: Moyen terme, 5 ans..." />
                 </div>
                 
                 <div style={{...S.fg, margin: 0}}>
@@ -4170,7 +4223,7 @@ export default function WallSwissApp() {
                 <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
                 
                 <div style={S.fg}><label style={S.label}>Taux de rendement cible net (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxClp} onChange={e=>u("tauxClp",e.target.value)} placeholder="4.5"/></div>
-                <div style={S.fg}><label style={S.label}>Frais d'entrée (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscriptionLpp} onChange={e=>u("fraisSouscriptionLpp",e.target.value)} placeholder="1"/></div>
+                <div style={S.fg}><label style={S.label}>Droits d'entrée (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscriptionLpp} onChange={e=>u("fraisSouscriptionLpp",e.target.value)} placeholder="1"/></div>
                 <div style={S.fg}>
                   <label style={S.label}>Profil de risque (Libre Passage)</label>
                   <select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>
@@ -4207,7 +4260,7 @@ export default function WallSwissApp() {
                 
                 <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
                 
-                <div style={S.fg}><label style={S.label}>Frais sur versements (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscription} onChange={e=>u("fraisSouscription",e.target.value)}/></div>
+                <div style={S.fg}><label style={S.label}>Droits d'entrée sur versements (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscription} onChange={e=>u("fraisSouscription",e.target.value)}/></div>
                 <div style={{...S.fg, margin: 0}}><label style={S.label}>Profil de risque</label><select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>{["Prudent", "Équilibré", "Dynamique", "Offensif"].map(s=><option key={s}>{s}</option>)}</select></div>
               </>
             ) : (
@@ -4220,18 +4273,13 @@ export default function WallSwissApp() {
                   </select>
                 </div>
                 <div style={S.fg}><label style={S.label}>Montant initial (CHF)</label><input style={S.input} type="number" value={form.montantInvestissement} onChange={e=>u("montantInvestissement",e.target.value)}/></div>
-                <div style={S.fg}><label style={S.label}>Frais de souscription (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscription} onChange={e=>u("fraisSouscription",e.target.value)}/></div>
+                <div style={S.fg}><label style={S.label}>Droits d'entrée (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscription} onChange={e=>u("fraisSouscription",e.target.value)}/></div>
                 
                 <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
                 
                 <div style={S.fg}>
                   <label style={S.label}>Horizon de placement</label>
-                  <input list="horizon-options" style={S.input} value={form.horizonPlacement} onChange={e=>u("horizonPlacement",e.target.value)} placeholder="Sélectionnez ou saisissez..." />
-                  <datalist id="horizon-options">
-                    <option value="Court terme (< 3 ans)" />
-                    <option value="Moyen terme (3 - 8 ans)" />
-                    <option value="Long terme (> 8 ans)" />
-                  </datalist>
+                  <input style={S.input} value={form.horizonPlacement} onChange={e=>u("horizonPlacement",e.target.value)} placeholder="Ex: Moyen terme, 5 ans..." />
                 </div>
                 <div style={{...S.fg, margin: 0}}><label style={S.label}>Profil de risque</label><select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>{["Prudent", "Équilibré", "Dynamique", "Offensif"].map(s=><option key={s}>{s}</option>)}</select></div>
               </>
@@ -4430,7 +4478,7 @@ export default function WallSwissApp() {
               ) : (
                 <>
                   <div style={{ fontSize: 15, fontWeight: 700, color: C.primary }}>CHF {fmt(form.montantInvestissement)}.-</div>
-                  <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>Frais: {form.fraisSouscription}%</div>
+                  <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>Droits d'entrée: {form.fraisSouscription}%</div>
                   <div style={{ fontSize: 12, color: C.gray }}>{form.tauxPessimiste}% / {form.tauxRealiste}% / {form.tauxOptimiste}%</div>
                 </>
               )}

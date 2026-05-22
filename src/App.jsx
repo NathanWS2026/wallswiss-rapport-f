@@ -3059,6 +3059,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [isEmailing, setIsEmailing] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState(false);
+  const [emailError, setEmailError] = useState("");
   
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailForm, setEmailForm] = useState({ to: "", subject: "", body: "" });
@@ -3198,7 +3199,8 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
   const handleConfirmEmail = async () => {
     const webhookUrl = appSettings.reportWebhookUrl?.trim();
     if (!webhookUrl || !webhookUrl.startsWith('http')) {
-      alert("Veuillez configurer une URL de Webhook valide (commençant par http) dans les paramètres (Module Paramètres > Envoi Rapports).");
+      setEmailError("Veuillez configurer une URL de Webhook valide dans les paramètres.");
+      setTimeout(() => setEmailError(""), 5000);
       return;
     }
     
@@ -3287,7 +3289,8 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
       setTimeout(() => setEmailSuccess(false), 3000);
     } catch (error) {
       console.error("Erreur lors de l'envoi de l'email :", error);
-      alert(`Une erreur est survenue lors de l'envoi : ${error.message || 'Vérifiez le lien du webhook.'}`);
+      setEmailError(`Erreur lors de l'envoi : ${error.message || 'Vérifiez le lien du webhook.'}`);
+      setTimeout(() => setEmailError(""), 5000);
     } finally {
       // 5. Restauration de l'interface
       replacements.forEach(({ textarea, div }) => {
@@ -3505,12 +3508,18 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
               <button onClick={() => setShowEmailModal(false)} style={{ background: "transparent", color: C.gray, border: `1px solid ${C.mediumGray}`, padding: "10px 20px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600 }}>Annuler</button>
               <button onClick={handleConfirmEmail} style={{ background: C.primary, color: C.white, border: "none", padding: "10px 20px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600 }}>Confirmer l'envoi</button>
-            </div>
           </div>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    )}
+
+    {emailError && (
+      <div style={{ position: "fixed", bottom: 40, right: 40, background: "#EF4444", color: C.white, padding: "12px 24px", fontSize: 14, fontWeight: 600, boxShadow: "0 10px 25px rgba(239, 68, 68, 0.3)", zIndex: 10001, display: "flex", alignItems: "center", gap: 10, animation: "fadeIn 0.3s ease-out" }}>
+        <span style={{ fontSize: 18 }}>!</span> {emailError}
+      </div>
+    )}
+  </div>
+);
 }
 
 // ────────────────────── MAIN APP / LAYOUT ──────────────────────
@@ -3681,11 +3690,13 @@ export default function WallSwissApp() {
     const webhookUrl = appSettings.lppWebhookUrl?.trim();
     
     if (!webhookUrl || !webhookUrl.startsWith('http')) {
-      alert("Veuillez configurer l'URL du Webhook Signature (Make/Zapier) dans les paramètres (Module Paramètres > Envoi Rapports).");
+      setToastMsg("Veuillez configurer l'URL du Webhook Signature dans les paramètres.");
+      setTimeout(() => setToastMsg(""), 4000);
       return;
     }
     if (!lppForm.emailClient || !lppForm.nom || !lppForm.prenom) {
-      alert("Le prénom, le nom et l'email du client sont obligatoires pour la signature électronique.");
+      setToastMsg("Le prénom, nom et email sont obligatoires pour la signature.");
+      setTimeout(() => setToastMsg(""), 4000);
       return;
     }
 
@@ -3731,10 +3742,12 @@ export default function WallSwissApp() {
         throw new Error(`Le webhook a refusé l'envoi (${response.status})`);
       }
 
-      alert("Le document a été envoyé avec succès au service de signature !\n\nLe client va recevoir un email sécurisé de Yousign.");
+      setToastMsg("Document envoyé avec succès à Yousign !");
+      setTimeout(() => setToastMsg(""), 4000);
     } catch (e) {
       console.error("Erreur d'envoi pour signature:", e);
-      alert(`Une erreur est survenue lors de l'envoi : ${e.message}`);
+      setToastMsg(`Erreur lors de l'envoi : ${e.message}`);
+      setTimeout(() => setToastMsg(""), 4000);
     } finally {
       setIsSendingSign(false);
     }
@@ -3998,7 +4011,8 @@ export default function WallSwissApp() {
       }
     }
     setBulkImport("");
-    alert(`${added} contacts importés avec succès !`);
+    setToastMsg(`${added} contacts importés avec succès !`);
+    setTimeout(() => setToastMsg(""), 3000);
   };
 
   const handleDeleteMailingClient = async (id) => {
@@ -4028,7 +4042,8 @@ export default function WallSwissApp() {
 
   const handleSendCampaign = () => {
     if (campaign.selectedIds.length === 0) {
-      alert("Veuillez sélectionner au moins un destinataire.");
+      setToastMsg("Veuillez sélectionner au moins un destinataire.");
+      setTimeout(() => setToastMsg(""), 3000);
       return;
     }
     setIsSendingCampaign(true);
@@ -4104,17 +4119,22 @@ export default function WallSwissApp() {
 
   const updateSettings = async (newSettings) => {
     setAppSettings(newSettings);
+    localStorage.setItem('wallswiss_settings', JSON.stringify(newSettings));
     
     if (!db || !user) {
-      alert("Firebase n'est pas connecté.\n\nPour que la sauvegarde s'effectue sur app.wallswiss.ch, vous devez remplacer les valeurs 'VOTRE_API_KEY' par vos vraies clés Firebase tout en haut du code source.");
+      setToastMsg("Paramètres sauvegardés localement (Firebase non connecté).");
+      setTimeout(() => setToastMsg(""), 3000);
       return;
     }
 
     try {
       await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'default'), newSettings, { merge: true });
+      setToastMsg("Paramètres sauvegardés avec succès !");
+      setTimeout(() => setToastMsg(""), 3000);
     } catch (e) {
       console.error("Erreur de sauvegarde des paramètres", e);
-      alert("Erreur lors de la sauvegarde Firebase : " + e.message);
+      setToastMsg("Erreur lors de la sauvegarde : " + e.message);
+      setTimeout(() => setToastMsg(""), 3000);
     }
   };
 
@@ -5928,27 +5948,19 @@ export default function WallSwissApp() {
                   </div>
                   
                   <div style={{ padding: "20px 32px", borderTop: `1px solid ${C.mediumGray}`, display: "flex", justifyContent: "flex-end", gap: 16 }}>
-                    <button onClick={() => handleCopy(`${selectedMail.objet}\n\n${selectedMail.corps}`, "Objet et Corps copiés !")} style={{ ...S.btnP, background: C.gold, display: "flex", alignItems: "center", gap: 8 }}>
-                      <Icons.Copy size={16}/> Tout Copier (Objet + Corps)
-                    </button>
-                    <button onClick={() => setSelectedMail(null)} style={S.btnS}>Fermer</button>
-                  </div>
+                  <button onClick={() => handleCopy(`${selectedMail.objet}\n\n${selectedMail.corps}`, "Objet et Corps copiés !")} style={{ ...S.btnP, background: C.gold, display: "flex", alignItems: "center", gap: 8 }}>
+                    <Icons.Copy size={16}/> Tout Copier (Objet + Corps)
+                  </button>
+                  <button onClick={() => setSelectedMail(null)} style={S.btnS}>Fermer</button>
                 </div>
               </div>
-            )}
-            
-            {/* Toast Notification */}
-            {toastMsg && (
-              <div style={{ position: "fixed", bottom: 40, right: 40, background: "#10B981", color: C.white, padding: "12px 24px", fontSize: 14, fontWeight: 600, boxShadow: "0 10px 25px rgba(16, 185, 129, 0.3)", zIndex: 2000, display: "flex", alignItems: "center", gap: 10, animation: "fadeIn 0.3s ease-out" }}>
-                <span style={{ fontSize: 18 }}>✓</span> {toastMsg}
-              </div>
-            )}
-            <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
+      )}
 
-        {/* VUE PARAMÈTRES & INTÉGRATIONS */}
-        {activeModule === "settings" && (
+      {/* VUE PARAMÈTRES & INTÉGRATIONS */}
+      {activeModule === "settings" && (
           <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
             <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
               <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -6237,17 +6249,25 @@ export default function WallSwissApp() {
                   {renderStep()}
                   
                   <div style={{ display: "flex", justifyContent: "space-between", marginTop: 32 }}>
-                    <button style={{ ...S.btnS, opacity: step===0?0:1, pointerEvents: step===0?"none":"auto" }} onClick={()=>setStep(s=>s-1)}>&larr; Précédent</button>
-                    {step < 6 && <button style={S.btnP} onClick={()=>setStep(s=>s+1)}>Étape Suivante &rarr;</button>}
-                  </div>
+                  <button style={{ ...S.btnS, opacity: step===0?0:1, pointerEvents: step===0?"none":"auto" }} onClick={()=>setStep(s=>s-1)}>&larr; Précédent</button>
+                  {step < 6 && <button style={S.btnP} onClick={()=>setStep(s=>s+1)}>Étape Suivante &rarr;</button>}
                 </div>
-              )}
-            </main>
-          </div>
-        )}
-      </div>
-
-      {preview && <ReportPreview data={preview} onClose={()=>setPreview(null)} onUpdateData={handlePreviewUpdate} appSettings={appSettings} onEdit={(e)=>{handleEditReport(e, preview); setPreview(null);}} onDelete={(e)=>{handleDeleteReport(e, preview.id); setPreview(null);}} />}
+              </div>
+            )}
+          </main>
+        </div>
+      )}
     </div>
-  );
+
+    {/* Toast Notification Globale */}
+    {toastMsg && (
+      <div style={{ position: "fixed", bottom: 40, right: 40, background: toastMsg.includes("Erreur") || toastMsg.includes("Veuillez") || toastMsg.includes("obligatoires") ? "#EF4444" : "#10B981", color: C.white, padding: "12px 24px", fontSize: 14, fontWeight: 600, boxShadow: "0 10px 25px rgba(0,0,0, 0.2)", zIndex: 3000, display: "flex", alignItems: "center", gap: 10, animation: "fadeIn 0.3s ease-out" }}>
+        <span style={{ fontSize: 18 }}>{toastMsg.includes("Erreur") || toastMsg.includes("Veuillez") || toastMsg.includes("obligatoires") ? "!" : "✓"}</span> {toastMsg}
+      </div>
+    )}
+    <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+
+    {preview && <ReportPreview data={preview} onClose={()=>setPreview(null)} onUpdateData={handlePreviewUpdate} appSettings={appSettings} onEdit={(e)=>{handleEditReport(e, preview); setPreview(null);}} onDelete={(e)=>{handleDeleteReport(e, preview.id); setPreview(null);}} />}
+  </div>
+);
 }

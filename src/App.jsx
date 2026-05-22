@@ -75,7 +75,8 @@ const Icons = {
   CheckCircle: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
   XCircle: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" x2="9" y1="9" y2="15"/><line x1="9" x2="15" y1="9" y2="15"/></svg>,
   Check: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
-  Layers: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+  Layers: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>,
+  Search: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
 };
 
 const LOGO_URL = "/logo blanc sans texte.png";
@@ -3621,6 +3622,15 @@ export default function WallSwissApp() {
   const [marketingCopied, setMarketingCopied] = useState(false);
   const [compteChIdx, setCompteChIdx] = useState(0);
 
+  // --- STATE RECHERCHE LPP ---
+  const [lppForm, setLppForm] = useState({
+    nom: "", prenom: "", dateNaissance: "", avs: "",
+    adresse: "", localite: "", pays: "Suisse", telephone: "", emailClient: "",
+    nomEntreprise: "WallSwiss", adresseEntreprise: "Rue Kléberg 14", cpaVilleEntreprise: "1201 Genève", emailEntreprise: "contact@wallswiss.ch"
+  });
+  const [isGeneratingLpp, setIsGeneratingLpp] = useState(false);
+  const [isSendingSign, setIsSendingSign] = useState(false);
+
   const handleCopy = (text, msg) => {
     navigator.clipboard.writeText(text);
     setToastMsg(msg);
@@ -3633,6 +3643,101 @@ export default function WallSwissApp() {
     navigator.clipboard.writeText(scriptText);
     setMarketingCopied(true);
     setTimeout(() => setMarketingCopied(false), 2500);
+  };
+
+  const handleDownloadLppDoc = async () => {
+    setIsGeneratingLpp(true);
+    const element = document.getElementById('lpp-doc-printable');
+    if (!element) { setIsGeneratingLpp(false); return; }
+    
+    const requireHtml2Pdf = async () => {
+      if (window.html2pdf) return window.html2pdf;
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+        script.onload = () => resolve(window.html2pdf);
+        script.onerror = reject;
+        document.body.appendChild(script);
+      });
+    };
+
+    try {
+      const html2pdf = await requireHtml2Pdf();
+      await html2pdf().set({
+        margin: [0.5, 0.5],
+        filename: `Recherche_LPP_${lppForm.nom || 'Client'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+      }).from(element).save();
+    } catch(e) {
+      console.error("Erreur PDF:", e);
+    } finally {
+      setIsGeneratingLpp(false);
+    }
+  };
+
+  const handleSendForSignature = async () => {
+    const webhookUrl = appSettings.lppWebhookUrl?.trim();
+    
+    if (!webhookUrl || !webhookUrl.startsWith('http')) {
+      alert("Veuillez configurer l'URL du Webhook Signature (Make/Zapier) dans les paramètres (Module Paramètres > Envoi Rapports).");
+      return;
+    }
+    if (!lppForm.emailClient || !lppForm.nom || !lppForm.prenom) {
+      alert("Le prénom, le nom et l'email du client sont obligatoires pour la signature électronique.");
+      return;
+    }
+
+    setIsSendingSign(true);
+    const element = document.getElementById('lpp-doc-printable');
+    if (!element) { setIsSendingSign(false); return; }
+
+    try {
+      const html2pdf = await requireHtml2Pdf();
+      
+      // Sécurité : scroll en haut
+      window.scrollTo(0, 0);
+
+      // Génération du PDF en base64 en mémoire
+      const rawPdfBase64 = await new Promise((resolve) => {
+        html2pdf().set({
+          margin: [0.5, 0.5],
+          filename: `Mandat_LPP.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, scrollX: 0, logging: false },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        }).from(element).toPdf().get('pdf').then((pdf) => resolve(pdf.output('datauristring')));
+      });
+
+      // Isoler la base64 pure
+      const pureBase64 = rawPdfBase64.includes('base64,') ? rawPdfBase64.substring(rawPdfBase64.indexOf('base64,') + 7) : rawPdfBase64;
+
+      // Envoi au Webhook (ex: Make.com)
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prenom: lppForm.prenom,
+          nom: lppForm.nom,
+          email: lppForm.emailClient,
+          telephone: lppForm.telephone,
+          pdfBase64: pureBase64,
+          filename: `Mandat_LPP_${lppForm.nom || 'Client'}.pdf`
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Le webhook a refusé l'envoi (${response.status})`);
+      }
+
+      alert("Le document a été envoyé avec succès au service de signature !\n\nLe client va recevoir un email sécurisé de Yousign.");
+    } catch (e) {
+      console.error("Erreur d'envoi pour signature:", e);
+      alert(`Une erreur est survenue lors de l'envoi : ${e.message}`);
+    } finally {
+      setIsSendingSign(false);
+    }
   };
 
   const handleImageUpload = async (file, path) => {
@@ -3704,6 +3809,7 @@ export default function WallSwissApp() {
     const defaults = {
       reportWebhookUrl: "",
       campaignWebhookUrl: "",
+      lppWebhookUrl: "",
       emailSubject: "Votre Analyse Patrimoniale - WallSwiss",
       emailBody: "Bonjour {{prenom}} {{nom}},\n\nVeuillez trouver ci-joint votre rapport d'analyse patrimoniale personnalisé suite à notre entretien.\n\nRestant à votre entière disposition pour toute question.\n\nCordialement,\n{{conseiller}}",
       agentFirstName: "",
@@ -4635,6 +4741,13 @@ export default function WallSwissApp() {
             <Icons.Target size={16} /> Hub Marketing
           </button>
 
+          <button 
+            onClick={() => setActiveModule("rechercheLpp")} 
+            style={{ width: "100%", textAlign: "left", background: activeModule === "rechercheLpp" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "rechercheLpp" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "rechercheLpp" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "rechercheLpp" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
+          >
+            <Icons.Search size={16} /> Recherche Avoirs LPP
+          </button>
+
           <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700, letterSpacing: "0.1em", padding: "0 24px", margin: "16px 0 8px", textTransform: "uppercase" }}>Liens rapides</div>
 
           <button 
@@ -5258,6 +5371,263 @@ export default function WallSwissApp() {
           </div>
         )}
 
+        {/* VUE MODULE RECHERCHE LPP */}
+        {activeModule === "rechercheLpp" && (
+          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+            <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
+              <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Générateur de Mandats & Recherche LPP</div>
+                </div>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <button onClick={handleDownloadLppDoc} disabled={isGeneratingLpp} style={{ ...S.btnS, padding: "8px 16px", fontSize: 12, opacity: isGeneratingLpp ? 0.7 : 1 }}>
+                    {isGeneratingLpp ? "GÉNÉRATION..." : "TÉLÉCHARGER PDF"}
+                  </button>
+                  <button onClick={handleSendForSignature} disabled={isSendingSign} style={{ ...S.btnP, padding: "8px 16px", fontSize: 12, display: "flex", alignItems: "center", gap: 8, opacity: isSendingSign ? 0.7 : 1 }}>
+                    <Icons.Mail size={14} /> {isSendingSign ? "ENVOI EN COURS..." : "SIGNATURE ÉLECTRONIQUE (YOUSIGN)"}
+                  </button>
+                </div>
+              </div>
+            </header>
+    
+            <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto", display: "flex", gap: 40, alignItems: "flex-start" }}>
+              
+              {/* Formulaire */}
+              <div style={{ flex: "0 0 450px", display: "flex", flexDirection: "column", gap: 20 }}>
+                <div style={S.card}>
+                  <div style={S.cardTitle}><div style={S.dot} /> Informations du Client</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                    <div><label style={S.label}>Prénom *</label><input style={S.input} value={lppForm.prenom} onChange={e=>setLppForm({...lppForm, prenom: e.target.value})} placeholder="Jean"/></div>
+                    <div><label style={S.label}>Nom *</label><input style={S.input} value={lppForm.nom} onChange={e=>setLppForm({...lppForm, nom: e.target.value})} placeholder="DUPONT"/></div>
+                  </div>
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={S.label}>Email Client (Pour Signature) *</label>
+                    <input style={S.input} type="email" value={lppForm.emailClient} onChange={e=>setLppForm({...lppForm, emailClient: e.target.value})} placeholder="client@email.com"/>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                    <div><label style={S.label}>Date de naissance</label><input style={S.input} value={lppForm.dateNaissance} onChange={e=>setLppForm({...lppForm, dateNaissance: e.target.value})} placeholder="01.01.1980"/></div>
+                    <div><label style={S.label}>N° AVS</label><input style={S.input} value={lppForm.avs} onChange={e=>setLppForm({...lppForm, avs: e.target.value})} placeholder="756.xxxx.xxxx.xx"/></div>
+                  </div>
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={S.label}>Adresse</label>
+                    <input style={S.input} value={lppForm.adresse} onChange={e=>setLppForm({...lppForm, adresse: e.target.value})} placeholder="Rue de la Gare 12"/>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                    <div><label style={S.label}>NPA / Localité</label><input style={S.input} value={lppForm.localite} onChange={e=>setLppForm({...lppForm, localite: e.target.value})} placeholder="1200 Genève"/></div>
+                    <div><label style={S.label}>Pays</label><input style={S.input} value={lppForm.pays} onChange={e=>setLppForm({...lppForm, pays: e.target.value})} placeholder="Suisse"/></div>
+                  </div>
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={S.label}>Téléphone</label>
+                    <input style={S.input} value={lppForm.telephone} onChange={e=>setLppForm({...lppForm, telephone: e.target.value})} placeholder="+41 79 000 00 00"/>
+                  </div>
+                </div>
+    
+                <div style={S.card}>
+                  <div style={S.cardTitle}><div style={S.dot} /> Informations Société / Mandataire</div>
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={S.label}>Nom de l'entreprise</label>
+                    <input style={S.input} value={lppForm.nomEntreprise} onChange={e=>setLppForm({...lppForm, nomEntreprise: e.target.value})}/>
+                  </div>
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={S.label}>Adresse</label>
+                    <input style={S.input} value={lppForm.adresseEntreprise} onChange={e=>setLppForm({...lppForm, adresseEntreprise: e.target.value})}/>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                    <div><label style={S.label}>NPA / Ville</label><input style={S.input} value={lppForm.cpaVilleEntreprise} onChange={e=>setLppForm({...lppForm, cpaVilleEntreprise: e.target.value})}/></div>
+                    <div><label style={S.label}>Email</label><input style={S.input} value={lppForm.emailEntreprise} onChange={e=>setLppForm({...lppForm, emailEntreprise: e.target.value})}/></div>
+                  </div>
+                </div>
+              </div>
+    
+              {/* Prévisualisation Document */}
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 20 }}>
+                <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 40, boxShadow: "0 10px 40px rgba(0,0,0,0.05)", borderRadius: "0px", fontFamily: "'Times New Roman', Times, serif", fontSize: 14, color: C.black, lineHeight: 1.6 }}>
+                   
+                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 60 }}>
+                      <div>
+                        {appSettings.defaultLogo ? <img src={appSettings.defaultLogo} alt="Logo" style={{ maxHeight: 60, marginBottom: 20 }} /> : <div style={{ fontSize: 24, fontWeight: "bold", color: C.primary, marginBottom: 20 }}>{lppForm.nomEntreprise || "WallSwiss"}</div>}
+                        <div>{lppForm.nomEntreprise || "Nom entreprise"}</div>
+                        <div>{lppForm.adresseEntreprise || "Rue"}</div>
+                        <div>{lppForm.cpaVilleEntreprise || "CPA Ville"}</div>
+                        <div>{lppForm.emailEntreprise || "contact@email.com"}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div>Le {new Date().toLocaleDateString('fr-CH')}</div>
+                        <br/>
+                        <div style={{ textAlign: "left", display: "inline-block" }}>
+                          <strong>Stiftung Auffangeinrichtung BVG</strong><br/>
+                          Elias-Canetti-Strasse 2<br/>
+                          8050 Zürich
+                        </div>
+                      </div>
+                   </div>
+    
+                   <h3 style={{ fontSize: 18, fontWeight: "bold", textDecoration: "underline", marginBottom: 24 }}>Demande de recherche d'avoirs</h3>
+                   
+                   <p>Madame, Monsieur,</p>
+                   <p>Par la présente, nous vous transmettons par mandat, une demande de recherche d’avoirs de 2ème pilier pour la personne ci-dessous :</p>
+                   
+                   <div style={{ margin: "24px 0", paddingLeft: 24 }}>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Nom :</strong> <span>{lppForm.nom || "..."}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Prénom :</strong> <span>{lppForm.prenom || "..."}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Date de naissance :</strong> <span>{lppForm.dateNaissance || "..."}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>N° AVS :</strong> <span>{lppForm.avs || "..."}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Adresse :</strong> <span>{lppForm.adresse || "..."}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Localité :</strong> <span>{lppForm.localite || "..."}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Pays :</strong> <span>{lppForm.pays || "..."}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Téléphone :</strong> <span>{lppForm.telephone || "..."}</span></div>
+                   </div>
+    
+                   <p>Vous trouverez également ci-joint la procuration ainsi qu'une copie de la carte d'identité.</p>
+                   <p>Comme cité dans la procuration, nous vous prions de communiquer les résultats de la recherche par courrier ou encore mieux, par courriel.</p>
+                   <p>Vous trouverez tous les détails dans notre en-tête.</p>
+                   <p>Dans l'attente d'une réponse, nous vous remercions, Madame, Monsieur, pour la suite que vous donnerez à ce dossier.</p>
+                   
+                   <div style={{ marginTop: 40, display: "flex", justifyContent: "space-between" }}>
+                     <div style={{ border: "1px dashed #ccc", padding: "20px 40px", color: "#ccc", textAlign: "center" }}>
+                       Signature du mandataire<br/>({lppForm.nomEntreprise || "Entreprise"})
+                     </div>
+                     <div style={{ border: "1px dashed #ccc", padding: "20px 40px", color: "#ccc", textAlign: "center" }}>
+                       Signature du client<br/>({lppForm.nom || "Client"})
+                     </div>
+                   </div>
+
+                   <div style={{ marginTop: 40, borderTop: "1px dashed #ccc", paddingTop: 40 }}>
+                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 60 }}>
+                        <div>
+                          <div>Monsieur/Madame</div>
+                          <div>{lppForm.nom || "NOM"} {lppForm.prenom || "Prénom"}</div>
+                          <div>{lppForm.adresse || "Rue"}</div>
+                          <div>{lppForm.localite || "CPA Ville"}</div>
+                          <div>{lppForm.pays || "Pays"}</div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div>Le {new Date().toLocaleDateString('fr-CH')}</div>
+                          <br/>
+                          <div style={{ textAlign: "left", display: "inline-block" }}>
+                            <strong>Stiftung Auffangeinrichtung BVG</strong><br/>
+                            Elias-Canetti-Strasse 2<br/>
+                            8050 Zürich
+                          </div>
+                        </div>
+                     </div>
+    
+                     <h3 style={{ fontSize: 18, fontWeight: "bold", textDecoration: "underline", marginBottom: 24 }}>Procuration</h3>
+                     
+                     <p>Madame, Monsieur,</p>
+                     <p>Je soussigné(e), <strong>{lppForm.nom || "NOM"} {lppForm.prenom || "Prénom"}</strong>, né(e) le <strong>{lppForm.dateNaissance || "xx.xx.xxxx"}</strong> et demeurant à <strong>{lppForm.adresse || "Rue"}, {lppForm.localite || "CPA Ville"}</strong>, autorise la société <strong>{lppForm.nomEntreprise || "Nom société"}</strong>, domiciliée à <strong>{lppForm.adresseEntreprise || "Adresse société"}, {lppForm.cpaVilleEntreprise || "CPA"}</strong>, à se présenter auprès de vos services afin d'effectuer des demandes d'avoirs de 2ème pilier.</p>
+                     
+                     <p>J’autorise la société <strong>{lppForm.nomEntreprise || "Nom société"}</strong> à vous faire cette demande par courrier électronique et assume les éventuels risques qui en découlent. Je vous autorise à communiquer directement les résultats de la recherche à la société <strong>{lppForm.nomEntreprise || "Nom société"}</strong> par courrier ou courriel.</p>
+                     
+                     <p>Cette procuration n’est valide que pour la présente demande et les résultats qui en découlent. Elle devient ensuite caduque.</p>
+                     
+                     <p>Pour tout litige en rapport avec la présente procuration, le for juridique est Genève et seul le droit suisse est applicable.</p>
+                     
+                     <p>Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.</p>
+    
+                     <div style={{ marginTop: 40, display: "flex", justifyContent: "space-between" }}>
+                       <div>Date, Lieu : _____________________</div>
+                       <div style={{ border: "1px dashed #ccc", padding: "30px 60px", color: "#ccc", textAlign: "center" }}>
+                         Signature du client<br/>({lppForm.nom || "Client"})
+                       </div>
+                     </div>
+                   </div>
+                </div>
+              </div>
+            </main>
+    
+            {/* Élément caché pour la génération PDF propre */}
+            <div style={{ position: "fixed", top: 0, left: 0, zIndex: -1000, opacity: 0.001, pointerEvents: "none" }}>
+              <div id="lpp-doc-printable" style={{ width: "800px", padding: "40px", background: "#fff", fontFamily: "'Times New Roman', Times, serif", fontSize: "14px", color: "#000", lineHeight: "1.6", boxSizing: "border-box" }}>
+                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 40 }}>
+                      <div>
+                        {appSettings.defaultLogo ? <img src={appSettings.defaultLogo} alt="Logo" style={{ maxHeight: 60, marginBottom: 20 }} /> : <div style={{ fontSize: 24, fontWeight: "bold", color: C.primary, marginBottom: 20 }}>{lppForm.nomEntreprise || "WallSwiss"}</div>}
+                        <div>{lppForm.nomEntreprise || "Nom entreprise"}</div>
+                        <div>{lppForm.adresseEntreprise || "Rue"}</div>
+                        <div>{lppForm.cpaVilleEntreprise || "CPA Ville"}</div>
+                        <div>{lppForm.emailEntreprise || "contact@email.com"}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div>Le {new Date().toLocaleDateString('fr-CH')}</div>
+                        <br/>
+                        <div style={{ textAlign: "left", display: "inline-block" }}>
+                          <strong>Stiftung Auffangeinrichtung BVG</strong><br/>
+                          Elias-Canetti-Strasse 2<br/>
+                          8050 Zürich
+                        </div>
+                      </div>
+                   </div>
+                   <h3 style={{ fontSize: 18, fontWeight: "bold", textDecoration: "underline", marginBottom: 24 }}>Demande de recherche d'avoirs</h3>
+                   <p>Madame, Monsieur,</p>
+                   <p>Par la présente, nous vous transmettons par mandat, une demande de recherche d’avoirs de 2ème pilier pour la personne ci-dessous :</p>
+                   <div style={{ margin: "24px 0", paddingLeft: 24 }}>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Nom :</strong> <span>{lppForm.nom || "________________"}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Prénom :</strong> <span>{lppForm.prenom || "________________"}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Date de naissance :</strong> <span>{lppForm.dateNaissance || "________________"}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>N° AVS :</strong> <span>{lppForm.avs || "________________"}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Adresse :</strong> <span>{lppForm.adresse || "________________"}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Localité :</strong> <span>{lppForm.localite || "________________"}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Pays :</strong> <span>{lppForm.pays || "________________"}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Téléphone :</strong> <span>{lppForm.telephone || "________________"}</span></div>
+                   </div>
+                   <p>Vous trouverez également ci-joint la procuration ainsi qu'une copie de la carte d'identité.</p>
+                   <p>Comme cité dans la procuration, nous vous prions de communiquer les résultats de la recherche par courrier ou encore mieux, par courriel.</p>
+                   <p>Vous trouverez tous les détails dans notre en-tête.</p>
+                   <p>Dans l'attente d'une réponse, nous vous remercions, Madame, Monsieur, pour la suite que vous donnerez à ce dossier.</p>
+                   
+                   <div style={{ marginTop: 60, display: "flex", justifyContent: "space-between" }}>
+                     <div style={{ padding: "0 20px", textAlign: "center" }}>
+                       Signature du mandataire :<br/><br/><br/>
+                       ___________________________
+                     </div>
+                     <div style={{ padding: "0 20px", textAlign: "center" }}>
+                       Signature du client :<br/><br/><br/>
+                       ___________________________
+                     </div>
+                   </div>
+
+                   <div className="html2pdf__page-break"></div>
+                   
+                   <div style={{ marginTop: 20, paddingTop: 20 }}>
+                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 40 }}>
+                        <div>
+                          <div>Monsieur/Madame</div>
+                          <div>{lppForm.nom || "NOM"} {lppForm.prenom || "Prénom"}</div>
+                          <div>{lppForm.adresse || "Rue"}</div>
+                          <div>{lppForm.localite || "CPA Ville"}</div>
+                          <div>{lppForm.pays || "Pays"}</div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div>Le {new Date().toLocaleDateString('fr-CH')}</div>
+                          <br/>
+                          <div style={{ textAlign: "left", display: "inline-block" }}>
+                            <strong>Stiftung Auffangeinrichtung BVG</strong><br/>
+                            Elias-Canetti-Strasse 2<br/>
+                            8050 Zürich
+                          </div>
+                        </div>
+                     </div>
+                     <h3 style={{ fontSize: 18, fontWeight: "bold", textDecoration: "underline", marginBottom: 24 }}>Procuration</h3>
+                     <p>Madame, Monsieur,</p>
+                     <p>Je soussigné(e), <strong>{lppForm.nom || "________________"} {lppForm.prenom || "________________"}</strong>, né(e) le <strong>{lppForm.dateNaissance || "________________"}</strong> et demeurant à <strong>{lppForm.adresse || "________________"}, {lppForm.localite || "________________"}</strong>, autorise la société <strong>{lppForm.nomEntreprise || "________________"}</strong>, domiciliée à <strong>{lppForm.adresseEntreprise || "________________"}, {lppForm.cpaVilleEntreprise || "________________"}</strong>, à se présenter auprès de vos services afin d'effectuer des demandes d'avoirs de 2ème pilier.</p>
+                     <p>J’autorise la société <strong>{lppForm.nomEntreprise || "________________"}</strong> à vous faire cette demande par courrier électronique et assume les éventuels risques qui en découlent. Je vous autorise à communiquer directement les résultats de la recherche à la société <strong>{lppForm.nomEntreprise || "________________"}</strong> par courrier ou courriel.</p>
+                     <p>Cette procuration n’est valide que pour la présente demande et les résultats qui en découlent. Elle devient ensuite caduque.</p>
+                     <p>Pour tout litige en rapport avec la présente procuration, le for juridique est Genève et seul le droit suisse est applicable.</p>
+                     <p>Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.</p>
+                     <div style={{ marginTop: 60, display: "flex", justifyContent: "space-between" }}>
+                       <div>Date, Lieu : _____________________</div>
+                       <div style={{ padding: "0 60px", textAlign: "center" }}>
+                         Signature du client :<br/><br/><br/>
+                         ___________________________
+                       </div>
+                     </div>
+                   </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* VUE MODULE ANNUAIRE */}
         {activeModule === "annuaire" && (
           <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -5669,11 +6039,11 @@ export default function WallSwissApp() {
 
                 {settingsTab === "reports" && (
                   <div style={S.card}>
-                    <div style={S.cardTitle}><div style={S.dot} /> Configuration Envoi de Rapports</div>
-                    <p style={{ color: C.gray, fontSize: 13, marginBottom: 24, marginTop: 0 }}>Configurez le Webhook (Make.com, Zapier) qui gère l'envoi individuel de vos PDF par email à la fin d'un rapport.</p>
+                    <div style={S.cardTitle}><div style={S.dot} /> Configuration Envoi de Rapports & Signatures</div>
+                    <p style={{ color: C.gray, fontSize: 13, marginBottom: 24, marginTop: 0 }}>Configurez les Webhooks (Make.com, Zapier) qui gèrent vos intégrations externes.</p>
 
                     <div style={S.fg}>
-                      <label style={S.label}>URL du Webhook (Rapports individuels)</label>
+                      <label style={S.label}>URL du Webhook - Rapports financiers (Email)</label>
                       <input 
                         style={S.input} 
                         value={appSettings.reportWebhookUrl || ""} 
@@ -5683,7 +6053,20 @@ export default function WallSwissApp() {
                     </div>
 
                     <div style={S.fg}>
-                      <label style={S.label}>Sujet de l'e-mail par défaut</label>
+                      <label style={{...S.label, color: C.primaryDark}}>URL du Webhook - Signature Yousign (Module LPP)</label>
+                      <input 
+                        style={{...S.input, borderLeft: `3px solid ${C.gold}`}} 
+                        value={appSettings.lppWebhookUrl || ""} 
+                        onChange={e => setAppSettings({...appSettings, lppWebhookUrl: e.target.value})} 
+                        placeholder="https://hook.eu1.make.com/..." 
+                      />
+                      <div style={{ fontSize: 11, color: C.gray, marginTop: 4 }}>Ce webhook recevra : nom, prenom, email, telephone, et le pdfBase64.</div>
+                    </div>
+
+                    <div style={{ height: 1, background: C.mediumGray, margin: "24px 0" }} />
+
+                    <div style={S.fg}>
+                      <label style={S.label}>Sujet de l'e-mail par défaut (Rapports)</label>
                       <input 
                         style={S.input} 
                         value={appSettings.emailSubject || ""} 
@@ -5692,10 +6075,9 @@ export default function WallSwissApp() {
                     </div>
 
                     <div style={S.fg}>
-                      <label style={S.label}>Corps de l'e-mail par défaut</label>
-                      <div style={{ fontSize: 11, color: C.gray, marginBottom: 8 }}>Variables disponibles : <code>{"{{prenom}}"}</code>, <code>{"{{nom}}"}</code>, <code>{"{{conseiller}}"}</code></div>
+                      <label style={S.label}>Corps de l'e-mail par défaut (Rapports)</label>
                       <textarea 
-                        style={{ ...S.input, minHeight: 120, resize: "vertical" }} 
+                        style={{...S.input, minHeight: 120, resize: "vertical"}} 
                         value={appSettings.emailBody || ""} 
                         onChange={e => setAppSettings({...appSettings, emailBody: e.target.value})} 
                       />

@@ -3654,33 +3654,88 @@ export default function WallSwissApp() {
     setTimeout(() => setMarketingCopied(false), 2500);
   };
 
-  const handleDownloadLppDoc = async () => {
-    setIsGeneratingLpp(true);
-    const element = document.getElementById('lpp-doc-printable');
-    if (!element) { setIsGeneratingLpp(false); return; }
-    
-    const requireHtml2Pdf = async () => {
-      if (window.html2pdf) return window.html2pdf;
-      return new Promise((resolve, reject) => {
+  const generateOfficialLppPdf = async () => {
+    // Charger pdf-lib dynamiquement pour manipuler des PDF existants
+    if (!window.PDFLib) {
+      await new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-        script.onload = () => resolve(window.html2pdf);
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+        script.onload = resolve;
         script.onerror = reject;
-        document.body.appendChild(script);
+        document.head.appendChild(script);
       });
+    }
+
+    const { PDFDocument } = window.PDFLib;
+    const url = '/SF-F5-FR.pdf';
+    
+    // Récupération du PDF existant sur Stackblitz
+    const existingPdfBytes = await fetch(url).then(res => {
+      if (!res.ok) throw new Error("Le fichier SF-F5-FR.pdf est introuvable à la racine.");
+      return res.arrayBuffer();
+    });
+
+    const pdfDoc = await PDFDocument.load(existingPdfBytes);
+    const form = pdfDoc.getForm();
+    
+    // 💡 AFFICHE LES NOMS DES CHAMPS DANS LA CONSOLE
+    // Cela vous permet d'ajuster les noms ci-dessous si le formulaire a des ID différents
+    const fields = form.getFields();
+    console.log("Noms des champs du PDF :", fields.map(f => f.getName()));
+
+    // Fonction sécurisée pour remplir un champ sans crasher s'il est mal nommé
+    const safeSetText = (fieldName, text) => {
+      try {
+        const field = form.getTextField(fieldName);
+        if (field && text) field.setText(text);
+      } catch (e) {
+        // Le champ n'existe pas ou porte un autre nom
+      }
     };
 
+    // --- MAPPING DES CHAMPS (À ajuster selon la console) ---
+    safeSetText('Nom', lppForm.nom);
+    safeSetText('Prenom', lppForm.prenom);
+    safeSetText('Date de naissance', lppForm.dateNaissance);
+    safeSetText('N AVS', lppForm.avs);
+    safeSetText('Adresse', lppForm.adresse);
+    safeSetText('NPA', lppForm.localite);
+    safeSetText('Localite', lppForm.localite);
+    safeSetText('Pays', lppForm.pays);
+    safeSetText('Telephone', lppForm.telephone);
+    safeSetText('E-mail', lppForm.emailClient);
+
+    // --- OPTION B : SI LE PDF N'A PAS DE CHAMPS INTERACTIFS ---
+    // Vous pouvez "dessiner" le texte par dessus l'image du PDF à des coordonnées précises.
+    // Décommentez le bloc ci-dessous et ajustez les {x, y} :
+    /*
+    const firstPage = pdfDoc.getPages()[0];
+    const { height } = firstPage.getSize();
+    firstPage.drawText(lppForm.nom, { x: 150, y: height - 180, size: 12 });
+    firstPage.drawText(lppForm.prenom, { x: 150, y: height - 200, size: 12 });
+    firstPage.drawText(lppForm.dateNaissance, { x: 150, y: height - 220, size: 12 });
+    // ...
+    */
+
+    return await pdfDoc.save();
+  };
+
+  const handleDownloadLppDoc = async () => {
+    setIsGeneratingLpp(true);
     try {
-      const html2pdf = await requireHtml2Pdf();
-      await html2pdf().set({
-        margin: [0.5, 0.5],
-        filename: `Recherche_LPP_${lppForm.nom || 'Client'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-      }).from(element).save();
+      const pdfBytes = await generateOfficialLppPdf();
+      
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Recherche_LPP_${lppForm.nom || 'Client'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch(e) {
       console.error("Erreur PDF:", e);
+      setToastMsg("Erreur lors de la génération du PDF officiel.");
+      setTimeout(() => setToastMsg(""), 4000);
     } finally {
       setIsGeneratingLpp(false);
     }
@@ -3701,30 +3756,15 @@ export default function WallSwissApp() {
     }
 
     setIsSendingSign(true);
-    const element = document.getElementById('lpp-doc-printable');
-    if (!element) { setIsSendingSign(false); return; }
 
     try {
-      const html2pdf = await requireHtml2Pdf();
+      const pdfBytes = await generateOfficialLppPdf();
       
-      // Sécurité : scroll en haut
-      window.scrollTo(0, 0);
+      // Conversion de Uint8Array en Base64 de façon performante
+      const pureBase64 = btoa(
+        new Uint8Array(pdfBytes).reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
 
-      // Génération du PDF en base64 en mémoire
-      const rawPdfBase64 = await new Promise((resolve) => {
-        html2pdf().set({
-          margin: [0.5, 0.5],
-          filename: `Mandat_LPP.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, scrollX: 0, logging: false },
-          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-        }).from(element).toPdf().get('pdf').then((pdf) => resolve(pdf.output('datauristring')));
-      });
-
-      // Isoler la base64 pure
-      const pureBase64 = rawPdfBase64.includes('base64,') ? rawPdfBase64.substring(rawPdfBase64.indexOf('base64,') + 7) : rawPdfBase64;
-
-      // Envoi au Webhook (ex: Make.com)
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3742,7 +3782,7 @@ export default function WallSwissApp() {
         throw new Error(`Le webhook a refusé l'envoi (${response.status})`);
       }
 
-      setToastMsg("Document envoyé avec succès à Yousign !");
+      setToastMsg("Document officiel envoyé avec succès à Yousign !");
       setTimeout(() => setToastMsg(""), 4000);
     } catch (e) {
       console.error("Erreur d'envoi pour signature:", e);
@@ -6271,4 +6311,3 @@ export default function WallSwissApp() {
   </div>
 );
 }
-

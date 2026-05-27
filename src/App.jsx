@@ -3655,7 +3655,7 @@ export default function WallSwissApp() {
   };
 
   const generateOfficialLppPdf = async () => {
-    // Charger pdf-lib dynamiquement pour manipuler des PDF existants
+    // Charger pdf-lib dynamiquement
     if (!window.PDFLib) {
       await new Promise((resolve, reject) => {
         const script = document.createElement('script');
@@ -3665,58 +3665,63 @@ export default function WallSwissApp() {
         document.head.appendChild(script);
       });
     }
-
-    const { PDFDocument } = window.PDFLib;
+  
+    const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
     const url = '/SF-F5-FR.pdf';
-    
-    // Récupération du PDF existant sur Stackblitz
+  
+    // Récupération du PDF officiel
     const existingPdfBytes = await fetch(url).then(res => {
-      if (!res.ok) throw new Error("Le fichier SF-F5-FR.pdf est introuvable à la racine.");
+      if (!res.ok) throw new Error("Le fichier SF-F5-FR.pdf est introuvable dans le dossier public/ du projet.");
       return res.arrayBuffer();
     });
-
+  
     const pdfDoc = await PDFDocument.load(existingPdfBytes);
-    const form = pdfDoc.getForm();
-    
-    // 💡 AFFICHE LES NOMS DES CHAMPS DANS LA CONSOLE
-    // Cela vous permet d'ajuster les noms ci-dessous si le formulaire a des ID différents
-    const fields = form.getFields();
-    console.log("Noms des champs du PDF :", fields.map(f => f.getName()));
-
-    // Fonction sécurisée pour remplir un champ sans crasher s'il est mal nommé
-    const safeSetText = (fieldName, text) => {
-      try {
-        const field = form.getTextField(fieldName);
-        if (field && text) field.setText(text);
-      } catch (e) {
-        // Le champ n'existe pas ou porte un autre nom
-      }
+    const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  
+    const pages = pdfDoc.getPages();
+    const page1 = pages[0];
+    const page2 = pages.length > 1 ? pages[1] : null;
+  
+    // Helper pour dessiner du texte de façon sécurisée
+    const drawText = (page, text, x, y, size = 11) => {
+      if (!page || !text) return;
+      page.drawText(String(text), {
+        x: x,
+        y: y,
+        size: size,
+        font: helvetica,
+        color: rgb(0.1, 0.1, 0.1)
+      });
     };
-
-    // --- MAPPING DES CHAMPS (À ajuster selon la console) ---
-    safeSetText('Nom', lppForm.nom);
-    safeSetText('Prenom', lppForm.prenom);
-    safeSetText('Date de naissance', lppForm.dateNaissance);
-    safeSetText('N AVS', lppForm.avs);
-    safeSetText('Adresse', lppForm.adresse);
-    safeSetText('NPA', lppForm.localite);
-    safeSetText('Localite', lppForm.localite);
-    safeSetText('Pays', lppForm.pays);
-    safeSetText('Telephone', lppForm.telephone);
-    safeSetText('E-mail', lppForm.emailClient);
-
-    // --- OPTION B : SI LE PDF N'A PAS DE CHAMPS INTERACTIFS ---
-    // Vous pouvez "dessiner" le texte par dessus l'image du PDF à des coordonnées précises.
-    // Décommentez le bloc ci-dessous et ajustez les {x, y} :
-    /*
-    const firstPage = pdfDoc.getPages()[0];
-    const { height } = firstPage.getSize();
-    firstPage.drawText(lppForm.nom, { x: 150, y: height - 180, size: 12 });
-    firstPage.drawText(lppForm.prenom, { x: 150, y: height - 200, size: 12 });
-    firstPage.drawText(lppForm.dateNaissance, { x: 150, y: height - 220, size: 12 });
-    // ...
-    */
-
+  
+    // ─── PAGE 1 : Informations personnelles ───
+    // Coordonnées calibrées sur le formulaire officiel SF-F5-FR (origine bas-gauche, PDF A4)
+    // Les deux champs "Nom" du formulaire reçoivent la même valeur (nom de naissance + nom actuel)
+    drawText(page1, lppForm.nom,           370, 426);  // Nom (1)
+    drawText(page1, lppForm.nom,           370, 400);  // Nom (2)
+    drawText(page1, lppForm.prenom,        370, 316);  // Prénom (1)
+    drawText(page1, lppForm.prenom,        370, 290);  // Prénom (2)
+    drawText(page1, lppForm.dateNaissance, 370, 234);  // Date de naissance
+    drawText(page1, lppForm.avs,           370, 207);  // N° AVS
+  
+    // Adresse : on découpe sur plusieurs lignes (max 4)
+    // Ligne 1 = adresse rue, Ligne 2 = localité, Ligne 3 = pays
+    drawText(page1, lppForm.adresse,  370, 168);  // Adresse L1
+    drawText(page1, lppForm.localite, 370, 142);  // Adresse L2 (NPA + Ville)
+    drawText(page1, lppForm.pays,     370, 115);  // Adresse L3 (Pays)
+  
+    // Téléphone / email
+    const telEmail = [lppForm.telephone, lppForm.emailClient].filter(Boolean).join(' / ');
+    drawText(page1, telEmail, 370, 57);
+  
+    // ─── PAGE 2 : Lieu et date ───
+    if (page2) {
+      const today = new Date().toLocaleDateString('fr-CH');
+      const lieuDate = `Genève, ${today}`;
+      drawText(page2, lieuDate, 370, 280);  // Champ "Lieu et date"
+      // La signature reste vide (sera ajoutée par Yousign après envoi)
+    }
+  
     return await pdfDoc.save();
   };
 

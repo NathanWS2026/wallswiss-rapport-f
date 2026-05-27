@@ -574,186 +574,2482 @@ function SlideCover({ data }) {
   );
 }
 
-// ────────────────────── FORMULAIRE LPP OFFICIEL ──────────────────────
+// Slide 2 — Table des matières SwissQuote
+function SlideTOC({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const isParFinance = data.assetManager === "ParFinance";
+  const hidden = data.hiddenSlides || [];
+  const getPage = (origIdx) => { let count = 0; for(let i=0; i<=origIdx; i++) if(!hidden.includes(i)) count++; return count; };
+  
+  let items = [
+    { title: "Qui sommes-nous ? Notre philosophie", origIdx: 2 },
+    { title: "Notre cabinet en chiffres", origIdx: 3 },
+    { title: "Résumé de votre situation personnelle", origIdx: 4 },
+    { title: "Pourquoi Swissquote est une banque fiable", origIdx: 5 },
+    { title: "Avantages WallSwiss BY Swissquote", origIdx: 6 },
+    { title: "Solution — Compte-titres", origIdx: 8 },
+  ];
+  
+  let nextIdx = 9;
+  
+  if (isParFinance) {
+    items.push({ title: "Votre Asset Manager : ParFinance", origIdx: nextIdx++ });
+    items.push({ title: "Factsheet | Aries Portfolio", origIdx: nextIdx++ });
+    items.push({ title: "Stratégie : Les principales positions", origIdx: nextIdx++ });
+  } else {
+    items.push({ title: "Fonds NS (CH) Swiss Excellence DPM", origIdx: nextIdx++ });
+  }
+  
+  items.push(
+    { title: "Projections financières", origIdx: nextIdx++ },
+    { title: "Avantages tarifaires WS Premium", origIdx: nextIdx++ },
+    { title: "Comparatif bancaire", origIdx: nextIdx++ },
+    { title: "Votre application de suivi", origIdx: nextIdx++ },
+    { title: "Synthèse & Contact", origIdx: nextIdx }
+  );
 
-const lppColors = { 
-  blue: "#1a4674", 
-  bg: "#fefce8", 
-  border: "#cbd5e1",
-  text: "#334155"
-};
+  items = items.filter(item => !hidden.includes(item.origIdx));
 
-const LppFormField = ({ label, value, sublabel, height = 30 }) => (
-  <div style={{ display: "flex", marginBottom: 6, alignItems: "flex-start", width: "100%" }}>
-    <div style={{ width: 220, fontSize: 12, color: lppColors.blue, fontWeight: "bold", paddingTop: 6, paddingRight: 10 }}>{label}</div>
-    <div style={{ flex: 1 }}>
-      <div style={{ width: "100%", minHeight: height, background: lppColors.bg, border: `1px solid ${lppColors.border}`, padding: "6px 8px", fontSize: 14, color: "#000", boxSizing: "border-box", display: "flex", alignItems: "flex-start", whiteSpace: "pre-wrap", fontFamily: "Arial, sans-serif" }}>
-        {value}
-      </div>
-      {sublabel && <div style={{ fontSize: 10, color: "#64748b", marginTop: 2 }}>{sublabel}</div>}
-    </div>
-  </div>
-);
-
-const LppOfficialPage1 = ({ data }) => (
-  <div style={{ width: "100%", height: "100%", position: "relative" }}>
-    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20, borderBottom: `2px solid ${lppColors.blue}`, paddingBottom: 15 }}>
-       <div style={{ flex: 1 }}>
-         <h1 style={{ margin: 0, fontSize: 15, color: lppColors.blue, fontWeight: "bold" }}>Fonds de garantie LPP</h1>
-         <h2 style={{ margin: "16px 0", fontSize: 24, color: lppColors.blue, lineHeight: 1.2 }}>Recherche d'avoirs<br/>de la prévoyance professionnelle</h2>
-         <h3 style={{ margin: 0, fontSize: 16, color: lppColors.blue, fontWeight: "bold" }}>Centrale du 2ème pilier</h3>
-       </div>
-       <div style={{ width: 240, display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right" }}>
-         <div style={{ border: "1px solid #000", padding: "10px 15px", fontSize: 12, textAlign: "left", width: "100%", boxSizing: "border-box" }}>
-           <strong>Centrale du 2ème pilier</strong><br/>
-           Fonds de garantie LPP<br/>
-           Organe de direction<br/>
-           Case postale 1023<br/>
-           3000 Berne 14
-         </div>
-         <div style={{ marginTop: 20, fontSize: 14, fontWeight: "bold", color: lppColors.blue, textAlign: "right" }}>
-           Formulaire de demande<br/>SF-F5-FR
-         </div>
-         <div style={{ marginTop: 8, fontSize: 12, color: lppColors.blue }}>Page 1/3</div>
-       </div>
-    </div>
-    
-    <div style={{ background: "#f1f5f9", padding: "12px 16px", marginBottom: 24, fontSize: 12, border: "1px solid #e2e8f0", lineHeight: 1.5 }}>
-      Un seul questionnaire par personne doit être envoyé. Pour que la demande d'une tierce<br/>
-      personne soit prise en considération. Veuillez joindre une copie de la procuration.<br/>
-      Veuillez lire l'aide-mémoire avant de compléter le présent questionnaire. Merci.
-    </div>
-
-    <div style={{ display: "flex", marginBottom: 32, alignItems: "flex-start" }}>
-      <div style={{ width: 220, fontWeight: "bold", color: lppColors.blue, fontSize: 13 }}>La demande concerne<br/><span style={{fontSize: 10, fontWeight: "normal"}}>Cas particuliers</span></div>
-      <div style={{ flex: 1 }}>
-         <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}><div style={{ width: 14, height: 14, border: "1px solid #000", background: "#fff" }}></div> moi-même (seulement pages 1 et 2)</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}><div style={{ width: 14, height: 14, border: "1px solid #000", background: "#fff" }}></div> une procédure de divorce</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}><div style={{ width: 14, height: 14, border: "1px solid #000", display: "flex", alignItems: "center", justifyContent: "center", background: lppColors.bg }}><strong>X</strong></div> une autre personne</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}><div style={{ width: 14, height: 14, border: "1px solid #000", background: "#fff" }}></div> un décès (remplir aussi la page 3)</div>
-         </div>
-      </div>
-    </div>
-
-    <h3 style={{ fontSize: 14, color: lppColors.blue, borderBottom: `1px solid ${lppColors.blue}`, paddingBottom: 4, marginBottom: 16 }}>1. Informations de la personne pour laquelle des avoirs sont recherchés</h3>
-    
-    <LppFormField label="Nom" value={data.nom} />
-    <LppFormField label="Autre(s) nom(s)" value="" sublabel="Veuillez séparer les noms par le signe « / »." />
-    <LppFormField label="Prénom" value={data.prenom} />
-    <LppFormField label="Autre(s) prénom(s)" value="" sublabel="Veuillez séparer les prénoms par un signe « / »." />
-    <LppFormField label="Date de naissance" value={data.dateNaissance} />
-    <LppFormField label="N° AVS" value={data.avs} />
-    <LppFormField label="Adresse" value={`${data.adresse || ""}\n${data.localite || ""}\n${data.pays || ""}`.trim()} height={60} />
-    <LppFormField label="Numéro de téléphone / e-mail" value={`${data.telephone || ""} ${data.telephone && data.emailClient ? " / " : ""} ${data.emailClient || ""}`} sublabel="(en cas de questions)" />
-  </div>
-);
-
-const LppOfficialPage2 = ({ data }) => (
-  <div style={{ width: "100%", height: "100%", position: "relative", display: "flex", flexDirection: "column" }}>
-    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20, borderBottom: `2px solid ${lppColors.blue}`, paddingBottom: 15 }}>
-       <div>
-         <h1 style={{ margin: 0, fontSize: 16, color: lppColors.blue, fontWeight: "bold" }}>Fonds de garantie LPP</h1>
-         <h3 style={{ margin: "4px 0 0", fontSize: 15, color: lppColors.blue, fontWeight: "normal" }}>Centrale du 2ème pilier</h3>
-       </div>
-       <div style={{ textAlign: "right" }}>
-         <div style={{ fontSize: 14, fontWeight: "bold", color: lppColors.blue }}>Formulaire de demande SF-F5-FR</div>
-         <div style={{ fontSize: 12, color: lppColors.blue, marginTop: 4 }}>Page 2/3</div>
-       </div>
-    </div>
-
-    <h3 style={{ fontSize: 14, color: lppColors.blue, borderBottom: `1px solid ${lppColors.blue}`, paddingBottom: 4, marginBottom: 16 }}>2. Remarques</h3>
-    <div style={{ width: "100%", height: 120, background: lppColors.bg, border: `1px solid ${lppColors.border}`, marginBottom: 24 }}></div>
-    
-    <div style={{ fontSize: 12, marginBottom: 40, display: "flex", gap: 12, alignItems: "flex-start", background: "#f8fafc", padding: 16, border: "1px solid #e2e8f0" }}>
-      <div style={{ fontSize: 24, color: lppColors.blue, fontWeight: "bold", lineHeight: 0.8 }}>+</div>
-      <div style={{ lineHeight: 1.5 }}>Il n'est pas obligatoire de joindre les copies de documents concernant les rapports de travail (feuilles de salaires, etc.) ou les assurances (certificat AVS, certificat du 2ème pilier, extrait de compte individuel AVS). Les copies de ces documents peuvent faciliter des vérifications plus poussées si une première recherche n'aboutit pas. Important: ne pas envoyer d'originaux. Il n'est pas nécessaire de faire certifier conformes les copies.</div>
-    </div>
-
-    <h3 style={{ fontSize: 14, color: lppColors.blue, borderBottom: `1px solid ${lppColors.blue}`, paddingBottom: 4, marginBottom: 16 }}>3. Confirmation de la personne qui fait la demande</h3>
-    <p style={{ marginBottom: 24, fontSize: 13 }}>La personne qui fait la demande confirme que les renseignements fournis ci-dessus sont corrects.</p>
-
-    <div style={{ display: "flex", gap: 24, marginBottom: 40 }}>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 12, marginBottom: 6, color: lppColors.blue, fontWeight: "bold" }}>Lieu et date</div>
-        <div style={{ width: "100%", height: 35, background: lppColors.bg, border: `1px solid ${lppColors.border}`, display: "flex", alignItems: "center", padding: "0 10px", fontSize: 14 }}>
-          {data.cpaVilleEntreprise || ""}, le {new Date().toLocaleDateString('fr-CH')}
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Table des matières" subtitle="STRUCTURE DE VOTRE PRÉSENTATION" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 80, rowGap: 24, alignContent: "center", maxWidth: 1000, margin: "0" }}>
+          {items.map((item, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "flex-end", width: "100%", paddingBottom: 6 }}>
+              <span style={{ color: C.darkGray, fontSize: 15, fontWeight: 600, paddingBottom: 2 }}>
+                {item.title}
+              </span>
+              <div style={{ flex: 1, borderBottom: `2px dotted ${C.mediumGray}`, margin: "0 16px", position: "relative", top: -8 }} />
+              <span style={{ color: C.primary, fontSize: 16, fontWeight: 700, flexShrink: 0, paddingBottom: 2 }}>
+                {String(getPage(item.origIdx)).padStart(2, '0')}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 12, marginBottom: 6, color: lppColors.blue, fontWeight: "bold" }}>Signature du demandeur ({data.nomEntreprise || "Mandataire"})</div>
-        <div style={{ width: "100%", height: 80, background: lppColors.bg, border: `1px solid ${lppColors.border}` }}></div>
-      </div>
+      {footer(fullName)}
     </div>
+  );
+}
 
-    <div style={{ marginTop: "auto", borderTop: "1px solid #CBD5E1", paddingTop: 16, fontSize: 11, display: "flex", gap: 32, lineHeight: 1.5 }}>
-      <div style={{ flex: 1 }}>
-        <strong style={{ color: lppColors.blue, fontSize: 12 }}>Annexes</strong><br/><br/>
-        La copie d'un passeport ou d'une carte d'identité jointe à la demande nous permet de retranscrire plus facilement les données personnelles correctes.<br/><br/>
-        Si cette demande est faite pour une autre personne, il est obligatoire de joindre la copie de la procuration (la procuration ne doit pas dater de plus d'une année). Exception: communication des données conformément à l'art. 86a LPP.
+// Slide 3 — Philosophie
+function SlidePhilosophy({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={{ ...slideBase, display: "flex", alignItems: "stretch" }}>
+      <div style={{ width: "35%", position: "relative", overflow: "hidden" }}>
+         <img src="/image page3.jpg" alt="Fond" className="pdf-image" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       </div>
-      <div style={{ flex: 1 }}>
-        Le présent questionnaire doit être renvoyé à:<br/><br/>
-        <strong style={{ fontSize: 12 }}>Centrale du 2ème pilier</strong><br/>
-        Fonds de garantie LPP<br/>
-        Organe de direction<br/>
-        Case postale 1023<br/>
-        3000 Berne 14<br/><br/>
-        T +41 31 380 79 75 (aucun renseignement sur les avoirs n'est donné par téléphone)<br/>
-        E-mail: info@zentralstelle.ch
-      </div>
-    </div>
-  </div>
-);
+      <div style={{ flex: 1, padding: "56px 80px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        {logoCorner()}
+        <ReportTitle title="Qui sommes-nous ?" />
+        
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 22, color: C.primaryDark, textTransform: "uppercase", marginBottom: 6 }}>NOTRE PHILOSOPHIE.</div>
+          <div style={{ fontSize: 14, color: C.gold, marginBottom: 16, fontWeight: 500 }}>Votre cabinet de planification financière à Genève.</div>
+          <EditableText editMode={editMode} value={data.texts?.philosophyP1} onChange={v => onTextChange("philosophyP1", v)} style={{ fontSize: 13, lineHeight: 1.7, color: C.darkGray, margin: "0 0 12px" }} />
+          <EditableText editMode={editMode} value={data.texts?.philosophyP2} onChange={v => onTextChange("philosophyP2", v)} style={{ fontSize: 13, lineHeight: 1.7, color: C.darkGray, margin: "0 0 12px" }} />
+          <EditableText editMode={editMode} value={data.texts?.philosophyP3} onChange={v => onTextChange("philosophyP3", v)} style={{ fontSize: 13, lineHeight: 1.7, color: C.darkGray, margin: 0 }} />
+        </div>
 
-const ProcurationLPP = ({ data }) => (
-  <div style={{ width: "100%", height: "100%", position: "relative" }}>
-     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 50 }}>
         <div>
-          <div style={{ fontSize: 20, fontWeight: "bold", marginBottom: 15 }}>Mandataire</div>
-          <div><strong>{data.nomEntreprise || "WallSwiss"}</strong></div>
-          <div>{data.adresseEntreprise || "Rue"}</div>
-          <div>{data.cpaVilleEntreprise || "CPA Ville"}</div>
-          <div>{data.emailEntreprise || "contact@email.com"}</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 22, color: C.primaryDark, textTransform: "uppercase", marginBottom: 6 }}>NOTRE MISSION</div>
+          <div style={{ fontSize: 14, color: C.gold, marginBottom: 16, fontWeight: 500 }}>Vos projets financiers avec expertise et transparence</div>
+          <EditableText editMode={editMode} value={data.texts?.missionP1} onChange={v => onTextChange("missionP1", v)} style={{ fontSize: 13, lineHeight: 1.7, color: C.darkGray, margin: "0 0 12px" }} />
+          <EditableText editMode={editMode} value={data.texts?.missionP2} onChange={v => onTextChange("missionP2", v)} style={{ fontSize: 13, lineHeight: 1.7, color: C.darkGray, margin: 0 }} />
         </div>
-        <div style={{ textAlign: "right", marginTop: 20 }}>
-          <div>Genève, le {new Date().toLocaleDateString('fr-CH')}</div>
-          <br/>
-          <div style={{ textAlign: "left", display: "inline-block", marginTop: 20 }}>
-            <strong>À l'attention de :</strong><br/>
-            Stiftung Auffangeinrichtung BVG<br/>
-            Elias-Canetti-Strasse 2<br/>
-            8050 Zürich
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+// Slide 4 — Qui sommes-nous
+function SlideAbout({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const stats = [
+    { val: "+2000", label: "CLIENTS" },
+    { val: "ACCRÉDITÉ", label: <>FINMA : F01496591<br/>ORIAS : 24004947</> },
+    { val: "+300M CHF", label: "SOUS GESTION" },
+    { val: "+20", label: "COLLABORATEURS" },
+    { val: "+50", label: "PARTENAIRES" },
+    { val: "100%", label: "SOLUTIONS PRAGMATIQUES" },
+  ];
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 64px 56px 80px", height: "100%", boxSizing: "border-box", display: "flex", gap: "64px" }}>
+        <div style={{ flex: 1.2, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <ReportTitle title="Notre cabinet" highlight="en chiffres" subtitle="QUI SOMMES-NOUS ?" />
+          <div style={{ color: C.gray, fontSize: 14, marginBottom: 16, fontWeight: 500 }}>Votre cabinet de planification financière à Genève.</div>
+          <EditableText editMode={editMode} value={data.texts?.aboutDesc} onChange={v => onTextChange("aboutDesc", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, marginBottom: 40 }} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+            {stats.map((s, i) => (
+              <div key={i} style={{ background: C.primary, padding: "20px 12px", textAlign: "center", borderRadius: "0px", boxShadow: "0 4px 12px rgba(105,33,2,0.15)" }}>
+                <div style={{ color: C.white, fontSize: 22, fontWeight: 800 }}>{s.val}</div>
+                <div style={{ color: C.gold, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", marginTop: 6 }}>{s.label}</div>
+              </div>
+            ))}
           </div>
         </div>
-     </div>
+        <div style={{ flex: 1, height: "100%", borderRadius: "0px", overflow: "hidden", boxShadow: "0 8px 30px rgba(0,0,0,0.1)" }}>
+          <img src="/geneva.jpg" alt="Equipe WallSwiss" className="pdf-image" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
 
-     <h3 style={{ fontSize: 22, fontWeight: "bold", textDecoration: "underline", marginBottom: 40, textAlign: "center" }}>PROCURATION</h3>
-     
-     <div style={{ textAlign: "justify", lineHeight: 1.8, fontSize: 14 }}>
-       <p>Madame, Monsieur,</p>
-       <p>Je soussigné(e), <strong>{data.nom || "________________"} {data.prenom || "________________"}</strong>, né(e) le <strong>{data.dateNaissance || "________________"}</strong> et demeurant à <strong>{data.adresse || "________________"}, {data.localite || "________________"}</strong>,</p>
-       
-       <p>Autorise par la présente la société <strong>{data.nomEntreprise || "________________"}</strong>, domiciliée à <strong>{data.adresseEntreprise || "________________"}, {data.cpaVilleEntreprise || "________________"}</strong>, à me représenter auprès de vos services afin d'effectuer toute demande de recherche d'avoirs de 2ème pilier.</p>
-       
-       <p>J’autorise la société <strong>{data.nomEntreprise || "________________"}</strong> à vous faire cette demande par courrier ou courrier électronique et assume les éventuels risques qui en découlent. Je vous autorise expressément à communiquer directement les résultats de la recherche à mon mandataire, la société <strong>{data.nomEntreprise || "________________"}</strong>, par courrier ou courriel ({data.emailEntreprise || "________________"}).</p>
-       
-       <p>Cette procuration n’est valide que pour la présente demande et la réception des résultats qui en découlent. Elle devient ensuite caduque.</p>
-       
-       <p>Pour tout litige en rapport avec la présente procuration, le for juridique est {data.cpaVilleEntreprise?.replace(/[0-9]/g, '').trim() || "Genève"} et seul le droit suisse est applicable.</p>
-       
-       <p>Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.</p>
-     </div>
+// Slide 5 — Situation personnelle
+function SlideSituation({ data }) {
+  const fullName = data.isCouple && data.prenomConjoint 
+    ? `${data.prenom} ${(data.nom || "").toUpperCase()} & ${data.prenomConjoint} ${(data.nomConjoint || "").toUpperCase()}`
+    : `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "48px 80px 80px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Résumé de" highlight="votre situation personnelle" subtitle="ANALYSE PATRIMONIALE" />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, flex: 1, minHeight: 0, marginTop: 8 }}>
+          
+          <div style={{ display: "flex", flexDirection: "column", gap: 24, justifyContent: "flex-start" }}>
+            <div>
+              <div style={{ background: C.primary, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Civilité & Statut</div>
+              <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
+                {[
+                  ["Âge", data.age ? (data.isCouple && data.ageConjoint ? `${data.age} ans / ${data.ageConjoint} ans` : `${data.age} ans`) : null],
+                  ["Profession", data.isCouple && data.professionConjoint ? `${data.profession} / ${data.professionConjoint}` : (data.profession || null)],
+                  ["Nationalité", data.nationalite || null],
+                  ["Statut civil", data.statut || null],
+                  ...(data.customClientFields || []).filter(f => f.label && f.value).map(f => [f.label, f.value])
+                ].filter(([k, v]) => v && v !== "-" && String(v).trim() !== "").map(([k, v], i, arr) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < arr.length - 1 ? `1px solid ${C.lightGray}` : "none", fontSize: 12.5 }}>
+                    <span style={{ color: C.gray, fontWeight: 500 }}>{k}</span>
+                    <span style={{ fontWeight: 700, color: C.primary }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <div style={{ background: C.primary, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Données Financières</div>
+              <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
+                {[
+                  ["Revenus annuels bruts", data.revenus ? `CHF ${fmt(data.revenus)}.-` : null],
+                  ["Capacité d'épargne", data.capaciteEpargne ? `CHF ${fmt(data.capaciteEpargne)}.- / mois` : null],
+                  ["Fortune globale estimée", data.fortuneGlobale ? `CHF ${fmt(data.fortuneGlobale)}.-` : null],
+                ].filter(([k, v]) => v && v !== "-" && String(v).trim() !== "").map(([k, v], i, arr) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < arr.length - 1 ? `1px solid ${C.lightGray}` : "none", fontSize: 12.5 }}>
+                    <span style={{ color: C.gray, fontWeight: 500 }}>{k}</span>
+                    <span style={{ fontWeight: 700, color: C.primary }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
-     <div style={{ marginTop: 80, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-       <div style={{ fontSize: 14 }}>Fait pour valoir ce que de droit.<br/><br/>Date et Lieu : _____________________</div>
-       <div style={{ border: "2px dashed #cbd5e1", padding: "40px 80px", color: "#94a3b8", textAlign: "center", borderRadius: 8 }}>
-         Signature du client :<br/><br/><br/><br/>
-         ___________________________
-       </div>
-     </div>
-  </div>
-);
+          <div style={{ display: "flex", flexDirection: "column", gap: 24, justifyContent: "flex-start" }}>
+            <div>
+              <div style={{ background: C.gold, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Vos objectifs prioritaires</div>
+              <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "16px 20px", background: C.white, borderRadius: "0px", minHeight: "120px" }}>
+                {(data.objectifs && data.objectifs.length > 0 ? data.objectifs : ["Aucun objectif spécifique renseigné"]).map((obj, i) => (
+                  <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "6px 0" }}>
+                    <div style={{ width: 6, height: 6, background: C.gold, marginTop: 6, flexShrink: 0, borderRadius: "0px" }} />
+                    <span style={{ fontSize: 12.5, color: C.darkGray, lineHeight: 1.5, fontWeight: 500 }}>{obj}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ background: C.gold, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Profil d'investisseur</div>
+              <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
+                {[
+                  ["Horizon de placement", data.horizonPlacement || "Moyen / Long terme"],
+                  ["Tolérance au risque", data.profilRisque || "Équilibré"],
+                ].map(([k, v], i, arr) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < arr.length - 1 ? `1px solid ${C.lightGray}` : "none", fontSize: 12.5 }}>
+                    <span style={{ color: C.gray, fontWeight: 500 }}>{k}</span>
+                    <span style={{ fontWeight: 700, color: C.primary }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+// Slide 6 — Pourquoi Swissquote
+function SlideSwissquote({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const points = [
+    "Swissquote est une banque suisse spécialisée dans l'investissement et les services financiers en ligne.",
+    "Elle est réglementée en Suisse et supervisée par la FINMA, ce qui implique un cadre de contrôle strict.",
+    "C'est un établissement reconnu, avec une structure solide et une présence bien établie sur le marché suisse.",
+    "Les clients bénéficient d'une plateforme complète pour investir, tout en restant dans un environnement bancaire sécurisé.",
+  ];
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Pourquoi Swissquote est une banque fiable" subtitle="PARTENAIRE BANCAIRE" />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 20, maxWidth: 860 }}>
+          {points.map((p, i) => (
+            <div key={i} style={{ background: C.lightGray, padding: "20px 28px", fontSize: 14, lineHeight: 1.7, color: C.darkGray, borderLeft: `4px solid ${C.gold}`, textAlign: "justify", borderRadius: "0px" }}>
+              {p}
+            </div>
+          ))}
+          <div style={{ background: "rgba(105,33,2,0.04)", padding: "20px 28px", fontSize: 14, lineHeight: 1.7, borderLeft: `4px solid ${C.primary}`, borderRadius: "0px", marginTop: 12 }}>
+            <EditableText editMode={editMode} value={data.texts?.swissquoteIntro} onChange={v => onTextChange("swissquoteIntro", v)} style={{ color: C.primary, fontWeight: 700, margin: 0 }} />
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+// Slide 7 — Avantages WallSwiss BY Swissquote
+function SlideAdvantages({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const avantages = [
+    { title: "Sécurité & réglementation suisses", desc: "Banque suisse régulée par la FINMA, avec garantie des dépôts jusqu'à 100'000 CHF. Bilan consolidé à 80 Mds CHF : et ratios Bâle III de Swissquote, bien qu'ils aient fluctué, sont historiquement restés élevés, démontrant une capitalisation qui excède les exigences réglementaires." },
+    { title: "Univers d'investissement le plus large", desc: "Accès à plus de 3 millions de produits (actions, ETF, fonds, obligations, dérivés, forex/CFD, crypto, etc.)." },
+    { title: "Heures étendues & Swiss DOTS", desc: "Trading sur Swiss DOTS de 08:00 à 22:00, conditions forfaitaires chez certains émetteurs, accès à SIX et aux marchés US/UE." },
+    { title: "ETF compétitifs", desc: "Plus de 9'000 ETF disponibles." },
+    { title: "Tarification optimisée", desc: "Tarifs négociés sur une sélection de valeurs clés pour des portefeuilles essentiels." },
+    { title: "Crypto de niveau bancaire", desc: "Achat/vente, staking, garde institutionnelle et échange crypto propriétaire (SQX) opérés par une banque suisse." },
+    { title: "Thématiques & produits structurés", desc: "Themes Trading, transactions thématiques en 1 clic et offre/partenariats d'AMCs pour professionnels/institutionnels." },
+    { title: "Plateformes & outils", desc: "Application multi-actifs (titres & crypto), interface intuitive, centre de formation (cours, webinars, e-books)." },
+    { title: "Support multilingue & équipe dédiée", desc: "Assistance client dédiée, équipe institutionnelle dédiée." },
+    { title: "Change compétitif", desc: "Conditions de change très compétitives." },
+  ];
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Avantages WallSwiss BY Swissquote" highlight="pour l'investissement" subtitle="CONDITIONS EXCLUSIVES" />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 32px", flex: 1, alignContent: "center" }}>
+          {avantages.map((a, i) => (
+            <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <div style={{ color: C.primary, fontSize: 20, marginTop: -4 }}>•</div>
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: C.darkGray }}>{a.title}</div>
+                <div style={{ fontSize: 11.5, color: C.gray, lineHeight: 1.5, marginTop: 4, textAlign: "justify" }}>{a.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+// Slide 8 — Section divider
+function SlideDivider({ data, number, title, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={{ ...slideBase, background: C.lightGray, display: "flex" }}>
+      <div style={{ width: "35%", background: `linear-gradient(150deg, ${C.primary} 0%, ${C.primaryDark} 100%)`, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "absolute", right: -40, width: 80, height: 80, background: C.lightGray, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, transform: "rotate(45deg)" }}>
+          <div style={{ width: 64, height: 64, background: C.primary, border: `2px solid ${C.gold}`, transform: "rotate(-45deg)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.1)" }}>
+            <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ height: 32 }} />
+          </div>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, padding: "0 100px", display: "flex", flexDirection: "column", justifyContent: "center", zIndex: 1 }}>
+        <div style={{ color: C.gray, fontSize: 13, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 16 }}>
+          La stratégie recommandée
+        </div>
+        <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.primary, fontSize: 56, fontWeight: 700, lineHeight: 1.1 }}>
+          Solution d'investissement
+        </div>
+        <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.gold, fontSize: 56, fontStyle: "italic", marginBottom: 40 }}>
+          {title}
+        </div>
+
+        <div style={{ width: 48, height: 3, background: C.primary, marginBottom: 32 }} />
+
+        <div style={{ display: "flex", gap: 20 }}>
+          <div style={{ width: 4, background: C.gold, flexShrink: 0 }} />
+          <EditableText editMode={editMode} value={data.texts?.dividerQuote} onChange={v => onTextChange("dividerQuote", v)} style={{ fontFamily: "'Montserrat', sans-serif", fontStyle: "italic", color: C.darkGray, fontSize: 14, maxWidth: 500, lineHeight: 1.8, textAlign: "justify" }} />
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+// Slide 9 — La solution compte-titres
+function SlideCompteTitre({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const bubbles = ["Épargne en cas de coup dur", "Financer un projet", "Disponibilité de l'épargne", "Complément de revenu pour la retraite", "Cadre fiscal avantageux", "Optimisation de la transmission"];
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
+        <div>
+          <ReportTitle title="La solution" highlight="compte-titres" subtitle="STRATÉGIE" />
+          <EditableText editMode={editMode} value={data.texts?.solution1} onChange={v => onTextChange("solution1", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px" }} />
+          <EditableText editMode={editMode} value={data.texts?.solution2} onChange={v => onTextChange("solution2", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px" }} />
+          <EditableText editMode={editMode} value={data.texts?.solution3} onChange={v => onTextChange("solution3", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: 0 }} />
+        </div>
+        <div>
+          <div style={{ background: C.primary, padding: 32, display: "flex", flexDirection: "column", alignItems: "center", borderRadius: "0px", boxShadow: "0 10px 30px rgba(105,33,2,0.15)" }}>
+            <div style={{ color: C.white, fontSize: 18, fontWeight: 800, textAlign: "center", marginBottom: 24 }}>Couteau Suisse<br/>de l'épargne</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, width: "100%" }}>
+              {bubbles.map((b, i) => (
+                <div key={i} style={{ background: C.gold, padding: "16px 14px", textAlign: "center", fontSize: 11.5, fontWeight: 600, color: C.white, lineHeight: 1.5, borderRadius: "0px" }}>{b}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+// Slide 10 — Fonds (NS ou ParFinance)
+function SlideFund({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const isParFinance = data.assetManager === "ParFinance";
+
+  if (isParFinance) {
+    const parFinancePositions = [
+      { title: "1. First Trust Water ETF (FIW)", desc: "Axé sur le secteur de l'eau, un domaine crucial en pleine expansion. Idéal pour s'exposer à un secteur durable nécessaire avec une performance solide." },
+      { title: "2. Global X Artificial Intelligence & Technology ETF (AIQ)", desc: "Capitalise sur l'essor de l'IA et du big data via des entreprises innovantes. Pour une exposition aux technologies émergentes et une croissance long terme." },
+      { title: "3. Global X US Infrastructure Development ETF (PAVE)", desc: "Mise sur le développement des infrastructures américaines (matériaux, ingénierie) bénéficiant de financements publics importants." },
+      { title: "4. iShares Global Healthcare ETF (IXJ)", desc: "Exposition mondiale au secteur de la santé (biotech, dispositifs médicaux) pour répondre aux besoins de la population vieillissante." },
+      { title: "5. iShares MSCI KLD 400 Social ETF (DSI)", desc: "Applique des critères ESG ciblés sur des entreprises aux pratiques durables et éthiques, tout en bénéficiant de rendements compétitifs." },
+      { title: "6. iShares S&P 500 Value ETF (IVE)", desc: "Se concentre sur les actions de valeur sous-évaluées du S&P 500. Idéal pour une approche prudente axée sur la stabilité." },
+      { title: "7. iShares Semiconductor ETF (SOXX)", desc: "Investit dans les semi-conducteurs, essentiels dans l'ère numérique. Adapté aux investisseurs ayant une tolérance au risque et attirés par l'innovation." },
+      { title: "8. iShares U.S. Consumer Staples ETF (IYK)", desc: "Cible les biens de consommation de base, offrant une stabilité en période d'incertitude économique." },
+      { title: "9. Schwab U.S. Large-Cap Growth ETF (SCHG)", desc: "Sélectionne des actions de croissance de grandes entreprises américaines privilégiant les leaders dans leurs secteurs." },
+      { title: "10. Technology Select Sector SPDR Fund (XLK)", desc: "Centré sur les géants technologiques américains. Un fonds pour les investisseurs optimistes sur le secteur numérique." },
+      { title: "11. VanEck Oil Services ETF (OIH)", desc: "Spécialisé dans les services pétroliers et l'énergie. Adapté pour naviguer dans un secteur volatil mais potentiellement lucratif." },
+      { title: "12. Vanguard Health Care ETF (VHT)", desc: "Investit dans un large éventail d'entreprises du secteur de la santé recherchant une stabilité et une croissance progressive." }
+    ];
+
+    return (
+      <div style={slideBase}>
+        {accentBar()}
+        {logoCorner()}
+        <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+          <ReportTitle title="Un investissement qui a du" highlight="sens" subtitle="LES PRINCIPALES POSITIONS" />
+          <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 40, rowGap: 14, overflow: "hidden", marginTop: -10 }}>
+            {parFinancePositions.map((pos, i) => (
+              <div key={i}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, marginBottom: 2 }}>{pos.title}</div>
+                <div style={{ fontSize: 9, color: C.darkGray, lineHeight: 1.4, textAlign: "justify" }}>{pos.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        {footer(fullName)}
+      </div>
+    );
+  }
+
+  return (
+    <div style={slideBase}>
+      <div style={{ padding: "32px 80px 48px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <div style={{ border: `3px solid ${C.gold}`, padding: "24px 32px", boxSizing: "border-box", background: C.white }}>
+          <div style={{ textAlign: "center", marginBottom: 12 }}>
+            <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, fontWeight: 700, color: C.primary }}>NS (CH) FUNDS — Swiss Excellence DPM CHF</div>
+            <div style={{ fontSize: 12, color: C.gray, marginTop: 6 }}>Fonds actions suisses — Synthèse institutionnelle (NS Partners)</div>
+          </div>
+          <div style={{ width: "100%", height: 2, background: C.gold, margin: "16px 0 24px 0" }} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 48px", fontSize: 12 }}>
+            <div>
+              <div style={{ fontWeight: 700, color: C.gold, marginBottom: 8, fontSize: 13, textTransform: "uppercase" }}>Positionnement</div>
+              {["Fonds actions 100% Suisse", "Devise : CHF", "Benchmark : SLI Swiss Leader Index TR", "Objectif : Surperformance du marché suisse"].map((t,i) => (
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 4 }}><span style={{ color: C.gold }}>—</span><span style={{ color: C.darkGray }}>{t}</span></div>
+              ))}
+              <div style={{ fontWeight: 700, color: C.gold, marginTop: 16, marginBottom: 8, fontSize: 13, textTransform: "uppercase" }}>Performance</div>
+              {["Performance annualisée : 4,5%", "YTD 2025 : +8,40%", "Benchmark : +7,99%"].map((t,i) => (
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 4 }}><span style={{ color: C.gold }}>—</span><span style={{ color: C.darkGray }}>{t}</span></div>
+              ))}
+              <div style={{ fontWeight: 700, color: C.gold, marginTop: 16, marginBottom: 8, fontSize: 13, textTransform: "uppercase" }}>Structure de frais</div>
+              {["Management fee : 1,50%", "Performance fee : 10%"].map((t,i) => (
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 4 }}><span style={{ color: C.gold }}>—</span><span style={{ color: C.darkGray }}>{t}</span></div>
+              ))}
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, color: C.gold, marginBottom: 8, fontSize: 13, textTransform: "uppercase" }}>Profil de risque</div>
+              {["Volatilité annualisée : 13,2%", "Sharpe ratio : 0,26", "Beta : 0,99", "Corrélation indice : 0,99"].map((t,i) => (
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 4 }}><span style={{ color: C.gold }}>—</span><span style={{ color: C.darkGray }}>{t}</span></div>
+              ))}
+              <div style={{ fontWeight: 700, color: C.gold, marginTop: 16, marginBottom: 8, fontSize: 13, textTransform: "uppercase" }}>Principales positions</div>
+              {["Roche — 6,86%", "Novartis — 6,59%", "Nestlé — 5,89%", "UBS — 5,51%"].map((t,i) => (
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 4 }}><span style={{ color: C.gold }}>—</span><span style={{ color: C.darkGray }}>{t}</span></div>
+              ))}
+              <div style={{ fontWeight: 700, color: C.gold, marginTop: 16, marginBottom: 8, fontSize: 13, textTransform: "uppercase" }}>Lecture stratégique WallSwiss</div>
+              {["Exposition domestique CHF", "Qualité suisse défensive", "ESG intégré", "Complément idéal d'une allocation internationale USD"].map((t,i) => (
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 4 }}><span style={{ color: C.primary, fontWeight: 800 }}>✓</span><span style={{ color: C.darkGray }}>{t}</span></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideParFinanceIntro({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Votre Asset Manager :" highlight="ParFinance" subtitle="GESTION INDÉPENDANTE DE HAUT NIVEAU" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 48, alignItems: "center" }}>
+          <div>
+            <EditableText editMode={editMode} value={data.texts?.parFinanceP1} onChange={v => onTextChange("parFinanceP1", v)} style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.7, marginBottom: 24, textAlign: "justify" }} />
+            <EditableText editMode={editMode} value={data.texts?.parFinanceP2} onChange={v => onTextChange("parFinanceP2", v)} style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.7, marginBottom: 24, textAlign: "justify" }} />
+          </div>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 40, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.05)", minHeight: 280 }}>
+            <div style={{ fontSize: 32, fontWeight: 800, color: C.primary, marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.1em" }}>ParFinance</div>
+            <div style={{ width: 40, height: 3, background: C.gold, marginBottom: 24 }} />
+            <div style={{ fontSize: 13, color: C.gray, textAlign: "center", lineHeight: 1.6 }}>
+              Société de gestion indépendante basée à Genève, spécialisée dans la création de portefeuilles performants et sur-mesure.
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideParFinanceFactsheet({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+
+  const topHoldings = [
+    { name: "SPDR® Blmbg 1-...ill ETF", weight: "7.03%" },
+    { name: "iShares US Consu..les ETF", weight: "5.59%" },
+    { name: "First Trust Water ETF", weight: "4.84%" },
+    { name: "Northern Oil & Gas Inc", weight: "4.50%" },
+    { name: "Meta Platforms Inc", weight: "3.93%" },
+    { name: "Netflix Inc", weight: "3.50%" },
+    { name: "Microsoft Corp", weight: "3.45%" },
+    { name: "Global X US Infras.Dev ETF", weight: "3.42%" },
+    { name: "iShares MSCI KLD.ial ETF", weight: "3.09%" },
+    { name: "iShares S&P 500 Value ETF", weight: "3.02%" }
+  ];
+
+  const topUnderlying = [
+    { name: "Microsoft Corp", weight: "4.72%" },
+    { name: "Northern Oil & Gas Inc", weight: "4.50%" },
+    { name: "Meta Platforms Inc", weight: "4.10%" },
+    { name: "Netflix Inc", weight: "3.60%" },
+    { name: "The Home Depot Inc", weight: "2.98%" },
+    { name: "NVIDIA Corp", weight: "2.90%" },
+    { name: "GE Vernova Inc", weight: "2.63%" },
+    { name: "Apple Inc", weight: "2.43%" },
+    { name: "Caterpillar Inc", weight: "2.25%" },
+    { name: "Freeport-McMoRan Inc", weight: "2.25%" }
+  ];
+
+  // Simulation visuelle du graphique améliorée
+  const chartPoints = "0,160 20,150 40,175 60,180 80,140 100,165 120,160 140,165 160,180 180,170 200,175 220,180 240,175 260,160 280,170 300,175 320,180 340,120 360,110 380,115 400,130 420,110 440,115 460,125 480,90 500,100 520,70 540,110 560,95 580,70 600,75 620,40";
+  const areaPoints = `0,200 ${chartPoints} 620,200`;
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Un investissement qui a du" highlight="sens" subtitle="FACTSHEET | ARIES PORTOFOLIO (USD)" />
+        
+        <div style={{ flex: 1, display: "flex", gap: 40, minHeight: 0, marginTop: -10 }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: C.primaryDark, marginBottom: 12, borderBottom: `2px solid ${C.primaryDark}`, paddingBottom: 8 }}>
+              Performances d'ARIES
+            </div>
+            <div style={{ fontSize: 9, color: C.gray, marginBottom: 16 }}>
+              • 1_ARIES PORTFOLIO USD - CUSTODY BANK UBS - ASSET MANAGEMENT PARFINANCE - ISIN CH0511368091 V2 (P:1711097) TOTAL RETURN
+            </div>
+            <div style={{ flex: 1, position: "relative", border: `1px solid ${C.lightGray}`, background: C.white, overflow: "visible" }}>
+              <svg viewBox="-10 -10 680 230" preserveAspectRatio="none" style={{ width: "100%", height: "100%", position: "absolute", bottom: 0, left: 0, overflow: "visible" }}>
+                 <line x1="0" y1="40" x2="620" y2="40" stroke="#E5E7EB" strokeWidth="1" />
+                 <line x1="0" y1="120" x2="620" y2="120" stroke="#E5E7EB" strokeWidth="1" />
+                 <line x1="0" y1="200" x2="620" y2="200" stroke="#E5E7EB" strokeWidth="1" />
+                 
+                 <text x="628" y="124" fontSize="11" fill="#6B7280">20.00%</text>
+                 <text x="628" y="204" fontSize="11" fill="#6B7280">0.00%</text>
+                 
+                 <line x1="100" y1="200" x2="100" y2="205" stroke="#E5E7EB" strokeWidth="1" />
+                 <text x="100" y="218" fontSize="10" fill="#6B7280" textAnchor="middle">JAN '23</text>
+                 <line x1="200" y1="200" x2="200" y2="205" stroke="#E5E7EB" strokeWidth="1" />
+                 <text x="200" y="218" fontSize="10" fill="#6B7280" textAnchor="middle">JUL '23</text>
+                 <line x1="300" y1="200" x2="300" y2="205" stroke="#E5E7EB" strokeWidth="1" />
+                 <text x="300" y="218" fontSize="10" fill="#6B7280" textAnchor="middle">JAN '24</text>
+                 <line x1="400" y1="200" x2="400" y2="205" stroke="#E5E7EB" strokeWidth="1" />
+                 <text x="400" y="218" fontSize="10" fill="#6B7280" textAnchor="middle">JUL '24</text>
+                 <line x1="500" y1="200" x2="500" y2="205" stroke="#E5E7EB" strokeWidth="1" />
+                 <text x="500" y="218" fontSize="10" fill="#6B7280" textAnchor="middle">JAN '25</text>
+                 <line x1="600" y1="200" x2="600" y2="205" stroke="#E5E7EB" strokeWidth="1" />
+                 <text x="600" y="218" fontSize="10" fill="#6B7280" textAnchor="middle">JUL '25</text>
+
+                 <polygon points={areaPoints} fill="rgba(139, 92, 246, 0.2)" />
+                 <polyline points={chartPoints} fill="none" stroke="#8b5cf6" strokeWidth="2.5" />
+
+                 <rect x="625" y="30" width="40" height="20" fill="#8b5cf6" rx="4"/>
+                 <text x="645" y="44" fontSize="10" fill="white" textAnchor="middle" fontWeight="bold">31.78%</text>
+              </svg>
+            </div>
+          </div>
+
+          <div style={{ width: "260px", display: "flex", flexDirection: "column", gap: 20 }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: C.darkGray, marginBottom: 8 }}>Top 10 Holdings</div>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 9.5 }}>
+                <thead>
+                  <tr style={{ borderBottom: `2px solid ${C.mediumGray}` }}>
+                    <th style={{ textAlign: "left", paddingBottom: 4, color: C.gray, fontWeight: 600 }}>HOLDING</th>
+                    <th style={{ textAlign: "right", paddingBottom: 4, color: C.gray, fontWeight: 600 }}>WEIGHT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topHoldings.map((h, i) => (
+                    <tr key={i} style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                      <td style={{ padding: "4px 0", color: C.darkGray, fontWeight: 600 }}>{h.name}</td>
+                      <td style={{ padding: "4px 0", textAlign: "right", color: C.gray }}>{h.weight}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: C.darkGray, marginBottom: 8 }}>Top 10 Underlying Holdings</div>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 9.5 }}>
+                <thead>
+                  <tr style={{ borderBottom: `2px solid ${C.mediumGray}` }}>
+                    <th style={{ textAlign: "left", paddingBottom: 4, color: C.gray, fontWeight: 600 }}>HOLDING</th>
+                    <th style={{ textAlign: "right", paddingBottom: 4, color: C.gray, fontWeight: 600 }}>WEIGHT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topUnderlying.map((h, i) => (
+                    <tr key={i} style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                      <td style={{ padding: "4px 0", color: C.darkGray, fontWeight: 600 }}>{h.name}</td>
+                      <td style={{ padding: "4px 0", textAlign: "right", color: C.gray }}>{h.weight}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+// Slide 11 — Projections
+function SlideProjections({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const rows = computeProjections(data);
+  const montant = data.montantInvestissement !== "" && data.montantInvestissement !== undefined ? Number(data.montantInvestissement) : 100000;
+  const frais = data.fraisSouscription !== "" && data.fraisSouscription !== undefined ? Number(data.fraisSouscription) : 3;
+
+  const svgW = 420; const svgH = 220;
+  const padL = 50; const padR = 15; const padT = 10; const padB = 25;
+  const w = svgW - padL - padR; const h = svgH - padT - padB;
+  const maxVal = rows[rows.length-1].optimiste;
+  const gridMax = Math.ceil(maxVal / 20000) * 20000 || 80000;
+  
+  const getX = (i) => padL + (i / (rows.length - 1)) * w;
+  const getY = (val) => padT + h - (val / gridMax) * h;
+
+  const dP = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.pessimiste)}`).join(' ');
+  const dR = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.realiste)}`).join(' ');
+  const dO = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.optimiste)}`).join(' ');
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Vos objectifs sur le" highlight="compte-titres" subtitle="SIMULATION FINANCIÈRE" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 40, alignItems: "center", minHeight: 0 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", paddingRight: 20 }}>
+            <p style={{ fontSize: 13, lineHeight: 1.6, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }}>
+              Ici, nous vous conseillons d'optimiser votre trésorerie actuelle avec un compte-titres chez <strong>SwissQuote</strong> sur la solution de placement avec un dépôt initial de <strong>CHF {fmt(montant)}.-</strong>
+            </p>
+            <p style={{ fontSize: 13, color: C.gray, margin: "0 0 32px", textAlign: "justify" }}>
+              Nous appliquons des droits d'entrée de {frais}% du montant investi soit {fmt(montant * frais / 100)}.-
+            </p>
+            
+            <div style={{ display: "flex", gap: 20, marginBottom: 20, alignSelf: "center", fontSize: 12, fontWeight: 600 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: "#9CA3AF" }} /> Pessimiste</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.gold }} /> Réaliste</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.primaryDark }} /> Optimiste</div>
+            </div>
+
+            <div style={{ width: 420, height: 220, alignSelf: "center" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width={420} height={220} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
+                {[0, 0.25, 0.5, 0.75, 1].map(pct => {
+                  const y = padT + h - (pct * h);
+                  const val = gridMax * pct;
+                  return (
+                    <g key={pct}>
+                      <line x1={padL} y1={y} x2={svgW - padR} y2={y} stroke="#E5E7EB" strokeWidth="1" />
+                      <text x={padL - 10} y={y + 4} fontSize="11" fill="#6B7280" textAnchor="end">{val === 0 ? "0" : val}</text>
+                    </g>
+                  );
+                })}
+                {rows.map((r, i) => (
+                  <text key={i} x={getX(i)} y={svgH - 2} fontSize="11" fill="#6B7280" textAnchor="middle">N+{r.year}</text>
+                ))}
+                <path d={dP} fill="none" stroke="#9CA3AF" strokeWidth="3" />
+                <path d={dR} fill="none" stroke={C.gold} strokeWidth="3" />
+                <path d={dO} fill="none" stroke={C.primaryDark} strokeWidth="3" />
+                {rows.map((r, i) => (
+                  <g key={i}>
+                    <circle cx={getX(i)} cy={getY(r.pessimiste)} r="4.5" fill="#9CA3AF" />
+                    <circle cx={getX(i)} cy={getY(r.realiste)} r="4.5" fill={C.gold} />
+                    <circle cx={getX(i)} cy={getY(r.optimiste)} r="4.5" fill={C.primaryDark} />
+                  </g>
+                ))}
+              </svg>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16, textAlign: "center" }}>PROJECTIONS FINANCIÈRES*</div>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, textAlign: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+              <thead>
+                <tr style={{ background: C.primary, color: C.white }}>
+                  <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 600 }}>Années</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 600 }}>Pessimiste<br/>({data.tauxPessimiste || 3}%)</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 600 }}>Réaliste<br/>({data.tauxRealiste || 6}%)</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 600 }}>Optimiste<br/>({data.tauxOptimiste || 9}%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white }}>
+                    <td style={{ padding: "12px 16px", fontWeight: 700, color: C.primary, textAlign: "center", borderBottom: "1px solid #E5E3DE" }}>N+{r.year}</td>
+                    <td style={{ padding: "12px 16px", textAlign: "center", borderBottom: "1px solid #E5E3DE" }}>{fmt(r.pessimiste)}</td>
+                    <td style={{ padding: "12px 16px", textAlign: "center", borderBottom: "1px solid #E5E3DE" }}>{fmt(r.realiste)}</td>
+                    <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 700, color: C.primary, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.optimiste)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p style={{ fontSize: 9, color: C.gray, marginTop: 12, lineHeight: 1.5, fontStyle: "italic", textAlign: "center", maxWidth: "90%" }}>
+              *L'illustration présentée ne constitue pas un indicator fiable quant aux performances futures. Elle a seulement pour but d'illustrer les mécanismes de votre investissement.
+            </p>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+// Slide 12 — Avantages tarifaires
+function SlideTarifs({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Avantages tarifaires WallSwiss —" highlight="WS Premium" subtitle="TARIFICATION" />
+        <div style={{ fontSize: 14, color: C.gray, marginBottom: 40 }}>Conditions préférentielles "WS Premium" — présentation synthétique</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 800 }}>
+          {[
+            { label: "Droits de garde", value: "0,10% de 0 à 1 M CHF", badge: "max 200 CHF", sub: "Puis 0,03% au-delà de 1 M (pricing sur-mesure possible > 1 M)." },
+            { label: "Frais d'achat AMC", value: "0,25%", badge: "min 50 CHF / transaction", sub: "" },
+            { label: "Taux de change", value: "0,40% jusqu'à 100 000 CHF", badge: "0,20% au-delà", sub: "" },
+          ].map((item, i) => (
+            <div key={i} style={{ display: "grid", gridTemplateColumns: "200px 1fr", border: `1px solid ${C.mediumGray}`, overflow: "hidden", borderRadius: "0px", boxShadow: "0 2px 10px rgba(0,0,0,0.03)" }}>
+              <div style={{ background: C.lightGray, padding: "20px 24px", display: "flex", alignItems: "center" }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: C.darkGray }}>{item.label}</span>
+              </div>
+              <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: C.primary }}>{item.value}</span>
+                  {item.badge && <span style={{ marginLeft: 16, fontSize: 11, fontWeight: 700, color: C.primary, border: `1px solid ${C.primary}`, padding: "3px 10px", textTransform: "uppercase", borderRadius: "0px" }}>{item.badge}</span>}
+                </div>
+                {item.sub && <div style={{ fontSize: 11, color: C.gray, marginTop: 6 }}>{item.sub}</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ fontSize: 10, color: C.gray, marginTop: 24, fontStyle: "italic" }}>Tarification indicative à valider selon profil client, volume et configuration de portefeuille.</div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+// Slide 13 — Comparatif bancaire
+function SlideComparatif({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Profil 2 —" highlight="Patrimoine en croissance" subtitle="COMPARATIF BANCAIRE" />
+        <div style={{ fontSize: 14, color: C.gray, marginBottom: 32 }}>Portefeuille 300 kCHF ; change annuel 60 kCHF ; achats d'AMC 20 kCHF/an.</div>
+        <table style={{ width: "100%", maxWidth: 800, borderCollapse: "collapse", fontSize: 13, boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
+          <thead>
+            <tr>
+              <th style={{ padding: "16px 20px", textAlign: "left", color: C.primary, fontWeight: 700, borderBottom: `2px solid ${C.primary}`, background: C.white }}>Banque</th>
+              <th style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 700, borderBottom: `2px solid ${C.primary}`, background: C.white }}>Garde (an)</th>
+              <th style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 700, borderBottom: `2px solid ${C.primary}`, background: C.white }}>Change (an)</th>
+              <th style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 700, borderBottom: `2px solid ${C.primary}`, background: C.white }}>AMC (an)</th>
+              <th style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 700, borderBottom: `2px solid ${C.primary}`, background: C.white }}>Total (an)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              { bank: "WallSwiss / Swissquote", garde: 200, change: 240, amc: 50, total: 490 },
+              { bank: "Raiffeisen", garde: 750, change: 750, amc: 180, total: 1680 },
+              { bank: "UBS", garde: 1050, change: 1020, amc: 200, total: 2270 },
+            ].map((r, i) => (
+              <tr key={i} style={{ background: i === 0 ? "rgba(105,33,2,0.05)" : C.white }}>
+                <td style={{ padding: "16px 20px", fontWeight: i === 0 ? 700 : 500, color: i === 0 ? C.primary : C.black, borderBottom: `1px solid ${C.lightGray}` }}>{r.bank}</td>
+                <td style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 600, borderBottom: `1px solid ${C.lightGray}` }}>{r.garde}</td>
+                <td style={{ padding: "16px 20px", textAlign: "right", color: C.primary, fontWeight: 600, borderBottom: `1px solid ${C.lightGray}` }}>{r.change}</td>
+                <td style={{ padding: "16px 20px", textAlign: "right", color: C.gold, fontWeight: 600, borderBottom: `1px solid ${C.lightGray}` }}>{r.amc}</td>
+                <td style={{ padding: "16px 20px", textAlign: "right", fontWeight: 700, color: i === 0 ? C.primary : C.black, borderBottom: `1px solid ${C.lightGray}` }}>{r.total}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ fontSize: 10, color: C.gray, marginTop: 20, fontStyle: "italic" }}>Hypothèses : tarifs publics/partenaires ; à valider selon profil & package.</div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+// Slide 14 — Application SwissQuote
+function SlideApp({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
+        <div>
+          <ReportTitle title="Votre application de suivi" highlight="SwissQuote" subtitle="CENTRALISEZ L'ENSEMBLE DE VOS FINANCES EN UN SEUL ENDROIT" />
+          <EditableText editMode={editMode} value={data.texts?.appP1} onChange={v => onTextChange("appP1", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 20px", textAlign: "justify" }} />
+          <EditableText editMode={editMode} value={data.texts?.appP2} onChange={v => onTextChange("appP2", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: 0, textAlign: "justify" }} />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative", height: "100%" }}>
+          <img src="/imgi_10_width_799.webp" alt="Swissquote App Desktop" className="pdf-image" style={{ width: "85%", objectFit: "contain", borderRadius: "0px", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", zIndex: 1 }} />
+          <img src="/imgi_9_width_400.webp" alt="Swissquote App Mobile" className="pdf-image" style={{ width: "35%", objectFit: "contain", position: "absolute", bottom: "8%", right: "2%", borderRadius: "0px", boxShadow: "0 15px 40px rgba(0,0,0,0.3)", zIndex: 2 }} />
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+// Slide 15 — Contact
+function SlideContact({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={{ ...slideBase, background: C.white, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", opacity: 0.03, pointerEvents: "none", zIndex: 1 }}>
+         <img src={LOGO_URL} alt="" className="pdf-image" style={{ width: "800px", filter: "invert(1)" }} />
+      </div>
+
+      <div style={{ zIndex: 2, display: "flex", width: "100%", padding: "0 80px", gap: "80px", alignItems: "center" }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 11, color: C.gold, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 16 }}>SYNTHÈSE & CONTACT</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 48, fontWeight: 700, color: C.primary, lineHeight: 1.1, marginBottom: 24 }}>
+            Prêt à concrétiser<br/><em style={{ color: C.gold }}>vos projets ?</em>
+          </div>
+          <div style={{ width: 48, height: 4, background: C.gold, marginBottom: 32 }} />
+          <EditableText editMode={editMode} value={data.texts?.contactDesc} onChange={v => onTextChange("contactDesc", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, margin: 0, maxWidth: 480 }} />
+        </div>
+
+        <div style={{ width: 420, border: `1px solid ${C.mediumGray}`, padding: "56px 48px", position: "relative", background: C.white, boxShadow: "0 10px 40px rgba(0,0,0,0.05)", borderRadius: "0px" }}>
+          <div style={{ position: "absolute", top: -12, left: 40, background: C.white, padding: "0 16px", color: C.gold, fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>
+            VOTRE INTERLOCUTEUR DÉDIÉ
+          </div>
+          
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 6 }}>{data.conseiller || "Votre Conseiller"}</div>
+          <div style={{ color: C.gray, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 40 }}>{data.titreConseiller || "Conseiller en Gestion de Patrimoine"}</div>
+          
+          <div style={{ display: "grid", gap: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>T</div>
+              <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>{data.telephone || "+41 XX XXX XX XX"}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>E</div>
+              <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>{data.email || "contact@wallswiss.ch"}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>A</div>
+              <span style={{ fontSize: 15, color: C.darkGray, fontWeight: 600 }}>Rue Kleberg 14, 1201 Genève</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {footer(fullName)}
+    </div>
+  );
+}
+
+// ────────────────────── SLIDES PRÉVOYANCE 3A/3B ──────────────────────
+
+function SlidePrevoyanceIntro({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Le système des" highlight="3 piliers suisses" subtitle="PRÉVOYANCE" />
+        
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 48, alignItems: "center" }}>
+          
+          {/* Colonne de gauche : Explications des piliers */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div style={{ background: C.white, borderLeft: `4px solid ${C.darkGray}`, padding: "16px 24px", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: C.darkGray }}>1er Pilier (AVS/AI)</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.gray, textTransform: "uppercase", letterSpacing: "0.05em" }}>Besoins vitaux</div>
+              </div>
+              <EditableText editMode={editMode} value={data.texts?.prevIntroP1} onChange={v => onTextChange("prevIntroP1", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, margin: 0 }} />
+            </div>
+            
+            <div style={{ background: C.white, borderLeft: `4px solid ${C.primary}`, padding: "16px 24px", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: C.primary }}>2ème Pilier (LPP)</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: "0.05em", opacity: 0.8 }}>Maintien niveau de vie</div>
+              </div>
+              <EditableText editMode={editMode} value={data.texts?.prevIntroP2} onChange={v => onTextChange("prevIntroP2", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, margin: 0 }} />
+            </div>
+            
+            <div style={{ background: C.white, borderLeft: `4px solid ${C.gold}`, padding: "16px 24px", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: C.gold }}>3ème Pilier (3A/3B)</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.gold, textTransform: "uppercase", letterSpacing: "0.05em" }}>Combler les lacunes</div>
+              </div>
+              <EditableText editMode={editMode} value={data.texts?.prevIntroP3} onChange={v => onTextChange("prevIntroP3", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, margin: 0 }} />
+            </div>
+          </div>
+
+          {/* Colonne de droite : Graphique empilé des 100% */}
+          <div style={{ display: "flex", justifyContent: "center", height: "100%", padding: "10px 0" }}>
+            <div style={{ position: "relative", width: 280, height: "100%", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+              
+              {/* Ligne cible 100% */}
+              <div style={{ position: "absolute", top: 0, left: -20, right: -40, borderTop: `2px dashed ${C.gray}` }}>
+                 <div style={{ position: "absolute", top: -20, right: 0, fontSize: 14, fontWeight: 800, color: C.darkGray }}>100% du salaire</div>
+              </div>
+
+              {/* Ligne cible 60% */}
+              <div style={{ position: "absolute", bottom: "60%", left: -20, right: -40, borderTop: `2px dashed ${C.primary}` }}>
+                 <div style={{ position: "absolute", top: -20, right: 0, fontSize: 14, fontWeight: 800, color: C.primary }}>~60% du salaire</div>
+              </div>
+              
+              {/* Blocs du graphique */}
+              <div style={{ height: "40%", background: C.gold, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid white", borderBottom: "none", zIndex: 2, boxShadow: "0 -4px 10px rgba(0,0,0,0.05)" }}>
+                <div style={{ color: C.white, fontWeight: 800, fontSize: 18, textAlign: "center" }}>3ème Pilier<br/><span style={{fontSize: 12, fontWeight: 600}}>Prévoyance privée</span></div>
+              </div>
+              
+              <div style={{ height: "30%", background: C.primary, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid white", borderBottom: "none", zIndex: 2, boxShadow: "0 -4px 10px rgba(0,0,0,0.05)" }}>
+                <div style={{ color: C.white, fontWeight: 800, fontSize: 18, textAlign: "center" }}>2ème Pilier<br/><span style={{fontSize: 12, fontWeight: 600}}>LPP</span></div>
+              </div>
+              
+              <div style={{ height: "30%", background: C.darkGray, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid white", zIndex: 2, boxShadow: "0 -4px 10px rgba(0,0,0,0.05)" }}>
+                <div style={{ color: C.white, fontWeight: 800, fontSize: 18, textAlign: "center" }}>1er Pilier<br/><span style={{fontSize: 12, fontWeight: 600}}>AVS/AI</span></div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceAvantages({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Avantages de la" highlight="Prévoyance 3A/3B" subtitle="LEVIERS DE CRÉATION DE RICHESSE" />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px 48px", flex: 1, alignContent: "center" }}>
+          {[
+            { title: "Optimisation Fiscale Immédiate", desc: "Déduction des versements de votre revenu imposable (Pilier 3A) et exonération d'impôt sur la fortune et le rendement pendant toute la durée du contrat." },
+            { title: "Croissance du Capital", desc: "Rendement supérieur à l'épargne bancaire grâce à l'investissement sur les marchés financiers via des fonds de placement de premier plan." },
+            { title: "Couverture Risques (Assurance)", desc: "Protection financière de votre famille en cas de décès et libération du paiement des primes en cas d'incapacité de gain." },
+            { title: "Souplesse et Flexibilité", desc: "Possibilité d'adapter les versements selon l'évolution de vos revenus et d'utiliser le capital pour l'achat de votre résidence principale." },
+          ].map((a, i) => (
+            <div key={i} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+              <div style={{ color: C.gold, fontSize: 24, marginTop: -4 }}>•</div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.primaryDark, marginBottom: 4 }}>{a.title}</div>
+                <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.6, textAlign: "justify" }}>{a.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceSolution({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
+        <div>
+          <ReportTitle title="Solution — Prévoyance" highlight="& Assurance Vie" subtitle="STRATÉGIE" />
+          <EditableText editMode={editMode} value={data.texts?.prevoyanceSol1} onChange={v => onTextChange("prevoyanceSol1", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }} />
+          <EditableText editMode={editMode} value={data.texts?.prevoyanceSol2} onChange={v => onTextChange("prevoyanceSol2", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }} />
+          <EditableText editMode={editMode} value={data.texts?.prevoyanceSol3} onChange={v => onTextChange("prevoyanceSol3", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: 0, textAlign: "justify" }} />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 24, boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+            <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>Compagnie Partenaire</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: C.primaryDark }}>{data.compagniePrevoyance || "Liechtenstein Life"}</div>
+          </div>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 24, boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+            <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>Votre Mensualité</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: C.primaryDark }}>CHF {fmt(data.capaciteEpargne || 500)}.-</div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceCouvertures({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Couvertures de risque et" highlight="garanties" subtitle="PROTECTION" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 32, alignItems: "center" }}>
+          <div style={{ background: "rgba(105,33,2,0.05)", padding: 32, borderTop: `4px solid ${C.primary}`, height: "260px", display: "flex", flexDirection: "column" }}>
+            <div style={{ color: C.primary, marginBottom: 16 }}><Icons.Shield size={32} /></div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: C.primaryDark, marginBottom: 12 }}>Libération des primes</div>
+            <EditableText editMode={editMode} value={data.texts?.prevCouvP1} onChange={v => onTextChange("prevCouvP1", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, flex: 1 }} />
+          </div>
+          <div style={{ background: "rgba(165,149,104,0.1)", padding: 32, borderTop: `4px solid ${C.gold}`, height: "260px", display: "flex", flexDirection: "column" }}>
+            <div style={{ color: C.gold, marginBottom: 16 }}><Icons.User size={32} /></div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: C.primaryDark, marginBottom: 12 }}>Capital Décès</div>
+            <EditableText editMode={editMode} value={data.texts?.prevCouvP2} onChange={v => onTextChange("prevCouvP2", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, flex: 1 }} />
+          </div>
+          <div style={{ background: C.lightGray, padding: 32, borderTop: `4px solid ${C.gray}`, height: "260px", display: "flex", flexDirection: "column" }}>
+            <div style={{ color: C.gray, marginBottom: 16 }}><Icons.TrendUp size={32} /></div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: C.primaryDark, marginBottom: 12 }}>Rente Invalidité (Option)</div>
+            <EditableText editMode={editMode} value={data.texts?.prevCouvP3} onChange={v => onTextChange("prevCouvP3", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, flex: 1 }} />
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceFonds({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Stratégie :" highlight="Fonds de placement" subtitle="CROISSANCE DU CAPITAL" />
+        <div style={{ flex: 1, display: "flex", gap: 64, alignItems: "center" }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 16, color: C.primaryDark, fontWeight: 600, marginBottom: 16, lineHeight: 1.6 }}>
+              {data.texts?.prevFondsIntro} <strong style={{ color: C.gold }}>{data.compagniePrevoyance || "Liechtenstein Life"}</strong>.
+            </div>
+            <EditableText editMode={editMode} value={data.texts?.strategieFonds} onChange={v => onTextChange("strategieFonds", v)} style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.8, padding: 24, background: C.lightGray, borderLeft: `4px solid ${C.primary}` }} />
+          </div>
+          <div style={{ width: 380 }}>
+            <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}>
+              <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 700, marginBottom: 16 }}>Répartition Cible</div>
+              {["Liquidités : 0 - 10%", "Obligations : 10 - 40%", "Actions : 50 - 90%", "Immobilier : 0 - 10%"].map((item, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: i===2 ? C.primary : C.gold }} />
+                  <span style={{ fontSize: 14, color: C.darkGray, fontWeight: i===2 ? 700 : 500 }}>{item}</span>
+                </div>
+              ))}
+              <div style={{ marginTop: 24, paddingTop: 16, borderTop: `1px solid ${C.lightGray}`, fontSize: 12, color: C.gray, fontStyle: "italic" }}>
+                *La pondération exacte dépend du profil de risque choisi : <strong>{data.profilRisque || "Équilibré"}</strong>.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideTOCPrevoyance({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const hidden = data.hiddenSlides || [];
+  const getPage = (origIdx) => { let count = 0; for(let i=0; i<=origIdx; i++) if(!hidden.includes(i)) count++; return count; };
+
+  let items = [
+    { title: "Qui sommes-nous ? Notre philosophie", origIdx: 2 },
+    { title: "Notre cabinet en chiffres", origIdx: 3 },
+    { title: "Résumé de votre situation personnelle", origIdx: 4 },
+    { title: "Le système des 3 piliers suisses", origIdx: 5 },
+    { title: "Avantages de la Prévoyance 3A/3B", origIdx: 6 },
+    { title: "Solution — Prévoyance & Assurance Vie", origIdx: 8 }, 
+    { title: "Couvertures de risque et garanties", origIdx: 9 },
+    { title: "Stratégie : Fonds de placement", origIdx: 10 },
+  ];
+  
+  let nextIdx = 11;
+  if (data.showPrevoyanceComparatif !== false) {
+      items.push({ title: "Comparatif banque commerciale & Assurance", origIdx: nextIdx++ });
+  }
+
+  if (data.profilRisque === "Dynamique") {
+      items.push({ title: "Détail Stratégie Dynamique & Performances", origIdx: nextIdx++ });
+  }
+  items.push({ title: "Comprendre la Valeur de Rachat", origIdx: nextIdx++ });
+  
+  if(data.optiFiscale) {
+      items.push({ title: "Impact & Optimisation Fiscale", origIdx: nextIdx++ });
+  }
+  items.push({ title: "Projections financières et capitalisation", origIdx: nextIdx++ });
+  items.push({ title: "Synthèse & Contact", origIdx: nextIdx });
+
+  items = items.filter(item => !hidden.includes(item.origIdx));
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Table des matières" subtitle="STRUCTURE DE VOTRE PRÉSENTATION" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 80, rowGap: 24, alignContent: "center", maxWidth: 1000, margin: "0" }}>
+          {items.map((item, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "flex-end", width: "100%", paddingBottom: 6 }}>
+              <span style={{ color: C.darkGray, fontSize: 15, fontWeight: 600, paddingBottom: 2 }}>
+                {item.title}
+              </span>
+              <div style={{ flex: 1, borderBottom: `2px dotted ${C.mediumGray}`, margin: "0 16px", position: "relative", top: -8 }} />
+              <span style={{ color: C.primary, fontSize: 16, fontWeight: 700, flexShrink: 0, paddingBottom: 2 }}>
+                {String(getPage(item.origIdx)).padStart(2, '0')}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceComparatif({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  
+  const rP_bank = 0.001; // 0.10%
+  const rR_bank = 0.005; // 0.50%
+  const rO_bank = 0.01;  // 1%
+  
+  const rP_ass = Number(data.tauxPessimistePrev || 2) / 100;
+  const rR_ass = Number(data.tauxRealistePrev || 4) / 100;
+  const rO_ass = Number(data.tauxOptimistePrev || 6) / 100;
+
+  const fixedYears = [0, 5, 10, 15]; // Simulation standard sur 15 ans
+  const baseCapital = 100000;
+  
+  const calcLumpSum = (rate, y) => baseCapital * Math.pow(1 + rate, y);
+
+  const bankData = fixedYears.map(y => ({
+    year: y,
+    pessimiste: calcLumpSum(rP_bank, y),
+    realiste: calcLumpSum(rR_bank, y),
+    optimiste: calcLumpSum(rO_bank, y)
+  }));
+  
+  const assData = fixedYears.map(y => ({
+    year: y,
+    pessimiste: calcLumpSum(rP_ass, y),
+    realiste: calcLumpSum(rR_ass, y),
+    optimiste: calcLumpSum(rO_ass, y)
+  }));
+
+  const colors = ["#9CA3AF", C.gold, C.primaryDark];
+  const formatPct = (val) => (val * 100).toFixed(1).replace('.0', '') + "%";
+
+  const renderChart = (title, dataArr, labels, isBank) => {
+    const svgW = 440; const svgH = 260;
+    const padL = 60; const padR = 20; const padT = 20; const padB = 30;
+    const w = svgW - padL - padR; const h = svgH - padT - padB;
+    
+    let gridSteps = [];
+    let gridMax = 100000;
+    
+    if (isBank) {
+      gridMax = 140000;
+      for(let i=0; i<=140000; i+=20000) gridSteps.push(i);
+    } else {
+      const maxObj = dataArr[dataArr.length-1].optimiste;
+      gridMax = Math.ceil(maxObj / 100000) * 100000 || 500000;
+      if (gridMax < 500000) gridMax = 500000;
+      const step = gridMax / 5;
+      for(let i=0; i<=gridMax; i+=step) gridSteps.push(i);
+    }
+    
+    const getX = (i) => padL + (i / (dataArr.length - 1)) * w;
+    const getY = (val) => padT + h - (val / gridMax) * h;
+
+    const dP = dataArr.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.pessimiste)}`).join(' ');
+    const dR = dataArr.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.realiste)}`).join(' ');
+    const dO = dataArr.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.optimiste)}`).join(' ');
+
+    return (
+      <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
+        <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 20, fontWeight: 700, color: C.primaryDark, marginBottom: 16, textAlign: "center", textTransform: "uppercase" }}>{title}</div>
+        <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 20, fontSize: 12, fontWeight: 500 }}>
+           <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: colors[0] }} /> Pessimiste {labels[0]}</div>
+           <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: colors[1] }} /> Réaliste {labels[1]}</div>
+           <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: colors[2] }} /> Optimiste {labels[2]}</div>
+        </div>
+        <svg width="100%" viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
+          {gridSteps.map(val => {
+            const y = getY(val);
+            return (
+              <g key={val}>
+                <line x1={padL} y1={y} x2={svgW - padR} y2={y} stroke="#E5E7EB" strokeWidth="1" />
+                <text x={padL - 10} y={y + 4} fontSize="11" fill="#374151" textAnchor="end">{val}</text>
+              </g>
+            );
+          })}
+          <line x1={padL} y1={getY(0)} x2={svgW - padR} y2={getY(0)} stroke="#E5E7EB" strokeWidth="1" />
+          {dataArr.map((r, i) => (
+            <text key={i} x={getX(i)} y={svgH - 5} fontSize="12" fill="#374151" textAnchor="middle">N+{r.year}</text>
+          ))}
+          <path d={dP} fill="none" stroke={colors[0]} strokeWidth="3" />
+          <path d={dR} fill="none" stroke={colors[1]} strokeWidth="3" />
+          <path d={dO} fill="none" stroke={colors[2]} strokeWidth="3" />
+          {dataArr.map((r, i) => (
+            <g key={i}>
+              <circle cx={getX(i)} cy={getY(r.pessimiste)} r="4" fill={colors[0]} />
+              <circle cx={getX(i)} cy={getY(r.realiste)} r="4" fill={colors[1]} />
+              <circle cx={getX(i)} cy={getY(r.optimiste)} r="4" fill={colors[2]} />
+            </g>
+          ))}
+        </svg>
+      </div>
+    );
+  };
+
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Comparatif banque commerciale &" highlight="ASSURANCE" />
+        <p style={{ fontSize: 14, color: C.darkGray, marginBottom: 40, lineHeight: 1.6 }}>
+          Ici, nous comparons le rendement actuel moyen des Prévoyances Individuelle en banque commerciale et en Assurance chez {data.compagniePrevoyance || "Liechtenstein"}. 3 scénarios de performances sont calculés pour chacune de ces solutions.
+        </p>
+        
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "flex-start" }}>
+          {renderChart("PROJECTIONS BANQUE COMMERCIALE*", bankData, ["0,10%", "0,50%", "1%"], true)}
+          {renderChart("PROJECTIONS ASSURANCE*", assData, [formatPct(rP_ass), formatPct(rR_ass), formatPct(rO_ass)], false)}
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceFondsDynamique({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  
+  const [fundPerformanceAPI, setFundPerformanceAPI] = useState(null);
+
+  useEffect(() => {
+    // 🔗 ÉTAPE 1 : Collez ici le lien CSV de votre Google Sheet publié
+    const googleSheetCsvUrl = "VOTRE_LIEN_GOOGLE_SHEET_CSV_ICI";
+
+    // Données de secours (affichées par défaut si le lien n'est pas configuré ou échoue)
+    const fallbackData = {
+      "IE00B5BMR087": { name: "iShares Core S&P 500 UCITS ETF", "3m": "+0.7%", "1y": "+16.7%", "3y": "+79.3%", "5y": "+91.5%", "10y": "+309.5%", "10y_ann": "+15.1%" },
+      "IE00B53SZB19": { name: "iShares NASDAQ 100 UCITS ETF", "3m": "-1.8%", "1y": "+19.8%", "3y": "+109.4%", "5y": "+96.8%", "10y": "+522.2%", "10y_ann": "+20.1%" },
+      "CH0237935637": { name: "iShares Swiss Dividend ETF (CH)", "3m": "-1.4%", "1y": "+4.1%", "3y": "+48.6%", "5y": "+72.0%", "10y": "+197.2%", "10y_ann": "+11.5%" },
+      "DE000A0S9GB0": { name: "Xetra-Gold ETC", "3m": "+7.2%", "1y": "+42.6%", "3y": "+116.7%", "5y": "+172.1%", "10y": "+258.1%", "10y_ann": "+13.6%" },
+      "LU0328475792": { name: "Xtrackers Stoxx Europe 600 UCITS ETF 1C", "3m": "-1.7%", "1y": "+7.1%", "3y": "+42.1%", "5y": "+55.6%", "10y": "+102.4%", "10y_ann": "+7.3%" }
+    };
+
+    if (!googleSheetCsvUrl || googleSheetCsvUrl === "VOTRE_LIEN_GOOGLE_SHEET_CSV_ICI") {
+      setFundPerformanceAPI(fallbackData);
+      return;
+    }
+
+    // Récupération des données depuis le Google Sheet
+    fetch(googleSheetCsvUrl)
+      .then(res => res.text())
+      .then(csv => {
+        // Parsing basique du CSV
+        const lines = csv.split('\n');
+        const parsedData = {};
+        
+        // On commence à i=1 pour ignorer la ligne d'en-tête du tableau Excel
+        for(let i = 1; i < lines.length; i++) {
+          if(!lines[i].trim()) continue;
+          // Séparation par virgules (Attention: Ne pas utiliser de virgules dans les noms des fonds sur le Sheet)
+          const row = lines[i].split(',');
+          if(row.length >= 8) {
+            const isin = row[0].trim();
+            parsedData[isin] = {
+              name: row[1]?.trim(),
+              "3m": row[2]?.trim(),
+              "1y": row[3]?.trim(),
+              "3y": row[4]?.trim(),
+              "5y": row[5]?.trim(),
+              "10y": row[6]?.trim(),
+              "10y_ann": row[7]?.trim(),
+            };
+          }
+        }
+        setFundPerformanceAPI(Object.keys(parsedData).length > 0 ? parsedData : fallbackData);
+      })
+      .catch(err => {
+        console.error("Erreur lecture Google Sheet CSV:", err);
+        setFundPerformanceAPI(fallbackData); 
+      });
+  }, []);
+
+  const funds = [
+    { isin: "IE00B5BMR087", weight: 30 },
+    { isin: "IE00B53SZB19", weight: 25 },
+    { isin: "CH0237935637", weight: 15 },
+    { isin: "DE000A0S9GB0", weight: 15 },
+    { isin: "LU0328475792", weight: 15 }
+  ];
+
+  // Calcul des moyennes pondérées du portefeuille
+  const parsePct = (str) => parseFloat((str || "0").replace("+", "").replace("%", "")) || 0;
+  const formatPct = (val) => (val > 0 ? "+" : "") + val.toFixed(1) + "%";
+  
+  const weightedAvg = { "3m": 0, "1y": 0, "3y": 0, "5y": 0, "10y": 0, "10y_ann": 0 };
+  
+  if (fundPerformanceAPI) {
+    funds.forEach(f => {
+      const apiData = fundPerformanceAPI[f.isin] || {};
+      const w = f.weight / 100;
+      Object.keys(weightedAvg).forEach(k => {
+        weightedAvg[k] += parsePct(apiData[k]) * w;
+      });
+    });
+  }
+
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Détail Stratégie" highlight="Dynamique" subtitle="RÉPARTITION ET PERFORMANCES HISTORIQUES" />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <p style={{ fontSize: 13, color: C.darkGray, marginBottom: 24 }}>Analyse des fonds sous-jacents composant votre portefeuille dynamique. Les rendements ci-dessous sont connectables en temps réel.</p>
+          
+          {!fundPerformanceAPI ? (
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.gray, fontSize: 14 }}>
+              Chargement des performances du marché en cours...
+            </div>
+          ) : (
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, textAlign: "left", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+              <thead>
+                <tr style={{ background: C.primary, color: C.white }}>
+                  <th style={{ padding: "12px 16px" }}>ISIN</th>
+                  <th style={{ padding: "12px 16px" }}>Nom du Fonds</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center" }}>Poids</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center" }}>3 Mois</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center" }}>1 An</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center" }}>3 Ans</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center" }}>5 Ans</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center" }}>10 Ans (Cumul)</th>
+                  <th style={{ padding: "12px 16px", textAlign: "center" }}>Moy. Annuelle</th>
+                </tr>
+              </thead>
+              <tbody>
+                {funds.map((f, i) => {
+                  const apiData = fundPerformanceAPI[f.isin] || { name: "Données indisponibles", "3m": "-", "1y": "-", "3y": "-", "5y": "-", "10y": "-", "10y_ann": "-" };
+                  return (
+                    <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white, borderBottom: `1px solid ${C.mediumGray}` }}>
+                      <td style={{ padding: "12px 16px", color: C.gray, fontFamily: "monospace" }}>{f.isin}</td>
+                      <td style={{ padding: "12px 16px", fontWeight: 700, color: C.primaryDark }}>{apiData.name}</td>
+                      <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.primary }}>{f.weight}%</td>
+                      <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["3m"]}</td>
+                      <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["1y"]}</td>
+                      <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["3y"]}</td>
+                      <td style={{ padding: "12px 16px", textAlign: "center", color: C.darkGray }}>{apiData["5y"]}</td>
+                      <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 700, color: C.darkGray }}>{apiData["10y"]}</td>
+                      <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.primary }}>{apiData["10y_ann"]}</td>
+                    </tr>
+                  );
+                })}
+                <tr style={{ background: "rgba(165,149,104,0.15)", borderTop: `2px solid ${C.gold}` }}>
+                  <td colSpan="2" style={{ padding: "12px 16px", fontWeight: 800, color: C.primaryDark, textAlign: "right", textTransform: "uppercase" }}>Moyenne Pondérée</td>
+                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 900, color: C.primary }}>100%</td>
+                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["3m"])}</td>
+                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["1y"])}</td>
+                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["3y"])}</td>
+                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 800, color: C.darkGray }}>{formatPct(weightedAvg["5y"])}</td>
+                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 900, color: C.darkGray }}>{formatPct(weightedAvg["10y"])}</td>
+                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 900, color: C.primary }}>{formatPct(weightedAvg["10y_ann"])}</td>
+                </tr>
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceRachat({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Comprendre la" highlight="Valeur de Rachat" subtitle="MÉCANISME DU PRODUIT RETRAITE" />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 64 }}>
+          <div style={{ flex: 1 }}>
+             <EditableText editMode={editMode} value={data.texts?.prevRachatP1} onChange={v => onTextChange("prevRachatP1", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 24 }} />
+             <ul style={{ paddingLeft: 20, margin: "0 0 24px 0", color: C.darkGray, fontSize: 13.5, lineHeight: 1.8 }}>
+               <li><strong>Mise en place des garanties :</strong> Une part de vos premiers versements est allouée à la création de votre bouclier financier (capital décès, libération des primes).</li>
+               <li><strong>Fondation du capital :</strong> Le reste est investi sur les marchés pour commencer à générer vos futurs rendements exponentiels.</li>
+             </ul>
+             <EditableText editMode={editMode} value={data.texts?.prevRachatP2} onChange={v => onTextChange("prevRachatP2", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.primary, textAlign: "justify", fontWeight: 600, margin: 0 }} />
+          </div>
+          <div style={{ width: 400, background: C.lightGray, padding: 32, borderLeft: `4px solid ${C.gold}` }}>
+            <div style={{ textAlign: "left", color: C.primary, fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Motifs de retrait anticipé (3A)</div>
+            <div style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, marginBottom: 12 }}>Bien que conçu pour la retraite, le capital peut être débloqué avant terme sous certaines conditions légales :</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", gap: 10 }}><span style={{ color: C.gold, fontWeight: 800 }}>✓</span><span style={{ fontSize: 12.5, color: C.darkGray }}>Achat de la résidence principale</span></div>
+              <div style={{ display: "flex", gap: 10 }}><span style={{ color: C.gold, fontWeight: 800 }}>✓</span><span style={{ fontSize: 12.5, color: C.darkGray }}>Départ définitif de la Suisse</span></div>
+              <div style={{ display: "flex", gap: 10 }}><span style={{ color: C.gold, fontWeight: 800 }}>✓</span><span style={{ fontSize: 12.5, color: C.darkGray }}>Lancement d'une activité indépendante</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePrevoyanceFiscalite({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Impact & Optimisation" highlight="Fiscale" subtitle="LE LEVIER DU PILIER 3A" />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 64 }}>
+          <div style={{ flex: 1 }}>
+             <EditableText editMode={editMode} value={data.texts?.prevFiscP1} onChange={v => onTextChange("prevFiscP1", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 24 }} />
+             <EditableText editMode={editMode} value={data.texts?.prevFiscP2} onChange={v => onTextChange("prevFiscP2", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
+          </div>
+          <div style={{ width: 400, background: C.white, border: `2px solid ${C.gold}`, padding: 32, boxShadow: "0 15px 35px rgba(0,0,0,0.05)" }}>
+            <div style={{ textAlign: "center", color: C.primary, fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 24 }}>Mécanisme de déduction</div>
+            
+            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `1px solid ${C.lightGray}`, paddingBottom: 12, marginBottom: 12 }}>
+              <span style={{ color: C.gray, fontSize: 13 }}>Revenu imposable initial</span>
+              <span style={{ color: C.darkGray, fontWeight: 600, fontSize: 13 }}>CHF {fmt(data.revenus || 120000)}.-</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `1px solid ${C.lightGray}`, paddingBottom: 12, marginBottom: 12 }}>
+              <span style={{ color: C.gold, fontSize: 13, fontWeight: 600 }}>Versement Pilier 3A Max (2025)</span>
+              <span style={{ color: C.gold, fontWeight: 700, fontSize: 13 }}>- CHF 7'258.-</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `2px solid ${C.primary}`, paddingBottom: 12, marginBottom: 16 }}>
+              <span style={{ color: C.primary, fontSize: 13, fontWeight: 700 }}>Nouveau revenu imposable</span>
+              <span style={{ color: C.primary, fontWeight: 800, fontSize: 14 }}>CHF {fmt(Number(data.revenus || 120000) - 7258)}.-</span>
+            </div>
+            
+            <div style={{ background: "rgba(105,33,2,0.05)", padding: 16, textAlign: "center", marginTop: 24 }}>
+               <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.05em", marginBottom: 8 }}>Économie d'impôt estimée par an</div>
+               <div style={{ fontSize: 28, color: C.primary, fontWeight: 900 }}>~ CHF {fmt(Math.round(7258 * 0.30))}.-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideProjectionsPrevoyance({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const rows = computeProjectionsPrevoyance(data);
+  const annual = Number(data.capaciteEpargne || 500) * 12;
+
+  // SVG Chart variables
+  const svgW = 480; const svgH = 240;
+  const padL = 60; const padR = 20; const padT = 20; const padB = 30;
+  const w = svgW - padL - padR; const h = svgH - padT - padB;
+  const maxVal = rows[rows.length-1].optimiste;
+  const gridMax = Math.ceil(maxVal / 50000) * 50000 || 150000;
+  
+  const getX = (i) => padL + (i / (rows.length - 1)) * w;
+  const getY = (val) => padT + h - (val / gridMax) * h;
+
+  const dInvested = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.invested)}`).join(' ');
+  const dPessimiste = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.pessimiste)}`).join(' ');
+  const dRealiste = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.realiste)}`).join(' ');
+  const dOptimiste = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.optimiste)}`).join(' ');
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Croissance de votre" highlight="Capital Prévoyance" subtitle={`PROJECTION JUSQU'À 65 ANS (${Math.max(1, 65 - (Number(data.age)||40))} ANS)`} />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 40, alignItems: "center", minHeight: 0 }}>
+          
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+             <p style={{ fontSize: 13, lineHeight: 1.6, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }}>
+              En investissant <strong>CHF {fmt(data.capaciteEpargne || 500)}.- / mois</strong>, voici la projection de votre capital à la retraite ({data.tauxPessimistePrev}% / {data.tauxRealistePrev}% / {data.tauxOptimistePrev}%), en tenant compte de l'effet des intérêts composés.
+            </p>
+
+            <div style={{ width: svgW, height: svgH, alignSelf: "center", background: C.white, border: `1px solid ${C.lightGray}`, padding: "10px 0" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
+                {/* Y Axis */}
+                {[0, 0.33, 0.66, 1].map(pct => {
+                  const y = padT + h - (pct * h);
+                  const val = Math.round(gridMax * pct);
+                  return (
+                    <g key={pct}>
+                      <line x1={padL} y1={y} x2={svgW - padR} y2={y} stroke="#E5E7EB" strokeWidth="1" strokeDasharray="4 4" />
+                      <text x={padL - 10} y={y + 4} fontSize="11" fill="#6B7280" textAnchor="end">{fmt(val)}</text>
+                    </g>
+                  );
+                })}
+                {/* X Axis */}
+                {rows.map((r, i) => (
+                  <text key={i} x={getX(i)} y={svgH - 5} fontSize="11" fill="#6B7280" textAnchor="middle">{r.age} ans</text>
+                ))}
+                
+                {/* Area under realiste */}
+                <path d={`${dRealiste} L ${getX(rows.length-1)} ${getY(0)} L ${getX(0)} ${getY(0)} Z`} fill="rgba(105,33,2,0.05)" />
+                
+                {/* Lines */}
+                <path d={dInvested} fill="none" stroke={C.gray} strokeWidth="2" strokeDasharray="6 4" />
+                <path d={dPessimiste} fill="none" stroke="#9CA3AF" strokeWidth="2" />
+                <path d={dRealiste} fill="none" stroke={C.primary} strokeWidth="3" />
+                <path d={dOptimiste} fill="none" stroke={C.gold} strokeWidth="2" />
+                
+                {/* Points Realiste */}
+                {rows.map((r, i) => (
+                  <g key={i}>
+                    <circle cx={getX(i)} cy={getY(r.invested)} r="3" fill={C.gray} />
+                    <circle cx={getX(i)} cy={getY(r.realiste)} r="5" fill={C.primary} stroke={C.white} strokeWidth="2" />
+                  </g>
+                ))}
+              </svg>
+            </div>
+            <div style={{ display: "flex", gap: 16, marginTop: 16, alignSelf: "center", fontSize: 11, fontWeight: 600 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 12, height: 2, background: C.gray, borderBottom: "2px dashed" }} /> Total Versé</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: "#9CA3AF" }} /> Pessimiste</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: C.primary }} /> Réaliste</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: C.gold }} /> Optimiste</div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, textAlign: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+              <thead>
+                <tr style={{ background: C.primary, color: C.white }}>
+                  <th style={{ padding: "10px 8px", fontWeight: 600 }}>Âge</th>
+                  <th style={{ padding: "10px 8px", fontWeight: 600 }}>Versé</th>
+                  <th style={{ padding: "10px 8px", fontWeight: 600 }}>Pessimiste</th>
+                  <th style={{ padding: "10px 8px", fontWeight: 600 }}>Réaliste</th>
+                  <th style={{ padding: "10px 8px", fontWeight: 600 }}>Optimiste</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.filter(r => r.year > 0).map((r, i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white }}>
+                    <td style={{ padding: "10px 8px", fontWeight: 700, color: C.primary, borderBottom: "1px solid #E5E3DE" }}>{r.age} ans</td>
+                    <td style={{ padding: "10px 8px", color: C.darkGray, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.invested)}</td>
+                    <td style={{ padding: "10px 8px", color: C.darkGray, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.pessimiste)}</td>
+                    <td style={{ padding: "10px 8px", fontWeight: 700, color: C.primary, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.realiste)}</td>
+                    <td style={{ padding: "10px 8px", fontWeight: 700, color: C.gold, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.optimiste)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {data.optiFiscale && (
+              <div style={{ marginTop: 12, background: "rgba(165,149,104,0.1)", padding: "8px 16px", border: `1px solid ${C.gold}`, color: C.primaryDark, fontSize: 11, fontWeight: 700 }}>
+                Gain Fiscal Cumulé à 65 ans : ~ CHF {fmt(rows[rows.length-1].taxSavings)}.-
+              </div>
+            )}
+            <p style={{ fontSize: 9, color: C.gray, marginTop: 12, lineHeight: 1.5, fontStyle: "italic", textAlign: "center" }}>
+              *Simulation non garantie à but illustratif. Les performances passées ne préjugent pas des résultats futurs.
+            </p>
+          </div>
+
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+// ────────────────────── SLIDES LPP (NOUVEAU MODÈLE) ──────────────────────
+
+function SlideTOCLPP({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const hidden = data.hiddenSlides || [];
+  const getPage = (origIdx) => { let count = 0; for(let i=0; i<=origIdx; i++) if(!hidden.includes(i)) count++; return count; };
+
+  const items = [
+    { title: "Qui sommes-nous ? Notre philosophie", origIdx: 2 },
+    { title: "Notre cabinet en chiffres", origIdx: 3 },
+    { title: "Résumé de votre situation personnelle", origIdx: 4 },
+    { title: "Les enjeux du 2ème Pilier (LPP)", origIdx: 5 },
+    { title: "Fonctionnement du Libre Passage", origIdx: 6 },
+    { title: "Votre Compte de Libre Passage", origIdx: 7 }, 
+    { title: `Votre Administrateur : ${data.administrateurLpp || "Pictet"}`, origIdx: 8 },
+    { title: "Avantages de l'investissement", origIdx: 9 },
+    { title: "Allocation d'actifs recommandée", origIdx: 10 },
+    { title: "Projections : Classique vs Investi", origIdx: 11 },
+    { title: "Synthèse & Contact", origIdx: 12 },
+  ].filter(item => !hidden.includes(item.origIdx));
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Table des matières" subtitle="STRUCTURE DE VOTRE PRÉSENTATION" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 80, rowGap: 24, alignContent: "center", maxWidth: 1000, margin: "0" }}>
+          {items.map((item, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "flex-end", width: "100%", paddingBottom: 6 }}>
+              <span style={{ color: C.darkGray, fontSize: 15, fontWeight: 600, paddingBottom: 2 }}>
+                {item.title}
+              </span>
+              <div style={{ flex: 1, borderBottom: `2px dotted ${C.mediumGray}`, margin: "0 16px", position: "relative", top: -8 }} />
+              <span style={{ color: C.primary, fontSize: 16, fontWeight: 700, flexShrink: 0, paddingBottom: 2 }}>
+                {String(getPage(item.origIdx)).padStart(2, '0')}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideLPPIntro({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Les enjeux du" highlight="2ème Pilier (LPP)" subtitle="LE DÉFI DE VOTRE RETRAITE" />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 64 }}>
+          <div style={{ flex: 1 }}>
+             <EditableText editMode={editMode} value={data.texts?.lppIntroP1} onChange={v => onTextChange("lppIntroP1", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 24 }} />
+             <EditableText editMode={editMode} value={data.texts?.lppIntroP2} onChange={v => onTextChange("lppIntroP2", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 24 }} />
+             <EditableText editMode={editMode} value={data.texts?.lppIntroP3} onChange={v => onTextChange("lppIntroP3", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.primary, fontWeight: 600, textAlign: "justify", margin: 0 }} />
+          </div>
+          <div style={{ width: 420, background: C.lightGray, borderTop: `4px solid ${C.primary}`, padding: 32, boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: C.primaryDark, marginBottom: 16 }}>La baisse du taux de conversion</div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 12 }}>
+              <div style={{ fontSize: 48, fontWeight: 900, color: C.primary, lineHeight: 1 }}>6.8%</div>
+              <div style={{ fontSize: 12, color: C.gray, textTransform: "uppercase", fontWeight: 700 }}>Taux légal minimum actuel</div>
+            </div>
+            <div style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, textAlign: "justify" }}>
+              Ce taux définit le montant de votre rente. Pour 100'000 CHF de capital, vous touchez 6'800 CHF/an. Cependant, la partie "surobligatoire" (la majorité de votre capital) est souvent soumise à un taux bien plus bas (parfois &lt; 5.0%), réduisant drastiquement votre niveau de vie futur.
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideLPPFonctionnement({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Fonctionnement du" highlight="Libre Passage" subtitle="REPRENEZ LE CONTRÔLE DE VOTRE ÉPARGNE" />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 64 }}>
+          <div style={{ flex: 1 }}>
+             <EditableText editMode={editMode} value={data.texts?.lppFonctP1} onChange={v => onTextChange("lppFonctP1", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 24 }} />
+             <EditableText editMode={editMode} value={data.texts?.lppFonctP2} onChange={v => onTextChange("lppFonctP2", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 24 }} />
+             <EditableText editMode={editMode} value={data.texts?.lppFonctP3} onChange={v => onTextChange("lppFonctP3", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.primary, fontWeight: 600, textAlign: "justify", margin: 0 }} />
+          </div>
+          <div style={{ width: 420, display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: "16px 24px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+              <div style={{ opacity: 0.5, color: C.darkGray }}><Icons.Building size={32} /></div>
+              <div>
+                <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em", marginBottom: 4 }}>Avant</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: C.darkGray }}>Caisse de pension</div>
+                <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>Géré collectivement, rendement dicté par la caisse.</div>
+              </div>
+            </div>
+            <div style={{ textAlign: "center", color: C.gold, fontSize: 20 }}>↓</div>
+            <div style={{ background: C.white, border: `2px solid ${C.gold}`, padding: "16px 24px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 10px 30px rgba(165,149,104,0.15)" }}>
+              <div style={{ opacity: 0.8, color: C.gold }}><Icons.Bank size={32} /></div>
+              <div>
+                <div style={{ fontSize: 11, color: C.gold, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em", marginBottom: 4 }}>Aujourd'hui</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: C.primaryDark }}>Compte de Maintien</div>
+                <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>Dort sur un compte, rendement quasi nul.</div>
+              </div>
+            </div>
+            <div style={{ textAlign: "center", color: C.primary, fontSize: 20 }}>↓</div>
+            <div style={{ background: C.primary, color: C.white, padding: "16px 24px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 10px 30px rgba(105,33,2,0.2)" }}>
+              <div style={{ color: C.white }}><Icons.TrendUp size={32} /></div>
+              <div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em", marginBottom: 4 }}>Notre Solution</div>
+                <div style={{ fontSize: 15, fontWeight: 800 }}>Libre Passage Investi</div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", marginTop: 4 }}>Géré selon votre profil, rendement du marché.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideLPPLibrePassage({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Le Compte de" highlight="Libre Passage" subtitle="DYNAMISATION DU CAPITAL DORMANT" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
+          <div>
+            <EditableText editMode={editMode} value={data.texts?.lppLibreP1} onChange={v => onTextChange("lppLibreP1", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }} />
+            <EditableText editMode={editMode} value={data.texts?.lppLibreP2} onChange={v => onTextChange("lppLibreP2", v)} style={{ fontSize: 13.5, lineHeight: 1.8, color: C.darkGray, margin: "0 0 24px", textAlign: "justify" }} />
+            <div style={{ background: C.lightGray, padding: 20, borderLeft: `4px solid ${C.primary}` }}>
+              <div style={{ fontSize: 12, color: C.gray, textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Votre Capital Libre Passage</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: C.primary }}>CHF {fmt(Number(data.capitalLibrePassage || 120000))}.-</div>
+            </div>
+          </div>
+          <div style={{ background: C.primary, padding: 32, display: "flex", flexDirection: "column", justifyContent: "center", borderRadius: "0px", boxShadow: "0 10px 30px rgba(105,33,2,0.15)", color: C.white, height: "100%" }}>
+            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 24, textAlign: "center" }}>Stratégie d'investissement</div>
+            <div style={{ display: "grid", gap: 16 }}>
+              <div style={{ background: "rgba(255,255,255,0.1)", padding: "16px", display: "flex", alignItems: "center", gap: 16 }}>
+                <span style={{ color: C.white }}><Icons.TrendUp size={24} /></span>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>Profil sélectionné</div>
+                  <div style={{ fontSize: 12, color: C.gold }}>{data.profilRisque || "Dynamique"}</div>
+                </div>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.1)", padding: "16px", display: "flex", alignItems: "center", gap: 16 }}>
+                <span style={{ color: C.white }}><Icons.Bank size={24} /></span>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>Administrateur / Fondation</div>
+                  <div style={{ fontSize: 12, color: C.gold }}>{data.administrateurLpp || "Pictet"}</div>
+                </div>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.1)", padding: "16px", display: "flex", alignItems: "center", gap: 16 }}>
+                <span style={{ color: C.white }}><Icons.Shield size={24} /></span>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>Sécurité</div>
+                  <div style={{ fontSize: 12, color: C.gold }}>Avoirs hors bilan bancaire</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideLPPAllocation({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const profil = data.profilRisque || "Équilibré";
+  
+  let actions = data.lppActions !== undefined && data.lppActions !== "" ? Number(data.lppActions) : (profil === "Prudent" ? 25 : profil === "Dynamique" ? 65 : profil === "Offensif" ? 85 : 45);
+  let oblig = data.lppOblig !== undefined && data.lppOblig !== "" ? Number(data.lppOblig) : (profil === "Prudent" ? 65 : profil === "Dynamique" ? 25 : profil === "Offensif" ? 10 : 45);
+  let immo = data.lppImmo !== undefined && data.lppImmo !== "" ? Number(data.lppImmo) : (profil === "Prudent" ? 10 : profil === "Dynamique" ? 10 : profil === "Offensif" ? 5 : 10);
+  
+  const total = actions + oblig + immo || 1;
+  const aPct = (actions/total)*100;
+  const oPct = (oblig/total)*100;
+  const iPct = (immo/total)*100;
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Allocation d'actifs recommandée" highlight={`Profil ${profil}`} subtitle="RÉPARTITION DE VOTRE LIBRE PASSAGE" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            <p style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }}>
+              Afin de générer un rendement optimal tout en maîtrisant la volatilité, votre capital de libre passage sera réparti selon votre tolérance au risque.
+            </p>
+            <div style={{ background: C.lightGray, padding: 24, borderLeft: `4px solid ${C.primary}` }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.primary, marginBottom: 8 }}>{actions}% Actions mondiales</div>
+              <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.5 }}>Moteur de performance à long terme, participation à la croissance économique globale.</div>
+            </div>
+            <div style={{ background: C.lightGray, padding: 24, borderLeft: `4px solid ${C.gold}` }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.gold, marginBottom: 8 }}>{oblig}% Obligations & Revenu fixe</div>
+              <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.5 }}>Amortisseur de volatilité, génère des rendements stables et sécurise le portefeuille.</div>
+            </div>
+            <div style={{ background: C.lightGray, padding: 24, borderLeft: `4px solid ${C.darkGray}` }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.darkGray, marginBottom: 8 }}>{immo}% Immobilier & Liquidités</div>
+              <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.5 }}>Protection contre l'inflation et diversification des classes d'actifs.</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+             <div style={{ width: 280, height: 280, position: "relative", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                <svg viewBox="0 0 48 48" style={{ width: "100%", height: "100%", transform: "rotate(-90deg)", filter: "drop-shadow(0 10px 15px rgba(0,0,0,0.1))", overflow: "visible" }}>
+                  <circle r="24" cx="24" cy="24" fill="white" />
+                  <circle r="15.9155" cx="24" cy="24" fill="transparent" stroke={C.primary} strokeWidth="16" strokeDasharray={`${aPct} 100`} />
+                  <circle r="15.9155" cx="24" cy="24" fill="transparent" stroke={C.gold} strokeWidth="16" strokeDasharray={`${oPct} 100`} strokeDashoffset={`-${aPct}`} />
+                  <circle r="15.9155" cx="24" cy="24" fill="transparent" stroke={C.darkGray} strokeWidth="16" strokeDasharray={`${iPct} 100`} strokeDashoffset={`-${aPct + oPct}`} />
+                  <circle r="14" cx="24" cy="24" fill="white" />
+                </svg>
+                <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: C.primaryDark }}>100%</div>
+                  <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Investi</div>
+                </div>
+             </div>
+             <div style={{ display: "flex", gap: 16, marginTop: 24, justifyContent: "center" }}>
+               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 700, color: C.darkGray }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.primary }}/> Actions</div>
+               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 700, color: C.darkGray }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.gold }}/> Obligations</div>
+               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 700, color: C.darkGray }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.darkGray }}/> Immo/Liq.</div>
+             </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideLPPAdministrateur({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const admin = data.administrateurLpp || "Pictet";
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title={`Votre Administrateur :`} highlight={admin} subtitle="SÉCURITÉ & GOUVERNANCE INSTITUTIONNELLE" />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 64 }}>
+          <div style={{ flex: 1 }}>
+             <EditableText editMode={editMode} value={data.texts?.lppAdminP1} onChange={v => onTextChange("lppAdminP1", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", marginBottom: 24 }} />
+             <EditableText editMode={editMode} value={data.texts?.lppAdminP2} onChange={v => onTextChange("lppAdminP2", v)} style={{ fontSize: 14, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
+          </div>
+          <div style={{ width: 400, background: C.white, border: `1px solid ${C.mediumGray}`, padding: 40, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.05)", minHeight: 280 }}>
+            <div style={{ fontSize: 28, fontWeight: 900, color: C.primary, marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.05em" }}>{admin}</div>
+            <div style={{ width: 40, height: 3, background: C.gold, marginBottom: 24 }} />
+            <div style={{ fontSize: 13, color: C.gray, textAlign: "center", lineHeight: 1.6 }}>
+              Une institution financière suisse renommée, spécialisée dans la gestion institutionnelle et le respect absolu du cadre légal OPP2.
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideLPPAvantagesCLP({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Avantages de l'investissement" highlight="sur les marchés" subtitle="POURQUOI NE PAS LAISSER SON CAPITAL DORMIR" />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 32 }}>
+          
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr", gap: 64, alignItems: "center" }}>
+             <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                <EditableText editMode={editMode} value={data.texts?.lppAvantagesP1} onChange={v => onTextChange("lppAvantagesP1", v)} style={{ fontSize: 14.5, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
+                <div style={{ width: 60, height: 3, background: C.gold }} />
+                <EditableText editMode={editMode} value={data.texts?.lppAvantagesP2} onChange={v => onTextChange("lppAvantagesP2", v)} style={{ fontSize: 14.5, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
+             </div>
+             
+             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+               <div style={{ display: "flex", gap: 20, alignItems: "flex-start", background: C.white, border: `1px solid ${C.mediumGray}`, padding: "24px", boxShadow: "0 10px 30px rgba(0,0,0,0.03)" }}>
+                  <div style={{ color: C.primary, background: "rgba(105,33,2,0.06)", padding: 12, borderRadius: "50%", flexShrink: 0 }}><Icons.TrendUp size={28} /></div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: C.primaryDark, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Contre l'inflation</div>
+                    <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.6 }}>L'investissement en actions/obligations maintient le pouvoir d'achat de votre retraite à long terme.</div>
+                  </div>
+               </div>
+               
+               <div style={{ display: "flex", gap: 20, alignItems: "flex-start", background: C.white, border: `1px solid ${C.mediumGray}`, padding: "24px", boxShadow: "0 10px 30px rgba(0,0,0,0.03)" }}>
+                  <div style={{ color: C.gold, background: "rgba(165,149,104,0.1)", padding: 12, borderRadius: "50%", flexShrink: 0 }}><Icons.Shield size={28} /></div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: C.primaryDark, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Protection de la famille</div>
+                    <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.6 }}>Libre désignation des bénéficiaires en cas de décès (au sein du cadre légal OPP2).</div>
+                  </div>
+               </div>
+
+               <div style={{ display: "flex", gap: 20, alignItems: "flex-start", background: C.white, border: `1px solid ${C.mediumGray}`, padding: "24px", boxShadow: "0 10px 30px rgba(0,0,0,0.03)" }}>
+                  <div style={{ color: C.darkGray, background: C.lightGray, padding: 12, borderRadius: "50%", flexShrink: 0 }}><Icons.PieChart size={28} /></div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: C.primaryDark, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Gestion sur-mesure</div>
+                    <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.6 }}>Une architecture ouverte permettant de sélectionner les meilleurs gérants mondiaux selon votre profil.</div>
+                  </div>
+               </div>
+             </div>
+          </div>
+
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideLPPProjections({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const rows = computeProjectionsLPP(data);
+  const initial = Number(data.capitalLibrePassage || 120000);
+  const fee = rows.length > 0 ? rows[0].fee : 1;
+
+  // SVG Chart variables
+  const svgW = 480; const svgH = 240;
+  const padL = 70; const padR = 20; const padT = 20; const padB = 30;
+  const w = svgW - padL - padR; const h = svgH - padT - padB;
+  const maxVal = rows[rows.length-1].clp;
+  const gridMax = Math.ceil(maxVal / 50000) * 50000 || 200000;
+  
+  const getX = (i) => padL + (i / (rows.length - 1)) * w;
+  const getY = (val) => padT + h - (val / gridMax) * h;
+
+  const dSupletive = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.supletive)}`).join(' ');
+  const dClassic = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.classic)}`).join(' ');
+  const dCLP = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.clp)}`).join(' ');
+
+  const rateCLPDisplay = (rows[0].rateCLP * 100).toFixed(1);
+  const netInitial = initial - (initial * fee / 100);
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Projections :" highlight="Classique vs Libre Passage" subtitle={`SIMULATION JUSQU'À 65 ANS (${Math.max(1, 65 - (Number(data.age)||40))} ANS)`} />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 40, alignItems: "center", minHeight: 0 }}>
+          
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+             <p style={{ fontSize: 12.5, lineHeight: 1.6, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }}>
+              Comparaison de l'évolution de votre capital de <strong>CHF {fmt(initial)}.-</strong> s'il est placé sur une Fondation Institutionnelle Supplétive (~0.05% net/an), s'il reste sur un compte de fondation classique (~1% net/an) ou s'il est investi sur les marchés via un <strong>Compte de libre passage WallSwiss</strong> (profil <strong>{data.profilRisque || "Dynamique"}</strong>, ~{rateCLPDisplay}% net/an).<br/>
+              <span style={{ fontSize: 11, color: C.primary, fontWeight: 600 }}>
+                *Des droits d'entrée de {fee}% (soit CHF {fmt(initial * fee / 100)}.-) sont déduits du capital initial, portant le montant net investi à CHF {fmt(netInitial)}.- pour la simulation WallSwiss.
+              </span>
+            </p>
+
+            <div style={{ width: svgW, height: svgH, alignSelf: "center", background: C.white, border: `1px solid ${C.lightGray}`, padding: "10px 0" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
+                {/* Y Axis */}
+                {[0, 0.33, 0.66, 1].map(pct => {
+                  const y = padT + h - (pct * h);
+                  const val = Math.round(gridMax * pct);
+                  return (
+                    <g key={pct}>
+                      <line x1={padL} y1={y} x2={svgW - padR} y2={y} stroke="#E5E7EB" strokeWidth="1" strokeDasharray="4 4" />
+                      <text x={padL - 10} y={y + 4} fontSize="11" fill="#6B7280" textAnchor="end">{fmt(val)}</text>
+                    </g>
+                  );
+                })}
+                {/* X Axis */}
+                {rows.map((r, i) => (
+                  <text key={i} x={getX(i)} y={svgH - 5} fontSize="11" fill="#6B7280" textAnchor="middle">{r.age} ans</text>
+                ))}
+                
+                {/* Area under CLP */}
+                <path d={`${dCLP} L ${getX(rows.length-1)} ${getY(0)} L ${getX(0)} ${getY(0)} Z`} fill="rgba(105,33,2,0.05)" />
+                
+                {/* Lines */}
+                <path d={dSupletive} fill="none" stroke="#D1D5DB" strokeWidth="2" strokeDasharray="4 4" />
+                <path d={dClassic} fill="none" stroke={C.gray} strokeWidth="2" />
+                <path d={dCLP} fill="none" stroke={C.primary} strokeWidth="3" />
+                
+                {/* Points */}
+                {rows.map((r, i) => (
+                  <g key={i}>
+                    <circle cx={getX(i)} cy={getY(r.supletive)} r="3" fill="#D1D5DB" />
+                    <circle cx={getX(i)} cy={getY(r.classic)} r="3" fill={C.gray} />
+                    <circle cx={getX(i)} cy={getY(r.clp)} r="5" fill={C.primary} stroke={C.white} strokeWidth="2" />
+                  </g>
+                ))}
+              </svg>
+            </div>
+            <div style={{ display: "flex", gap: 16, marginTop: 16, alignSelf: "center", fontSize: 11, fontWeight: 600 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 12, height: 2, borderBottom: "2px dashed #D1D5DB" }} /> Fondation Supplétive (0.05%)</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 12, height: 2, background: C.gray }} /> Compte Classique (~1%)</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.primary }} /> Libre Passage WallSwiss</div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5, textAlign: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+              <thead>
+                <tr style={{ background: C.primary, color: C.white }}>
+                  <th style={{ padding: "12px 6px", fontWeight: 600 }}>Âge</th>
+                  <th style={{ padding: "12px 6px", fontWeight: 600 }}>Fondation<br/>Supplétive</th>
+                  <th style={{ padding: "12px 6px", fontWeight: 600 }}>Compte<br/>Classique</th>
+                  <th style={{ padding: "12px 6px", fontWeight: 600 }}>Libre Passage<br/>WallSwiss<br/><span style={{fontSize: 9, opacity: 0.8}}>(net de frais)</span></th>
+                  <th style={{ padding: "12px 6px", fontWeight: 600 }}>Différence<br/>(WS - Classique)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white }}>
+                    <td style={{ padding: "10px 6px", fontWeight: 700, color: C.primary, borderBottom: "1px solid #E5E3DE" }}>{i === 0 ? "Aujourd'hui" : `${r.age} ans`}</td>
+                    <td style={{ padding: "10px 6px", color: C.gray, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.supletive)}</td>
+                    <td style={{ padding: "10px 6px", color: C.darkGray, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.classic)}</td>
+                    <td style={{ padding: "10px 6px", fontWeight: 700, color: C.primary, borderBottom: "1px solid #E5E3DE" }}>{fmt(r.clp)}</td>
+                    <td style={{ padding: "10px 6px", fontWeight: 700, color: r.clp - r.classic >= 0 ? C.gold : "#EF4444", borderBottom: "1px solid #E5E3DE" }}>
+                      {r.clp - r.classic > 0 ? "+ " : ""}
+                      {fmt(r.clp - r.classic)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            
+            <div style={{ marginTop: 20, background: "rgba(165,149,104,0.1)", padding: "12px 20px", border: `1px solid ${C.gold}`, color: C.primaryDark, fontSize: 12, fontWeight: 700, textAlign: "center", width: "100%", boxSizing: "border-box" }}>
+              Manque à gagner évité à 65 ans :<br/>
+              <span style={{ fontSize: 20, color: C.primary, marginTop: 4, display: "block" }}>CHF {fmt(rows[rows.length-1].clp - rows[rows.length-1].classic)}.-</span>
+            </div>
+
+            <p style={{ fontSize: 9, color: C.gray, marginTop: 12, lineHeight: 1.5, fontStyle: "italic", textAlign: "center" }}>
+              *Simulation non garantie à but illustratif. Les rendements d'investissement sont estimés nets de frais de gestion selon le profil choisi.
+            </p>
+          </div>
+
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+// ────────────────────── SLIDES ASSURANCE VIE & PER ──────────────────────
+
+function SlideTOCAssuranceVie({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const hidden = data.hiddenSlides || [];
+  const getPage = (origIdx) => { let count = 0; for(let i=0; i<=origIdx; i++) if(!hidden.includes(i)) count++; return count; };
+
+  let items = [
+    { title: "Qui sommes-nous ? Notre philosophie", origIdx: 2 },
+    { title: "Notre cabinet en chiffres", origIdx: 3 },
+    { title: "Résumé de votre situation personnelle", origIdx: 4 },
+    { title: "Les solutions de l'assurance-vie", origIdx: 5 },
+    { title: "Le plan épargne retraite, son fonctionnement", origIdx: 6 },
+    { title: "La fiscalité de l'assurance-vie", origIdx: 7 },
+    { title: "Gestion de votre portefeuille", origIdx: 8 },
+    { title: "Projections financières", origIdx: 9 },
+  ];
+  
+  let nextIdx = 10;
+  if (data.hasProjectionsMultiples) {
+    items.push({ title: "Projections financières (Scénario 2)", origIdx: nextIdx++ });
+  }
+  items.push({ title: "Synthèse & Contact", origIdx: nextIdx });
+
+  items = items.filter(item => !hidden.includes(item.origIdx));
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Table des matières" subtitle="STRUCTURE DE VOTRE PRÉSENTATION" />
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 80, rowGap: 24, alignContent: "center", maxWidth: 1000, margin: "0" }}>
+          {items.map((item, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "flex-end", width: "100%", paddingBottom: 6 }}>
+              <span style={{ color: C.darkGray, fontSize: 15, fontWeight: 600, paddingBottom: 2 }}>
+                {item.title}
+              </span>
+              <div style={{ flex: 1, borderBottom: `2px dotted ${C.mediumGray}`, margin: "0 16px", position: "relative", top: -8 }} />
+              <span style={{ color: C.primary, fontSize: 16, fontWeight: 700, flexShrink: 0, paddingBottom: 2 }}>
+                {String(getPage(item.origIdx)).padStart(2, '0')}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideAvSolutions({ data, editMode, onTextChange }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {logoCorner()}
+      <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Les solutions de" highlight="l'assurance-vie" subtitle="LE PLACEMENT PRÉFÉRÉ DES FRANÇAIS" />
+        <div style={{ flex: 1, display: "flex", gap: 64, alignItems: "center" }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
+            <EditableText editMode={editMode} value={data.texts?.avSolutionsP1} onChange={v => onTextChange("avSolutionsP1", v)} style={{ fontSize: 14.5, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
+            <div style={{ width: 60, height: 3, background: C.gold }} />
+            <EditableText editMode={editMode} value={data.texts?.avSolutionsP2} onChange={v => onTextChange("avSolutionsP2", v)} style={{ fontSize: 14.5, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
+          </div>
+          <div style={{ width: 400, height: 300, background: C.lightGray, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.05)", position: "relative", overflow: "hidden" }}>
+            <img src="/image page3.jpg" alt="Assurance Vie" className="pdf-image" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.9 }} />
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(105,33,2,0.85)", color: C.white, padding: "16px", textAlign: "center", fontWeight: 700, fontSize: 14 }}>
+              + de 2 000 Milliards d'Euros d'encours
+            </div>
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlidePERFonctionnement({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  return (
+    <div style={slideBase}>
+      {/* On retire l'accentBar pour laisser la bannière en bas s'afficher sur toute la largeur */}
+      {logoCorner()}
+      <div style={{ padding: "40px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Le plan épargne retraite," highlight="son fonctionnement" />
+
+        <div style={{ flex: 1, position: "relative", marginTop: 40 }}>
+           {/* SVG Graph de la ligne de temps et de l'arc */}
+           <svg viewBox="0 0 1000 300" style={{ position: "absolute", top: 0, left: -20, width: "1060px", height: "300px", overflow: "visible" }}>
+             {/* Arc principal */}
+             <path d="M 60 200 Q 500 -50 930 180" fill="none" stroke={C.gold} strokeWidth="5" />
+             <polygon points="920,172 940,185 918,190" fill={C.gold} />
+
+             {/* Ligne horizontale */}
+             <line x1="20" y1="220" x2="940" y2="220" stroke={C.gold} strokeWidth="5" />
+             <polygon points="930,210 950,220 930,230" fill={C.gold} />
+
+             {/* Grosse flèche de départ */}
+             <path d="M 30 120 L 70 120 L 70 180 L 90 180 L 50 220 L 10 180 L 30 180 Z" fill={C.primaryDark} />
+           </svg>
+
+           {/* Textes en surimpression (HTML pour faciliter le formatage) */}
+           <div style={{ position: "absolute", top: -20, width: "100%", textAlign: "center", fontSize: 20, color: C.black, fontWeight: 500 }}>
+             Hors droits de succession + insaisissable
+           </div>
+
+           <div style={{ position: "absolute", top: 230, left: 30, fontSize: 20, fontWeight: 500 }}>0</div>
+           <div style={{ position: "absolute", top: 260, left: 30, color: C.primaryDark, fontWeight: 800, fontSize: 16 }}>
+             + Garantie plancher décès
+           </div>
+
+           {/* Boîte 1 : Versements libres */}
+           <div style={{ position: "absolute", top: 100, left: 240 }}>
+             <div style={{ background: C.primaryDark, color: C.white, padding: "16px 32px", fontWeight: 700, fontSize: 16 }}>
+               Versement libres
+             </div>
+             <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 10px" }}>
+                <svg width="24" height="24" viewBox="0 0 100 100" style={{ transform: "rotate(-45deg)" }}>
+                  <path d="M 10 40 L 60 40 L 60 20 L 90 50 L 60 80 L 60 60 L 10 60 Z" fill="#9CA3AF" />
+                </svg>
+                <svg width="24" height="24" viewBox="0 0 100 100" style={{ transform: "rotate(45deg)", marginTop: 16 }}>
+                  <path d="M 10 40 L 60 40 L 60 20 L 90 50 L 60 80 L 60 60 L 10 60 Z" fill="#9CA3AF" />
+                </svg>
+             </div>
+           </div>
+
+           {/* Repère 8 ans */}
+           <div style={{ position: "absolute", top: 230, left: 500, transform: "translateX(-50%)", fontSize: 22, fontWeight: 500 }}>
+             8 ans
+           </div>
+
+           {/* Boîte 2 : Verser / Retirer librement */}
+           <div style={{ position: "absolute", top: 80, left: 600 }}>
+             <div style={{ background: C.primaryDark, color: C.white, padding: "16px 32px", fontWeight: 700, fontSize: 16, textAlign: "center", lineHeight: 1.4 }}>
+               Verser / retirer<br/>librement
+             </div>
+             <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 10px" }}>
+                <svg width="24" height="24" viewBox="0 0 100 100" style={{ transform: "rotate(-45deg)" }}>
+                  <path d="M 10 40 L 60 40 L 60 20 L 90 50 L 60 80 L 60 60 L 10 60 Z" fill="#9CA3AF" />
+                </svg>
+                <svg width="24" height="24" viewBox="0 0 100 100" style={{ transform: "rotate(45deg)", marginTop: 16 }}>
+                  <path d="M 10 40 L 60 40 L 60 20 L 90 50 L 60 80 L 60 60 L 10 60 Z" fill="#9CA3AF" />
+                </svg>
+             </div>
+           </div>
+
+           <div style={{ position: "absolute", top: 260, left: 570, color: C.primaryDark, fontWeight: 800, fontSize: 16, maxWidth: 220, lineHeight: 1.4 }}>
+             + Optimisation et avantages fiscaux sur les plus values
+           </div>
+
+           <div style={{ position: "absolute", top: 260, left: 810, color: C.primaryDark, fontWeight: 800, fontSize: 16, width: 250 }}>
+             + Disponibilité du capital
+             <ul style={{ color: C.primaryDark, fontWeight: 600, fontSize: 13, marginTop: 8, paddingLeft: 16, lineHeight: 1.6 }}>
+               <li>rachat partiel</li>
+               <li>rachat partiel programmé</li>
+               <li>rachat total</li>
+               <li>rentes viagères</li>
+             </ul>
+           </div>
+        </div>
+      </div>
+
+      {/* Bannière "Nos partenaires" (au dessus du footer) */}
+      <div style={{ position: "absolute", bottom: 40, left: 0, right: 0, height: 70, background: "#9CA3AF", display: "flex", alignItems: "center", padding: "0 80px", gap: 32 }}>
+        <div style={{ fontSize: 22, color: C.white, fontWeight: 500 }}>Nos partenaires</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Logo vectorisé d'approximation de SwissLife pour éviter les problèmes d'import d'image dans le PDF */}
+          <svg width="32" height="32" viewBox="0 0 100 100">
+             <path d="M 10 90 Q 50 10 90 10 Q 70 50 100 90 Z" fill="#E3000F" />
+             <rect x="55" y="45" width="20" height="6" fill="white" />
+             <rect x="62" y="38" width="6" height="20" fill="white" />
+          </svg>
+          <div style={{ color: C.darkGray, fontSize: 20, fontWeight: 500, fontFamily: "Arial, sans-serif" }}>SwissLife</div>
+        </div>
+      </div>
+
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideAvFiscalite({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const blueTitle = "#4A5C8C"; // Couleur bleue spécifique à cette slide d'après l'image
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "40px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="La fiscalité de" highlight="l'assurance-vie" />
+
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 32, marginTop: 10 }}>
+
+          {/* BLOC 1 : Avant 2017 */}
+          <div>
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <div style={{ color: blueTitle, fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Fiscalité sur les intérêts des sommes versées :</div>
+              <div style={{ color: blueTitle, fontSize: 24, fontWeight: 800 }}>Avant le 27 Septembre 2017</div>
+            </div>
+
+            <div style={{ position: "relative", height: 100 }}>
+              <svg viewBox="0 0 1000 100" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", overflow: "visible" }}>
+                <line x1="50" y1="50" x2="940" y2="50" stroke={C.gold} strokeWidth="6" />
+                <polygon points="930,40 950,50 930,60" fill={C.gold} />
+
+                <polygon points="50,50 64,50 57,30" fill={C.primaryDark} />
+                <polygon points="300,50 314,50 307,30" fill={C.primaryDark} />
+                <polygon points="550,50 564,50 557,30" fill={C.primaryDark} />
+              </svg>
+              
+              <div style={{ position: "absolute", top: 10, left: 230, fontSize: 13, color: C.black }}>Date d'ouverture 4 ans</div>
+
+              <div style={{ position: "absolute", top: 60, left: 130, fontSize: 13, color: C.black }}>35% (ou IR) + 17,2%</div>
+              <div style={{ position: "absolute", top: 60, left: 350, fontSize: 13, color: C.black }}>15% (ou IR) + 17,2%</div>
+              <div style={{ position: "absolute", top: 60, left: 565, fontSize: 13, color: C.black, lineHeight: 1.5 }}>
+                7,5% (après abattement de 9200 € pour un couple ou<br/>
+                4600€ pour une personne seule sur la base imposable)<br/>
+                + 17,2 PS ( sans abattement )
+              </div>
+            </div>
+          </div>
+
+          {/* BLOC 2 : Après 2017 */}
+          <div>
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <div style={{ color: blueTitle, fontSize: 24, fontWeight: 800 }}>Après le 27 Septembre 2017</div>
+            </div>
+
+            {/* Timeline > 150k */}
+            <div style={{ position: "relative", height: 90 }}>
+              <div style={{ position: "absolute", top: 0, left: 50, fontSize: 13, color: C.black }}>Date d'ouverture</div>
+              <svg viewBox="0 0 1000 90" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", overflow: "visible" }}>
+                <polygon points="50,45 64,45 57,25" fill={C.primaryDark} />
+                <line x1="50" y1="45" x2="940" y2="45" stroke={C.gold} strokeWidth="6" />
+                <polygon points="930,35 950,45 930,55" fill={C.gold} />
+              </svg>
+              <div style={{ position: "absolute", top: 25, left: 50, background: C.primaryDark, color: C.white, padding: "12px 24px", fontWeight: 700, fontSize: 15 }}>
+                &gt; 150 000€
+              </div>
+              <div style={{ position: "absolute", top: 55, left: 400, fontSize: 14, color: C.black, textAlign: "center", lineHeight: 1.5 }}>
+                Flat tax 30% ( 17,2 PS+ 12,8 IR )<br/>sur la base imposable
+              </div>
+            </div>
+
+            {/* Timeline < 150k */}
+            <div style={{ position: "relative", height: 120 }}>
+              <div style={{ position: "absolute", top: 0, left: 50, fontSize: 13, color: C.black }}>Date d'ouverture</div>
+              <div style={{ position: "absolute", top: 0, left: 530, fontSize: 13, color: C.black }}>8 ans</div>
+
+              <svg viewBox="0 0 1000 120" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", overflow: "visible" }}>
+                <polygon points="50,45 64,45 57,25" fill={C.primaryDark} />
+                <polygon points="530,45 544,45 537,25" fill={C.primaryDark} />
+                <line x1="50" y1="45" x2="940" y2="45" stroke={C.gold} strokeWidth="6" />
+                <polygon points="930,35 950,45 930,55" fill={C.gold} />
+              </svg>
+              <div style={{ position: "absolute", top: 25, left: 50, background: C.primaryDark, color: C.white, padding: "12px 24px", fontWeight: 700, fontSize: 15 }}>
+                &lt; 150 000€
+              </div>
+              <div style={{ position: "absolute", top: 55, left: 260, fontSize: 14, color: C.black }}>
+                Flat tax 30%
+              </div>
+              <div style={{ position: "absolute", top: 55, left: 545, fontSize: 13, color: C.black, lineHeight: 1.6 }}>
+                7,5 % (jusqu'à 150 000 € de versements)<br/>
+                12,8 % (pour les versements nets supérieurs à 150 000 €)<br/>
+                4 600 € pour une personne seule<br/>
+                9 200 € pour un couple soumis à une imposition commune
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideAvGestion({ data }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  
+  const funds = [
+    { nom: "Axiom European Banks Equity RC EUR(v)", isin: "LU1876459303", poids: "20%", p1c: "63.10%", p3c: "210.01%", p3a: "45.81%", p10c: "314.20%", p10a: "15.27%" },
+    { nom: "Alken Euro Opportunities A", isin: "LU0524465977", poids: "20%", p1c: "54.33%", p3c: "90.53%", p3a: "23.97%", p10c: "145.09%", p10a: "9.38%" },
+    { nom: "AXA Or et Matières Premières C", isin: "FR0010011171", poids: "20%", p1c: "76.63%", p3c: "89.13%", p3a: "23.67%", p10c: "377.33%", p10a: "16.92%" },
+    { nom: "DNCA Invest Archer Mid-Cap Europe A EUR", isin: "LU1366712435", poids: "20%", p1c: "17.07%", p3c: "42.18%", p3a: "12.45%", p10c: "n/a*", p10a: "n/a*" },
+    { nom: "AXA Amérique Actions AC", isin: "FR0000447807", poids: "20%", p1c: "4.09%", p3c: "56.24%", p3a: "16.04%", p10c: "183.92%", p10a: "11.00%" }
+  ];
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "32px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Gestion de votre" highlight="portefeuille" subtitle="ALLOCATION ET PERFORMANCES HISTORIQUES" />
+        
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16, marginTop: 4 }}>
+          <p style={{ fontSize: 13.5, color: C.darkGray, margin: 0, lineHeight: 1.6 }}>
+            Une sélection rigoureuse de fonds pour diversifier vos avoirs et viser une croissance pérenne. Les performances passées sont présentées à titre indicatif pour illustrer la solidité de ces supports sur différentes périodes.
+          </p>
+
+          {/* Main Table */}
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, textAlign: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+            <thead>
+              <tr style={{ background: C.primaryDark, color: C.white }}>
+                <th style={{ padding: "8px 10px", textAlign: "left" }}>Fonds (ISIN)</th>
+                <th style={{ padding: "8px 10px" }}>Poids</th>
+                <th style={{ padding: "8px 10px" }}>Perf 1 an<br/>(cumulée)</th>
+                <th style={{ padding: "8px 10px" }}>Perf 3 ans<br/>(cumulée)</th>
+                <th style={{ padding: "8px 10px" }}>Perf 3 ans<br/>(annualisée)</th>
+                <th style={{ padding: "8px 10px" }}>Perf 10 ans<br/>(cumulée)</th>
+                <th style={{ padding: "8px 10px" }}>Perf 10 ans<br/>(annualisée)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {funds.map((f, i) => (
+                <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white, borderBottom: `1px solid ${C.mediumGray}` }}>
+                  <td style={{ padding: "8px 10px", textAlign: "left" }}>
+                    <div style={{ fontWeight: 700, color: C.primary, marginBottom: 2 }}>{f.nom}</div>
+                    <div style={{ fontSize: 9, color: C.gray }}>{f.isin}</div>
+                  </td>
+                  <td style={{ padding: "8px 10px", fontWeight: 700, color: C.darkGray }}>{f.poids}</td>
+                  <td style={{ padding: "8px 10px", color: C.darkGray }}>{f.p1c}</td>
+                  <td style={{ padding: "8px 10px", color: C.darkGray }}>{f.p3c}</td>
+                  <td style={{ padding: "8px 10px", color: C.darkGray }}>{f.p3a}</td>
+                  <td style={{ padding: "8px 10px", color: C.darkGray }}>{f.p10c}</td>
+                  <td style={{ padding: "8px 10px", color: C.darkGray }}>{f.p10a}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 4 }}>
+            {/* Summary Table */}
+            <table style={{ width: "50%", borderCollapse: "collapse", fontSize: 12, textAlign: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+              <thead>
+                <tr style={{ background: C.primaryDark, color: C.white }}>
+                  <th style={{ padding: "6px 10px" }}>Horizon</th>
+                  <th style={{ padding: "6px 10px" }}>Cumulé</th>
+                  <th style={{ padding: "6px 10px" }}>Annualisé</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style={{ background: C.lightGray, borderBottom: `1px solid ${C.mediumGray}` }}>
+                  <td style={{ padding: "6px 10px", fontWeight: 600, color: C.darkGray }}>1 an</td>
+                  <td style={{ padding: "6px 10px", color: C.primary, fontWeight: 700 }}>43.04%</td>
+                  <td style={{ padding: "6px 10px", color: C.primary, fontWeight: 700 }}>43.04%</td>
+                </tr>
+                <tr style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}` }}>
+                  <td style={{ padding: "6px 10px", fontWeight: 600, color: C.darkGray }}>3 ans</td>
+                  <td style={{ padding: "6px 10px", color: C.primary, fontWeight: 700 }}>97.62%</td>
+                  <td style={{ padding: "6px 10px", color: C.primary, fontWeight: 700 }}>25.49%</td>
+                </tr>
+                <tr style={{ background: C.lightGray }}>
+                  <td style={{ padding: "6px 10px", fontWeight: 600, color: C.darkGray }}>10 ans</td>
+                  <td style={{ padding: "6px 10px", color: C.primary, fontWeight: 700 }}>239.33%**</td>
+                  <td style={{ padding: "6px 10px", color: C.primary, fontWeight: 700 }}>13.00%**</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p style={{ fontSize: 9, color: C.gray, marginTop: 4, fontStyle: "italic", textAlign: "center" }}>
+            * Fonds créé il y a moins de 10 ans. ** Moyenne calculée sur les fonds existants sur la période de 10 ans.<br/>
+            Les performances passées ne préjugent pas des performances futures.
+          </p>
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
+
+function SlideAvProjections({ data, index = 1 }) {
+  const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
+  const rows = computeProjectionsAV(data, index);
+  
+  const initial = index === 2 ? (data.montantInvestissement2 || 200000) : (data.montantInvestissement || 100000);
+  const monthly = index === 2 ? (data.capaciteEpargne2 || 1000) : (data.capaciteEpargne || 500);
+  const subtitle = index === 2 ? "ESTIMATION DE LA VALEUR DE VOTRE CONTRAT (SCÉNARIO 2)" : "ESTIMATION DE LA VALEUR DE VOTRE CONTRAT";
+  
+  const r1 = data.tauxPessimiste || 3;
+  const r2 = data.tauxRealiste || 6;
+  const r3 = data.tauxOptimiste || 9;
+
+  // Small graph variables
+  const svgW = 320; const svgH = 180;
+  const padL = 50; const padR = 10; const padT = 10; const padB = 20;
+  const w = svgW - padL - padR; const h = svgH - padT - padB;
+  const maxVal = rows.length > 0 ? Math.max(rows[rows.length-1].val3, rows[rows.length-1].versements) : 1;
+  const gridMax = Math.ceil(maxVal / 20000) * 20000 || 50000;
+  
+  const getX = (i) => padL + (i / (rows.length - 1)) * w;
+  const getY = (val) => padT + h - (val / gridMax) * h;
+
+  const dP = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.val1)}`).join(' ');
+  const dR = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.val2)}`).join(' ');
+  const dO = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.val3)}`).join(' ');
+  const dV = rows.map((r, i) => `${i===0?'M':'L'} ${getX(i)} ${getY(r.versements)}`).join(' ');
+
+  return (
+    <div style={slideBase}>
+      {accentBar()}
+      {logoCorner()}
+      <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <ReportTitle title="Projections" highlight="financières" subtitle={subtitle} />
+        
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "360px 1fr", gap: 40, alignItems: "center" }}>
+          
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <p style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, marginBottom: 20, textAlign: "justify" }}>
+              Cette projection personnalisée simule l'évolution de votre épargne sur <strong>{data.dureeProjectionAv || 15} ans</strong>, en tenant compte d'un versement initial de <strong>{fmt(initial)} €</strong> et d'une mensualité de <strong>{fmt(monthly)} €</strong> (déduction faite des {data.fraisSouscription || 0}% de droits d'entrée).
+            </p>
+
+            <div style={{ width: svgW, height: svgH, background: C.white, border: `1px solid ${C.lightGray}`, marginBottom: 16 }}>
+              <svg width={svgW} height={svgH} style={{ overflow: "visible" }}>
+                {[0, 0.5, 1].map(pct => {
+                  const y = padT + h - (pct * h);
+                  return (
+                    <g key={pct}>
+                      <line x1={padL} y1={y} x2={svgW - padR} y2={y} stroke="#E5E7EB" strokeDasharray="2 2" />
+                      <text x={padL - 8} y={y + 4} fontSize="10" fill={C.gray} textAnchor="end">{fmt(Math.round(gridMax * pct))}</text>
+                    </g>
+                  );
+                })}
+                <path d={dV} fill="none" stroke={C.gray} strokeWidth="2" strokeDasharray="4 4" />
+                <path d={dP} fill="none" stroke="#9CA3AF" strokeWidth="2" />
+                <path d={dR} fill="none" stroke={C.primary} strokeWidth="3" />
+                <path d={dO} fill="none" stroke={C.gold} strokeWidth="2" />
+              </svg>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 4px", fontSize: 11, fontWeight: 600 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 2, borderBottom: "2px dashed", borderColor: C.gray }} /> Versements</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: "#9CA3AF" }} /> Scénario 1 ({r1}%)</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: C.primary }} /> Scénario 2 ({r2}%)</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: "50%", background: C.gold }} /> Scénario 3 ({r3}%)</div>
+            </div>
+          </div>
+
+          <div style={{ overflow: "hidden", borderRadius: "0px", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10, textAlign: "center", background: C.white }}>
+              <thead>
+                <tr style={{ background: C.primaryDark, color: C.white }}>
+                  <th rowSpan="2" style={{ padding: "6px", borderRight: `1px solid rgba(255,255,255,0.2)` }}>Année</th>
+                  <th rowSpan="2" style={{ padding: "6px", borderRight: `1px solid rgba(255,255,255,0.2)` }}>Versements<br/>cumulés</th>
+                  <th colSpan="2" style={{ padding: "6px", borderRight: `1px solid rgba(255,255,255,0.2)`, background: "#6B7280" }}>Scénario 1 ({r1}%)</th>
+                  <th colSpan="2" style={{ padding: "6px", borderRight: `1px solid rgba(255,255,255,0.2)`, background: C.primary }}>Scénario 2 ({r2}%)</th>
+                  <th colSpan="2" style={{ padding: "6px", background: "#8A7950" }}>Scénario 3 ({r3}%)</th>
+                </tr>
+                <tr style={{ background: C.primary, color: C.white }}>
+                  <th style={{ padding: "6px", fontSize: 9, background: "#9CA3AF" }}>Capital Est.</th>
+                  <th style={{ padding: "6px", fontSize: 9, background: "#9CA3AF", borderRight: `1px solid rgba(255,255,255,0.2)` }}>Plus-value</th>
+                  <th style={{ padding: "6px", fontSize: 9 }}>Capital Est.</th>
+                  <th style={{ padding: "6px", fontSize: 9, borderRight: `1px solid rgba(255,255,255,0.2)` }}>Plus-value</th>
+                  <th style={{ padding: "6px", fontSize: 9, background: C.gold }}>Capital Est.</th>
+                  <th style={{ padding: "6px", fontSize: 9, background: C.gold }}>Plus-value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white, borderBottom: `1px solid ${C.mediumGray}` }}>
+                    <td style={{ padding: "6px", fontWeight: 700, color: C.primary }}>N+{r.year}</td>
+                    <td style={{ padding: "6px", color: C.darkGray }}>{fmt(r.versements)} €</td>
+                    
+                    <td style={{ padding: "6px", color: C.darkGray }}>{fmt(r.val1)} €</td>
+                    <td style={{ padding: "6px", color: r.pv1 >= 0 ? "#10B981" : "#EF4444", fontWeight: 600, borderRight: `1px solid ${C.lightGray}` }}>{r.pv1 >= 0 ? "+" : ""}{fmt(r.pv1)} €</td>
+                    
+                    <td style={{ padding: "6px", fontWeight: 700, color: C.primary }}>{fmt(r.val2)} €</td>
+                    <td style={{ padding: "6px", color: r.pv2 >= 0 ? "#10B981" : "#EF4444", fontWeight: 700, borderRight: `1px solid ${C.lightGray}` }}>{r.pv2 >= 0 ? "+" : ""}{fmt(r.pv2)} €</td>
+                    
+                    <td style={{ padding: "6px", fontWeight: 700, color: C.gold }}>{fmt(r.val3)} €</td>
+                    <td style={{ padding: "6px", color: r.pv3 >= 0 ? "#10B981" : "#EF4444", fontWeight: 600 }}>{r.pv3 >= 0 ? "+" : ""}{fmt(r.pv3)} €</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+      {footer(fullName)}
+    </div>
+  );
+}
 
 // ────────────────────── PREVIEW MODAL ──────────────────────
 
@@ -1358,98 +3654,33 @@ export default function WallSwissApp() {
     setTimeout(() => setMarketingCopied(false), 2500);
   };
 
-  const requirePdfLib = async () => {
-    if (window.PDFLib) return window.PDFLib;
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
-      script.onload = () => resolve(window.PDFLib);
-      script.onerror = reject;
-      document.body.appendChild(script);
-    });
-  };
-
-  const requireHtml2Canvas = async () => {
-    if (window.html2canvas) return window.html2canvas;
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-      script.onload = () => resolve(window.html2canvas);
-      script.onerror = reject;
-      document.body.appendChild(script);
-    });
-  };
-
-  const generateLppPdfBase64 = async () => {
-    const { PDFDocument, rgb, StandardFonts } = await requirePdfLib();
-    
-    // Téléchargement du PDF officiel vierge sauvegardé (ou local par défaut)
-    const templatePath = appSettings.lppOfficialTemplatePdf || "/SF-F5-FR.pdf";
-    const templateRes = await fetch(templatePath);
-    const existingPdfBytes = await templateRes.arrayBuffer();
-    
-    const pdfDoc = await PDFDocument.load(existingPdfBytes);
-    const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const pages = pdfDoc.getPages();
-    const page1 = pages[0];
-    const page2 = pages.length > 1 ? pages[1] : null;
-
-    const draw = (page, text, x, y, size = 11) => {
-      if(!page || !text) return;
-      page.drawText(String(text), { x, y, size, font: helveticaFont, color: rgb(0,0,0) });
-    };
-
-    // PAGE 1 : Coordonnées approximatives pour le document SF-F5-FR
-    draw(page1, "X", 65, 520, 14); // Case "Une autre personne"
-    draw(page1, lppForm.nom, 230, 475);
-    draw(page1, lppForm.prenom, 230, 420);
-    draw(page1, lppForm.dateNaissance, 230, 365);
-    draw(page1, lppForm.avs, 230, 335);
-    draw(page1, lppForm.adresse, 230, 285);
-    draw(page1, `${lppForm.localite} - ${lppForm.pays}`, 230, 265);
-    draw(page1, `${lppForm.telephone} / ${lppForm.emailClient}`, 230, 185);
-
-    // PAGE 2
-    if (page2) {
-      const lieuDate = `${lppForm.cpaVilleEntreprise || "Genève"}, le ${new Date().toLocaleDateString('fr-CH')}`;
-      draw(page2, lieuDate, 65, 410);
-      draw(page2, lppForm.nomEntreprise || "Mandataire", 310, 410);
-    }
-
-    // PAGE 3 : PROCURATION
-    const h2c = await requireHtml2Canvas();
-    const procElement = document.getElementById('procuration-printable');
-    
-    // Assurer que l'élément est capturable
-    const prevDisplay = procElement.style.display;
-    procElement.style.display = 'block';
-    const canvas = await h2c(procElement, { scale: 2, useCORS: true, logging: false });
-    procElement.style.display = prevDisplay;
-
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    const jpgImage = await pdfDoc.embedJpg(imgData);
-    
-    // Ajout d'une nouvelle page A4 (595x842) à la fin du document officiel
-    const page3 = pdfDoc.addPage([595, 842]);
-    page3.drawImage(jpgImage, { x: 0, y: 0, width: 595, height: 842 });
-
-    return await pdfDoc.saveAsBase64({ dataUri: true });
-  };
-
   const handleDownloadLppDoc = async () => {
     setIsGeneratingLpp(true);
+    const element = document.getElementById('lpp-doc-printable');
+    if (!element) { setIsGeneratingLpp(false); return; }
+    
+    const requireHtml2Pdf = async () => {
+      if (window.html2pdf) return window.html2pdf;
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+        script.onload = () => resolve(window.html2pdf);
+        script.onerror = reject;
+        document.body.appendChild(script);
+      });
+    };
+
     try {
-      const pdfBase64 = await generateLppPdfBase64();
-      const link = document.createElement('a');
-      link.href = pdfBase64;
-      link.download = `Recherche_LPP_${lppForm.nom || 'Client'}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const html2pdf = await requireHtml2Pdf();
+      await html2pdf().set({
+        margin: [0.5, 0.5],
+        filename: `Recherche_LPP_${lppForm.nom || 'Client'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+      }).from(element).save();
     } catch(e) {
       console.error("Erreur PDF:", e);
-      setToastMsg("Erreur lors de la génération du PDF officiel.");
-      setTimeout(() => setToastMsg(""), 4000);
     } finally {
       setIsGeneratingLpp(false);
     }
@@ -1470,10 +3701,30 @@ export default function WallSwissApp() {
     }
 
     setIsSendingSign(true);
+    const element = document.getElementById('lpp-doc-printable');
+    if (!element) { setIsSendingSign(false); return; }
+
     try {
-      const rawPdfBase64 = await generateLppPdfBase64();
+      const html2pdf = await requireHtml2Pdf();
+      
+      // Sécurité : scroll en haut
+      window.scrollTo(0, 0);
+
+      // Génération du PDF en base64 en mémoire
+      const rawPdfBase64 = await new Promise((resolve) => {
+        html2pdf().set({
+          margin: [0.5, 0.5],
+          filename: `Mandat_LPP.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, scrollX: 0, logging: false },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        }).from(element).toPdf().get('pdf').then((pdf) => resolve(pdf.output('datauristring')));
+      });
+
+      // Isoler la base64 pure
       const pureBase64 = rawPdfBase64.includes('base64,') ? rawPdfBase64.substring(rawPdfBase64.indexOf('base64,') + 7) : rawPdfBase64;
 
+      // Envoi au Webhook (ex: Make.com)
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1572,7 +3823,6 @@ export default function WallSwissApp() {
       reportWebhookUrl: "",
       campaignWebhookUrl: "",
       lppWebhookUrl: "",
-      lppOfficialTemplatePdf: "/SF-F5-FR.pdf",
       emailSubject: "Votre Analyse Patrimoniale - WallSwiss",
       emailBody: "Bonjour {{prenom}} {{nom}},\n\nVeuillez trouver ci-joint votre rapport d'analyse patrimoniale personnalisé suite à notre entretien.\n\nRestant à votre entière disposition pour toute question.\n\nCordialement,\n{{conseiller}}",
       agentFirstName: "",
@@ -3165,7 +5415,6 @@ export default function WallSwissApp() {
               
               {/* Formulaire */}
               <div style={{ flex: "0 0 450px", display: "flex", flexDirection: "column", gap: 20 }}>
-
                 <div style={S.card}>
                   <div style={S.cardTitle}><div style={S.dot} /> Informations du Client</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
@@ -3211,28 +5460,190 @@ export default function WallSwissApp() {
                 </div>
               </div>
     
-              {/* Prévisualisation Document - Rendu Visuel Centré */}
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 40, alignItems: "center", background: "#e2e8f0", padding: "40px 0", overflowY: "auto", overflowX: "hidden", borderRadius: 8, border: "1px solid #cbd5e1", position: "relative" }}>
-                
-                <div style={{ position: "absolute", top: 20, background: "rgba(0,0,0,0.7)", color: "#fff", padding: "8px 16px", borderRadius: 20, fontSize: 12, fontWeight: "bold", zIndex: 10 }}>
-                   Mode aperçu. Le fichier final sera fusionné sur le PDF officiel.
-                </div>
+              {/* Prévisualisation Document */}
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 20 }}>
+                <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 40, boxShadow: "0 10px 40px rgba(0,0,0,0.05)", borderRadius: "0px", fontFamily: "'Times New Roman', Times, serif", fontSize: 14, color: C.black, lineHeight: 1.6 }}>
+                   
+                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 60 }}>
+                      <div>
+                        {appSettings.defaultLogo ? <img src={appSettings.defaultLogo} alt="Logo" style={{ maxHeight: 60, marginBottom: 20 }} /> : <div style={{ fontSize: 24, fontWeight: "bold", color: C.primary, marginBottom: 20 }}>{lppForm.nomEntreprise || "WallSwiss"}</div>}
+                        <div>{lppForm.nomEntreprise || "Nom entreprise"}</div>
+                        <div>{lppForm.adresseEntreprise || "Rue"}</div>
+                        <div>{lppForm.cpaVilleEntreprise || "CPA Ville"}</div>
+                        <div>{lppForm.emailEntreprise || "contact@email.com"}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div>Le {new Date().toLocaleDateString('fr-CH')}</div>
+                        <br/>
+                        <div style={{ textAlign: "left", display: "inline-block" }}>
+                          <strong>Stiftung Auffangeinrichtung BVG</strong><br/>
+                          Elias-Canetti-Strasse 2<br/>
+                          8050 Zürich
+                        </div>
+                      </div>
+                   </div>
+    
+                   <h3 style={{ fontSize: 18, fontWeight: "bold", textDecoration: "underline", marginBottom: 24 }}>Demande de recherche d'avoirs</h3>
+                   
+                   <p>Madame, Monsieur,</p>
+                   <p>Par la présente, nous vous transmettons par mandat, une demande de recherche d’avoirs de 2ème pilier pour la personne ci-dessous :</p>
+                   
+                   <div style={{ margin: "24px 0", paddingLeft: 24 }}>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Nom :</strong> <span>{lppForm.nom || "..."}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Prénom :</strong> <span>{lppForm.prenom || "..."}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Date de naissance :</strong> <span>{lppForm.dateNaissance || "..."}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>N° AVS :</strong> <span>{lppForm.avs || "..."}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Adresse :</strong> <span>{lppForm.adresse || "..."}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Localité :</strong> <span>{lppForm.localite || "..."}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Pays :</strong> <span>{lppForm.pays || "..."}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Téléphone :</strong> <span>{lppForm.telephone || "..."}</span></div>
+                   </div>
+    
+                   <p>Vous trouverez également ci-joint la procuration ainsi qu'une copie de la carte d'identité.</p>
+                   <p>Comme cité dans la procuration, nous vous prions de communiquer les résultats de la recherche par courrier ou encore mieux, par courriel.</p>
+                   <p>Vous trouverez tous les détails dans notre en-tête.</p>
+                   <p>Dans l'attente d'une réponse, nous vous remercions, Madame, Monsieur, pour la suite que vous donnerez à ce dossier.</p>
+                   
+                   <div style={{ marginTop: 40, display: "flex", justifyContent: "space-between" }}>
+                     <div style={{ border: "1px dashed #ccc", padding: "20px 40px", color: "#ccc", textAlign: "center" }}>
+                       Signature du mandataire<br/>({lppForm.nomEntreprise || "Entreprise"})
+                     </div>
+                     <div style={{ border: "1px dashed #ccc", padding: "20px 40px", color: "#ccc", textAlign: "center" }}>
+                       Signature du client<br/>({lppForm.nom || "Client"})
+                     </div>
+                   </div>
 
-                <div style={{ width: "794px", minHeight: "1123px", background: "#fff", padding: "50px", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", boxSizing: "border-box", flexShrink: 0, fontFamily: "Arial, sans-serif", fontSize: 13, color: "#000", lineHeight: 1.4 }}>
-                   <LppOfficialPage1 data={lppForm} />
-                </div>
-                <div style={{ width: "794px", minHeight: "1123px", background: "#fff", padding: "50px", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", boxSizing: "border-box", flexShrink: 0, fontFamily: "Arial, sans-serif", fontSize: 13, color: "#000", lineHeight: 1.4 }}>
-                   <LppOfficialPage2 data={lppForm} />
-                </div>
-                <div style={{ width: "794px", minHeight: "1123px", background: "#fff", padding: "50px", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", boxSizing: "border-box", flexShrink: 0, fontFamily: "'Times New Roman', Times, serif", fontSize: 14, color: "#000" }}>
-                   <ProcurationLPP data={lppForm} />
+                   <div style={{ marginTop: 40, borderTop: "1px dashed #ccc", paddingTop: 40 }}>
+                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 60 }}>
+                        <div>
+                          <div>Monsieur/Madame</div>
+                          <div>{lppForm.nom || "NOM"} {lppForm.prenom || "Prénom"}</div>
+                          <div>{lppForm.adresse || "Rue"}</div>
+                          <div>{lppForm.localite || "CPA Ville"}</div>
+                          <div>{lppForm.pays || "Pays"}</div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div>Le {new Date().toLocaleDateString('fr-CH')}</div>
+                          <br/>
+                          <div style={{ textAlign: "left", display: "inline-block" }}>
+                            <strong>Stiftung Auffangeinrichtung BVG</strong><br/>
+                            Elias-Canetti-Strasse 2<br/>
+                            8050 Zürich
+                          </div>
+                        </div>
+                     </div>
+    
+                     <h3 style={{ fontSize: 18, fontWeight: "bold", textDecoration: "underline", marginBottom: 24 }}>Procuration</h3>
+                     
+                     <p>Madame, Monsieur,</p>
+                     <p>Je soussigné(e), <strong>{lppForm.nom || "NOM"} {lppForm.prenom || "Prénom"}</strong>, né(e) le <strong>{lppForm.dateNaissance || "xx.xx.xxxx"}</strong> et demeurant à <strong>{lppForm.adresse || "Rue"}, {lppForm.localite || "CPA Ville"}</strong>, autorise la société <strong>{lppForm.nomEntreprise || "Nom société"}</strong>, domiciliée à <strong>{lppForm.adresseEntreprise || "Adresse société"}, {lppForm.cpaVilleEntreprise || "CPA"}</strong>, à se présenter auprès de vos services afin d'effectuer des demandes d'avoirs de 2ème pilier.</p>
+                     
+                     <p>J’autorise la société <strong>{lppForm.nomEntreprise || "Nom société"}</strong> à vous faire cette demande par courrier électronique et assume les éventuels risques qui en découlent. Je vous autorise à communiquer directement les résultats de la recherche à la société <strong>{lppForm.nomEntreprise || "Nom société"}</strong> par courrier ou courriel.</p>
+                     
+                     <p>Cette procuration n’est valide que pour la présente demande et les résultats qui en découlent. Elle devient ensuite caduque.</p>
+                     
+                     <p>Pour tout litige en rapport avec la présente procuration, le for juridique est Genève et seul le droit suisse est applicable.</p>
+                     
+                     <p>Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.</p>
+    
+                     <div style={{ marginTop: 40, display: "flex", justifyContent: "space-between" }}>
+                       <div>Date, Lieu : _____________________</div>
+                       <div style={{ border: "1px dashed #ccc", padding: "30px 60px", color: "#ccc", textAlign: "center" }}>
+                         Signature du client<br/>({lppForm.nom || "Client"})
+                       </div>
+                     </div>
+                   </div>
                 </div>
               </div>
             </main>
     
-            {/* Élément caché UNIQUEMENT pour la capture de la Procuration */}
-            <div id="procuration-printable" style={{ position: "absolute", top: "-9999px", left: "-9999px", width: "794px", height: "1123px", background: "#fff", padding: "50px", boxSizing: "border-box", fontFamily: "'Times New Roman', Times, serif", fontSize: 14, color: "#000" }}>
-               <ProcurationLPP data={lppForm} />
+            {/* Élément caché pour la génération PDF propre */}
+            <div style={{ position: "fixed", top: 0, left: 0, zIndex: -1000, opacity: 0.001, pointerEvents: "none" }}>
+              <div id="lpp-doc-printable" style={{ width: "800px", padding: "40px", background: "#fff", fontFamily: "'Times New Roman', Times, serif", fontSize: "14px", color: "#000", lineHeight: "1.6", boxSizing: "border-box" }}>
+                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 40 }}>
+                      <div>
+                        {appSettings.defaultLogo ? <img src={appSettings.defaultLogo} alt="Logo" style={{ maxHeight: 60, marginBottom: 20 }} /> : <div style={{ fontSize: 24, fontWeight: "bold", color: C.primary, marginBottom: 20 }}>{lppForm.nomEntreprise || "WallSwiss"}</div>}
+                        <div>{lppForm.nomEntreprise || "Nom entreprise"}</div>
+                        <div>{lppForm.adresseEntreprise || "Rue"}</div>
+                        <div>{lppForm.cpaVilleEntreprise || "CPA Ville"}</div>
+                        <div>{lppForm.emailEntreprise || "contact@email.com"}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div>Le {new Date().toLocaleDateString('fr-CH')}</div>
+                        <br/>
+                        <div style={{ textAlign: "left", display: "inline-block" }}>
+                          <strong>Stiftung Auffangeinrichtung BVG</strong><br/>
+                          Elias-Canetti-Strasse 2<br/>
+                          8050 Zürich
+                        </div>
+                      </div>
+                   </div>
+                   <h3 style={{ fontSize: 18, fontWeight: "bold", textDecoration: "underline", marginBottom: 24 }}>Demande de recherche d'avoirs</h3>
+                   <p>Madame, Monsieur,</p>
+                   <p>Par la présente, nous vous transmettons par mandat, une demande de recherche d’avoirs de 2ème pilier pour la personne ci-dessous :</p>
+                   <div style={{ margin: "24px 0", paddingLeft: 24 }}>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Nom :</strong> <span>{lppForm.nom || "________________"}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Prénom :</strong> <span>{lppForm.prenom || "________________"}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Date de naissance :</strong> <span>{lppForm.dateNaissance || "________________"}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>N° AVS :</strong> <span>{lppForm.avs || "________________"}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Adresse :</strong> <span>{lppForm.adresse || "________________"}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Localité :</strong> <span>{lppForm.localite || "________________"}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Pays :</strong> <span>{lppForm.pays || "________________"}</span></div>
+                     <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Téléphone :</strong> <span>{lppForm.telephone || "________________"}</span></div>
+                   </div>
+                   <p>Vous trouverez également ci-joint la procuration ainsi qu'une copie de la carte d'identité.</p>
+                   <p>Comme cité dans la procuration, nous vous prions de communiquer les résultats de la recherche par courrier ou encore mieux, par courriel.</p>
+                   <p>Vous trouverez tous les détails dans notre en-tête.</p>
+                   <p>Dans l'attente d'une réponse, nous vous remercions, Madame, Monsieur, pour la suite que vous donnerez à ce dossier.</p>
+                   
+                   <div style={{ marginTop: 60, display: "flex", justifyContent: "space-between" }}>
+                     <div style={{ padding: "0 20px", textAlign: "center" }}>
+                       Signature du mandataire :<br/><br/><br/>
+                       ___________________________
+                     </div>
+                     <div style={{ padding: "0 20px", textAlign: "center" }}>
+                       Signature du client :<br/><br/><br/>
+                       ___________________________
+                     </div>
+                   </div>
+
+                   <div className="html2pdf__page-break"></div>
+                   
+                   <div style={{ marginTop: 20, paddingTop: 20 }}>
+                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 40 }}>
+                        <div>
+                          <div>Monsieur/Madame</div>
+                          <div>{lppForm.nom || "NOM"} {lppForm.prenom || "Prénom"}</div>
+                          <div>{lppForm.adresse || "Rue"}</div>
+                          <div>{lppForm.localite || "CPA Ville"}</div>
+                          <div>{lppForm.pays || "Pays"}</div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div>Le {new Date().toLocaleDateString('fr-CH')}</div>
+                          <br/>
+                          <div style={{ textAlign: "left", display: "inline-block" }}>
+                            <strong>Stiftung Auffangeinrichtung BVG</strong><br/>
+                            Elias-Canetti-Strasse 2<br/>
+                            8050 Zürich
+                          </div>
+                        </div>
+                     </div>
+                     <h3 style={{ fontSize: 18, fontWeight: "bold", textDecoration: "underline", marginBottom: 24 }}>Procuration</h3>
+                     <p>Madame, Monsieur,</p>
+                     <p>Je soussigné(e), <strong>{lppForm.nom || "________________"} {lppForm.prenom || "________________"}</strong>, né(e) le <strong>{lppForm.dateNaissance || "________________"}</strong> et demeurant à <strong>{lppForm.adresse || "________________"}, {lppForm.localite || "________________"}</strong>, autorise la société <strong>{lppForm.nomEntreprise || "________________"}</strong>, domiciliée à <strong>{lppForm.adresseEntreprise || "________________"}, {lppForm.cpaVilleEntreprise || "________________"}</strong>, à se présenter auprès de vos services afin d'effectuer des demandes d'avoirs de 2ème pilier.</p>
+                     <p>J’autorise la société <strong>{lppForm.nomEntreprise || "________________"}</strong> à vous faire cette demande par courrier électronique et assume les éventuels risques qui en découlent. Je vous autorise à communiquer directement les résultats de la recherche à la société <strong>{lppForm.nomEntreprise || "________________"}</strong> par courrier ou courriel.</p>
+                     <p>Cette procuration n’est valide que pour la présente demande et les résultats qui en découlent. Elle devient ensuite caduque.</p>
+                     <p>Pour tout litige en rapport avec la présente procuration, le for juridique est Genève et seul le droit suisse est applicable.</p>
+                     <p>Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.</p>
+                     <div style={{ marginTop: 60, display: "flex", justifyContent: "space-between" }}>
+                       <div>Date, Lieu : _____________________</div>
+                       <div style={{ padding: "0 60px", textAlign: "center" }}>
+                         Signature du client :<br/><br/><br/>
+                         ___________________________
+                       </div>
+                     </div>
+                   </div>
+              </div>
             </div>
           </div>
         )}
@@ -3344,7 +5755,7 @@ export default function WallSwissApp() {
                   {
                     titre: "LPP",
                     docs: [
-                      { nom: "Recherche Centrale LPP", desc: "Formulaire de recherche du 2ème Pilier", fichier: "/SF-F5-FR.pdf" },
+                      { nom: "Recherche Centrale LPP", desc: "Formulaire de recherche du 2ème Pilier", fichier: "/Centrale 2P.pdf" },
                       { nom: "Liste Documents Retrait", desc: "Documents à fournir pour retrait EPL", fichier: "/1._Liste_Documents_A_Fournir_Retrait_Epl.pdf" },
                       { nom: "Demande de Retrait EPL", desc: "Formulaire de demande de retrait FLLP", fichier: "/Demande_de_Retrait_Epl_FLLP_Fr.pdf" },
                       { nom: "Déblocage LPP Lemania", desc: "Formulaire de déblocage LPP LEMANIA", fichier: "/Formulaire de déblocage LPP LEMANIA.pdf" }
@@ -3860,3 +6271,4 @@ export default function WallSwissApp() {
   </div>
 );
 }
+

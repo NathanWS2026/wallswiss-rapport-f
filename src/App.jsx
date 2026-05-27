@@ -3655,7 +3655,7 @@ export default function WallSwissApp() {
   };
 
   const generateOfficialLppPdf = async () => {
-    // Charger pdf-lib dynamiquement
+    // Charger pdf-lib dynamiquement pour manipuler le PDF officiel
     if (!window.PDFLib) {
       await new Promise((resolve, reject) => {
         const script = document.createElement('script');
@@ -3665,24 +3665,23 @@ export default function WallSwissApp() {
         document.head.appendChild(script);
       });
     }
-  
+
     const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
     const url = '/SF-F5-FR.pdf';
-  
-    // Récupération du PDF officiel
+
+    // Récupération du PDF officiel à la racine du projet
     const existingPdfBytes = await fetch(url).then(res => {
-      if (!res.ok) throw new Error("Le fichier SF-F5-FR.pdf est introuvable dans le dossier public/ du projet.");
+      if (!res.ok) throw new Error("Le fichier SF-F5-FR.pdf est introuvable. Placez-le à la racine du projet (dossier public/).");
       return res.arrayBuffer();
     });
-  
+
     const pdfDoc = await PDFDocument.load(existingPdfBytes);
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  
     const pages = pdfDoc.getPages();
     const page1 = pages[0];
     const page2 = pages.length > 1 ? pages[1] : null;
-  
-    // Helper pour dessiner du texte de façon sécurisée
+
+    // Helper sécurisé pour dessiner du texte sur une page
     const drawText = (page, text, x, y, size = 11) => {
       if (!page || !text) return;
       page.drawText(String(text), {
@@ -3693,35 +3692,34 @@ export default function WallSwissApp() {
         color: rgb(0.1, 0.1, 0.1)
       });
     };
-  
+
     // ─── PAGE 1 : Informations personnelles ───
-    // Coordonnées calibrées sur le formulaire officiel SF-F5-FR (origine bas-gauche, PDF A4)
-    // Les deux champs "Nom" du formulaire reçoivent la même valeur (nom de naissance + nom actuel)
-    drawText(page1, lppForm.nom,           370, 426);  // Nom (1)
-    drawText(page1, lppForm.nom,           370, 400);  // Nom (2)
-    drawText(page1, lppForm.prenom,        370, 316);  // Prénom (1)
-    drawText(page1, lppForm.prenom,        370, 290);  // Prénom (2)
-    drawText(page1, lppForm.dateNaissance, 370, 234);  // Date de naissance
-    drawText(page1, lppForm.avs,           370, 207);  // N° AVS
-  
-    // Adresse : on découpe sur plusieurs lignes (max 4)
-    // Ligne 1 = adresse rue, Ligne 2 = localité, Ligne 3 = pays
-    drawText(page1, lppForm.adresse,  370, 168);  // Adresse L1
-    drawText(page1, lppForm.localite, 370, 142);  // Adresse L2 (NPA + Ville)
-    drawText(page1, lppForm.pays,     370, 115);  // Adresse L3 (Pays)
-  
-    // Téléphone / email
+    // Coordonnées PDF calibrées précisément sur le formulaire officiel SF-F5-FR
+    // (origine bas-gauche, A4 = 595 x 842 points)
+    // Les deux cases "Nom" reçoivent la même valeur (nom de naissance + nom actuel)
+    drawText(page1, lppForm.nom,           370, 421);  // Nom (case 1)
+    drawText(page1, lppForm.nom,           370, 395);  // Nom (case 2)
+    drawText(page1, lppForm.prenom,        370, 332);  // Prénom (case 1)
+    drawText(page1, lppForm.prenom,        370, 306);  // Prénom (case 2)
+    drawText(page1, lppForm.dateNaissance, 370, 224);  // Date de naissance
+    drawText(page1, lppForm.avs,           370, 198);  // N° AVS
+
+    // Adresse : répartie sur 3 lignes (rue / NPA+ville / pays)
+    drawText(page1, lppForm.adresse,  370, 155);  // Adresse L1 (rue)
+    drawText(page1, lppForm.localite, 370, 128);  // Adresse L2 (NPA + ville)
+    drawText(page1, lppForm.pays,     370, 102);  // Adresse L3 (pays)
+
+    // Téléphone / email combinés
     const telEmail = [lppForm.telephone, lppForm.emailClient].filter(Boolean).join(' / ');
-    drawText(page1, telEmail, 370, 57);
-  
+    drawText(page1, telEmail, 370, 47);
+
     // ─── PAGE 2 : Lieu et date ───
     if (page2) {
       const today = new Date().toLocaleDateString('fr-CH');
-      const lieuDate = `Genève, ${today}`;
-      drawText(page2, lieuDate, 370, 280);  // Champ "Lieu et date"
+      drawText(page2, `Genève, ${today}`, 370, 419);
       // La signature reste vide (sera ajoutée par Yousign après envoi)
     }
-  
+
     return await pdfDoc.save();
   };
 

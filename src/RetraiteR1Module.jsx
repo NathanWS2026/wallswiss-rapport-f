@@ -1829,7 +1829,7 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
         filename: pdfFilename,
         image: { type: 'jpeg', quality: 0.95 },
         html2canvas: { scale: 2, useCORS: true, scrollY: 0, scrollX: 0, x: 0, y: 0, windowWidth: PAGE_W, logging: false },
-        pagebreak: { mode: ['css', 'legacy'] },
+        pagebreak: { mode: ['css', 'legacy'], before: '.pdf-page', avoid: '.pdf-page' },
         jsPDF: { unit: 'in', format: [PAGE_W / 96, PAGE_H / 96], orientation: 'portrait' }
       }).from(element).save();
     } catch (e) {
@@ -1871,7 +1871,7 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
         margin: 0, filename: pdfFilename,
         image: { type: 'jpeg', quality: 0.85 },
         html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, scrollX: 0, x: 0, y: 0, windowWidth: PAGE_W, logging: false },
-        pagebreak: { mode: ['css', 'legacy'] },
+        pagebreak: { mode: ['css', 'legacy'], before: '.pdf-page', avoid: '.pdf-page' },
         jsPDF: { unit: 'in', format: [PAGE_W / 96, PAGE_H / 96], orientation: 'portrait' }
       };
       const raw = await new Promise((resolve) => {
@@ -1933,7 +1933,7 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
       <div style={{ position: "fixed", top: 0, left: 0, zIndex: -1000, opacity: 0.001, pointerEvents: "none" }}>
         <div id="r1-printable" style={{ width: `${PAGE_W}px`, background: C.white }}>
           {slides.map((Sl, i) => (
-            <div key={i} className="pdf-page" style={{ width: `${PAGE_W}px`, height: `${PAGE_H}px`, position: "relative", overflow: "hidden", pageBreakBefore: i > 0 ? "always" : "auto", pageBreakInside: "avoid" }}>
+            <div key={i} className="pdf-page" style={{ width: `${PAGE_W}px`, height: `${PAGE_H}px`, position: "relative", overflow: "hidden", display: "block" }}>
               {Sl}
             </div>
           ))}

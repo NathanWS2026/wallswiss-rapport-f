@@ -1823,13 +1823,14 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
     try {
       const html2pdf = await requireHtml2Pdf();
       window.scrollTo(0, 0);
+      // A4 portrait : 8.27" x 11.69" — on calque le format de page sur les dimensions du slide
       await html2pdf().set({
         margin: 0,
         filename: pdfFilename,
         image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, scrollY: 0, windowWidth: PAGE_W, logging: false },
+        html2canvas: { scale: 2, useCORS: true, scrollY: 0, scrollX: 0, x: 0, y: 0, windowWidth: PAGE_W, logging: false },
         pagebreak: { mode: ['css', 'legacy'] },
-        jsPDF: { unit: 'px', format: [PAGE_W, PAGE_H], orientation: 'portrait', hotfixes: ['px_scaling'] }
+        jsPDF: { unit: 'in', format: [PAGE_W / 96, PAGE_H / 96], orientation: 'portrait' }
       }).from(element).save();
     } catch (e) {
       console.error("Erreur PDF:", e);
@@ -1869,9 +1870,9 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
       const opt = {
         margin: 0, filename: pdfFilename,
         image: { type: 'jpeg', quality: 0.85 },
-        html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, windowWidth: PAGE_W, logging: false },
+        html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, scrollX: 0, x: 0, y: 0, windowWidth: PAGE_W, logging: false },
         pagebreak: { mode: ['css', 'legacy'] },
-        jsPDF: { unit: 'px', format: [PAGE_W, PAGE_H], orientation: 'portrait', hotfixes: ['px_scaling'] }
+        jsPDF: { unit: 'in', format: [PAGE_W / 96, PAGE_H / 96], orientation: 'portrait' }
       };
       const raw = await new Promise((resolve) => {
         html2pdf().set(opt).from(element).toPdf().get('pdf').then((pdf) => resolve(pdf.output('datauristring')));

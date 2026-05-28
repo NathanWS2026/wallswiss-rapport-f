@@ -3,6 +3,9 @@ import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInWithCustomToken, signInAnonymously, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, addDoc, deleteDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+// Module Planification Retraite R1
+
+import RetraiteR1Module from "./RetraiteR1Module";
 
 // ────────────────────── FIREBASE SETUP ──────────────────────
 let app, auth, db, storage, appId = "wallswiss-app";
@@ -4819,6 +4822,18 @@ export default function WallSwissApp() {
           >
             <Icons.Users size={16} /> CRM Salesforce
           </button>
+          <button 
+
+            onClick={() => setActiveModule("retraiteR1")} 
+
+            style={{ width: "100%", textAlign: "left", background: activeModule === "retraiteR1" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "retraiteR1" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "retraiteR1" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "retraiteR1" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
+
+          >
+
+            <Icons.PieChart size={16} /> Planification Retraite
+
+          </button>
+
         </nav>
 
         <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
@@ -5433,6 +5448,24 @@ export default function WallSwissApp() {
             </main>
           </div>
         )}
+        
+ {/* VUE MODULE PLANIFICATION RETRAITE */}
+
+ {activeModule === "retraiteR1" && (
+
+<RetraiteR1Module
+
+  user={user}
+
+  db={db}
+
+  appId={appId}
+
+  appSettings={appSettings}
+
+/>
+
+)}
 
         {/* VUE MODULE RECHERCHE LPP */}
         {activeModule === "rechercheLpp" && (

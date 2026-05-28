@@ -1821,17 +1821,32 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
     await new Promise(r => setTimeout(r, 300));
 
     try {
-      const html2pdf = await requireHtml2Pdf();
-      window.scrollTo(0, 0);
-      // A4 portrait : 8.27" x 11.69" — on calque le format de page sur les dimensions du slide
-      await html2pdf().set({
-        margin: 0,
-        filename: pdfFilename,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, scrollY: 0, scrollX: 0, x: 0, y: 0, windowWidth: PAGE_W, logging: false },
-        pagebreak: { mode: ['css', 'legacy'], before: '.pdf-page', avoid: '.pdf-page' },
-        jsPDF: { unit: 'in', format: [PAGE_W / 96, PAGE_H / 96], orientation: 'portrait' }
-      }).from(element).save();
+      await requireHtml2Pdf(); // charge html2canvas + jsPDF sur window
+      const html2canvas = window.html2canvas;
+      const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      if (!html2canvas || !jsPDFClass) throw new Error("html2canvas/jsPDF non disponibles");
+
+      const pages = element.querySelectorAll('.pdf-page');
+      const pdfW = PAGE_W / 96; // pouces
+      const pdfH = PAGE_H / 96;
+      const pdf = new jsPDFClass({ unit: 'in', format: [pdfW, pdfH], orientation: 'portrait' });
+
+      for (let i = 0; i < pages.length; i++) {
+        const canvas = await html2canvas(pages[i], {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          width: PAGE_W,
+          height: PAGE_H,
+          windowWidth: PAGE_W,
+          windowHeight: PAGE_H,
+          logging: false,
+        });
+        const img = canvas.toDataURL('image/jpeg', 0.95);
+        if (i > 0) pdf.addPage([pdfW, pdfH], 'portrait');
+        pdf.addImage(img, 'JPEG', 0, 0, pdfW, pdfH, undefined, 'FAST');
+      }
+      pdf.save(pdfFilename);
     } catch (e) {
       console.error("Erreur PDF:", e);
     } finally {
@@ -1866,17 +1881,32 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
     await new Promise(r => setTimeout(r, 300));
 
     try {
-      const html2pdf = await requireHtml2Pdf();
-      const opt = {
-        margin: 0, filename: pdfFilename,
-        image: { type: 'jpeg', quality: 0.85 },
-        html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, scrollX: 0, x: 0, y: 0, windowWidth: PAGE_W, logging: false },
-        pagebreak: { mode: ['css', 'legacy'], before: '.pdf-page', avoid: '.pdf-page' },
-        jsPDF: { unit: 'in', format: [PAGE_W / 96, PAGE_H / 96], orientation: 'portrait' }
-      };
-      const raw = await new Promise((resolve) => {
-        html2pdf().set(opt).from(element).toPdf().get('pdf').then((pdf) => resolve(pdf.output('datauristring')));
-      });
+      await requireHtml2Pdf();
+      const html2canvas = window.html2canvas;
+      const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      if (!html2canvas || !jsPDFClass) throw new Error("html2canvas/jsPDF non disponibles");
+
+      const pages = element.querySelectorAll('.pdf-page');
+      const pdfW = PAGE_W / 96;
+      const pdfH = PAGE_H / 96;
+      const pdf = new jsPDFClass({ unit: 'in', format: [pdfW, pdfH], orientation: 'portrait' });
+
+      for (let i = 0; i < pages.length; i++) {
+        const canvas = await html2canvas(pages[i], {
+          scale: 1.5,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          width: PAGE_W,
+          height: PAGE_H,
+          windowWidth: PAGE_W,
+          windowHeight: PAGE_H,
+          logging: false,
+        });
+        const img = canvas.toDataURL('image/jpeg', 0.85);
+        if (i > 0) pdf.addPage([pdfW, pdfH], 'portrait');
+        pdf.addImage(img, 'JPEG', 0, 0, pdfW, pdfH, undefined, 'FAST');
+      }
+      const raw = pdf.output('datauristring');
       const pureBase64 = raw.includes('base64,') ? raw.substring(raw.indexOf('base64,') + 7) : raw;
       const response = await fetch(webhookUrl, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },

@@ -1933,7 +1933,7 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
       <div style={{ position: "fixed", top: 0, left: 0, zIndex: -1000, opacity: 0.001, pointerEvents: "none" }}>
         <div id="r1-printable" style={{ width: `${PAGE_W}px`, background: C.white }}>
           {slides.map((Sl, i) => (
-            <div key={i} className="pdf-page" style={{ width: `${PAGE_W}px`, height: `${PAGE_H}px`, position: "relative", overflow: "hidden", pageBreakAfter: i < slides.length - 1 ? "always" : "auto" }}>
+            <div key={i} className="pdf-page" style={{ width: `${PAGE_W}px`, height: `${PAGE_H}px`, position: "relative", overflow: "hidden", pageBreakBefore: i > 0 ? "always" : "auto", pageBreakInside: "avoid" }}>
               {Sl}
             </div>
           ))}

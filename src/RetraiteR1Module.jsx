@@ -2086,16 +2086,102 @@ function SlideAVS({ data, num }) {
           ))}
         </div>
 
-        <CartePilier titre={`${data.client.prenom} ${(data.client.nom || "").toUpperCase()}`} couleur={C.primary} data={[
-          ["N° AVS", data.client.avsNumero || "—"],
-          ["Caisse", data.client.avsCaisse || "—"],
-          ["Années cotisées", `${data.client.avsAnneesCotisation || 0} / 44`],
-          ["Rente mensuelle (sce normale)", `CHF ${fmt(avsC.renteMensuelle)} /mois`],
-          ["13e rente annuelle", data.client.avs13eRente ? `CHF ${fmt(avsC.treizieme)}` : "Non incluse"],
-          ["Lacunes signalées", data.client.avsLacunes || "Aucune"]
-        ]} />
-        <div style={{ marginTop: 12, background: "rgba(218,41,28,0.05)", padding: 12, borderLeft: `4px solid ${C.swiss}`, fontSize: 10, color: C.darkGray, lineHeight: 1.5 }}>
-          <strong>Le conseil :</strong> Dans la majorité des cas, l'anticipation n'est pas conseillée (perte définitive de 6.8% × N années). L'ajournement est rarement amorti. <em>Chiffre non opposable à la caisse — basé sur déclarations client.</em>
+        {/* Détail du calcul AVS — Décomposition étape par étape */}
+        {(() => {
+          const anneesCot = Number(data.client.avsAnneesCotisation || 0);
+          const echelle = Math.min(44, anneesCot);
+          const tauxCompletion = (echelle / 44 * 100).toFixed(1);
+          const revenuBrut = Number(data.client.revenusBrut || 0);
+          const ramApprox = revenuBrut; // approximation : revenu actuel ≈ RAM
+          const renteMin = 1260, renteMax = 2520, seuilSup = 88200;
+          // Formule simplifiée : rente échelle 44 selon RAM
+          let renteEch44;
+          if (ramApprox >= seuilSup) renteEch44 = renteMax;
+          else if (ramApprox <= 15120) renteEch44 = renteMin;
+          else renteEch44 = renteMin + (renteMax - renteMin) * ((ramApprox - 15120) / (seuilSup - 15120));
+          const renteEchClient = renteEch44 * (echelle / 44);
+          const renteCalculee = avsC.renteMensuelle;
+          const treize = avsC.treizieme;
+          const totalAnnuel = avsC.renteAnnuelle;
+          return (
+            <>
+              <div style={{ marginBottom: 10, fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Décomposition du calcul AVS — {data.client.prenom}
+              </div>
+              <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 14, marginBottom: 10 }}>
+                <table style={{ width: "100%", fontSize: 10.5, borderCollapse: "collapse" }}>
+                  <tbody>
+                    <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                      <td style={{ padding: "6px 8px", color: C.gray, width: 28 }}><strong style={{ color: C.swiss }}>1.</strong></td>
+                      <td style={{ padding: "6px 8px", color: C.darkGray }}>Années de cotisation</td>
+                      <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700, color: C.primary }}>{anneesCot} / 44 ans</td>
+                    </tr>
+                    <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                      <td style={{ padding: "6px 8px", color: C.gray }}><strong style={{ color: C.swiss }}>2.</strong></td>
+                      <td style={{ padding: "6px 8px", color: C.darkGray }}>Échelle applicable <span style={{ color: C.gray, fontSize: 9 }}>(échelle 44 = rente pleine)</span></td>
+                      <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700, color: C.primary }}>Échelle {echelle} <span style={{ color: C.gray, fontWeight: 500 }}>({tauxCompletion}%)</span></td>
+                    </tr>
+                    <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                      <td style={{ padding: "6px 8px", color: C.gray }}><strong style={{ color: C.swiss }}>3.</strong></td>
+                      <td style={{ padding: "6px 8px", color: C.darkGray }}>Revenu annuel moyen déterminant (RAM) <span style={{ color: C.gray, fontSize: 9 }}>(estim.)</span></td>
+                      <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700, color: C.primary }}>CHF {fmt(ramApprox)}</td>
+                    </tr>
+                    <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                      <td style={{ padding: "6px 8px", color: C.gray }}><strong style={{ color: C.swiss }}>4.</strong></td>
+                      <td style={{ padding: "6px 8px", color: C.darkGray }}>Rente échelle 44 selon RAM <span style={{ color: C.gray, fontSize: 9 }}>(formule légale : min CHF 1'260 / max CHF 2'520)</span></td>
+                      <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700, color: C.primary }}>CHF {fmt(renteEch44)} /mois</td>
+                    </tr>
+                    <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                      <td style={{ padding: "6px 8px", color: C.gray }}><strong style={{ color: C.swiss }}>5.</strong></td>
+                      <td style={{ padding: "6px 8px", color: C.darkGray }}>Application de l'échelle <span style={{ color: C.gray, fontSize: 9 }}>(rente éch. 44 × {tauxCompletion}%)</span></td>
+                      <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700, color: C.primary }}>CHF {fmt(renteEchClient)} /mois</td>
+                    </tr>
+                    <tr style={{ borderBottom: `2px solid ${C.swiss}`, background: "rgba(218,41,28,0.05)" }}>
+                      <td style={{ padding: "8px", color: C.swiss, fontWeight: 900 }}>=</td>
+                      <td style={{ padding: "8px", color: C.swiss, fontWeight: 800 }}>Rente mensuelle retenue {data.client.avsRenteEstimee ? <span style={{ color: C.gray, fontSize: 9, fontWeight: 500 }}>(estimation client validée)</span> : <span style={{ color: C.gray, fontSize: 9, fontWeight: 500 }}>(calcul indicatif)</span>}</td>
+                      <td style={{ padding: "8px", textAlign: "right", fontWeight: 900, color: C.swiss, fontSize: 14 }}>CHF {fmt(renteCalculee)} /mois</td>
+                    </tr>
+                    <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                      <td style={{ padding: "6px 8px", color: C.gray }}><strong style={{ color: C.gold }}>6.</strong></td>
+                      <td style={{ padding: "6px 8px", color: C.darkGray }}>× 12 mois</td>
+                      <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700, color: C.primary }}>CHF {fmt(renteCalculee * 12)} /an</td>
+                    </tr>
+                    {data.client.avs13eRente && (
+                      <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                        <td style={{ padding: "6px 8px", color: C.gray }}><strong style={{ color: C.gold }}>7.</strong></td>
+                        <td style={{ padding: "6px 8px", color: C.darkGray }}>+ 13e rente AVS (réforme AVS21 dès déc. 2026, +8.3%)</td>
+                        <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700, color: C.gold }}>+ CHF {fmt(treize)}</td>
+                      </tr>
+                    )}
+                    <tr style={{ background: C.swiss, color: C.white }}>
+                      <td style={{ padding: "10px 8px", fontWeight: 900 }}>=</td>
+                      <td style={{ padding: "10px 8px", fontWeight: 900 }}>RENTE AVS ANNUELLE TOTALE</td>
+                      <td style={{ padding: "10px 8px", textAlign: "right", fontWeight: 900, fontSize: 15, color: C.white }}>CHF {fmt(totalAnnuel)} /an</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                <div style={{ background: C.lightGray, padding: 10, fontSize: 9.5, color: C.darkGray, lineHeight: 1.5, borderLeft: `3px solid ${C.swiss}` }}>
+                  <strong style={{ color: C.swiss }}>Identification</strong><br/>
+                  N° AVS : <strong>{data.client.avsNumero || "—"}</strong><br/>
+                  Caisse : <strong>{data.client.avsCaisse || "—"}</strong><br/>
+                  Lacunes : <strong>{data.client.avsLacunes || "Aucune"}</strong>
+                </div>
+                <div style={{ background: "rgba(165,149,104,0.1)", padding: 10, fontSize: 9.5, color: C.darkGray, lineHeight: 1.5, borderLeft: `3px solid ${C.gold}` }}>
+                  <strong style={{ color: C.gold }}>Bonus de la formule légale</strong><br/>
+                  Bonifications <em>éducatives</em> ajoutées au RAM (par enfant).<br/>
+                  Splitting pour couples mariés (50/50 des revenus).<br/>
+                  Bonifications <em>d'assistance</em> si soutien à un proche.
+                </div>
+              </div>
+            </>
+          );
+        })()}
+
+        <div style={{ background: "rgba(218,41,28,0.05)", padding: 10, borderLeft: `4px solid ${C.swiss}`, fontSize: 9.5, color: C.darkGray, lineHeight: 1.5 }}>
+          <strong>Le conseil WallSwiss :</strong> L'anticipation entraîne une perte définitive de <strong>6.8% par année anticipée</strong> (max 2 ans, soit -13.6%). L'ajournement (1 à 5 ans) ajoute +5.2% à +31.5%, mais nécessite environ 12 ans de versement pour être amorti. <em>Chiffres non opposables à la caisse — exiger l'extrait du compte individuel (CI) pour validation.</em>
         </div>
       </div>
       <PageFooter data={data} />

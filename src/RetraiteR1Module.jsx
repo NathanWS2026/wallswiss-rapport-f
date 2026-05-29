@@ -1837,6 +1837,73 @@ function SlideContact({ data, num }) {
   );
 }
 
+function SlideSommaire({ data }) {
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num="" titreSection="Sommaire" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 40 }}>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Sommaire de <em style={{ color: C.gold }}>l'étude</em></div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, paddingLeft: 20 }}>
+          {[
+            "1. Profil & Objectifs",
+            "2. Vue d'ensemble de la retraite",
+            "3. Le 1er Pilier — AVS",
+            "4. Le 2e Pilier — LPP",
+            "5. Le 3e Pilier — Prévoyance privée",
+            "6. Volet France — Pensions françaises",
+            "7. Patrimoine global",
+            "8. Leviers d'optimisation",
+            "9. Hypothèses de l'étude",
+            "10. Documents à fournir",
+            "11. Prochaines étapes"
+          ].map((item, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ width: 8, height: 8, background: C.gold, borderRadius: "50%" }} />
+              <div style={{ fontSize: 14, color: C.primaryDark, fontWeight: 600 }}>{item}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
+function SlideWallswiss({ data }) {
+  return (
+    <div style={{ ...pageBase, background: `linear-gradient(180deg, ${C.lightGray} 0%, ${C.white} 100%)` }}>
+      <PageHeader data={data} num="" titreSection="Votre Partenaire" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <div style={{ textAlign: "center", marginBottom: 30 }}>
+          <div style={{ background: C.white, width: 72, height: 72, margin: "0 auto 20px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+            <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ width: 40, height: 40, objectFit: "contain" }} />
+          </div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, color: C.primary, fontWeight: 700, margin: 0 }}>WallSwiss</div>
+          <div style={{ color: C.gold, fontSize: 12, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginTop: 8 }}>Votre partenaire patrimonial</div>
+        </div>
+        <div style={{ background: C.white, padding: 30, borderLeft: `4px solid ${C.primary}`, boxShadow: "0 8px 24px rgba(0,0,0,0.04)", marginBottom: 30 }}>
+          <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.8, margin: 0, textAlign: "justify" }}>
+            Spécialistes de la planification financière et successorale pour les frontaliers et résidents suisses, nous vous accompagnons dans la structuration de votre patrimoine. Notre approche globale intègre la prévoyance, l'immobilier et la fiscalité de part et d'autre de la frontière pour vous garantir une sérénité totale à l'heure de la retraite.
+          </p>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 20 }}>
+            <div style={{ fontSize: 12, color: C.primary, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}><Icons.Check size={16} color={C.gold} /> Indépendance</div>
+            <div style={{ fontSize: 11, color: C.gray, lineHeight: 1.6 }}>Des conseils impartiaux et des solutions sélectionnées en toute objectivité pour servir exclusivement vos intérêts.</div>
+          </div>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 20 }}>
+            <div style={{ fontSize: 12, color: C.primary, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}><Icons.Users size={16} color={C.gold} /> Sur-mesure</div>
+            <div style={{ fontSize: 11, color: C.gray, lineHeight: 1.6 }}>Une stratégie personnalisée, spécifiquement adaptée à vos objectifs et votre situation transfrontalière.</div>
+          </div>
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
 // ────────────────────── MODALE D'APERÇU + GÉNÉRATION PDF ──────────────────────
 
 const getBase64Image = async (url) => {
@@ -1877,6 +1944,8 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
 
   const slides = [
     <SlideCouverture data={data} />,
+    <SlideSommaire data={data} />,
+    <SlideWallswiss data={data} />,
     <SlideProfil data={data} num="01" />,
     <SlideVueEnsemble data={data} num="02" />,
     <SlideAVS data={data} num="03" />,

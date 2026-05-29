@@ -1769,15 +1769,17 @@ const getBase64Image = async (url) => {
   }
 };
 
-const requireHtml2Pdf = async () => {
-  if (window.html2pdf) return window.html2pdf;
-  return new Promise((resolve, reject) => {
+const requirePdfLibs = async () => {
+  if (window.html2canvas && window.jspdf) return;
+  const loadScript = (src) => new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-    script.onload = () => resolve(window.html2pdf);
+    script.src = src;
+    script.onload = resolve;
     script.onerror = reject;
     document.body.appendChild(script);
   });
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
 };
 
 function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
@@ -1821,9 +1823,9 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
     await new Promise(r => setTimeout(r, 300));
 
     try {
-      await requireHtml2Pdf(); // charge html2canvas + jsPDF sur window
+      await requirePdfLibs();
       const html2canvas = window.html2canvas;
-      const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      const jsPDFClass = window.jspdf.jsPDF;
       if (!html2canvas || !jsPDFClass) throw new Error("html2canvas/jsPDF non disponibles");
 
       const pages = element.querySelectorAll('.pdf-page');
@@ -1881,9 +1883,9 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
     await new Promise(r => setTimeout(r, 300));
 
     try {
-      await requireHtml2Pdf();
+      await requirePdfLibs();
       const html2canvas = window.html2canvas;
-      const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      const jsPDFClass = window.jspdf.jsPDF;
       if (!html2canvas || !jsPDFClass) throw new Error("html2canvas/jsPDF non disponibles");
 
       const pages = element.querySelectorAll('.pdf-page');
@@ -1960,7 +1962,7 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
       </div>
 
       {/* Bloc caché pour la génération PDF */}
-      <div style={{ position: "fixed", top: 0, left: 0, zIndex: -1000, opacity: 0.001, pointerEvents: "none" }}>
+      <div style={{ position: "absolute", left: "-9999px", top: 0, zIndex: -1000, opacity: 1, pointerEvents: "none" }}>
         <div id="r1-printable" style={{ width: `${PAGE_W}px`, background: C.white }}>
           {slides.map((Sl, i) => (
             <div key={i} className="pdf-page" style={{ width: `${PAGE_W}px`, height: `${PAGE_H}px`, position: "relative", overflow: "hidden", display: "block" }}>

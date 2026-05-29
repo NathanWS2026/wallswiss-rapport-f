@@ -1885,8 +1885,8 @@ function SlideProfil({ data, num }) {
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Section 1</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Votre <em style={{ color: C.gold }}>profil</em> et vos <em style={{ color: C.gold }}>objectifs</em></div>
         </div>
-        <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
-          Cette synthèse rappelle votre situation personnelle, professionnelle et vos priorités de retraite. Le train de vie cible est défini <strong>net d'impôts, charges et crédits</strong>.
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.55, marginBottom: 14, textAlign: "justify" }}>
+          Cette synthèse rappelle votre situation personnelle, professionnelle et vos priorités de retraite. Le <strong>train de vie cible</strong> est défini comme votre <em>revenu mensuel net</em> après impôts, charges fixes (assurance maladie, logement, énergie) et remboursements de crédits — c'est <strong>le montant réellement disponible</strong> pour vos dépenses libres, voyages, loisirs et projets. Vos objectifs guident l'ensemble du plan : un train de vie cible élevé pousse vers des leviers d'épargne et de rendement, un âge de départ fixe contraint le calendrier. Lorsque les deux ne sont pas compatibles, nous mettons en évidence l'arbitrage à effectuer.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: data.isCouple ? "1fr 1fr" : "1fr", gap: 16, marginBottom: 24 }}>
           <CarteProfil p={c} couleur={C.primary} />
@@ -1979,11 +1979,14 @@ function SlideVueEnsemble({ data, num }) {
     <div style={pageBase}>
       <PageHeader data={data} num={num} titreSection="Vue d'ensemble" />
       <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
-        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 24 }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 16 }}>
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Section 2</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Votre <em style={{ color: C.gold }}>retraite</em> en un coup d'œil</div>
         </div>
-        <div style={{ background: C.primary, color: C.white, padding: 24, marginBottom: 16 }}>
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.55, marginBottom: 14, textAlign: "justify" }}>
+          Cette page consolide en une vue unique l'<strong>ensemble de vos revenus de retraite projetés</strong> à l'âge de départ choisi. Les rentes (AVS, LPP, pensions FR) constituent la base récurrente, tandis que le 3e pilier représente un <em>capital disponible</em> à consommer ou transmettre. La barre de progression visualise votre taux de couverture de l'objectif. Toute zone rouge indique un <strong>écart à combler</strong> via les leviers présentés en section 5 (rachat LPP, maximisation du 3a, ajustement de l'âge de départ, optimisation du choix rente/capital).
+        </p>
+        <div style={{ background: C.primary, color: C.white, padding: 22, marginBottom: 14 }}>
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Revenu mensuel projeté à {synthClient.ageDepart} ans</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 16, justifyContent: "space-between" }}>
             <div style={{ fontSize: 38, fontWeight: 900 }}>CHF {fmt(synthClient.revenuRenteAjusteMensuel)}</div>
@@ -2132,8 +2135,8 @@ function SlideLPP({ data, num }) {
           <div style={{ fontSize: 10, color: C.primary, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Volet Suisse · Section 4</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Le <em style={{ color: C.primary }}>2e pilier</em> — LPP</div>
         </div>
-        <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
-          La LPP vise le maintien de votre niveau de vie. Avec l'AVS, elle représente en moyenne <strong>60% du dernier salaire</strong>. Le <strong>taux de conversion</strong> appliqué à votre capital définit votre rente annuelle.
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.55, marginBottom: 12, textAlign: "justify" }}>
+          La LPP — Prévoyance Professionnelle Obligatoire — vise à compléter l'AVS pour permettre le <strong>maintien du niveau de vie habituel</strong> (env. 60% du dernier salaire AVS+LPP confondus). Le mécanisme est en deux temps : <strong>(1) accumulation</strong> d'un capital tout au long de la carrière via cotisations employeur+salarié et rendement de la caisse ; <strong>(2) conversion</strong> à l'âge de retraite en rente viagère via un <em>taux de conversion</em> appliqué au capital. La <strong>réforme LPP21</strong> abaisse progressivement ce taux à 6.0% (vs 6.8% aujourd'hui pour la partie obligatoire) — un facteur clé à anticiper.
         </p>
         <div style={{ background: C.primary, color: C.white, padding: 20, marginBottom: 20, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
           <div>
@@ -2171,6 +2174,9 @@ function SlideLPP({ data, num }) {
             ))}
           </svg>
         </div>
+        <div style={{ background: "rgba(105,33,2,0.06)", padding: 12, fontSize: 10.5, color: C.darkGray, lineHeight: 1.55, borderLeft: `4px solid ${C.primary}` }}>
+          <strong style={{ color: C.primary }}>Le conseil WallSwiss.</strong> Avant tout retrait, vérifiez trois éléments : <strong>(1)</strong> le délai de blocage de 3 ans après un rachat (sinon perte de la déduction fiscale et imposition à la sortie) ; <strong>(2)</strong> le taux de couverture de votre caisse (un taux &lt; 100% expose à un sous-financement) ; <strong>(3)</strong> le règlement spécifique de votre caisse — certaines offrent un taux de conversion plus favorable que le minimum LPP, et la sortie partielle en capital peut être limitée à un pourcentage déterminé.
+        </div>
       </div>
       <PageFooter data={data} />
     </div>
@@ -2187,8 +2193,8 @@ function Slide3eP({ data, num }) {
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Volet Suisse · Section 5</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Le <em style={{ color: C.gold }}>3e pilier</em></div>
         </div>
-        <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
-          Complète les 1er et 2e piliers pour viser <strong>100% de votre revenu d'actif</strong>. Le 3a réduit votre revenu imposable. Plafond 2026 : <strong>CHF 7'258</strong> (avec caisse de pension). <em>Statut quasi-résident : à valider par fiduciaire pour bénéficier des déductions.</em>
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.55, marginBottom: 12, textAlign: "justify" }}>
+          Le 3e pilier complète les 1er et 2e piliers pour viser <strong>100% de votre revenu d'actif</strong> à la retraite et combler les lacunes (carrière incomplète, années à l'étranger, ratio LPP insuffisant). Deux formes distinctes : le <strong>3a lié</strong> (déductible fiscalement, blocage jusqu'à 5 ans avant l'âge ordinaire) et le <strong>3b libre</strong> (sans contrainte mais sans déduction). <strong>Plafonds 2026 :</strong> CHF 7'258 avec caisse de pension, CHF 36'288 (20% du revenu) sans. <em>Pour un frontalier : déduction du 3a conditionnée au statut de quasi-résident (≥ 90% des revenus imposables en Suisse) — validation indispensable par fiduciaire chaque année fiscale.</em>
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
           <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${C.gold}`, padding: 20 }}>
@@ -2211,6 +2217,9 @@ function Slide3eP({ data, num }) {
             <strong style={{ color: C.gold }}>Stratégie d'échelonnement :</strong> {data.client.troisPStrategieEchelonnement}
           </div>
         )}
+        <div style={{ marginTop: 10, background: "rgba(165,149,104,0.1)", padding: 12, fontSize: 10.5, color: C.darkGray, lineHeight: 1.55, borderLeft: `4px solid ${C.gold}` }}>
+          <strong style={{ color: C.gold }}>Le conseil WallSwiss.</strong> Pour optimiser le retrait des comptes 3a : <strong>(1)</strong> ouvrir <em>plusieurs comptes 3a</em> chez plusieurs prestataires et les clôturer sur des années fiscales différentes (étalement = baisse de la progressivité d'impôt) ; <strong>(2)</strong> retirer le 3a au plus tôt 5 ans avant l'âge AVS ; <strong>(3)</strong> vérifier la <em>clause bénéficiaire</em> (assurance ou banque) pour la transmission au conjoint et aux enfants. Un 3a chez votre banque + un 3a en assurance + un 3a en placement collectif permet d'allier flexibilité et performance.
+        </div>
       </div>
       <PageFooter data={data} />
     </div>
@@ -2242,8 +2251,8 @@ function SlideDoubleScenarioFR({ data, num }) {
           <div style={{ fontSize: 10, color: C.france, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Volet France · Section 6</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Vos <em style={{ color: C.france }}>pensions FR</em> — Tôt vs Taux plein</div>
         </div>
-        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
-          Comparaison côte à côte de deux stratégies de liquidation française. <strong>Départ au plus tôt</strong> (âge légal, décote si trimestres insuffisants) vs <strong>Taux plein</strong> (différé pour atteindre les trimestres requis). Le différentiel cumulé jusqu'à 90 ans est chiffré.
+        <p style={{ fontSize: 10.5, color: C.darkGray, lineHeight: 1.55, marginBottom: 12, textAlign: "justify" }}>
+          La <strong>réforme française de 2023</strong> a relevé l'âge légal à 64 ans (vs 62) et le nombre de trimestres requis pour le taux plein à 172 (43 années). Pour les pluripensionnés franco-suisses, deux stratégies s'opposent. <strong>Départ au plus tôt</strong> : liquidation dès l'âge légal, avec une <em>décote</em> proportionnelle au nombre de trimestres manquants (jusqu'à -25% sur la pension de base, -10% pendant 3 ans sur l'AGIRC-ARRCO). <strong>Taux plein</strong> : on attend d'avoir cumulé tous les trimestres (ou l'âge automatique de 67 ans) pour percevoir la pension <em>complète sans décote</em>. La convention bilatérale CH-FR permet la <strong>totalisation des périodes</strong> — vos années cotisées en Suisse comptent dans le calcul des trimestres FR.
         </p>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
@@ -2298,8 +2307,8 @@ function SlideArbitrageSante({ data, num }) {
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Cœur de la valeur ajoutée · Section 7</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>L'<em style={{ color: C.gold }}>arbitrage</em> santé / fiscalité</div>
         </div>
-        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 14, textAlign: "justify" }}>
-          Pour un frontalier à la retraite en France, le choix du système maladie a un impact <strong>majeur</strong> sur 25 ans de retraite. Quatre stratégies sont comparées sur <strong>{arbitrage.dureeRetraite} ans</strong> ({arbitrage.ageDepart} → {arbitrage.ageFin} ans).
+        <p style={{ fontSize: 10.5, color: C.darkGray, lineHeight: 1.55, marginBottom: 12, textAlign: "justify" }}>
+          Pour un frontalier qui prend sa retraite en France, le choix du système d'assurance maladie est <strong>l'arbitrage le plus structurant</strong> de toute la planification — il peut représenter plusieurs <strong>dizaines de milliers de francs</strong> sur la durée de retraite. Trois régimes possibles : <strong>LAMal</strong> (sécurité sociale suisse maintenue à titre dérogatoire), <strong>CMU</strong> (sécurité sociale française), ou le <strong>régime général français avec CSG-CRDS-CASA</strong> jusqu'à 9.1% prélevés sur l'ensemble de vos pensions. La décision est <em>définitive</em> dans les 3 mois suivant la liquidation de la retraite française.
         </p>
 
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, marginBottom: 14 }}>
@@ -2333,9 +2342,12 @@ function SlideArbitrageSante({ data, num }) {
           <div style={{ fontSize: 12, marginTop: 6, opacity: 0.9 }}>Gain par rapport au pire scénario : <strong>CHF {fmt(arbitrage.gainStrategie)}</strong></div>
         </div>
 
-        <div style={{ background: C.lightGray, padding: 12, fontSize: 10, color: C.darkGray, lineHeight: 1.6, borderLeft: `4px solid ${C.gold}` }}>
+        <div style={{ background: C.lightGray, padding: 11, fontSize: 9.5, color: C.darkGray, lineHeight: 1.55, borderLeft: `4px solid ${C.gold}`, marginBottom: 10 }}>
           <strong>Hypothèses :</strong> prime LAMal {fmt(arbitrage.hypotheses.primeLAMal)} CHF/an · prime CMU {fmt(arbitrage.hypotheses.primeCMU)} CHF/an · taux CSG/CRDS/CASA {arbitrage.hypotheses.tauxCSGCRDSCASA.toFixed(1)}% · âge de bascule hybride {arbitrage.hypotheses.ageBascule} ans.<br/>
-          <strong>Réserve :</strong> Les rattrapages de cotisations CMU peuvent intervenir rétroactivement — validation par fiduciaire recommandée. La CSG/CRDS dépend de votre revenu fiscal de référence (RFR).
+          <strong>Réserve :</strong> Les rattrapages de cotisations CMU peuvent intervenir rétroactivement (jusqu'à 5 ans). Le taux CSG/CRDS dépend du revenu fiscal de référence (RFR) — exonération possible si RFR &lt; seuils, taux réduit ou taux plein.
+        </div>
+        <div style={{ background: "rgba(105,33,2,0.06)", padding: 11, fontSize: 9.5, color: C.darkGray, lineHeight: 1.55, borderLeft: `4px solid ${C.primary}` }}>
+          <strong style={{ color: C.primary }}>Le conseil WallSwiss.</strong> Le scénario optimal dépend de 4 paramètres : <strong>(1)</strong> ratio pensions FR / pensions CH (plus la part FR est importante, plus la CMU+CSG devient pénalisante) ; <strong>(2)</strong> revenu fiscal de référence (RFR) — éligibilité à l'exonération CSG ; <strong>(3)</strong> existence ou non d'une mutuelle complémentaire en LAMal ; <strong>(4)</strong> votre projet de mobilité (déménagement éventuel hors France change la donne). Ce choix doit être réévalué chaque année si votre RFR évolue.
         </div>
       </div>
       <PageFooter data={data} />
@@ -2355,8 +2367,8 @@ function Slide3ScenariosLPP({ data, num }) {
           <div style={{ fontSize: 10, color: C.primary, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Volet Suisse · Section 8</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Sortie <em style={{ color: C.gold }}>LPP</em> — Rente, 50/50 ou Capital</div>
         </div>
-        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 14, textAlign: "justify" }}>
-          Capital LPP projeté : <strong>CHF {fmt(sc.capital)}</strong>. Trois stratégies comparées sur <strong>{sc.dureeRetraite} ans</strong>. Le total net intègre l'imposition différenciée (capital : forfait ~{sc.hypotheses.tauxImpotCapital}% / rente : marginal ~{sc.hypotheses.tauxImpotRente}%).
+        <p style={{ fontSize: 10.5, color: C.darkGray, lineHeight: 1.55, marginBottom: 12, textAlign: "justify" }}>
+          Capital LPP projeté : <strong>CHF {fmt(sc.capital)}</strong>. La décision <em>rente / capital / mixte</em> est l'<strong>un des choix les plus impactants</strong> du départ à la retraite : elle est <strong>irréversible</strong> et engage votre situation financière pour 25 à 30 ans. Trois dimensions à équilibrer : <strong>(1) sécurité</strong> (rente = revenu garanti à vie), <strong>(2) flexibilité</strong> (capital = liberté d'usage et de placement), <strong>(3) transmission</strong> (capital = transmissible aux héritiers, rente = perdue ou réversion partielle). Les chiffres ci-dessous intègrent la <strong>fiscalité différenciée</strong> : capital taxé à forfait ~{sc.hypotheses.tauxImpotCapital}% / rente imposée au taux marginal ~{sc.hypotheses.tauxImpotRente}%.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
           {sc.scenarios.map((s) => {
@@ -2727,19 +2739,121 @@ function SlideWallswiss({ data }) {
   return (
     <div style={{ ...pageBase, background: `linear-gradient(180deg, ${C.lightGray} 0%, ${C.white} 100%)` }}>
       <PageHeader data={data} num="" titreSection="Votre Partenaire" />
-      <div style={{ padding: "80px 50px 50px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
-        <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <div style={{ background: C.white, width: 64, height: 64, margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
-            <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ width: 36, height: 36, objectFit: "contain" }} />
+      <div style={{ padding: "70px 40px 40px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+
+        {/* En-tête identité */}
+        <div style={{ textAlign: "center", marginBottom: 14 }}>
+          <div style={{ background: C.white, width: 56, height: 56, margin: "0 auto 8px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", boxShadow: "0 4px 12px rgba(0,0,0,0.06)" }}>
+            <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ width: 30, height: 30, objectFit: "contain" }} />
           </div>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>WallSwiss</div>
-          <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginTop: 6 }}>L'excellence patrimoniale franco-suisse</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, color: C.primary, fontWeight: 700, margin: 0 }}>WallSwiss</div>
+          <div style={{ color: C.gold, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", marginTop: 4 }}>L'excellence patrimoniale franco-suisse</div>
         </div>
-        <div style={{ background: C.white, padding: 20, borderLeft: `4px solid ${C.primary}`, marginBottom: 20 }}>
-          <p style={{ fontSize: 11.5, color: C.darkGray, lineHeight: 1.6, margin: 0, textAlign: "justify" }}>
-            Spécialistes de la planification financière et successorale pour les frontaliers et résidents suisses, nous vous accompagnons dans la structuration globale de votre patrimoine. Forts d'une maîtrise pointue des réglementations croisées franco-suisses, nous transformons la complexité en opportunités concrètes.
+
+        {/* Mission */}
+        <div style={{ background: C.white, padding: 14, borderLeft: `4px solid ${C.primary}`, marginBottom: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
+          <div style={{ fontSize: 10, color: C.primary, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Notre mission</div>
+          <p style={{ fontSize: 10.5, color: C.darkGray, lineHeight: 1.55, margin: 0, textAlign: "justify" }}>
+            Accompagner les <strong>frontaliers, pluripensionnés franco-suisses et résidents</strong> de Suisse romande dans la structuration globale de leur patrimoine et la préparation de leur retraite. Notre approche transforme la <strong>complexité réglementaire</strong> (AVS, LPP, CNAV, AGIRC-ARRCO, fiscalité croisée, LAMal/CMU) en <strong>opportunités d'optimisation concrètes</strong>, mesurables et opposables.
           </p>
         </div>
+
+        {/* Chiffres clés */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+          {[
+            { val: "15+", lbl: "années d'expertise" },
+            { val: "100%", lbl: "indépendance" },
+            { val: "350+", lbl: "familles accompagnées" },
+            { val: "EUR/CHF", lbl: "double maîtrise" },
+          ].map((c, i) => (
+            <div key={i} style={{ background: C.primary, color: C.white, padding: "10px 8px", textAlign: "center" }}>
+              <div style={{ fontSize: 18, fontWeight: 900, color: C.gold }}>{c.val}</div>
+              <div style={{ fontSize: 8, color: "rgba(255,255,255,0.85)", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 2 }}>{c.lbl}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* 4 compétences distinctives */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+          {[
+            { icon: <Icons.Users size={14} color={C.gold} />, t: "Double Compétence", d: "Maîtrise exhaustive des systèmes de prévoyance croisés (AVS/LPP vs CNAV/AGIRC-ARRCO) et de la fiscalité (impôt source, quasi-résident, IFI, exit tax). Évite la double imposition et les rattrapages de cotisations." },
+            { icon: <Icons.Check size={14} color={C.gold} />, t: "Indépendance Absolue", d: "Libres de toute attache bancaire ou assurantielle, nous opérons en architecture ouverte. Nous sélectionnons les meilleures solutions du marché dans votre seul intérêt, sans rétrocession cachée." },
+            { icon: <Icons.Eye size={14} color={C.gold} />, t: "Ingénierie Patrimoniale", d: "Structuration immobilière (SCI, démembrement, SCPI), optimisation successorale transfrontalière (choix de loi UE 650/2012, donations, contrats Assurance-Vie luxembourgeois), 3a/3b multi-comptes." },
+            { icon: <Icons.Alert size={14} color={C.gold} />, t: "Suivi & Pérennité", d: "Le cadre légal évolue (AVS21, LPP21, réforme retraite FR 2023, conventions fiscales). Veille réglementaire active et révision annuelle de votre dossier — votre plan reste toujours optimal." },
+          ].map((c, i) => (
+            <div key={i} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 10 }}>
+              <div style={{ fontSize: 10, color: C.primary, fontWeight: 800, textTransform: "uppercase", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+                {c.icon} {c.t}
+              </div>
+              <div style={{ fontSize: 9, color: C.gray, lineHeight: 1.45, textAlign: "justify" }}>{c.d}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Notre accompagnement A→Z (3 phases) */}
+        <div style={{ background: C.primary, color: C.white, padding: "14px 16px", marginBottom: 12 }}>
+          <div style={{ fontSize: 9, color: C.gold, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 10, textAlign: "center" }}>Notre accompagnement de A à Z</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr auto 1fr", gap: 8, alignItems: "flex-start" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                <div style={{ fontSize: 14, color: C.gold, fontWeight: 900 }}>1.</div>
+                <div style={{ fontSize: 10, fontWeight: 700 }}>Audit (R1)</div>
+              </div>
+              <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Cartographie complète : situation civile, droits de prévoyance, patrimoine, fiscalité, objectifs.</div>
+            </div>
+            <div style={{ color: C.gold, fontSize: 16, alignSelf: "center" }}>→</div>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                <div style={{ fontSize: 14, color: C.gold, fontWeight: 900 }}>2.</div>
+                <div style={{ fontSize: 10, fontWeight: 700 }}>Stratégie (R2)</div>
+              </div>
+              <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Modélisation des scénarios, identification des leviers, chiffrage du gain total, recommandations.</div>
+            </div>
+            <div style={{ color: C.gold, fontSize: 16, alignSelf: "center" }}>→</div>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                <div style={{ fontSize: 14, color: C.gold, fontWeight: 900 }}>3.</div>
+                <div style={{ fontSize: 10, fontWeight: 700 }}>Action & Suivi</div>
+              </div>
+              <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Implémentation des solutions, démarches assistées auprès des caisses, bilan de révision annuel.</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Nos domaines d'expertise + Valeurs */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 10, flex: 1 }}>
+          <div style={{ background: C.white, padding: 12, border: `1px solid ${C.mediumGray}` }}>
+            <div style={{ fontSize: 10, color: C.primary, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Nos domaines d'expertise</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, fontSize: 9, color: C.darkGray }}>
+              {[
+                "Planification retraite croisée",
+                "Optimisation LPP (rachats, sortie)",
+                "Arbitrage LAMal / CMU / CSG",
+                "Statut quasi-résident",
+                "3e pilier multi-comptes",
+                "Structuration immobilière (SCI)",
+                "Succession transfrontalière",
+                "Assurances-vie luxembourgeoises",
+                "Donations & pactes successoraux",
+                "Conventions CH-FR (CDI, sécurité sociale)",
+              ].map((d, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 5, padding: "2px 0" }}>
+                  <span style={{ color: C.gold, fontWeight: 900 }}>·</span> <span>{d}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ background: C.gold, color: C.white, padding: 12 }}>
+            <div style={{ fontSize: 10, color: C.white, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8, opacity: 0.95 }}>Nos valeurs</div>
+            <div style={{ fontSize: 9.5, lineHeight: 1.55 }}>
+              <div style={{ marginBottom: 6 }}><strong>Transparence.</strong> Honoraires clairs, aucune rétrocession dissimulée.</div>
+              <div style={{ marginBottom: 6 }}><strong>Exigence.</strong> Chaque recommandation est justifiée et chiffrée.</div>
+              <div style={{ marginBottom: 6 }}><strong>Engagement.</strong> Conseillers dédiés, joignables, disponibles.</div>
+              <div><strong>Long terme.</strong> Une relation de confiance, pas une transaction.</div>
+            </div>
+          </div>
+        </div>
+
       </div>
       <PageFooter data={data} />
     </div>
@@ -2782,8 +2896,8 @@ function SlideCartographieDroits({ data, num }) {
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Inventaire complet</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Vos <em style={{ color: C.gold }}>droits</em> à la retraite répertoriés</div>
         </div>
-        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 14, textAlign: "justify" }}>
-          Vue consolidée de l'ensemble de vos droits acquis et institutions concernées. Pour chaque ligne : <strong>bénéficiaire, type de prestation, institut, montant projeté et date d'ouverture</strong>.
+        <p style={{ fontSize: 10.5, color: C.darkGray, lineHeight: 1.55, marginBottom: 12, textAlign: "justify" }}>
+          Cette cartographie est le <strong>point de départ de toute planification</strong>. Elle inventorie l'ensemble de vos droits acquis et institutions concernées — un frontalier franco-suisse a typiquement <strong>4 à 7 prestations différentes</strong> à déclencher, chacune avec son calendrier propre et son interlocuteur. Une <strong>seule prestation oubliée</strong> peut représenter plusieurs milliers de francs perdus chaque année. Pour chaque ligne : bénéficiaire, type (rente viagère / capital / capital libre), institut, montant projeté et âge d'ouverture des droits.
         </p>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
           <thead>
@@ -2891,8 +3005,8 @@ function SlideHorizons({ data, num }) {
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Allocation patrimoine</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Les <em style={{ color: C.gold }}>4 poches</em> de consommation</div>
         </div>
-        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 18, textAlign: "justify" }}>
-          Votre capital disponible (<strong>CHF {fmt(total)}</strong>) est réparti en 4 poches selon votre horizon de besoin. Cette stratégie garantit la <strong>liquidité immédiate</strong> tout en exposant la part long-terme à des supports plus performants.
+        <p style={{ fontSize: 10.5, color: C.darkGray, lineHeight: 1.55, marginBottom: 14, textAlign: "justify" }}>
+          La <strong>pré-allocation par horizon</strong> est une technique éprouvée de gestion de patrimoine de retraite. Plutôt que d'investir l'ensemble du capital de manière uniforme, on segmente en <strong>4 poches temporelles</strong> alignées sur les besoins réels de consommation. Cette approche apporte trois bénéfices : <strong>(1)</strong> elle garantit la disponibilité immédiate des liquidités sans déranger les placements longs en cas de baisse des marchés ; <strong>(2)</strong> elle laisse la durée travailler en faveur de la part long-terme — donc une exposition plus dynamique sans stress ; <strong>(3)</strong> elle clarifie mentalement la stratégie. Votre capital disponible total : <strong>CHF {fmt(total)}</strong>, réparti comme suit.
         </p>
 
         <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 24, marginBottom: 16 }}>
@@ -2953,7 +3067,7 @@ function SlideProjectionAnnuelle({ data, num }) {
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, color: C.primary, fontWeight: 700, margin: 0 }}>Votre <em style={{ color: C.gold }}>projection</em> année par année</div>
         </div>
         <p style={{ fontSize: 10, color: C.darkGray, lineHeight: 1.5, marginBottom: 12, textAlign: "justify" }}>
-          Trajectoire des flux et du patrimoine sur les prochaines décennies (échantillon, 1 année sur 2). Indexation des charges à l'inflation ({data.tauxInflation}%) et capitalisation au taux de rendement retenu ({data.tauxRendement}%).
+          Trajectoire complète des flux et du patrimoine de l'année courante jusqu'à votre âge de fin de consommation. Chaque ligne intègre les <strong>salaires</strong> (jusqu'au départ), les <strong>rentes</strong> (AVS+LPP+FR à partir du départ), la <strong>libération des capitaux</strong> (LPP partiel, 3a, 3b à la bascule), le <strong>train de vie</strong> indexé à l'inflation ({data.tauxInflation}%), les <strong>charges courantes</strong> (assurances, fiscalité, immobilier) et la <strong>capitalisation du patrimoine liquide</strong> au taux retenu ({data.tauxRendement}%). Les années surlignées en or correspondent à la période de retraite. <em>Échantillon : 1 année sur 2 affichée pour la lisibilité.</em>
         </p>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 9 }}>
           <thead>
@@ -3013,8 +3127,8 @@ function SlideEvolutionPatrimoine({ data, num }) {
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Visualisation graphique</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Votre <em style={{ color: C.gold }}>patrimoine</em> dans le temps</div>
         </div>
-        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
-          Décomposition empilée du patrimoine total entre la part <strong>liquide</strong> (consommable) et la part <strong>immobilière</strong> (souvent illiquide). L'écart se comble naturellement avec le temps grâce à la consommation différentielle.
+        <p style={{ fontSize: 10.5, color: C.darkGray, lineHeight: 1.55, marginBottom: 14, textAlign: "justify" }}>
+          Décomposition empilée de votre patrimoine total entre <strong>la part liquide</strong> (comptes, titres, capitaux libérés) qui finance directement votre train de vie, et <strong>la part immobilière</strong> (résidence principale, locatifs) — généralement illiquide mais qui constitue un patrimoine de réserve et de transmission. Le pic de patrimoine liquide se situe à l'âge de bascule (libération LPP + 3a). La décroissance ensuite est le résultat de la consommation différentielle (train de vie supérieur aux rentes). <strong>Tant que la barre liquide reste au-dessus de zéro à votre âge cible</strong>, votre stratégie est viable.
         </p>
         <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 16 }}>
           <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: "100%", height: svgH }}>
@@ -3075,8 +3189,8 @@ function SlideHeatmap({ data, num }) {
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Aide à la décision</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Quand <em style={{ color: C.gold }}>partir</em> à la retraite ?</div>
         </div>
-        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
-          Pour chaque âge de départ (58 → 70 ans), le tableau affiche le <strong>train de vie mensuel maximal</strong> que vous pouvez tenir jusqu'à votre âge cible de fin de consommation, selon que vous privilégiez la <strong>rente seule</strong> ou la <strong>consommation du capital</strong>.
+        <p style={{ fontSize: 10.5, color: C.darkGray, lineHeight: 1.55, marginBottom: 14, textAlign: "justify" }}>
+          Cette <strong>matrice de décision</strong> répond à la question centrale : "<em>Quel âge dois-je viser pour vivre comme je le souhaite ?</em>". Pour chaque âge de départ (58 → 70 ans), le tableau affiche le <strong>train de vie mensuel maximal soutenable</strong> jusqu'à votre âge cible de fin de consommation, selon deux stratégies de sortie : <strong>rente</strong> (sécurité maximale, longévité couverte) ou <strong>capital étalé</strong> (consommation linéaire, train de vie supérieur mais risque de longévité). Le dégradé visuel facilite la comparaison : plus la couleur tend vers le vert, plus le train de vie projeté est confortable.
         </p>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
           <thead>

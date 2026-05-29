@@ -588,6 +588,200 @@ function generatePlanActions(data) {
 }
 
 // ============================================================
+// PHASE 2 — HELPERS DE PROJECTION AVANCÉS
+// ============================================================
+
+// ─── Projection annuelle 2026 → 2050 (tableau ligne-à-ligne) ───
+function calcProjectionAnnuelle(data) {
+  const ageActuel = Number(data.client.age || 50);
+  const ageDepart = Number(data.client.objAgeDepart || 65);
+  const ageFin = Number(data.client.objAgeFinConsommation || 90);
+  const anneeActuelle = new Date().getFullYear();
+  const anneeDepart = anneeActuelle + (ageDepart - ageActuel);
+  const anneeFin = anneeActuelle + (ageFin - ageActuel);
+  const tauxRdt = Number(data.tauxRendement || 1.5) / 100;
+  const inflation = Number(data.tauxInflation || 1.5) / 100;
+  const tauxChange = Number(data.tauxChangeEurChf || 0.95);
+
+  const synth = calcSyntheseRetraite(data.client, data);
+  const lpp = calcLPP(data.client, ageDepart);
+  const tp = calc3eP(data.client, ageDepart);
+  const trainVieInitial = Number(data.client.objTrainVie || 0) * 12;
+
+  const salaireAnnuel = Number(data.client.revenusNet || 0);
+  const epargneAnnuelle = Number(data.client.fluxEpargneMensuel || 0) * 12;
+  const chargesActuelles = (Number(data.budCoutVieMensuel || 0) + Number(data.budAssuranceMaladie || 0) + Number(data.budAutresAssurances || 0)) * 12 + Number(data.budChargeFiscale || 0);
+
+  // Patrimoine de départ
+  const patFinancierInitial = Number(data.patComptesCourants || 0) + Number(data.patEpargne || 0) + Number(data.patDepotsTitres || 0);
+  const patImmoInitial = Number(data.immoResidencePrincipaleValeur || 0) - Number(data.immoResidencePrincipaleHypotheque || 0);
+
+  const rows = [];
+  let patLiquide = patFinancierInitial;
+  let patImmo = patImmoInitial;
+  let capital3a = tp.capital3a;
+  let capital3b = tp.capital3b;
+  let capitalLPP = lpp.capitalAge65;
+  let trainVie = trainVieInitial;
+
+  for (let annee = anneeActuelle; annee <= Math.min(anneeFin, anneeActuelle + 30); annee++) {
+    const age = ageActuel + (annee - anneeActuelle);
+    const enRetraite = age >= ageDepart;
+    let salaires = enRetraite ? 0 : salaireAnnuel;
+    let rentes = 0, capitalsLib = 0, charges = chargesActuelles * Math.pow(1 + inflation, annee - anneeActuelle);
+    let trainVieAnnee = trainVie * Math.pow(1 + inflation, annee - anneeActuelle);
+
+    if (enRetraite) {
+      // Rentes : AVS + LPP (rente partielle) + Pensions FR
+      const partRente = 1 - Number(data.client.lppPartCapitalPct || 0) / 100;
+      rentes = synth.avs.renteAnnuelle + (lpp.renteAnnuelle * partRente) + synth.pensionsFRChfAnnuelle;
+      if (age === ageDepart) {
+        // Année de bascule : capital LPP, 3a/3b libérés
+        capitalsLib = capitalLPP * Number(data.client.lppPartCapitalPct || 0) / 100 + capital3a + capital3b;
+        capitalLPP = capitalLPP * (1 - Number(data.client.lppPartCapitalPct || 0) / 100);
+        capital3a = 0; capital3b = 0;
+      }
+      // Charges retraite : 75% des charges actives
+      charges *= 0.75;
+    }
+
+    const fluxNet = salaires + rentes - charges - trainVieAnnee + (enRetraite ? 0 : epargneAnnuelle);
+    // Le flux d'épargne avant retraite augmente le patrimoine liquide
+    patLiquide = patLiquide * (1 + tauxRdt) + fluxNet + capitalsLib;
+    patImmo = patImmo * (1 + inflation * 0.5);
+    if (!enRetraite) {
+      capital3a *= (1 + tauxRdt);
+      capital3b *= (1 + tauxRdt);
+    }
+
+    rows.push({
+      annee, age, enRetraite,
+      salaires: Math.round(salaires),
+      rentes: Math.round(rentes),
+      charges: Math.round(charges),
+      trainVie: Math.round(trainVieAnnee),
+      epargne: enRetraite ? 0 : epargneAnnuelle,
+      capitalsLib: Math.round(capitalsLib),
+      patLiquide: Math.round(patLiquide),
+      patImmo: Math.round(patImmo),
+      patTotal: Math.round(patLiquide + patImmo),
+    });
+  }
+  return rows;
+}
+
+// ─── Pré-allocation par horizon de consommation (4 poches) ───
+function calcAllocationPoches(data) {
+  const tp = calc3eP(data.client, Number(data.client.objAgeDepart || 65));
+  const lpp = calcLPP(data.client, Number(data.client.objAgeDepart || 65));
+  const liq = Number(data.patComptesCourants || 0) + Number(data.patEpargne || 0);
+  const titres = Number(data.patDepotsTitres || 0);
+  const partLPPCapital = Number(data.client.lppPartCapitalPct || 0) / 100;
+  const capitalLPPSorti = lpp.capitalAge65 * partLPPCapital;
+
+  const capitalDisponible = liq + titres + tp.capitalTotal + capitalLPPSorti;
+
+  // Répartition standard : 15% / 25% / 30% / 30%
+  return [
+    { id: "court", label: "Court terme", horizon: "0–3 ans", pct: 15, montant: Math.round(capitalDisponible * 0.15), color: C.bad, support: "Liquidités, comptes courants" },
+    { id: "moyen", label: "Moyen terme", horizon: "4–8 ans", pct: 25, montant: Math.round(capitalDisponible * 0.25), color: C.warn, support: "Obligations courtes, fonds défensifs" },
+    { id: "long", label: "Long terme", horizon: "9–15 ans", pct: 30, montant: Math.round(capitalDisponible * 0.30), color: C.france, support: "Mixte actions/obligations" },
+    { id: "trèsLong", label: "Très long terme", horizon: "> 15 ans", pct: 30, montant: Math.round(capitalDisponible * 0.30), color: C.ok, support: "Actions, immobilier, fonds dynamiques" },
+  ];
+}
+
+// ─── Heatmap train de vie par âge de départ (58 → 70) ───
+function calcHeatmapAges(data) {
+  const ages = [58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70];
+  const tauxChange = Number(data.tauxChangeEurChf || 0.95);
+  const ageFin = Number(data.client.objAgeFinConsommation || 90);
+  const rows = ages.map((age) => {
+    const personne = { ...data.client, objAgeDepart: age };
+    const avs = age < 65
+      ? calcAVS(personne, { scenario: "anticipe", anneesShift: 65 - age })
+      : age > 65
+        ? calcAVS(personne, { scenario: "ajourne", anneesShift: Math.min(5, age - 65) })
+        : calcAVS(personne);
+    const lpp = calcLPP(personne, age);
+    const tp = calc3eP(personne, age);
+    const pensionsFR = calcPensionsFR(personne).totalAnnuel * tauxChange;
+    const dureeRetraite = Math.max(1, ageFin - age);
+
+    // Train de vie en rente : revenu mensuel rente uniquement
+    const renteAnnuelle = avs.renteAnnuelle + lpp.renteAnnuelle + pensionsFR;
+    const trainDeVieRente = Math.round(renteAnnuelle / 12);
+
+    // Train de vie en capital : ajoute capital étalé sur durée résiduelle
+    const capital = tp.capitalTotal + lpp.capitalAge65 * 0.5;
+    const trainDeVieCapital = Math.round((renteAnnuelle + capital / dureeRetraite) / 12);
+
+    return { age, trainDeVieRente, trainDeVieCapital, dureeRetraite };
+  });
+  const maxVal = Math.max(...rows.map(r => Math.max(r.trainDeVieRente, r.trainDeVieCapital)));
+  return { rows, maxVal };
+}
+
+// ─── Calcul mensuel détaillé du train de vie ───
+function calcTrainDeVieMensuel(data) {
+  const synth = calcSyntheseRetraite(data.client, data);
+  const revenuBrut = synth.revenuRenteMensuel;
+  const cotSociales = Math.round(revenuBrut * 0.06); // CSG/CRDS simplifié
+  const impotMensuel = Math.round((Number(data.budChargeFiscale || 0) / 12) * 0.6); // 60% de l'impôt actuel à la retraite
+  const revenuNet = revenuBrut - cotSociales - impotMensuel;
+  const chargesFixes = Number(data.budAssuranceMaladie || 0) + Number(data.budAutresAssurances || 0);
+  const trainVieDispo = revenuNet - chargesFixes;
+  // Avant 90 ans : on peut consommer capital + train de vie
+  const tp = calc3eP(data.client, Number(data.client.objAgeDepart || 65));
+  const lpp = calcLPP(data.client, Number(data.client.objAgeDepart || 65));
+  const dureeRetraite = Math.max(1, Number(data.client.objAgeFinConsommation || 90) - Number(data.client.objAgeDepart || 65));
+  const capitalDisponible = tp.capitalTotal + lpp.capitalAge65 * Number(data.client.lppPartCapitalPct || 0) / 100;
+  const consoCapitalMensuel = Math.round(capitalDisponible / dureeRetraite / 12);
+  const trainVieAvant90 = trainVieDispo + consoCapitalMensuel;
+  const trainVieApres90 = revenuNet - chargesFixes; // rente seule, capital épuisé
+  return {
+    revenuBrut, cotSociales, impotMensuel, revenuNet, chargesFixes,
+    consoCapitalMensuel, trainVieAvant90, trainVieApres90,
+    patImmoRestant: Number(data.immoResidencePrincipaleValeur || 0) - Number(data.immoResidencePrincipaleHypotheque || 0),
+  };
+}
+
+// ─── Cartographie des droits de retraite (tableau Qui/Quoi/Type/Institut) ───
+function calcCartographieDroits(data) {
+  const ageDepart = Number(data.client.objAgeDepart || 65);
+  const avs = calcAVS(data.client);
+  const lpp = calcLPP(data.client, ageDepart);
+  const tp = calc3eP(data.client, ageDepart);
+  const pensionsFR = calcPensionsFR(data.client);
+  const tauxChange = Number(data.tauxChangeEurChf || 0.95);
+
+  const lignes = [
+    { qui: `${data.client.prenom}`, intitule: "Rente AVS", type: "Rente viagère", institut: data.client.avsCaisse || "Caisse de compensation", montant: `CHF ${fmt(avs.renteMensuelle)} /mois`, ageDebut: 65 },
+    { qui: `${data.client.prenom}`, intitule: "Rente LPP", type: "Rente / Capital", institut: data.client.lppCaisse || "Caisse de pension", montant: `CHF ${fmt(lpp.renteMensuelle)} /mois`, ageDebut: ageDepart },
+    { qui: `${data.client.prenom}`, intitule: "Capital 3a", type: "Capital", institut: "Banque(s) / Assurance(s) 3a", montant: `CHF ${fmt(tp.capital3a)}`, ageDebut: ageDepart },
+  ];
+  if (Number(tp.capital3b) > 0) {
+    lignes.push({ qui: `${data.client.prenom}`, intitule: "Capital 3b", type: "Capital libre", institut: "Assurance-vie", montant: `CHF ${fmt(tp.capital3b)}`, ageDebut: ageDepart });
+  }
+  if (data.client.frACarriereFrance) {
+    lignes.push({ qui: `${data.client.prenom}`, intitule: "Pension CNAV (base FR)", type: "Rente viagère", institut: data.client.frRegimeBase || "CNAV", montant: `${fmtEUR(pensionsFR.pensionCnavMensuelle)} € /mois`, ageDebut: Number(data.client.frAgeTauxPlein || 67) });
+    lignes.push({ qui: `${data.client.prenom}`, intitule: "AGIRC-ARRCO (complémentaire)", type: "Rente viagère", institut: "AGIRC-ARRCO", montant: `${fmtEUR(pensionsFR.pensionAgircMensuelle)} € /mois`, ageDebut: Number(data.client.frAgeTauxPlein || 67) });
+  }
+  if (data.isCouple && data.conjoint.prenom) {
+    const avsC = calcAVS(data.conjoint);
+    const lppC = calcLPP(data.conjoint, Number(data.conjoint.objAgeDepart || 65));
+    const tpC = calc3eP(data.conjoint, Number(data.conjoint.objAgeDepart || 65));
+    if (avsC.renteMensuelle > 0) lignes.push({ qui: data.conjoint.prenom, intitule: "Rente AVS", type: "Rente viagère", institut: data.conjoint.avsCaisse || "Caisse de compensation", montant: `CHF ${fmt(avsC.renteMensuelle)} /mois`, ageDebut: 65 });
+    if (lppC.renteMensuelle > 0) lignes.push({ qui: data.conjoint.prenom, intitule: "Rente LPP", type: "Rente / Capital", institut: data.conjoint.lppCaisse || "Caisse de pension", montant: `CHF ${fmt(lppC.renteMensuelle)} /mois`, ageDebut: Number(data.conjoint.objAgeDepart || 65) });
+    if (tpC.capitalTotal > 0) lignes.push({ qui: data.conjoint.prenom, intitule: "Capital 3e pilier", type: "Capital", institut: "Banque(s) / Assurance(s)", montant: `CHF ${fmt(tpC.capitalTotal)}`, ageDebut: Number(data.conjoint.objAgeDepart || 65) });
+    if (data.conjoint.frACarriereFrance) {
+      const pFR = calcPensionsFR(data.conjoint);
+      lignes.push({ qui: data.conjoint.prenom, intitule: "Pensions FR cumulées", type: "Rente viagère", institut: "CNAV + AGIRC-ARRCO", montant: `${fmtEUR(pFR.totalMensuel)} € /mois`, ageDebut: Number(data.conjoint.frAgeTauxPlein || 67) });
+    }
+  }
+  return lignes;
+}
+
+// ============================================================
 // STATE INITIAL — Avec nouveaux champs Phase 1
 // ============================================================
 
@@ -1583,36 +1777,81 @@ function SlideCouverture({ data }) {
 }
 
 function SlideSommaire({ data }) {
-  const sections = [
-    { num: "01", titre: "Profil & Objectifs", page: 4 },
-    { num: "02", titre: "Vue d'ensemble", page: 5 },
-    { num: "03", titre: "1er pilier — AVS", page: 6 },
-    { num: "04", titre: "2e pilier — LPP", page: 7 },
-    { num: "05", titre: "3e pilier", page: 8 },
-    { num: "06", titre: "Volet français — Double scénario", page: 9 },
-    { num: "07", titre: "Arbitrage santé / fiscalité", page: 10 },
-    { num: "08", titre: "3 scénarios de sortie LPP", page: 11 },
-    { num: "09", titre: "Patrimoine global", page: 12 },
-    { num: "10", titre: "Leviers d'optimisation", page: 13 },
-    { num: "11", titre: "Hypothèses retenues", page: 14 },
-    { num: "12", titre: "Plan d'actions calendaire", page: 15 },
-    { num: "13", titre: "Gain total du conseil", page: 16 },
-    { num: "14", titre: "Documents à fournir", page: 17 },
-    { num: "15", titre: "Prochaines étapes", page: 18 },
+  const parts = [
+    {
+      titre: "Partie 1 — Diagnostic & droits",
+      sections: [
+        { num: "1.1", titre: "Profil & objectifs" },
+        { num: "1.2", titre: "Cartographie de vos droits à la retraite" },
+        { num: "1.3", titre: "Vue d'ensemble — Revenu projeté" },
+        { num: "1.4", titre: "Temple des revenus retraite" },
+      ]
+    },
+    {
+      titre: "Partie 2 — Prévoyance suisse",
+      sections: [
+        { num: "2.1", titre: "1er pilier — AVS (anticipation / ajournement)" },
+        { num: "2.2", titre: "2e pilier — LPP (capitalisation)" },
+        { num: "2.3", titre: "3e pilier — 3a + 3b" },
+        { num: "2.4", titre: "3 scénarios de sortie LPP" },
+      ]
+    },
+    {
+      titre: "Partie 3 — Volet français & arbitrage",
+      sections: [
+        { num: "3.1", titre: "Pensions FR — Tôt vs Taux plein" },
+        { num: "3.2", titre: "Arbitrage santé / fiscalité (LAMal/CMU/CSG)" },
+        ...(data.isCouple && data.conjoint?.prenom ? [{ num: "3.3", titre: `Vue complète conjoint — ${data.conjoint.prenom}` }] : [])
+      ]
+    },
+    {
+      titre: "Partie 4 — Projection patrimoniale",
+      sections: [
+        { num: "4.1", titre: "Patrimoine global aujourd'hui" },
+        { num: "4.2", titre: "Pré-allocation par horizon (4 poches)" },
+        { num: "4.3", titre: "Projection annuelle 2026 → 2050" },
+        { num: "4.4", titre: "Évolution graphique du patrimoine" },
+        { num: "4.5", titre: "Heatmap — Train de vie par âge de départ" },
+        { num: "4.6", titre: "Calcul mensuel du train de vie" },
+      ]
+    },
+    {
+      titre: "Partie 5 — Stratégie & exécution",
+      sections: [
+        { num: "5.1", titre: "Leviers d'optimisation" },
+        { num: "5.2", titre: "Fiche sortie en capital" },
+        { num: "5.3", titre: "Plan d'actions calendaire" },
+        { num: "5.4", titre: "Gain total du conseil" },
+      ]
+    },
+    {
+      titre: "Partie 6 — Annexes",
+      sections: [
+        { num: "6.1", titre: "Hypothèses retenues" },
+        { num: "6.2", titre: "Documents à fournir pour le R2" },
+        { num: "6.3", titre: "Espace notes" },
+        { num: "6.4", titre: "Avertissement légal" },
+        { num: "6.5", titre: "Contact & prochaines étapes" },
+      ]
+    },
   ];
   return (
     <div style={pageBase}>
       <PageHeader data={data} num="" titreSection="Sommaire" />
-      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
-        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 32 }}>
-          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Table des matières</div>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, color: C.primary, fontWeight: 700 }}>Sommaire <em style={{ color: C.gold }}>du rapport</em></div>
+      <div style={{ padding: "90px 50px 50px", height: "100%", boxSizing: "border-box", overflow: "hidden" }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 18 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 4 }}>Table des matières</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, color: C.primary, fontWeight: 700 }}>Sommaire <em style={{ color: C.gold }}>du rapport</em></div>
         </div>
-        {sections.map((s, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${C.lightGray}` }}>
-            <div style={{ width: 36, fontSize: 11, color: C.gold, fontWeight: 800, letterSpacing: "0.05em" }}>{s.num}</div>
-            <div style={{ flex: 1, fontSize: 13, color: C.darkGray, fontWeight: 500 }}>{s.titre}</div>
-            <div style={{ fontSize: 11, color: C.gray }}>p. {s.page}</div>
+        {parts.map((part, pi) => (
+          <div key={pi} style={{ marginBottom: 10 }}>
+            <div style={{ background: C.primary, color: C.white, padding: "5px 10px", fontSize: 10, fontWeight: 800, letterSpacing: "0.05em", textTransform: "uppercase" }}>{part.titre}</div>
+            {part.sections.map((s, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", padding: "4px 10px", borderBottom: `1px solid ${C.lightGray}`, fontSize: 11 }}>
+                <div style={{ width: 30, color: C.gold, fontWeight: 800, fontSize: 10 }}>{s.num}</div>
+                <div style={{ flex: 1, color: C.darkGray, fontWeight: 500 }}>{s.titre}</div>
+              </div>
+            ))}
           </div>
         ))}
       </div>
@@ -2508,6 +2747,607 @@ function SlideWallswiss({ data }) {
 }
 
 // ============================================================
+// PHASE 2 — SLIDES VISUELLES SUPPLÉMENTAIRES
+// ============================================================
+
+// ─── Page de transition à citation ───
+function SlideCitation({ data, num, citation, auteur, contexte }) {
+  return (
+    <div style={{ ...pageBase, background: `linear-gradient(135deg, ${C.primaryDark} 0%, ${C.primary} 100%)` }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: C.gold }} />
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 6, background: C.gold }} />
+      <div style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: 80, boxSizing: "border-box", position: "relative" }}>
+        <div style={{ position: "absolute", top: 80, left: 80, fontSize: 180, color: "rgba(165,149,104,0.15)", fontFamily: "'Times New Roman', Times, serif", lineHeight: 0.8 }}>"</div>
+        <div style={{ position: "absolute", bottom: 100, right: 80, fontSize: 180, color: "rgba(165,149,104,0.15)", fontFamily: "'Times New Roman', Times, serif", lineHeight: 0.8, transform: "rotate(180deg)" }}>"</div>
+        <div style={{ color: C.gold, fontSize: 10, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 24 }}>{contexte}</div>
+        <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 30, color: C.white, fontWeight: 400, fontStyle: "italic", lineHeight: 1.4, textAlign: "center", maxWidth: 600, marginBottom: 32, position: "relative", zIndex: 2 }}>
+          « {citation} »
+        </div>
+        <div style={{ width: 60, height: 2, background: C.gold, marginBottom: 16 }} />
+        <div style={{ color: C.gold, fontSize: 13, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase" }}>— {auteur}</div>
+      </div>
+      <div style={{ position: "absolute", bottom: 30, left: 0, right: 0, textAlign: "center", color: "rgba(255,255,255,0.4)", fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase" }}>WallSwiss · {num}</div>
+    </div>
+  );
+}
+
+// ─── Cartographie des droits de retraite ───
+function SlideCartographieDroits({ data, num }) {
+  const lignes = calcCartographieDroits(data);
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="Cartographie de vos droits" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Inventaire complet</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Vos <em style={{ color: C.gold }}>droits</em> à la retraite répertoriés</div>
+        </div>
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 14, textAlign: "justify" }}>
+          Vue consolidée de l'ensemble de vos droits acquis et institutions concernées. Pour chaque ligne : <strong>bénéficiaire, type de prestation, institut, montant projeté et date d'ouverture</strong>.
+        </p>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
+          <thead>
+            <tr style={{ background: C.primary, color: C.white }}>
+              <th style={{ padding: "8px 10px", textAlign: "left" }}>Qui</th>
+              <th style={{ padding: "8px 10px", textAlign: "left" }}>Intitulé</th>
+              <th style={{ padding: "8px 10px", textAlign: "left" }}>Type</th>
+              <th style={{ padding: "8px 10px", textAlign: "left" }}>Institut</th>
+              <th style={{ padding: "8px 10px", textAlign: "right" }}>Montant</th>
+              <th style={{ padding: "8px 10px", textAlign: "center" }}>Dès</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lignes.map((l, i) => (
+              <tr key={i} style={{ borderBottom: `1px solid ${C.lightGray}`, background: i % 2 === 0 ? C.white : "rgba(105,33,2,0.02)" }}>
+                <td style={{ padding: "8px 10px", color: C.primary, fontWeight: 700 }}>{l.qui}</td>
+                <td style={{ padding: "8px 10px", color: C.darkGray, fontWeight: 600 }}>{l.intitule}</td>
+                <td style={{ padding: "8px 10px", color: C.gray, fontStyle: "italic" }}>{l.type}</td>
+                <td style={{ padding: "8px 10px", color: C.gray, fontSize: 10 }}>{l.institut}</td>
+                <td style={{ padding: "8px 10px", textAlign: "right", color: C.primary, fontWeight: 700 }}>{l.montant}</td>
+                <td style={{ padding: "8px 10px", textAlign: "center", color: C.darkGray }}>{l.ageDebut} ans</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ marginTop: 14, background: C.lightGray, padding: 12, borderLeft: `4px solid ${C.gold}`, fontSize: 10.5, color: C.darkGray, lineHeight: 1.6 }}>
+          <strong>Nombre total de prestations à déclencher :</strong> {lignes.length} · <strong>Bénéficiaires :</strong> {data.isCouple ? 2 : 1}. Chacune nécessite une demande formelle auprès de l'institut concerné — voir le <em>Plan d'actions calendaire</em>.
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
+// ─── Schéma "temple" des entrées ───
+function SlideTemple({ data, num }) {
+  const ageDepart = Number(data.client.objAgeDepart || 65);
+  const avs = calcAVS(data.client);
+  const lpp = calcLPP(data.client, ageDepart);
+  const tp = calc3eP(data.client, ageDepart);
+  const pensionsFR = calcPensionsFR(data.client);
+  const tauxChange = Number(data.tauxChangeEurChf || 0.95);
+  const piliers = [
+    { num: "I", titre: "AVS", sub: "1er pilier", montant: `CHF ${fmt(avs.renteMensuelle)}/mois`, age: 65, color: C.swiss },
+    { num: "II", titre: "LPP", sub: "2e pilier", montant: `CHF ${fmt(lpp.renteMensuelle)}/mois`, age: ageDepart, color: C.primary },
+    { num: "III", titre: "3e Pilier", sub: "Privé", montant: `CHF ${fmt(tp.capitalTotal)} capital`, age: ageDepart, color: C.gold },
+    { num: "IV", titre: "Pensions FR", sub: "Volet français", montant: `${fmtEUR(pensionsFR.totalMensuel)} €/mois`, age: Number(data.client.frAgeTauxPlein || 67), color: C.france },
+  ];
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="Temple de vos revenus retraite" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Architecture des revenus</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Le <em style={{ color: C.gold }}>temple</em> de vos rentes</div>
+        </div>
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 24, textAlign: "justify" }}>
+          Visualisation en piliers de l'ensemble de vos sources de revenus à la retraite. Chaque colonne représente une source, son institut et son montant projeté à l'âge de déclenchement.
+        </p>
+
+        {/* Toit du temple */}
+        <div style={{ width: "85%", margin: "0 auto", height: 14, background: `linear-gradient(180deg, ${C.gold} 0%, ${C.primaryDark} 100%)`, marginBottom: 0 }} />
+        <div style={{ width: "90%", margin: "0 auto -4px", height: 8, background: C.primary, marginBottom: 8 }} />
+
+        {/* Piliers */}
+        <div style={{ width: "85%", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
+          {piliers.map((p, i) => (
+            <div key={i} style={{ background: C.white, border: `2px solid ${p.color}`, borderTop: `8px solid ${p.color}`, padding: 16, textAlign: "center", minHeight: 200, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+              <div>
+                <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, color: p.color, fontWeight: 900, marginBottom: 4 }}>{p.num}</div>
+                <div style={{ fontSize: 12, color: C.primary, fontWeight: 800, marginBottom: 2 }}>{p.titre}</div>
+                <div style={{ fontSize: 9, color: C.gray, textTransform: "uppercase", letterSpacing: "0.05em" }}>{p.sub}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: p.color, fontWeight: 800, marginBottom: 4 }}>{p.montant}</div>
+                <div style={{ fontSize: 9, color: C.gray }}>dès {p.age} ans</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Socle */}
+        <div style={{ width: "92%", margin: "0 auto", height: 12, background: C.primary, marginTop: 8 }} />
+        <div style={{ width: "95%", margin: "0 auto", height: 8, background: `linear-gradient(180deg, ${C.primaryDark} 0%, ${C.gold} 100%)` }} />
+
+        <div style={{ marginTop: 24, background: C.lightGray, padding: 14, borderLeft: `4px solid ${C.gold}`, fontSize: 11, color: C.darkGray, lineHeight: 1.6 }}>
+          <strong>Lecture :</strong> Les 4 piliers se complètent. L'AVS couvre le minimum vital, la LPP le maintien du niveau de vie, le 3e pilier comble les lacunes, et les pensions FR matérialisent vos années de carrière française. <strong>Aucun ne suffit à lui seul.</strong>
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
+// ─── Pré-allocation par horizon (4 poches + camembert) ───
+function SlideHorizons({ data, num }) {
+  const poches = calcAllocationPoches(data);
+  const total = poches.reduce((s, p) => s + p.montant, 0) || 1;
+  let offset = 0;
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="Pré-allocation par horizon" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Allocation patrimoine</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Les <em style={{ color: C.gold }}>4 poches</em> de consommation</div>
+        </div>
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 18, textAlign: "justify" }}>
+          Votre capital disponible (<strong>CHF {fmt(total)}</strong>) est réparti en 4 poches selon votre horizon de besoin. Cette stratégie garantit la <strong>liquidité immédiate</strong> tout en exposant la part long-terme à des supports plus performants.
+        </p>
+
+        <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 24, marginBottom: 16 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <svg viewBox="0 0 48 48" style={{ width: 220, height: 220, transform: "rotate(-90deg)" }}>
+              <circle r="16" cx="24" cy="24" fill="transparent" stroke={C.lightGray} strokeWidth="12" />
+              {poches.map((p, i) => {
+                const len = (p.montant / total) * 100;
+                const dash = `${len} 100`;
+                const dashOff = `-${offset}`;
+                offset += len;
+                return <circle key={i} r="16" cx="24" cy="24" fill="transparent" stroke={p.color} strokeWidth="12" strokeDasharray={dash} strokeDashoffset={dashOff} pathLength="100" />;
+              })}
+              <circle r="9" cx="24" cy="24" fill={C.white} />
+            </svg>
+            <div style={{ textAlign: "center", marginTop: -130, fontFamily: "'Times New Roman', Times, serif", color: C.primary, position: "relative", zIndex: 2 }}>
+              <div style={{ fontSize: 10, color: C.gray, letterSpacing: "0.1em", textTransform: "uppercase" }}>Total</div>
+              <div style={{ fontSize: 18, fontWeight: 900 }}>CHF {fmt(Math.round(total / 1000))}k</div>
+            </div>
+          </div>
+
+          <div>
+            {poches.map((p, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 0", borderBottom: i < poches.length - 1 ? `1px solid ${C.lightGray}` : "none" }}>
+                <div style={{ width: 6, height: 50, background: p.color, flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: p.color }}>{p.label} <span style={{ fontSize: 10, color: C.gray, fontWeight: 500 }}>({p.horizon})</span></div>
+                  <div style={{ fontSize: 10, color: C.gray, marginTop: 2 }}>{p.support}</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: p.color }}>CHF {fmt(p.montant)}</div>
+                  <div style={{ fontSize: 10, color: C.gray }}>{p.pct}%</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ background: C.lightGray, padding: 14, borderLeft: `4px solid ${C.primary}`, fontSize: 11, color: C.darkGray, lineHeight: 1.6 }}>
+          <strong>Le principe :</strong> chaque poche est calibrée pour un horizon précis. La <strong>poche court terme</strong> sécurise vos dépenses immédiates (0–3 ans). La <strong>poche très long terme</strong> bénéficie du temps pour absorber la volatilité et générer de la performance.
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
+// ─── Projection annuelle 2026-2050 ───
+function SlideProjectionAnnuelle({ data, num }) {
+  const proj = calcProjectionAnnuelle(data);
+  const sample = proj.filter((_, i) => i % 2 === 0).slice(0, 14); // 1 année sur 2
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="Projection annuelle" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.primary}`, paddingLeft: 16, marginBottom: 16 }}>
+          <div style={{ fontSize: 10, color: C.primary, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Trajectoire patrimoniale</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, color: C.primary, fontWeight: 700, margin: 0 }}>Votre <em style={{ color: C.gold }}>projection</em> année par année</div>
+        </div>
+        <p style={{ fontSize: 10, color: C.darkGray, lineHeight: 1.5, marginBottom: 12, textAlign: "justify" }}>
+          Trajectoire des flux et du patrimoine sur les prochaines décennies (échantillon, 1 année sur 2). Indexation des charges à l'inflation ({data.tauxInflation}%) et capitalisation au taux de rendement retenu ({data.tauxRendement}%).
+        </p>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 9 }}>
+          <thead>
+            <tr style={{ background: C.primary, color: C.white }}>
+              <th style={{ padding: "5px 4px", textAlign: "center" }}>Année</th>
+              <th style={{ padding: "5px 4px", textAlign: "center" }}>Âge</th>
+              <th style={{ padding: "5px 4px", textAlign: "right" }}>Salaires</th>
+              <th style={{ padding: "5px 4px", textAlign: "right" }}>Rentes</th>
+              <th style={{ padding: "5px 4px", textAlign: "right" }}>Capitaux</th>
+              <th style={{ padding: "5px 4px", textAlign: "right" }}>Train de vie</th>
+              <th style={{ padding: "5px 4px", textAlign: "right" }}>Charges</th>
+              <th style={{ padding: "5px 4px", textAlign: "right", borderLeft: `2px solid ${C.gold}` }}>Pat. liquide</th>
+              <th style={{ padding: "5px 4px", textAlign: "right" }}>Pat. immo</th>
+              <th style={{ padding: "5px 4px", textAlign: "right", background: C.gold }}>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sample.map((r) => (
+              <tr key={r.annee} style={{ borderBottom: `1px solid ${C.lightGray}`, background: r.enRetraite ? "rgba(165,149,104,0.06)" : C.white }}>
+                <td style={{ padding: "5px 4px", textAlign: "center", fontWeight: 700, color: r.enRetraite ? C.gold : C.darkGray }}>{r.annee}</td>
+                <td style={{ padding: "5px 4px", textAlign: "center", color: C.gray }}>{r.age}</td>
+                <td style={{ padding: "5px 4px", textAlign: "right", color: C.darkGray }}>{r.salaires > 0 ? fmt(r.salaires) : "—"}</td>
+                <td style={{ padding: "5px 4px", textAlign: "right", color: C.darkGray }}>{r.rentes > 0 ? fmt(r.rentes) : "—"}</td>
+                <td style={{ padding: "5px 4px", textAlign: "right", color: C.gold, fontWeight: r.capitalsLib > 0 ? 700 : 400 }}>{r.capitalsLib > 0 ? fmt(r.capitalsLib) : "—"}</td>
+                <td style={{ padding: "5px 4px", textAlign: "right", color: C.bad }}>-{fmt(r.trainVie)}</td>
+                <td style={{ padding: "5px 4px", textAlign: "right", color: C.gray }}>-{fmt(r.charges)}</td>
+                <td style={{ padding: "5px 4px", textAlign: "right", color: C.primary, fontWeight: 700, borderLeft: `2px solid ${C.gold}` }}>{fmt(r.patLiquide)}</td>
+                <td style={{ padding: "5px 4px", textAlign: "right", color: C.gray }}>{fmt(r.patImmo)}</td>
+                <td style={{ padding: "5px 4px", textAlign: "right", color: C.primaryDark, fontWeight: 900 }}>{fmt(r.patTotal)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ marginTop: 12, fontSize: 9, color: C.gray, fontStyle: "italic", display: "flex", gap: 14 }}>
+          <span><span style={{ display: "inline-block", width: 10, height: 10, background: "rgba(165,149,104,0.3)", marginRight: 4, verticalAlign: "middle" }} /> Années en retraite</span>
+          <span>Montants en CHF — Échantillon 1 an sur 2</span>
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
+// ─── Évolution graphique du patrimoine (histogramme empilé) ───
+function SlideEvolutionPatrimoine({ data, num }) {
+  const proj = calcProjectionAnnuelle(data);
+  const sample = proj.filter((_, i) => i % 3 === 0).slice(0, 12);
+  const maxP = Math.max(...sample.map(r => r.patTotal), 1);
+  const svgW = 700, svgH = 280, padL = 50, padR = 20, padT = 30, padB = 50;
+  const chartW = svgW - padL - padR, chartH = svgH - padT - padB;
+  const barW = chartW / sample.length * 0.7;
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="Évolution du patrimoine" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 16 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Visualisation graphique</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Votre <em style={{ color: C.gold }}>patrimoine</em> dans le temps</div>
+        </div>
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
+          Décomposition empilée du patrimoine total entre la part <strong>liquide</strong> (consommable) et la part <strong>immobilière</strong> (souvent illiquide). L'écart se comble naturellement avec le temps grâce à la consommation différentielle.
+        </p>
+        <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 16 }}>
+          <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: "100%", height: svgH }}>
+            {[0, 0.25, 0.5, 0.75, 1].map(pct => {
+              const y = padT + chartH - pct * chartH;
+              return (
+                <g key={pct}>
+                  <line x1={padL} y1={y} x2={svgW - padR} y2={y} stroke={C.lightGray} strokeDasharray="3 3" />
+                  <text x={padL - 8} y={y + 4} fontSize="9" fill={C.gray} textAnchor="end">{fmt(Math.round(maxP * pct / 1000))}k</text>
+                </g>
+              );
+            })}
+            {sample.map((r, i) => {
+              const x = padL + (i / sample.length) * chartW + (chartW / sample.length - barW) / 2;
+              const hImmo = (r.patImmo / maxP) * chartH;
+              const hLiq = (r.patLiquide / maxP) * chartH;
+              return (
+                <g key={r.annee}>
+                  <rect x={x} y={padT + chartH - hImmo} width={barW} height={hImmo} fill={C.gold} />
+                  <rect x={x} y={padT + chartH - hImmo - hLiq} width={barW} height={hLiq} fill={C.primary} />
+                  <text x={x + barW / 2} y={svgH - 30} fontSize="9" fill={C.gray} textAnchor="middle">{r.annee}</text>
+                  <text x={x + barW / 2} y={svgH - 18} fontSize="8" fill={C.gray} textAnchor="middle">{r.age}a</text>
+                </g>
+              );
+            })}
+          </svg>
+          <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 12, fontSize: 11 }}>
+            <span><span style={{ display: "inline-block", width: 14, height: 14, background: C.primary, marginRight: 6, verticalAlign: "middle" }} /> Patrimoine liquide</span>
+            <span><span style={{ display: "inline-block", width: 14, height: 14, background: C.gold, marginRight: 6, verticalAlign: "middle" }} /> Patrimoine immobilier</span>
+          </div>
+        </div>
+        <div style={{ marginTop: 16, background: C.lightGray, padding: 14, borderLeft: `4px solid ${C.primary}`, fontSize: 11, color: C.darkGray, lineHeight: 1.6 }}>
+          <strong>Lecture :</strong> Le patrimoine liquide reste au-dessus de zéro tout au long de la projection — votre stratégie est viable jusqu'à {data.client.objAgeFinConsommation || 90} ans avec une marge de sécurité. La part immobilière constitue un patrimoine de réserve transmissible.
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
+// ─── Heatmap train de vie par âge de départ (58→70) ───
+function SlideHeatmap({ data, num }) {
+  const hm = calcHeatmapAges(data);
+  const getColor = (v) => {
+    const ratio = v / hm.maxVal;
+    if (ratio > 0.85) return "#0F766E";
+    if (ratio > 0.70) return "#15803D";
+    if (ratio > 0.55) return "#65A30D";
+    if (ratio > 0.40) return "#CA8A04";
+    if (ratio > 0.25) return "#EA580C";
+    return "#DC2626";
+  };
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="Heatmap train de vie / âge" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 16 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Aide à la décision</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Quand <em style={{ color: C.gold }}>partir</em> à la retraite ?</div>
+        </div>
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
+          Pour chaque âge de départ (58 → 70 ans), le tableau affiche le <strong>train de vie mensuel maximal</strong> que vous pouvez tenir jusqu'à votre âge cible de fin de consommation, selon que vous privilégiez la <strong>rente seule</strong> ou la <strong>consommation du capital</strong>.
+        </p>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+          <thead>
+            <tr style={{ background: C.primary, color: C.white }}>
+              <th style={{ padding: "10px 12px", textAlign: "left" }}>Âge de départ</th>
+              <th style={{ padding: "10px 12px", textAlign: "center" }}>Durée retraite</th>
+              <th style={{ padding: "10px 12px", textAlign: "center" }}>Train de vie en RENTE</th>
+              <th style={{ padding: "10px 12px", textAlign: "center" }}>Train de vie en CAPITAL</th>
+            </tr>
+          </thead>
+          <tbody>
+            {hm.rows.map((r) => (
+              <tr key={r.age} style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                <td style={{ padding: "8px 12px", fontWeight: 700, color: C.primary }}>{r.age} ans</td>
+                <td style={{ padding: "8px 12px", textAlign: "center", color: C.gray }}>{r.dureeRetraite} ans</td>
+                <td style={{ padding: "8px 12px", textAlign: "center", background: getColor(r.trainDeVieRente), color: C.white, fontWeight: 800 }}>CHF {fmt(r.trainDeVieRente)} /mois</td>
+                <td style={{ padding: "8px 12px", textAlign: "center", background: getColor(r.trainDeVieCapital), color: C.white, fontWeight: 800 }}>CHF {fmt(r.trainDeVieCapital)} /mois</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ marginTop: 14, display: "flex", justifyContent: "center", gap: 4, fontSize: 9 }}>
+          {["Faible", "Modeste", "Correct", "Bon", "Très bon", "Excellent"].map((l, i) => {
+            const colors = ["#DC2626", "#EA580C", "#CA8A04", "#65A30D", "#15803D", "#0F766E"];
+            return <span key={i} style={{ padding: "4px 8px", background: colors[i], color: C.white, fontWeight: 700 }}>{l}</span>;
+          })}
+        </div>
+        <div style={{ marginTop: 12, background: C.lightGray, padding: 12, borderLeft: `4px solid ${C.gold}`, fontSize: 11, color: C.darkGray, lineHeight: 1.5 }}>
+          <strong>Le conseil :</strong> La colonne « Capital » suppose une consommation linéaire du patrimoine sur la durée. C'est généralement <strong>40 à 60% plus élevé</strong> que la rente seule mais expose au risque de longévité.
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
+// ─── Calcul mensuel détaillé du train de vie ───
+function SlideTrainDeVieMensuel({ data, num }) {
+  const tv = calcTrainDeVieMensuel(data);
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="Train de vie mensuel détaillé" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 16 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Du brut au net consommable</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Votre <em style={{ color: C.gold }}>train de vie</em> réel</div>
+        </div>
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
+          Décomposition du chemin entre vos <strong>revenus bruts</strong> et votre <strong>train de vie net consommable</strong>. Différenciation avant et après 90 ans (épuisement du capital).
+        </p>
+
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, marginBottom: 16 }}>
+          <tbody>
+            <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+              <td style={{ padding: "12px 16px", color: C.darkGray, fontWeight: 600 }}>Revenus bruts mensuels (AVS + LPP + FR)</td>
+              <td style={{ padding: "12px 16px", textAlign: "right", color: C.primary, fontWeight: 700 }}>CHF {fmt(tv.revenuBrut)}</td>
+            </tr>
+            <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+              <td style={{ padding: "12px 16px", color: C.gray, paddingLeft: 32 }}>− Contributions sociales (CSG/CRDS estimées)</td>
+              <td style={{ padding: "12px 16px", textAlign: "right", color: C.bad }}>− CHF {fmt(tv.cotSociales)}</td>
+            </tr>
+            <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+              <td style={{ padding: "12px 16px", color: C.gray, paddingLeft: 32 }}>− Imposition mensuelle</td>
+              <td style={{ padding: "12px 16px", textAlign: "right", color: C.bad }}>− CHF {fmt(tv.impotMensuel)}</td>
+            </tr>
+            <tr style={{ borderBottom: `2px solid ${C.primary}`, background: "rgba(105,33,2,0.04)" }}>
+              <td style={{ padding: "12px 16px", color: C.primary, fontWeight: 800 }}>= Revenus nets</td>
+              <td style={{ padding: "12px 16px", textAlign: "right", color: C.primary, fontWeight: 900, fontSize: 14 }}>CHF {fmt(tv.revenuNet)}</td>
+            </tr>
+            <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+              <td style={{ padding: "12px 16px", color: C.gray, paddingLeft: 32 }}>− Charges fixes (assurance maladie, autres)</td>
+              <td style={{ padding: "12px 16px", textAlign: "right", color: C.bad }}>− CHF {fmt(tv.chargesFixes)}</td>
+            </tr>
+            <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+              <td style={{ padding: "12px 16px", color: C.gray, paddingLeft: 32 }}>+ Consommation du capital (étalée)</td>
+              <td style={{ padding: "12px 16px", textAlign: "right", color: C.ok, fontWeight: 700 }}>+ CHF {fmt(tv.consoCapitalMensuel)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+          <div style={{ background: C.ok, color: C.white, padding: 18 }}>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.85)", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Train de vie AVANT 90 ans</div>
+            <div style={{ fontSize: 24, fontWeight: 900 }}>CHF {fmt(tv.trainVieAvant90)}<span style={{ fontSize: 12, fontWeight: 500 }}> /mois</span></div>
+            <div style={{ fontSize: 10, opacity: 0.9, marginTop: 4 }}>Rente + consommation patrimoine</div>
+          </div>
+          <div style={{ background: C.warn, color: C.white, padding: 18 }}>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.85)", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Train de vie APRÈS 90 ans</div>
+            <div style={{ fontSize: 24, fontWeight: 900 }}>CHF {fmt(tv.trainVieApres90)}<span style={{ fontSize: 12, fontWeight: 500 }}> /mois</span></div>
+            <div style={{ fontSize: 10, opacity: 0.9, marginTop: 4 }}>Rente seule (capital épuisé)</div>
+          </div>
+        </div>
+
+        <div style={{ background: C.lightGray, padding: 12, fontSize: 11, color: C.darkGray, borderLeft: `4px solid ${C.gold}`, lineHeight: 1.6 }}>
+          <strong>Patrimoine immobilier restant à 90 ans :</strong> CHF {fmt(tv.patImmoRestant)} — réserve de transmission ou de soutien en cas d'événement majeur (EMS, perte d'autonomie).
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
+// ─── Fiche résumé sortie en capital ───
+function SlideFicheCapital({ data, num }) {
+  const ageDepart = Number(data.client.objAgeDepart || 65);
+  const lpp = calcLPP(data.client, ageDepart);
+  const tp = calc3eP(data.client, ageDepart);
+  const partLPPCapital = Number(data.client.lppPartCapitalPct || 0) / 100;
+  const capitalLPPSorti = lpp.capitalAge65 * partLPPCapital;
+  const anneeDepart = new Date().getFullYear() + (ageDepart - Number(data.client.age || 50));
+  const lignes = [
+    { pilier: "2e pilier — LPP (part capital)", montant: capitalLPPSorti, quand: `T-12 mois (annonce caisse)`, institut: data.client.lppCaisse || "Caisse de pension", dateEffet: `${anneeDepart}` },
+    { pilier: "3a — Compte n°1", montant: tp.capital3a * (1 / Number(data.client.troisPNbComptes || 1)), quand: `T-3 mois`, institut: "Banque 3a #1", dateEffet: `${anneeDepart}` },
+  ];
+  if (Number(data.client.troisPNbComptes || 1) > 1) {
+    for (let i = 2; i <= Number(data.client.troisPNbComptes); i++) {
+      lignes.push({ pilier: `3a — Compte n°${i}`, montant: tp.capital3a / Number(data.client.troisPNbComptes), quand: `T-3 mois`, institut: `Banque 3a #${i}`, dateEffet: `${anneeDepart + i - 1}` });
+    }
+  }
+  if (Number(tp.capital3b) > 0) {
+    lignes.push({ pilier: "3b — Assurance-vie", montant: tp.capital3b, quand: "À tout moment", institut: "Assureur 3b", dateEffet: `${anneeDepart}` });
+  }
+  const total = lignes.reduce((s, l) => s + l.montant, 0);
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="Fiche sortie en capital" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 16 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Mode opératoire</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Vos <em style={{ color: C.gold }}>capitaux</em> à libérer</div>
+        </div>
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
+          Pour chaque capital à percevoir : <strong>montant projeté, échéance de la demande, institut concerné, date d'effet</strong>. L'échelonnement sur plusieurs années optimise la charge fiscale.
+        </p>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+          <thead>
+            <tr style={{ background: C.primary, color: C.white }}>
+              <th style={{ padding: "10px", textAlign: "left" }}>Source du capital</th>
+              <th style={{ padding: "10px", textAlign: "right" }}>Montant</th>
+              <th style={{ padding: "10px", textAlign: "left" }}>Quand faire la demande</th>
+              <th style={{ padding: "10px", textAlign: "left" }}>Auprès de</th>
+              <th style={{ padding: "10px", textAlign: "center" }}>Date d'effet</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lignes.map((l, i) => (
+              <tr key={i} style={{ borderBottom: `1px solid ${C.lightGray}`, background: i % 2 === 0 ? C.white : "rgba(165,149,104,0.03)" }}>
+                <td style={{ padding: "10px", color: C.darkGray, fontWeight: 600 }}>{l.pilier}</td>
+                <td style={{ padding: "10px", textAlign: "right", color: C.primary, fontWeight: 700 }}>CHF {fmt(l.montant)}</td>
+                <td style={{ padding: "10px", color: C.gold, fontWeight: 600, fontSize: 10 }}>{l.quand}</td>
+                <td style={{ padding: "10px", color: C.gray, fontStyle: "italic", fontSize: 10 }}>{l.institut}</td>
+                <td style={{ padding: "10px", textAlign: "center", color: C.darkGray, fontWeight: 700 }}>{l.dateEffet}</td>
+              </tr>
+            ))}
+            <tr style={{ background: C.primary, color: C.white }}>
+              <td style={{ padding: "12px 10px", fontWeight: 900 }}>TOTAL CAPITAUX</td>
+              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 900, fontSize: 16, color: C.gold }}>CHF {fmt(Math.round(total))}</td>
+              <td colSpan={3}></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style={{ marginTop: 14, background: "rgba(239,68,68,0.05)", padding: 12, borderLeft: `4px solid ${C.bad}`, fontSize: 10.5, color: C.darkGray, lineHeight: 1.5 }}>
+          <strong>Alerte fiscale :</strong> Les retraits en capital sont taxés séparément du revenu, à un taux privilégié, mais <strong>cumulés dans la même année</strong>. Échelonner sur plusieurs années fiscales = baisse significative de l'impôt total. L'effet est particulièrement marqué entre comptes 3a et capital LPP.
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
+// ─── Slide conjoint (vue complète) ───
+function SlideConjoint({ data, num }) {
+  if (!data.isCouple || !data.conjoint.prenom) return null;
+  const synth = calcSyntheseRetraite(data.conjoint, data);
+  const lpp = calcLPP(data.conjoint, Number(data.conjoint.objAgeDepart || 65));
+  const tp = calc3eP(data.conjoint, Number(data.conjoint.objAgeDepart || 65));
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection={`${data.conjoint.prenom} — Vue complète`} />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Volet conjoint</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>{data.conjoint.prenom} {(data.conjoint.nom || "").toUpperCase()}</div>
+        </div>
+        <CarteProfil p={data.conjoint} couleur={C.gold} />
+        <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${C.swiss}`, padding: 14 }}>
+            <div style={{ fontSize: 10, color: C.swiss, fontWeight: 800, marginBottom: 4 }}>AVS</div>
+            <div style={{ fontSize: 18, fontWeight: 900, color: C.primary }}>CHF {fmt(synth.avs.renteMensuelle)}</div>
+            <div style={{ fontSize: 10, color: C.gray }}>/mois à 65 ans</div>
+          </div>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${C.primary}`, padding: 14 }}>
+            <div style={{ fontSize: 10, color: C.primary, fontWeight: 800, marginBottom: 4 }}>LPP</div>
+            <div style={{ fontSize: 18, fontWeight: 900, color: C.primary }}>CHF {fmt(lpp.renteMensuelle)}</div>
+            <div style={{ fontSize: 10, color: C.gray }}>/mois — Cap. {fmt(lpp.capitalAge65)}</div>
+          </div>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${C.gold}`, padding: 14 }}>
+            <div style={{ fontSize: 10, color: C.gold, fontWeight: 800, marginBottom: 4 }}>3e Pilier</div>
+            <div style={{ fontSize: 18, fontWeight: 900, color: C.primary }}>CHF {fmt(tp.capitalTotal)}</div>
+            <div style={{ fontSize: 10, color: C.gray }}>capital projeté</div>
+          </div>
+        </div>
+        {data.conjoint.frACarriereFrance && (
+          <div style={{ marginTop: 16, background: C.france, color: C.white, padding: 16 }}>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.85)", fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>Pensions françaises</div>
+            <div style={{ fontSize: 20, fontWeight: 900 }}>{fmtEUR(synth.pensionsFR.totalMensuel)} €/mois <span style={{ fontSize: 12, opacity: 0.85 }}>(soit CHF {fmt(synth.pensionsFRChfMensuelle)}/mois)</span></div>
+            <div style={{ fontSize: 10, opacity: 0.9, marginTop: 4 }}>Trimestres {data.conjoint.frTrimestresAcquis}/{data.conjoint.frTrimestresRequis} · {synth.pensionsFR.tauxPlein ? "Taux plein" : "Décote applicable"}</div>
+          </div>
+        )}
+        <div style={{ marginTop: 16, background: C.primary, color: C.white, padding: 18, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 12, color: C.gold, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Revenu rente conjoint(e) à {synth.ageDepart} ans</span>
+          <span style={{ fontSize: 24, fontWeight: 900 }}>CHF {fmt(synth.revenuRenteAjusteMensuel)} /mois</span>
+        </div>
+        <div style={{ marginTop: 14, background: C.lightGray, padding: 12, borderLeft: `4px solid ${C.gold}`, fontSize: 11, color: C.darkGray, lineHeight: 1.6 }}>
+          <strong>Vue couple consolidée :</strong> les revenus des deux conjoints se complètent. Le décalage des âges de départ ({data.client.objAgeDepart} vs {data.conjoint.objAgeDepart} ans) permet un <strong>échelonnement naturel</strong> des liquidations, optimisant la fiscalité.
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
+// ─── Page Notes lignées ───
+function SlideNotes({ data, num }) {
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="Notes personnelles" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 24 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Vos annotations</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Espace <em style={{ color: C.gold }}>notes</em></div>
+        </div>
+        <p style={{ fontSize: 11, color: C.gray, marginBottom: 24, fontStyle: "italic" }}>Utilisez cet espace pour noter vos questions, vos points d'attention ou les éléments à valider entre R1 et R2.</p>
+        {Array.from({ length: 22 }).map((_, i) => (
+          <div key={i} style={{ height: 28, borderBottom: `1px solid ${C.mediumGray}`, marginBottom: 0 }} />
+        ))}
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
+// ─── Page Avertissement / Disclaimer légal ───
+function SlideDisclaimer({ data, num }) {
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="Avertissement légal" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.bad}`, paddingLeft: 16, marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: C.bad, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Limitations de responsabilité</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, color: C.primary, fontWeight: 700, margin: 0 }}>Avertissement <em style={{ color: C.bad }}>légal</em></div>
+        </div>
+        <div style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.7, textAlign: "justify" }}>
+          <p><strong style={{ color: C.primary }}>1. Nature du document.</strong> Le présent rapport constitue une étude personnalisée à caractère <strong>indicatif</strong>. Il a vocation à éclairer vos décisions patrimoniales mais ne constitue ni un conseil juridique, ni un conseil fiscal individualisé au sens des réglementations applicables.</p>
+          <p><strong style={{ color: C.primary }}>2. Sources et données.</strong> Les chiffres présentés reposent sur les informations transmises par le client (déclarations, certificats des caisses, attestations des compagnies 3A) et sur des hypothèses validées en début d'étude. Toute inexactitude des données fournies se répercute mécaniquement sur les projections.</p>
+          <p><strong style={{ color: C.primary }}>3. Non-garantie des rendements.</strong> Les rendements futurs des placements (1er, 2e et 3e piliers, patrimoine financier) ne sont jamais garantis. Les chiffres tels que <em>taux de conversion LPP</em>, <em>valeur du point AGIRC-ARRCO</em> ou <em>rente AVS maximale</em> évoluent dans le temps et selon les réformes.</p>
+          <p><strong style={{ color: C.primary }}>4. Caractère non opposable.</strong> Les estimations de rentes AVS et LPP <strong>ne sont pas opposables</strong> aux caisses de compensation ni aux institutions de prévoyance. Seules les décisions formelles de ces institutions, à la date effective de liquidation, font foi.</p>
+          <p><strong style={{ color: C.primary }}>5. Évolutions réglementaires.</strong> Le cadre franco-suisse (convention de sécurité sociale, fiscalité transfrontalière, statut de quasi-résident, règles d'affiliation maladie LAMal/CMU) est susceptible d'évolutions. Une revue régulière du dossier est recommandée — annuelle au minimum.</p>
+          <p><strong style={{ color: C.primary }}>6. Indépendance.</strong> WallSwiss SA opère en architecture ouverte et n'est lié par aucune obligation de distribution envers une institution financière particulière. Les recommandations de partenaires (change, banque, notaire) reposent uniquement sur leur adéquation à la situation du client.</p>
+          <p><strong style={{ color: C.primary }}>7. Protection des données.</strong> Les données collectées sont traitées dans le respect de la LPD suisse et du RGPD européen. Hébergement Google Firestore — région européenne. Vous disposez d'un droit d'accès, de rectification et de suppression à tout moment auprès de votre conseiller.</p>
+        </div>
+        <div style={{ marginTop: 24, padding: 14, background: C.lightGray, borderLeft: `4px solid ${C.gold}`, fontSize: 10, color: C.gray, fontStyle: "italic", textAlign: "center" }}>
+          Document confidentiel établi le {data.dateRapport ? new Date(data.dateRapport).toLocaleDateString('fr-FR') : "—"} par {data.conseiller || "—"}. Reproduction et diffusion soumises à autorisation.
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
+// ============================================================
 // MODALE D'APERÇU + GÉNÉRATION PDF
 // ============================================================
 const getBase64Image = async (url) => {
@@ -2548,21 +3388,36 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
     <SlideCouverture data={data} />,
     <SlideSommaire data={data} />,
     <SlideWallswiss data={data} />,
-    <SlideProfil data={data} num="01" />,
-    <SlideVueEnsemble data={data} num="02" />,
-    <SlideAVS data={data} num="03" />,
-    <SlideLPP data={data} num="04" />,
-    <Slide3eP data={data} num="05" />,
-    <SlideDoubleScenarioFR data={data} num="06" />,
-    <SlideArbitrageSante data={data} num="07" />,
-    <Slide3ScenariosLPP data={data} num="08" />,
-    <SlidePatrimoine data={data} num="09" />,
-    <SlideLeviers data={data} num="10" />,
-    <SlideHypotheses data={data} num="11" />,
-    <SlidePlanActions data={data} num="12" />,
-    <SlideGainTotal data={data} num="13" />,
-    <SlideDocuments data={data} num="14" />,
-    <SlideContact data={data} num="15" />,
+    <SlideCitation data={data} num="03" citation="L'épargne est le meilleur des héritages que l'on peut laisser à ses enfants." auteur="Sénèque" contexte="Avant-propos" />,
+    <SlideProfil data={data} num="04" />,
+    <SlideCartographieDroits data={data} num="05" />,
+    <SlideVueEnsemble data={data} num="06" />,
+    <SlideTemple data={data} num="07" />,
+    <SlideCitation data={data} num="08" citation="La vie, c'est ce qui vous arrive pendant que vous êtes occupés à faire d'autres projets." auteur="John Lennon" contexte="Volet prévoyance suisse" />,
+    <SlideAVS data={data} num="09" />,
+    <SlideLPP data={data} num="10" />,
+    <Slide3eP data={data} num="11" />,
+    <Slide3ScenariosLPP data={data} num="12" />,
+    <SlideCitation data={data} num="13" citation="Personne ne peut revenir en arrière et faire un nouveau départ, mais chacun peut partir maintenant et faire une nouvelle fin." auteur="Mahatma Gandhi" contexte="Volet français" />,
+    <SlideDoubleScenarioFR data={data} num="14" />,
+    <SlideArbitrageSante data={data} num="15" />,
+    ...(data.isCouple && data.conjoint?.prenom ? [<SlideConjoint data={data} num="16" />] : []),
+    <SlidePatrimoine data={data} num={data.isCouple ? "17" : "16"} />,
+    <SlideHorizons data={data} num={data.isCouple ? "18" : "17"} />,
+    <SlideProjectionAnnuelle data={data} num={data.isCouple ? "19" : "18"} />,
+    <SlideEvolutionPatrimoine data={data} num={data.isCouple ? "20" : "19"} />,
+    <SlideHeatmap data={data} num={data.isCouple ? "21" : "20"} />,
+    <SlideTrainDeVieMensuel data={data} num={data.isCouple ? "22" : "21"} />,
+    <SlideCitation data={data} num={data.isCouple ? "23" : "22"} citation="Le futur appartient à ceux qui croient à la beauté de leurs rêves." auteur="Eleanor Roosevelt" contexte="Stratégie & action" />,
+    <SlideLeviers data={data} num={data.isCouple ? "24" : "23"} />,
+    <SlideFicheCapital data={data} num={data.isCouple ? "25" : "24"} />,
+    <SlidePlanActions data={data} num={data.isCouple ? "26" : "25"} />,
+    <SlideGainTotal data={data} num={data.isCouple ? "27" : "26"} />,
+    <SlideHypotheses data={data} num={data.isCouple ? "28" : "27"} />,
+    <SlideDocuments data={data} num={data.isCouple ? "29" : "28"} />,
+    <SlideNotes data={data} num={data.isCouple ? "30" : "29"} />,
+    <SlideDisclaimer data={data} num={data.isCouple ? "31" : "30"} />,
+    <SlideContact data={data} num={data.isCouple ? "32" : "31"} />,
   ];
 
   const pdfFilename = `Planification_Retraite_${(data.client.prenom || "").trim()}_${(data.client.nom || "Client").trim()}.pdf`.replace(/\s+/g, '_');

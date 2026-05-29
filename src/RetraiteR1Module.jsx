@@ -14,11 +14,14 @@ const C = {
   darkGray: "#374151",
   swiss: "#DA291C",
   france: "#0055A4",
+  ok: "#10B981",
+  warn: "#F59E0B",
+  bad: "#EF4444",
 };
 
 const LOGO_URL = "/logo blanc sans texte.png";
 
-// ────────────────────── ICÔNES MINIMALES ──────────────────────
+// ────────────────────── ICÔNES ──────────────────────
 const Icons = {
   Check: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
   Alert: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>,
@@ -38,49 +41,57 @@ const Icons = {
 const fmt = (n) => Number(n || 0).toLocaleString("fr-CH", { maximumFractionDigits: 0 });
 const fmtEUR = (n) => Number(n || 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 });
 
-// ────────────────────── HELPERS DE PROJECTION ──────────────────────
+// ============================================================
+// SECTION 1 — HELPERS DE PROJECTION (CŒUR DES CALCULS)
+// ============================================================
 
-// AVS Suisse — Rente maximale 2026: ~2'520 CHF/mois (incl. ajustement),
-// Rente minimale: ~1'260 CHF/mois. 44 années requises pour rente complète.
-// 13e rente AVS dès décembre 2026.
-function calcAVS(person) {
+// AVS Suisse — Avec gestion 13e rente 2026, anticipation, ajournement
+function calcAVS(person, options = {}) {
   const annees = Number(person.avsAnneesCotisation || 0);
   const renteMaxBase = 2520; // CHF/mois en 2026
   const renteMinBase = 1260;
   const tauxCompletion = Math.min(annees / 44, 1);
 
-  // Si rente estimée fournie par le client, on l'utilise
+  let renteMensuelle;
+  let source;
   if (person.avsRenteEstimee && Number(person.avsRenteEstimee) > 0) {
-    const renteMensuelle = Number(person.avsRenteEstimee);
-    const renteAnnuelle = renteMensuelle * 12;
-    const treizieme = person.avs13eRente !== false ? renteMensuelle : 0;
-    return {
-      renteMensuelle,
-      renteAnnuelle: renteAnnuelle + treizieme,
-      treizieme,
-      tauxCompletion,
-      source: "Estimation client"
-    };
+    renteMensuelle = Number(person.avsRenteEstimee);
+    source = "Estimation client";
+  } else {
+    const revenuMoyen = Number(person.revenusBrut || 0);
+    let renteBase = renteMinBase + (renteMaxBase - renteMinBase) * tauxCompletion;
+    if (revenuMoyen > 0 && revenuMoyen < 88200) {
+      renteBase = Math.max(renteMinBase, renteBase * (revenuMoyen / 88200));
+    }
+    renteMensuelle = Math.round(renteBase);
+    source = "Estimation indicative";
   }
 
-  // Sinon calcul approximatif basé sur années + revenu
-  const revenuMoyen = Number(person.revenusBrut || 0);
-  let renteBase = renteMinBase + (renteMaxBase - renteMinBase) * tauxCompletion;
-  if (revenuMoyen > 0 && revenuMoyen < 88200) {
-    renteBase = Math.max(renteMinBase, renteBase * (revenuMoyen / 88200));
+  // Ajustement anticipation / ajournement (options.scenario peut être 'normal' | 'anticipe' | 'ajourne')
+  const scenario = options.scenario || "normal";
+  let coefficient = 1;
+  let anneesShift = options.anneesShift || 0;
+  if (scenario === "anticipe" && anneesShift > 0) {
+    coefficient = 1 - 0.068 * anneesShift; // -6.8% par année anticipée
+  } else if (scenario === "ajourne" && anneesShift > 0) {
+    const taux = { 1: 0.052, 2: 0.108, 3: 0.171, 4: 0.241, 5: 0.315 };
+    coefficient = 1 + (taux[anneesShift] || 0);
   }
-  const renteMensuelle = Math.round(renteBase);
+  renteMensuelle = Math.round(renteMensuelle * coefficient);
   const treizieme = person.avs13eRente !== false ? renteMensuelle : 0;
   return {
     renteMensuelle,
     renteAnnuelle: renteMensuelle * 12 + treizieme,
     treizieme,
     tauxCompletion,
-    source: "Estimation indicative"
+    source,
+    coefficient,
+    scenario,
+    anneesShift,
   };
 }
 
-// LPP — Calcul approximatif avec capitalisation jusqu'à l'âge de référence
+// LPP — Capitalisation et taux de conversion
 function calcLPP(person, ageDepart = 65) {
   const avoirActuel = Number(person.lppAvoirActuel || 0);
   const cotisationAnnuelle = Number(person.lppCotisationAnnuelle || 0);
@@ -88,7 +99,6 @@ function calcLPP(person, ageDepart = 65) {
   const age = Number(person.age || 40);
   const annees = Math.max(0, ageDepart - age);
 
-  // Capitalisation: FV = PV*(1+r)^n + PMT * [(1+r)^n - 1] / r
   let capitalAge65 = avoirActuel;
   if (tauxRendement > 0) {
     capitalAge65 = avoirActuel * Math.pow(1 + tauxRendement, annees) +
@@ -96,20 +106,14 @@ function calcLPP(person, ageDepart = 65) {
   } else {
     capitalAge65 = avoirActuel + cotisationAnnuelle * annees;
   }
-
-  // Si le client a déjà une estimation, on l'utilise
   if (person.lppCapitalProjete && Number(person.lppCapitalProjete) > 0) {
     capitalAge65 = Number(person.lppCapitalProjete);
   }
-
-  // Ajout des libres-passages
   const librePassage = Number(person.lppLibrePassage || 0);
   const lpProj = librePassage * Math.pow(1 + tauxRendement, annees);
   capitalAge65 += lpProj;
-
   const tauxConversion = Number(person.lppTauxConversion || 5.0) / 100;
   const renteAnnuelle = capitalAge65 * tauxConversion;
-
   return {
     capitalAge65: Math.round(capitalAge65),
     renteAnnuelle: Math.round(renteAnnuelle),
@@ -119,14 +123,13 @@ function calcLPP(person, ageDepart = 65) {
   };
 }
 
-// 3e Pilier (3A + 3B)
+// 3e Pilier
 function calc3eP(person, ageDepart = 65) {
   const avoir3a = Number(person.troisPAvoir3a || 0);
   const cotisationAnnuelle = Number(person.troisPCotisationAnnuelle || 0);
   const tauxRendement = Number(person.troisPTauxRendement || 3) / 100;
   const age = Number(person.age || 40);
   const annees = Math.max(0, ageDepart - age);
-
   let capital3a = avoir3a;
   if (tauxRendement > 0) {
     capital3a = avoir3a * Math.pow(1 + tauxRendement, annees) +
@@ -134,10 +137,8 @@ function calc3eP(person, ageDepart = 65) {
   } else {
     capital3a = avoir3a + cotisationAnnuelle * annees;
   }
-
   const avoir3b = Number(person.troisPAvoir3b || 0);
   const capital3b = avoir3b * Math.pow(1 + tauxRendement, annees);
-
   return {
     capital3a: Math.round(capital3a),
     capital3b: Math.round(capital3b),
@@ -145,26 +146,33 @@ function calc3eP(person, ageDepart = 65) {
   };
 }
 
-// Pensions françaises (CNAV + AGIRC-ARRCO)
-function calcPensionsFR(person) {
+// Pensions françaises
+function calcPensionsFR(person, options = {}) {
   const trimAcquis = Number(person.frTrimestresAcquis || 0);
   const trimRequis = Number(person.frTrimestresRequis || 172);
-  const sam = Number(person.frSAM || 0); // Salaire annuel moyen
+  const sam = Number(person.frSAM || 0);
 
-  // CNAV: 50% du SAM si taux plein, sinon proratisé
-  const tauxPlein = trimAcquis >= trimRequis ? 0.50 : 0.50 * (trimAcquis / trimRequis);
+  // Scenario: 'taux_plein' attend l'âge taux plein (annule décote), 'tot' part au plus tôt avec décote
+  const scenario = options.scenario || "normal";
+  let trimRetenus = trimAcquis;
+  if (scenario === "taux_plein") {
+    trimRetenus = trimRequis; // suppose qu'on attend pour cumuler
+  }
+  const tauxPlein = trimRetenus >= trimRequis ? 0.50 : 0.50 * (trimRetenus / trimRequis);
+
+  // Décote sur AGIRC-ARRCO si départ anticipé sans taux plein (10% pendant 3 ans)
+  let coefAgirc = 1;
+  if (scenario === "tot" && trimAcquis < trimRequis) {
+    coefAgirc = 0.90;
+  }
   let pensionCnavAnnuelle = sam * tauxPlein;
-  if (person.frPensionCnavEstimee && Number(person.frPensionCnavEstimee) > 0) {
+  if (person.frPensionCnavEstimee && Number(person.frPensionCnavEstimee) > 0 && scenario !== "taux_plein") {
     pensionCnavAnnuelle = Number(person.frPensionCnavEstimee) * 12;
   }
-
-  // AGIRC-ARRCO: points × valeur du point (1.4159 € en 2024)
   const points = Number(person.frPointsAgircArrco || 0);
   const valeurPoint = 1.4159;
-  const pensionAgircAnnuelle = points * valeurPoint;
-
+  const pensionAgircAnnuelle = points * valeurPoint * coefAgirc;
   const totalAnnuel = pensionCnavAnnuelle + pensionAgircAnnuelle;
-
   return {
     pensionCnavAnnuelle: Math.round(pensionCnavAnnuelle),
     pensionCnavMensuelle: Math.round(pensionCnavAnnuelle / 12),
@@ -172,48 +180,34 @@ function calcPensionsFR(person) {
     pensionAgircMensuelle: Math.round(pensionAgircAnnuelle / 12),
     totalAnnuel: Math.round(totalAnnuel),
     totalMensuel: Math.round(totalAnnuel / 12),
-    tauxPlein: trimAcquis >= trimRequis,
+    tauxPlein: trimRetenus >= trimRequis,
+    scenario,
+    coefAgirc,
   };
 }
 
-// Synthèse globale d'une personne — Tous revenus retraite confondus (CHF)
+// Synthèse globale d'une personne
 function calcSyntheseRetraite(person, hypotheses) {
   const ageDepart = Number(person.objAgeDepart || 65);
   const tauxChange = Number(hypotheses.tauxChangeEurChf || 0.95);
-
   const avs = calcAVS(person);
   const lpp = calcLPP(person, ageDepart);
   const troisP = calc3eP(person, ageDepart);
   const pensionsFR = calcPensionsFR(person);
-
-  // Conversion pensions FR en CHF
   const pensionsFRChfAnnuelle = pensionsFR.totalAnnuel * tauxChange;
   const pensionsFRChfMensuelle = pensionsFR.totalMensuel * tauxChange;
-
-  // Revenu annuel rente seule (AVS + LPP + pensions FR)
   const revenuRenteAnnuel = avs.renteAnnuelle + lpp.renteAnnuelle + pensionsFRChfAnnuelle;
-
-  // Capital disponible (3e pilier + part LPP en capital éventuelle)
   const partLPPCapital = Number(person.lppPartCapitalPct || 0) / 100;
   const capitalLPPSorti = lpp.capitalAge65 * partLPPCapital;
   const renteLPPAjustee = lpp.renteAnnuelle * (1 - partLPPCapital);
   const revenuRenteAjuste = avs.renteAnnuelle + renteLPPAjustee + pensionsFRChfAnnuelle;
-
   const capitalTotal = troisP.capitalTotal + capitalLPPSorti;
-
-  // Train de vie souhaité (mensuel CHF)
   const trainVie = Number(person.objTrainVie || 0);
   const objectifAnnuel = trainVie * 12;
-
   const ecart = objectifAnnuel - revenuRenteAjuste;
   const ecartPct = objectifAnnuel > 0 ? (ecart / objectifAnnuel) * 100 : 0;
-
   return {
-    ageDepart,
-    avs,
-    lpp,
-    troisP,
-    pensionsFR,
+    ageDepart, avs, lpp, troisP, pensionsFR,
     pensionsFRChfAnnuelle: Math.round(pensionsFRChfAnnuelle),
     pensionsFRChfMensuelle: Math.round(pensionsFRChfMensuelle),
     revenuRenteAnnuel: Math.round(revenuRenteAnnuel),
@@ -230,26 +224,384 @@ function calcSyntheseRetraite(person, hypotheses) {
   };
 }
 
-// ────────────────────── STATE INITIAL ──────────────────────
+// ============================================================
+// PHASE 1 — NOUVEAUX HELPERS (différenciants clés)
+// ============================================================
+
+// ─── Module 4 : Arbitrage transfrontalier santé / fiscalité ───
+// Pour un frontalier qui prend sa retraite en France, 4 stratégies possibles :
+//   1) LAMal maintenue (option franco-suisse)
+//   2) CMU (sécurité sociale française) + CSG/CRDS/CASA sur pensions
+//   3) Hybride : LAMal puis CMU (basculement à un âge donné)
+//   4) Refus de la retraite française (reste salarié CH et conserve LAMal)
+// Le calcul retourne la matrice de coûts sur la durée résiduelle de vie.
+function calcArbitrageSante(person, hypotheses) {
+  const ageDepart = Number(person.objAgeDepart || 65);
+  const ageFin = Number(person.objAgeFinConsommation || 90);
+  const dureeRetraite = Math.max(1, ageFin - ageDepart);
+  const tauxChange = Number(hypotheses.tauxChangeEurChf || 0.95);
+
+  // Pensions perçues (CHF/an)
+  const avs = calcAVS(person);
+  const lpp = calcLPP(person, ageDepart);
+  const pensionsFR = calcPensionsFR(person);
+  const pensionsFRChf = pensionsFR.totalAnnuel * tauxChange;
+  const renteAnnuelleTotale = avs.renteAnnuelle + lpp.renteAnnuelle + pensionsFRChf;
+
+  // Hypothèses santé (annuel CHF par personne)
+  const primeLAMal = Number(hypotheses.primeLAMalAnnuelle || 9600); // 800 CHF/mois moyen retraité
+  const primeCMU = Number(hypotheses.primeCMUAnnuelle || 0); // CMU = gratuite (cotisation sur revenus si dépassement)
+  const tauxCSGCRDSCASA = Number(hypotheses.tauxCSGCRDSCASA || 9.1) / 100; // 9.1% max sur pensions
+  const cotisationCMUSubsidiaire = Number(hypotheses.cotisationCMUSubsidiaire || 0);
+
+  // Scénario A : LAMal maintenue tout du long
+  const coutLAMal = primeLAMal * dureeRetraite;
+  // CSG/CRDS appliquée seulement sur la pension française (LAMal n'exonère pas la pension FR)
+  const csgSurPensionFR_LAMal = (pensionsFR.totalAnnuel * tauxChange) * (tauxCSGCRDSCASA * 0.3) * dureeRetraite; // ~30% du taux plein en LAMal
+  const totalA = coutLAMal + csgSurPensionFR_LAMal;
+
+  // Scénario B : CMU + CSG/CRDS/CASA sur toutes pensions (FR + suisses)
+  const coutCMU = (primeCMU + cotisationCMUSubsidiaire) * dureeRetraite;
+  const csgGlobale = renteAnnuelleTotale * tauxCSGCRDSCASA * dureeRetraite;
+  const totalB = coutCMU + csgGlobale;
+
+  // Scénario C : Hybride — LAMal jusqu'à 70 ans puis CMU
+  const ageBascule = Number(hypotheses.ageBasculeHybride || 70);
+  const dureeLAMal = Math.max(0, Math.min(dureeRetraite, ageBascule - ageDepart));
+  const dureeCMU = Math.max(0, dureeRetraite - dureeLAMal);
+  const coutHybride =
+    primeLAMal * dureeLAMal +
+    (pensionsFR.totalAnnuel * tauxChange) * (tauxCSGCRDSCASA * 0.3) * dureeLAMal +
+    (primeCMU + cotisationCMUSubsidiaire) * dureeCMU +
+    renteAnnuelleTotale * tauxCSGCRDSCASA * dureeCMU;
+  const totalC = coutHybride;
+
+  // Scénario D : Refus retraite FR (différer indéfiniment, ou la refuser)
+  // Pas de CSG/CRDS sur pensions françaises (puisque non liquidée), reste LAMal
+  const totalD = coutLAMal; // simplifié : pas de pensions FR → pas de CSG dessus
+  // Mais perte des pensions FR pendant la durée
+  const perteRevenuD = pensionsFRChf * dureeRetraite;
+
+  const scenarios = [
+    { id: "A", label: "LAMal maintenue", cout: totalA, detail: "Prime LAMal + CSG limitée sur pension FR", recommandePour: "Patrimoine élevé, peu de pension FR" },
+    { id: "B", label: "CMU + CSG/CRDS", cout: totalB, detail: "CMU gratuite mais 9.1% sur toutes pensions", recommandePour: "Pensions globales faibles" },
+    { id: "C", label: "Hybride (LAMal→CMU)", cout: totalC, detail: `Bascule à ${ageBascule} ans`, recommandePour: "Compromis prudent" },
+    { id: "D", label: "Refus retraite FR", cout: totalD + perteRevenuD, detail: `Perte ${fmt(perteRevenuD)} CHF de pension`, recommandePour: "Très rares cas" },
+  ];
+
+  const meilleur = scenarios.reduce((a, b) => (b.cout < a.cout ? b : a));
+  const pire = scenarios.reduce((a, b) => (b.cout > a.cout ? b : a));
+  const gainStrategie = pire.cout - meilleur.cout;
+
+  return {
+    scenarios,
+    meilleur,
+    pire,
+    gainStrategie: Math.round(gainStrategie),
+    dureeRetraite,
+    ageDepart,
+    ageFin,
+    hypotheses: { primeLAMal, primeCMU, tauxCSGCRDSCASA: tauxCSGCRDSCASA * 100, ageBascule },
+  };
+}
+
+// ─── Module 3 : Double scénario retraite française ───
+// Présente côte à côte : départ au plus tôt vs taux plein
+function calcDoubleScenarioFR(person, hypotheses) {
+  if (!person.frACarriereFrance) return null;
+
+  const ageMinLegal = 64; // depuis réforme 2023
+  const ageTauxPlein = Number(person.frAgeTauxPlein || 67);
+  const ageFin = Number(person.objAgeFinConsommation || 90);
+  const tauxChange = Number(hypotheses.tauxChangeEurChf || 0.95);
+
+  const totScenario = calcPensionsFR(person, { scenario: "tot" });
+  const pleinScenario = calcPensionsFR(person, { scenario: "taux_plein" });
+
+  // Cumuls jusqu'à 90 ans (en EUR)
+  const cumulTot = totScenario.totalAnnuel * Math.max(0, ageFin - ageMinLegal);
+  const cumulPlein = pleinScenario.totalAnnuel * Math.max(0, ageFin - ageTauxPlein);
+  const differentielCumule = cumulPlein - cumulTot;
+
+  return {
+    tot: {
+      ...totScenario,
+      ageDepart: ageMinLegal,
+      cumulEur: Math.round(cumulTot),
+      cumulChf: Math.round(cumulTot * tauxChange),
+    },
+    plein: {
+      ...pleinScenario,
+      ageDepart: ageTauxPlein,
+      cumulEur: Math.round(cumulPlein),
+      cumulChf: Math.round(cumulPlein * tauxChange),
+    },
+    differentielCumuleEur: Math.round(differentielCumule),
+    differentielCumuleChf: Math.round(differentielCumule * tauxChange),
+    recommandation: differentielCumule > 0 ? "taux_plein" : "tot",
+  };
+}
+
+// ─── 3 scénarios de sortie LPP : 100% rente / 50-50 / 100% capital ───
+function calc3ScenariosLPP(person, hypotheses) {
+  const ageDepart = Number(person.objAgeDepart || 65);
+  const ageFin = Number(person.objAgeFinConsommation || 90);
+  const dureeRetraite = Math.max(1, ageFin - ageDepart);
+  const lpp = calcLPP(person, ageDepart);
+  const capital = lpp.capitalAge65;
+  const tauxConv = (Number(person.lppTauxConversion || 5)) / 100;
+  const renteAnnuellePleine = capital * tauxConv;
+
+  // Impôt forfaitaire sur capital LPP (taux moyen FR/CH variable, on prend ~10% par défaut)
+  const tauxImpotCapital = Number(hypotheses.tauxImpotCapitalLPP || 8) / 100;
+  // Impôt sur la rente (intégrée au revenu, marginal ~25%)
+  const tauxImpotRente = Number(hypotheses.tauxImpotRenteLPP || 25) / 100;
+
+  // Scénario 1 : 100% Rente
+  const renteCumulee = renteAnnuellePleine * dureeRetraite;
+  const impotsRente = renteCumulee * tauxImpotRente;
+  const netRente = renteCumulee - impotsRente;
+
+  // Scénario 2 : 50/50 (50% rente, 50% capital)
+  const cap50 = capital * 0.5;
+  const rente50Annuelle = (capital * 0.5) * tauxConv;
+  const rente50Cumulee = rente50Annuelle * dureeRetraite;
+  const impotCap50 = cap50 * tauxImpotCapital;
+  const impotRente50 = rente50Cumulee * tauxImpotRente;
+  const netMixte = (cap50 - impotCap50) + (rente50Cumulee - impotRente50);
+
+  // Scénario 3 : 100% Capital
+  const impotCapTotal = capital * tauxImpotCapital;
+  const netCapital = capital - impotCapTotal;
+
+  return {
+    capital,
+    renteAnnuellePleine: Math.round(renteAnnuellePleine),
+    dureeRetraite,
+    scenarios: [
+      {
+        id: "rente",
+        label: "100% Rente viagère",
+        capitalPercu: 0,
+        rentePercue: Math.round(renteAnnuellePleine),
+        impots: Math.round(impotsRente),
+        netTotal: Math.round(netRente),
+        avantages: "Revenu garanti à vie, protection longévité",
+        inconvenients: "Imposition annuelle élevée, pas de transmission",
+      },
+      {
+        id: "mixte",
+        label: "50% Rente / 50% Capital",
+        capitalPercu: Math.round(cap50 - impotCap50),
+        rentePercue: Math.round(rente50Annuelle),
+        impots: Math.round(impotCap50 + impotRente50),
+        netTotal: Math.round(netMixte),
+        avantages: "Équilibre sécurité + flexibilité",
+        inconvenients: "Compromis sur les deux dimensions",
+      },
+      {
+        id: "capital",
+        label: "100% Capital",
+        capitalPercu: Math.round(netCapital),
+        rentePercue: 0,
+        impots: Math.round(impotCapTotal),
+        netTotal: Math.round(netCapital),
+        avantages: "Liquidité totale, transmissible, fiscalité unique",
+        inconvenients: "Risque de longévité, gestion à la charge",
+      },
+    ],
+    hypotheses: { tauxImpotCapital: tauxImpotCapital * 100, tauxImpotRente: tauxImpotRente * 100 },
+  };
+}
+
+// ─── Chiffrage du GAIN TOTAL du conseil (matérialiser la valeur ajoutée) ───
+function calcGainTotal(data) {
+  // 1) Gain choix âge AVS — différence entre anticiper et attendre 65 ans
+  const avsAnticipe = calcAVS(data.client, { scenario: "anticipe", anneesShift: 2 });
+  const avsNormal = calcAVS(data.client);
+  const annees65a90 = 25;
+  const annees63a90 = 27;
+  const cumulAnticipe = avsAnticipe.renteAnnuelle * annees63a90;
+  const cumulNormal = avsNormal.renteAnnuelle * annees65a90;
+  const gainAgeAVS = Math.max(0, cumulNormal - cumulAnticipe);
+
+  // 2) Gain stratégie maladie
+  const arbitrage = calcArbitrageSante(data.client, data);
+  const gainStrategieMaladie = arbitrage.gainStrategie;
+
+  // 3) Économies de change (partenaire B-Sharpe ou équivalent vs banque classique)
+  const tauxChange = Number(data.tauxChangeEurChf || 0.95);
+  const flowAnnuelEur = Number(data.client.revenusFR || 0) +
+                        calcPensionsFR(data.client).totalAnnuel;
+  const economieChange = flowAnnuelEur * 0.015; // ~1.5% économie sur frais de change
+  const economiesChange = Math.round(economieChange * (Number(data.economiesPartenairesAnneesEstimees || 20)));
+
+  // 4) Économies de frais (banque dédiée frontalier vs banque standard)
+  const economiesFrais = Number(data.economiesFraisAnnuelles || 800) * Number(data.economiesPartenairesAnneesEstimees || 20);
+
+  const total = gainAgeAVS + gainStrategieMaladie + economiesChange + economiesFrais;
+
+  return {
+    gainAgeAVS: Math.round(gainAgeAVS),
+    gainStrategieMaladie: Math.round(gainStrategieMaladie),
+    economiesChange: Math.round(economiesChange),
+    economiesFrais: Math.round(economiesFrais),
+    total: Math.round(total),
+  };
+}
+
+// ─── Plan d'actions calendaire (généré automatiquement) ───
+function generatePlanActions(data) {
+  const ageActuel = Number(data.client.age || 50);
+  const ageDepart = Number(data.client.objAgeDepart || 65);
+  const anneeActuelle = new Date().getFullYear();
+  const anneeDepart = anneeActuelle + (ageDepart - ageActuel);
+
+  const actions = [];
+
+  // Actions immédiates (T+0)
+  actions.push({
+    annee: anneeActuelle, mois: "Q1",
+    action: "Demander le relevé du compte individuel (CI) AVS",
+    destinataire: "Caisse cantonale de compensation",
+    importance: "haute",
+    statut: "à faire",
+  });
+  actions.push({
+    annee: anneeActuelle, mois: "Q1",
+    action: "Demander une attestation détaillée de la caisse de pension LPP",
+    destinataire: "Institution de prévoyance",
+    importance: "haute",
+    statut: "à faire",
+  });
+  if (data.client.frACarriereFrance) {
+    actions.push({
+      annee: anneeActuelle, mois: "Q1",
+      action: "Télécharger le RIS sur info-retraite.fr et le transmettre au conseiller",
+      destinataire: "info-retraite.fr (CNAV)",
+      importance: "haute",
+      statut: "à faire",
+    });
+  }
+  if (Number(data.client.lppPotentielRachat) > 0 && Number(data.client.lppRachats3Ans) === 0) {
+    actions.push({
+      annee: anneeActuelle, mois: "Q4",
+      action: `Étudier rachat LPP (potentiel CHF ${fmt(data.client.lppPotentielRachat)})`,
+      destinataire: "Caisse de pension",
+      importance: "haute",
+      statut: "à faire",
+    });
+  }
+  if (data.client.lppAvoirsOublies) {
+    actions.push({
+      annee: anneeActuelle, mois: "Q2",
+      action: "Recherche d'avoirs LPP oubliés",
+      destinataire: "Centrale du 2e pilier + Institution supplétive",
+      importance: "moyenne",
+      statut: "à faire",
+    });
+  }
+
+  // Actions à 12 mois avant retraite
+  if (anneeDepart > anneeActuelle) {
+    actions.push({
+      annee: anneeDepart - 1, mois: "Q1",
+      action: "Annoncer la sortie LPP à la caisse de pension (préavis 12 mois)",
+      destinataire: "Caisse de pension",
+      importance: "haute",
+      statut: "à faire",
+    });
+    actions.push({
+      annee: anneeDepart - 1, mois: "Q3",
+      action: "Déposer la demande de rente AVS (3 mois avant l'âge ordinaire)",
+      destinataire: "Caisse de compensation",
+      importance: "haute",
+      statut: "à faire",
+    });
+    if (data.client.frACarriereFrance) {
+      actions.push({
+        annee: anneeDepart - 1, mois: "Q2",
+        action: "Liquider les pensions FR via demande unique (info-retraite.fr)",
+        destinataire: "CNAV + AGIRC-ARRCO",
+        importance: "haute",
+        statut: "à faire",
+      });
+    }
+    actions.push({
+      annee: anneeDepart - 1, mois: "Q4",
+      action: "Décider du basculement LAMal → CMU ou statut quasi-résident",
+      destinataire: "Conseiller + fiduciaire",
+      importance: "haute",
+      statut: "à faire",
+    });
+  }
+
+  // Actions à 3 mois avant retraite
+  if (anneeDepart > anneeActuelle) {
+    actions.push({
+      annee: anneeDepart, mois: "Q1",
+      action: "Décider de l'échelonnement des retraits 3a (sur 2-3 ans pour fractionner l'impôt)",
+      destinataire: "Banque(s) 3a",
+      importance: "moyenne",
+      statut: "à faire",
+    });
+    actions.push({
+      annee: anneeDepart, mois: "Q1",
+      action: "Souscrire une assurance accident privée (LAA cesse à la retraite)",
+      destinataire: "Assureur privé",
+      importance: "moyenne",
+      statut: "à faire",
+    });
+  }
+
+  // Actions de suivi récurrentes
+  actions.push({
+    annee: anneeDepart + 1, mois: "Q1",
+    action: "Réviser le portefeuille en allocation de retraite (4 poches)",
+    destinataire: "Conseiller",
+    importance: "moyenne",
+    statut: "à faire",
+  });
+  actions.push({
+    annee: anneeDepart + 1, mois: "Q4",
+    action: "Première déclaration d'impôt en tant que retraité — vérifier convention CH-FR",
+    destinataire: "Fiduciaire",
+    importance: "haute",
+    statut: "à faire",
+  });
+
+  // Actions succession
+  if (!data.succTestament) {
+    actions.push({
+      annee: anneeActuelle, mois: "Q2",
+      action: "Rédiger ou actualiser le testament avec choix de loi applicable",
+      destinataire: "Notaire",
+      importance: "moyenne",
+      statut: "à faire",
+    });
+  }
+
+  return actions.sort((a, b) => {
+    if (a.annee !== b.annee) return a.annee - b.annee;
+    return a.mois.localeCompare(b.mois);
+  });
+}
+
+// ============================================================
+// STATE INITIAL — Avec nouveaux champs Phase 1
+// ============================================================
 
 const personneVide = () => ({
-  // A - Identité
   prenom: "", nom: "", dateNaissance: "", age: "", nationalite: "Suisse",
   permisG: false, permisType: "",
   statutMatrimonial: "Marié(e)", regimeMatrimonial: "",
   adresse: "", domicileFiscal: "", santeGenerale: "Bonne",
-
-  // C - Pro
   statutPro: "Salarié", employeur: "", tauxOccupation: "100",
   revenusBrut: "", revenusNet: "", dateFinActivite: "",
   autresRevenus: "", revenusFR: "", fluxEpargneMensuel: "",
-
-  // D - AVS
   avsNumero: "", avsAnneesCotisation: "", avsLacunes: "",
   avsCaisse: "", avsRenteEstimee: "", avsAnticipation: false,
   avsAjournement: false, avs13eRente: true, avsCotisationsArretAnticipe: "",
-
-  // E - LPP
   lppCaisse: "", lppAvoirActuel: "", lppCotisationAnnuelle: "",
   lppTauxRendement: "1.25", lppTauxConversion: "5.0",
   lppCapitalProjete: "", lppRenteProjete: "",
@@ -257,15 +609,11 @@ const personneVide = () => ({
   lppPotentielRachat: "", lppRachats3Ans: "0", lppEPL: "0", lppMisesEnGage: "",
   lppChoixSortie: "Mixte", lppPartCapitalPct: "50",
   lppTauxCouverture: "",
-
-  // F - 3e Pilier
   troisPAvoir3a: "", troisPCotisationAnnuelle: "",
   troisPTauxRendement: "3", troisPNbComptes: "1",
   troisPAvoir3b: "", troisPCotisation3b: "",
   troisPStrategieEchelonnement: "",
   troisPClausesBeneficiaires: "",
-
-  // J - Volet français
   frACarriereFrance: false,
   frRegimeBase: "CNAV", frTrimestresAcquis: "", frTrimestresRequis: "172",
   frSAM: "", frAgeTauxPlein: "",
@@ -273,8 +621,6 @@ const personneVide = () => ({
   frAutresRegimes: "", frLacunesARegulariser: "",
   frDecisionRetraiteFR: "Accepter",
   frAssuranceMaladie: "LAMal",
-
-  // B - Objectifs (par personne pour simplifier — souvent communs)
   objAgeDepart: "65", objPriorite: "train_vie",
   objTrainVie: "", objDepartProgressif: false,
   objProjets: "", objPreferenceSortie: "Mixte",
@@ -287,21 +633,17 @@ const stateInitial = () => ({
   dateRapport: new Date().toISOString().split('T')[0],
   isCouple: true,
 
-  // Personnes
   client: {
     prenom: "Jean", nom: "Dupont", dateNaissance: "15.06.1965", age: "61", nationalite: "Français",
     permisG: true, permisType: "G (Frontalier)",
     statutMatrimonial: "Marié(e)", regimeMatrimonial: "Participation aux acquêts",
     adresse: "12 rue du Lac, 74000 Annecy", domicileFiscal: "France (74)", santeGenerale: "Bonne",
-
     statutPro: "Cadre", employeur: "Rolex SA", tauxOccupation: "100",
     revenusBrut: "135000", revenusNet: "105000", dateFinActivite: "65",
     autresRevenus: "0", revenusFR: "0", fluxEpargneMensuel: "1500",
-
     avsNumero: "756.1234.5678.90", avsAnneesCotisation: "35", avsLacunes: "Études en France",
     avsCaisse: "CCGC", avsRenteEstimee: "2150", avsAnticipation: false,
     avsAjournement: false, avs13eRente: true, avsCotisationsArretAnticipe: "0",
-
     lppCaisse: "Fondation LPP X", lppAvoirActuel: "485000", lppCotisationAnnuelle: "18500",
     lppTauxRendement: "1.5", lppTauxConversion: "5.2",
     lppCapitalProjete: "620000", lppRenteProjete: "2686",
@@ -309,13 +651,11 @@ const stateInitial = () => ({
     lppPotentielRachat: "85000", lppRachats3Ans: "25000", lppEPL: "0", lppMisesEnGage: "",
     lppChoixSortie: "Mixte", lppPartCapitalPct: "50",
     lppTauxCouverture: "108",
-
     troisPAvoir3a: "115000", troisPCotisationAnnuelle: "7258",
     troisPTauxRendement: "3", troisPNbComptes: "2",
     troisPAvoir3b: "40000", troisPCotisation3b: "2400",
     troisPStrategieEchelonnement: "Retrait espacé sur 2 ans.",
     troisPClausesBeneficiaires: "Conjoint puis enfants.",
-
     frACarriereFrance: true,
     frRegimeBase: "CNAV (salariés)", frTrimestresAcquis: "62", frTrimestresRequis: "172",
     frSAM: "34000", frAgeTauxPlein: "67",
@@ -323,7 +663,6 @@ const stateInitial = () => ({
     frAutresRegimes: "", frLacunesARegulariser: "3 trimestres en 1988",
     frDecisionRetraiteFR: "Accepter",
     frAssuranceMaladie: "LAMal",
-
     objAgeDepart: "65", objPriorite: "train_vie",
     objTrainVie: "9000", objDepartProgressif: true,
     objProjets: "Achat d'un camping-car et voyage en Asie", objPreferenceSortie: "Mixte",
@@ -334,15 +673,12 @@ const stateInitial = () => ({
     permisG: false, permisType: "Citoyen FR/UE",
     statutMatrimonial: "Marié(e)", regimeMatrimonial: "Participation aux acquêts",
     adresse: "12 rue du Lac, 74000 Annecy", domicileFiscal: "France (74)", santeGenerale: "Bonne",
-
     statutPro: "Salarié", employeur: "Hôpital local", tauxOccupation: "80",
     revenusBrut: "45000", revenusNet: "35000", dateFinActivite: "2032",
     autresRevenus: "0", revenusFR: "45000", fluxEpargneMensuel: "500",
-
     avsNumero: "", avsAnneesCotisation: "", avsLacunes: "",
     avsCaisse: "", avsRenteEstimee: "", avsAnticipation: false,
     avsAjournement: false, avs13eRente: true, avsCotisationsArretAnticipe: "",
-
     lppCaisse: "", lppAvoirActuel: "", lppCotisationAnnuelle: "",
     lppTauxRendement: "1.25", lppTauxConversion: "5.0",
     lppCapitalProjete: "", lppRenteProjete: "",
@@ -350,13 +686,11 @@ const stateInitial = () => ({
     lppPotentielRachat: "", lppRachats3Ans: "0", lppEPL: "0", lppMisesEnGage: "",
     lppChoixSortie: "Mixte", lppPartCapitalPct: "50",
     lppTauxCouverture: "",
-
     troisPAvoir3a: "", troisPCotisationAnnuelle: "",
     troisPTauxRendement: "3", troisPNbComptes: "1",
     troisPAvoir3b: "", troisPCotisation3b: "",
     troisPStrategieEchelonnement: "",
     troisPClausesBeneficiaires: "",
-
     frACarriereFrance: true,
     frRegimeBase: "CNAV (salariés)", frTrimestresAcquis: "130", frTrimestresRequis: "170",
     frSAM: "28000", frAgeTauxPlein: "67",
@@ -364,20 +698,17 @@ const stateInitial = () => ({
     frAutresRegimes: "", frLacunesARegulariser: "",
     frDecisionRetraiteFR: "Accepter",
     frAssuranceMaladie: "LAMal",
-
     objAgeDepart: "64", objPriorite: "train_vie",
     objTrainVie: "", objDepartProgressif: false,
     objProjets: "", objPreferenceSortie: "Rente",
     objAgeFinConsommation: "90", objToleranceRisque: "Prudent",
   },
 
-  // Enfants
   enfants: [
     { prenom: "Lucas", dateNaissance: "14.05.2001", aCharge: true, finEntretien: "2026" },
     { prenom: "Emma", dateNaissance: "08.09.2004", aCharge: true, finEntretien: "2029" }
   ],
 
-  // G - Immobilier (commun au couple)
   immoResidencePrincipaleValeur: "850000",
   immoResidencePrincipaleHypotheque: "320000",
   immoResidencePrincipaleTauxInt: "1.45",
@@ -388,47 +719,53 @@ const stateInitial = () => ({
   immoProjets: "Revente de la résidence principale dans 5 ans pour plus petit.",
   immoBiensFrance: "Appartement locatif à Lyon (250k€).",
 
-  // H - Patrimoine financier
   patComptesCourants: "45000", patEpargne: "85000", patDepotsTitres: "125000",
   patCredits: "15000", patLeasings: "0", patParticipations: "0",
   patComptesFrance: "Livret A et LDD",
 
-  // I - Budget
   budCoutVieMensuel: "6500", budAssuranceMaladie: "820",
   budAutresAssurances: "350", budChargeFiscale: "18500",
   budChargesImmo: "12000", budPensionsVersees: "0",
 
-  // K - Fiscalité
   fiscDerniereTaxation: "2024", fiscImpositionSource: true,
   fiscQuasiResident: true, fiscRevenuImposable: "125000",
   fiscFortuneImposable: "350000", fiscImpotsFrance: "2500",
 
-  // L - Risques
   risqueCouvertureDeces: "Capital LPP 250k + 3a 115k",
   risqueCouvertureInvalidite: "Rente 54k/an",
   risqueLacunesConjoint: "Baisse de revenu pour Marie (-60%)",
   risqueClausesBeneficiaires: "Standard",
   risqueLAARetraite: "À souscrire",
 
-  // M - Succession
   succTestament: true, succPacteSuccessoral: false,
   succContratMariage: false, succMandatInaptitude: false,
   succDonations: "30k€ à chaque enfant", succObjectifsTransmission: "Protéger le conjoint en priorité",
   succLoiApplicable: "France",
 
-  // N - Hypothèses validées
   tauxRendement: "3", tauxInflation: "1.5",
   tauxChangeEurChf: "0.95", paysResidenceRetraite: "France",
   scenarios: ["Âge cible", "Arrêt anticipé -3 ans", "Rente vs Capital"],
 
-  // Documents reçus
-  docsRecus: {},
+  // ─── NOUVEAUX CHAMPS PHASE 1 ───
+  // Arbitrage santé / fiscalité
+  primeLAMalAnnuelle: "9600",
+  primeCMUAnnuelle: "0",
+  cotisationCMUSubsidiaire: "0",
+  tauxCSGCRDSCASA: "9.1",
+  ageBasculeHybride: "70",
+  arbitrageSanteRetenu: "A", // A | B | C | D
+  arbitrageSanteCommentaire: "",
+  // 3 scénarios LPP
+  tauxImpotCapitalLPP: "8",
+  tauxImpotRenteLPP: "25",
+  // Économies partenaires (gain total)
+  economiesFraisAnnuelles: "800",
+  economiesPartenairesAnneesEstimees: "20",
+  partenairesDescription: "B-Sharpe (change), Banque du Léman (frais), Notaire spécialisé",
 
-  // Conseiller
+  docsRecus: {},
   conseiller: "Alexandre Dupuis", titreConseiller: "Conseiller Financier",
   telephone: "+41 22 555 12 34", email: "a.dupuis@wallswiss.ch",
-
-  // Notes
   notesConseiller: "Client très organisé. Crainte fiscalité sur le capital.",
   pointsAttention: "Attention au rachat LPP de 25k (blocage de 3 ans pour le capital).",
 });
@@ -447,7 +784,6 @@ const S = {
   sectionBadge: (color) => ({ display: "inline-block", background: color, color: C.white, padding: "4px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }),
 };
 
-// ────────────────────── COMPOSANT FIELD RÉUTILISABLE ──────────────────────
 function Field({ label, value, onChange, type = "text", placeholder = "", select = null, textarea = false, suffix = "", colSpan = 1, step = null }) {
   return (
     <div style={{ ...S.fg, gridColumn: `span ${colSpan}` }}>
@@ -480,7 +816,9 @@ function CheckRow({ label, checked, onChange, hint = "" }) {
   );
 }
 
-// ────────────────────── PANNEAU PERSONNE (commun A + C) ──────────────────────
+// ============================================================
+// PANNEAUX WIZARD (existants)
+// ============================================================
 function PanneauIdentite({ p, setP, titre, couleur }) {
   return (
     <div style={S.card}>
@@ -560,7 +898,7 @@ function PanneauAVS({ p, setP, titre, couleur }) {
         <Field label="Rente AVS estimée" value={p.avsRenteEstimee} onChange={(v) => setP({ ...p, avsRenteEstimee: v })} type="number" suffix="CHF/mois" />
         <Field label="Lacunes identifiées" value={p.avsLacunes} onChange={(v) => setP({ ...p, avsLacunes: v })} textarea colSpan={2} placeholder="Ex: 2 années jeunesse, période à l'étranger…" />
       </div>
-      <CheckRow label="Inclure la 13e rente AVS (premier versement décembre 2026)" checked={p.avs13eRente} onChange={(v) => setP({ ...p, avs13eRente: v })} hint="Mécanisme d'ajustement par lequel les rentiers AVS perçoivent une 13e rente annuelle." />
+      <CheckRow label="Inclure la 13e rente AVS (premier versement décembre 2026)" checked={p.avs13eRente} onChange={(v) => setP({ ...p, avs13eRente: v })} hint="Réforme AVS21 : +8.3% sur la rente annuelle dès décembre 2026." />
       <CheckRow label="Anticipation de la rente envisagée" checked={p.avsAnticipation} onChange={(v) => setP({ ...p, avsAnticipation: v })} hint="Réduction de 6.8% par année anticipée (max 2 ans)." />
       <CheckRow label="Ajournement de la rente envisagé" checked={p.avsAjournement} onChange={(v) => setP({ ...p, avsAjournement: v })} hint="Supplément de +5.2% à +31.5% (1 à 5 ans)." />
       <Field label="Cotisations AVS prévues en cas d'arrêt anticipé (sans activité lucrative)" value={p.avsCotisationsArretAnticipe} onChange={(v) => setP({ ...p, avsCotisationsArretAnticipe: v })} type="number" suffix="CHF/an" />
@@ -592,7 +930,7 @@ function PanneauLPP({ p, setP, titre, couleur }) {
       </div>
       <CheckRow label="Vérifier la présence d'avoirs LPP oubliés (Fondation institution supplétive)" checked={p.lppAvoirsOublies} onChange={(v) => setP({ ...p, lppAvoirsOublies: v })} />
       <div style={{ background: "rgba(165,149,104,0.1)", padding: 12, marginTop: 12, borderLeft: `4px solid ${C.gold}`, fontSize: 11, color: C.darkGray }}>
-        <Icons.Alert size={14} color={C.gold} /> <strong>Attention :</strong> Délai de blocage de 3 ans entre un rachat LPP et un retrait en capital. Vérifier la date des derniers rachats.
+        <Icons.Alert size={14} color={C.gold} /> <strong>Attention :</strong> Délai de blocage de 3 ans entre un rachat LPP et un retrait en capital.
       </div>
     </div>
   );
@@ -611,10 +949,10 @@ function Panneau3eP({ p, setP, titre, couleur }) {
         <Field label="Cotisation annuelle 3a en cours" value={p.troisPCotisationAnnuelle} onChange={(v) => setP({ ...p, troisPCotisationAnnuelle: v })} type="number" suffix="CHF/an" />
         <Field label="Rendement net supposé" value={p.troisPTauxRendement} onChange={(v) => setP({ ...p, troisPTauxRendement: v })} type="number" step="0.5" suffix="%" />
       </div>
-      <Field label="Stratégie d'échelonnement des retraits 3a (sur plusieurs comptes & années)" value={p.troisPStrategieEchelonnement} onChange={(v) => setP({ ...p, troisPStrategieEchelonnement: v })} textarea />
+      <Field label="Stratégie d'échelonnement des retraits 3a" value={p.troisPStrategieEchelonnement} onChange={(v) => setP({ ...p, troisPStrategieEchelonnement: v })} textarea />
       <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700, marginBottom: 8, marginTop: 16 }}>3b — Libre</div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Avoir 3b (assurance-vie libre, valeur de rachat)" value={p.troisPAvoir3b} onChange={(v) => setP({ ...p, troisPAvoir3b: v })} type="number" suffix="CHF" />
+        <Field label="Avoir 3b (assurance-vie libre)" value={p.troisPAvoir3b} onChange={(v) => setP({ ...p, troisPAvoir3b: v })} type="number" suffix="CHF" />
         <Field label="Cotisation annuelle 3b en cours" value={p.troisPCotisation3b} onChange={(v) => setP({ ...p, troisPCotisation3b: v })} type="number" suffix="CHF/an" />
       </div>
       <Field label="Clauses bénéficiaires (3a + 3b)" value={p.troisPClausesBeneficiaires} onChange={(v) => setP({ ...p, troisPClausesBeneficiaires: v })} textarea />
@@ -622,7 +960,39 @@ function Panneau3eP({ p, setP, titre, couleur }) {
   );
 }
 
-// ────────────────────── PANNEAUX COMMUNS AU FOYER ──────────────────────
+function PanneauFR({ p, setP, titre, couleur }) {
+  return (
+    <div style={S.card}>
+      <div style={{ ...S.cardTitle, color: couleur }}>
+        <div style={{ ...S.dot, background: couleur }} /> {titre} — Volet français
+      </div>
+      <CheckRow label="A déjà eu une carrière professionnelle en France" checked={p.frACarriereFrance} onChange={(v) => setP({ ...p, frACarriereFrance: v })} />
+      {p.frACarriereFrance && (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12 }}>
+            <Field label="Régime de base" value={p.frRegimeBase} onChange={(v) => setP({ ...p, frRegimeBase: v })} select={["CNAV (salariés)", "MSA (agriculteurs)", "SSI (indépendants)", "Régime spécial"]} />
+            <Field label="Trimestres acquis" value={p.frTrimestresAcquis} onChange={(v) => setP({ ...p, frTrimestresAcquis: v })} type="number" />
+            <Field label="Trimestres requis pour taux plein" value={p.frTrimestresRequis} onChange={(v) => setP({ ...p, frTrimestresRequis: v })} type="number" placeholder="172" />
+            <Field label="Âge du taux plein" value={p.frAgeTauxPlein} onChange={(v) => setP({ ...p, frAgeTauxPlein: v })} type="number" suffix="ans" />
+            <Field label="SAM — Salaire annuel moyen (25 meilleures années)" value={p.frSAM} onChange={(v) => setP({ ...p, frSAM: v })} type="number" suffix="EUR/an" />
+            <Field label="Pension CNAV estimée (RIS)" value={p.frPensionCnavEstimee} onChange={(v) => setP({ ...p, frPensionCnavEstimee: v })} type="number" suffix="EUR/mois" />
+            <Field label="Points AGIRC-ARRCO" value={p.frPointsAgircArrco} onChange={(v) => setP({ ...p, frPointsAgircArrco: v })} type="number" />
+            <Field label="Autres régimes (IRCANTEC, spéciaux…)" value={p.frAutresRegimes} onChange={(v) => setP({ ...p, frAutresRegimes: v })} />
+          </div>
+          <Field label="Lacunes à régulariser (envoyer bulletins à la Carsat)" value={p.frLacunesARegulariser} onChange={(v) => setP({ ...p, frLacunesARegulariser: v })} textarea />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="Décision retraite française" value={p.frDecisionRetraiteFR} onChange={(v) => setP({ ...p, frDecisionRetraiteFR: v })} select={["Accepter", "Différer", "Refuser"]} />
+            <Field label="Stratégie assurance maladie à la retraite" value={p.frAssuranceMaladie} onChange={(v) => setP({ ...p, frAssuranceMaladie: v })} select={["LAMal maintenue", "CMU + CSG/CRDS", "À déterminer"]} />
+          </div>
+          <div style={{ background: "rgba(0,85,164,0.08)", padding: 10, marginTop: 8, borderLeft: `3px solid ${C.france}`, fontSize: 11, color: C.darkGray }}>
+            <strong>Astuce :</strong> Le RIS (Relevé Individuel de Situation) est téléchargeable sur <strong>info-retraite.fr</strong>.
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function PanneauEnfants({ enfants, setEnfants }) {
   return (
     <div style={S.card}>
@@ -658,8 +1028,8 @@ function PanneauImmobilier({ data, setData }) {
         <Field label="Mode d'amortissement" value={data.immoAmortissement} onChange={(v) => u("immoAmortissement", v)} select={["Direct", "Indirect"]} />
       </div>
       <div style={{ fontSize: 11, fontWeight: 700, color: C.darkGray, margin: "16px 0 8px", textTransform: "uppercase" }}>Biens en France</div>
-      <Field label="Biens immobiliers situés en France" value={data.immoBiensFrance} onChange={(v) => u("immoBiensFrance", v)} textarea placeholder="Type, valeur, taxe foncière, IFI éventuel…" />
-      <Field label="Projets immobiliers" value={data.immoProjets} onChange={(v) => u("immoProjets", v)} textarea placeholder="Ex: revente RP, achat secondaire en France…" />
+      <Field label="Biens immobiliers situés en France" value={data.immoBiensFrance} onChange={(v) => u("immoBiensFrance", v)} textarea />
+      <Field label="Projets immobiliers" value={data.immoProjets} onChange={(v) => u("immoProjets", v)} textarea />
     </div>
   );
 }
@@ -742,9 +1112,6 @@ function PanneauSuccession({ data, setData }) {
       <Field label="Donations déjà faites ou envisagées" value={data.succDonations} onChange={(v) => u("succDonations", v)} textarea />
       <Field label="Objectifs de transmission" value={data.succObjectifsTransmission} onChange={(v) => u("succObjectifsTransmission", v)} textarea />
       <Field label="Loi applicable choisie (Règlement UE 650/2012)" value={data.succLoiApplicable} onChange={(v) => u("succLoiApplicable", v)} select={["Suisse", "France", "À déterminer"]} />
-      <div style={{ background: "rgba(218,41,28,0.05)", padding: 12, marginTop: 12, borderLeft: `4px solid ${C.swiss}`, fontSize: 11, color: C.darkGray }}>
-        <Icons.Alert size={14} color={C.swiss} /> <strong>Bi-juridiction :</strong> les règles successorales franco-suisses peuvent différer. Penser au choix explicite de loi applicable.
-      </div>
     </div>
   );
 }
@@ -753,15 +1120,15 @@ function PanneauHypotheses({ data, setData }) {
   const u = (k, v) => setData({ ...data, [k]: v });
   return (
     <div style={S.card}>
-      <div style={S.cardTitle}><div style={S.dot} /> Hypothèses de l'étude — à valider avec le client</div>
+      <div style={S.cardTitle}><div style={S.dot} /> Hypothèses de l'étude</div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Taux de rendement du patrimoine" value={data.tauxRendement} onChange={(v) => u("tauxRendement", v)} type="number" step="0.5" suffix="% /an" />
         <Field label="Taux d'inflation / indexation" value={data.tauxInflation} onChange={(v) => u("tauxInflation", v)} type="number" step="0.1" suffix="% /an" />
         <Field label="Taux de change EUR / CHF retenu" value={data.tauxChangeEurChf} onChange={(v) => u("tauxChangeEurChf", v)} type="number" step="0.01" suffix="CHF par EUR" />
         <Field label="Pays de résidence prévu à la retraite" value={data.paysResidenceRetraite} onChange={(v) => u("paysResidenceRetraite", v)} select={["Suisse", "France", "Autre UE", "Hors UE"]} />
       </div>
-      <Field label="Notes du conseiller (profil, priorités, points d'attention)" value={data.notesConseiller} onChange={(v) => u("notesConseiller", v)} textarea />
-      <Field label="Points d'attention spécifiques pour le R2" value={data.pointsAttention} onChange={(v) => u("pointsAttention", v)} textarea placeholder="Ex: vérifier rachat LPP &lt; 3 ans, statut quasi-résident, CMU↔LAMal…" />
+      <Field label="Notes du conseiller" value={data.notesConseiller} onChange={(v) => u("notesConseiller", v)} textarea />
+      <Field label="Points d'attention spécifiques pour le R2" value={data.pointsAttention} onChange={(v) => u("pointsAttention", v)} textarea />
     </div>
   );
 }
@@ -790,18 +1157,147 @@ function PanneauConseiller({ data, setData, appSettings }) {
   );
 }
 
-// ────────────────────── WIZARD PRINCIPAL ──────────────────────
+// ============================================================
+// PANNEAUX WIZARD — PHASE 1 (nouveaux)
+// ============================================================
+
+function PanneauArbitrageSante({ data, setData }) {
+  const u = (k, v) => setData({ ...data, [k]: v });
+  const arbitrage = useMemo(() => calcArbitrageSante(data.client, data), [data]);
+  return (
+    <div style={S.card}>
+      <div style={S.cardTitle}>
+        <div style={S.dot} /> Arbitrage transfrontalier santé / fiscalité
+      </div>
+      <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginTop: 0 }}>
+        Pour un frontalier qui prend sa retraite en France, le choix du système maladie est <strong>l'un des plus impactants</strong> de la planification. Cette section calcule le coût total sur la durée de retraite des 4 stratégies possibles.
+      </p>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+        <Field label="Prime LAMal annuelle (à la retraite)" value={data.primeLAMalAnnuelle} onChange={(v) => u("primeLAMalAnnuelle", v)} type="number" suffix="CHF/an" />
+        <Field label="Cotisation CMU subsidiaire" value={data.cotisationCMUSubsidiaire} onChange={(v) => u("cotisationCMUSubsidiaire", v)} type="number" suffix="EUR/an" />
+        <Field label="Taux CSG/CRDS/CASA" value={data.tauxCSGCRDSCASA} onChange={(v) => u("tauxCSGCRDSCASA", v)} type="number" step="0.1" suffix="%" />
+        <Field label="Âge de bascule LAMal→CMU (scénario hybride)" value={data.ageBasculeHybride} onChange={(v) => u("ageBasculeHybride", v)} type="number" suffix="ans" />
+        <Field label="Stratégie retenue" value={data.arbitrageSanteRetenu} onChange={(v) => u("arbitrageSanteRetenu", v)} select={["A", "B", "C", "D"]} />
+      </div>
+
+      <div style={{ marginTop: 16, fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Matrice des scénarios (sur {arbitrage.dureeRetraite} ans)</div>
+      <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8, fontSize: 12 }}>
+        <thead>
+          <tr style={{ background: C.primary, color: C.white }}>
+            <th style={{ padding: "8px 10px", textAlign: "left" }}>Scénario</th>
+            <th style={{ padding: "8px 10px", textAlign: "left" }}>Description</th>
+            <th style={{ padding: "8px 10px", textAlign: "right" }}>Coût total</th>
+            <th style={{ padding: "8px 10px", textAlign: "center" }}>Choix</th>
+          </tr>
+        </thead>
+        <tbody>
+          {arbitrage.scenarios.map((s) => {
+            const isMeilleur = s.id === arbitrage.meilleur.id;
+            return (
+              <tr key={s.id} style={{ borderBottom: `1px solid ${C.lightGray}`, background: isMeilleur ? "rgba(16,185,129,0.08)" : "transparent" }}>
+                <td style={{ padding: "8px 10px", fontWeight: 700, color: isMeilleur ? C.ok : C.darkGray }}>{s.id} — {s.label}</td>
+                <td style={{ padding: "8px 10px", color: C.gray }}>{s.detail}</td>
+                <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: 700, color: isMeilleur ? C.ok : C.darkGray }}>CHF {fmt(s.cout)}</td>
+                <td style={{ padding: "8px 10px", textAlign: "center" }}>
+                  <input type="radio" name="arbitrageSante" checked={data.arbitrageSanteRetenu === s.id} onChange={() => u("arbitrageSanteRetenu", s.id)} style={{ accentColor: C.primary }} />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <div style={{ marginTop: 12, background: "rgba(16,185,129,0.08)", padding: 12, borderLeft: `4px solid ${C.ok}`, fontSize: 12, color: C.darkGray }}>
+        <strong style={{ color: C.ok }}>Recommandation :</strong> Scénario <strong>{arbitrage.meilleur.label}</strong>. Gain par rapport au pire scénario : <strong>CHF {fmt(arbitrage.gainStrategie)}</strong>.
+      </div>
+      <Field label="Commentaire / réserve sur le choix retenu" value={data.arbitrageSanteCommentaire} onChange={(v) => u("arbitrageSanteCommentaire", v)} textarea placeholder="Ex: stratégie à valider par fiduciaire, rattrapages de cotisations à prévoir…" />
+    </div>
+  );
+}
+
+function PanneauEconomiesPartenaires({ data, setData }) {
+  const u = (k, v) => setData({ ...data, [k]: v });
+  const gain = useMemo(() => calcGainTotal(data), [data]);
+  return (
+    <div style={S.card}>
+      <div style={S.cardTitle}><div style={S.dot} /> Économies via partenaires & gain total du conseil</div>
+      <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginTop: 0 }}>
+        Le chiffrage du <strong>gain total</strong> matérialise la valeur de votre conseil en euros : meilleur choix AVS, meilleure stratégie santé, économies de change et de frais bancaires (via partenaires recommandés).
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label="Économies frais bancaires annuelles" value={data.economiesFraisAnnuelles} onChange={(v) => u("economiesFraisAnnuelles", v)} type="number" suffix="CHF/an" />
+        <Field label="Durée d'estimation des économies" value={data.economiesPartenairesAnneesEstimees} onChange={(v) => u("economiesPartenairesAnneesEstimees", v)} type="number" suffix="ans" />
+      </div>
+      <Field label="Partenaires recommandés" value={data.partenairesDescription} onChange={(v) => u("partenairesDescription", v)} textarea placeholder="Ex: B-Sharpe (change), Banque du Léman (frais)…" />
+
+      <div style={{ marginTop: 12, background: C.primary, color: C.white, padding: 16 }}>
+        <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Chiffrage consolidé du gain total</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 12 }}>
+          <div>Gain choix âge AVS</div><div style={{ textAlign: "right", fontWeight: 700 }}>CHF {fmt(gain.gainAgeAVS)}</div>
+          <div>Gain stratégie maladie</div><div style={{ textAlign: "right", fontWeight: 700 }}>CHF {fmt(gain.gainStrategieMaladie)}</div>
+          <div>Économies de change (partenaires)</div><div style={{ textAlign: "right", fontWeight: 700 }}>CHF {fmt(gain.economiesChange)}</div>
+          <div>Économies frais bancaires</div><div style={{ textAlign: "right", fontWeight: 700 }}>CHF {fmt(gain.economiesFrais)}</div>
+        </div>
+        <div style={{ height: 1, background: "rgba(255,255,255,0.2)", margin: "12px 0" }} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 18, fontWeight: 900 }}>
+          <span>TOTAL ESTIMÉ</span><span style={{ color: C.gold }}>CHF {fmt(gain.total)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PanneauScenariosLPP({ data, setData }) {
+  const u = (k, v) => setData({ ...data, [k]: v });
+  const scenarios = useMemo(() => calc3ScenariosLPP(data.client, data), [data]);
+  return (
+    <div style={S.card}>
+      <div style={S.cardTitle}><div style={S.dot} /> 3 scénarios de sortie LPP — Comparaison chiffrée</div>
+      <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginTop: 0 }}>
+        Capital LPP projeté : <strong>CHF {fmt(scenarios.capital)}</strong>. Comparaison des 3 stratégies de sortie sur {scenarios.dureeRetraite} ans de retraite.
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label="Taux d'impôt forfaitaire sur capital LPP" value={data.tauxImpotCapitalLPP} onChange={(v) => u("tauxImpotCapitalLPP", v)} type="number" step="0.5" suffix="%" />
+        <Field label="Taux d'impôt marginal sur rente" value={data.tauxImpotRenteLPP} onChange={(v) => u("tauxImpotRenteLPP", v)} type="number" step="0.5" suffix="%" />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginTop: 12 }}>
+        {scenarios.scenarios.map((sc) => {
+          const isMax = sc.netTotal === Math.max(...scenarios.scenarios.map(s => s.netTotal));
+          return (
+            <div key={sc.id} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${isMax ? C.ok : C.gold}`, padding: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: isMax ? C.ok : C.primary, marginBottom: 8 }}>{sc.label}</div>
+              <div style={{ fontSize: 11, color: C.gray, lineHeight: 1.8 }}>
+                <div>Capital perçu : <strong>CHF {fmt(sc.capitalPercu)}</strong></div>
+                <div>Rente / an : <strong>CHF {fmt(sc.rentePercue)}</strong></div>
+                <div>Impôts totaux : <strong style={{ color: C.bad }}>CHF {fmt(sc.impots)}</strong></div>
+              </div>
+              <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${C.lightGray}`, fontSize: 13, fontWeight: 800, color: isMax ? C.ok : C.primary }}>
+                Net : CHF {fmt(sc.netTotal)}
+              </div>
+              <div style={{ marginTop: 6, fontSize: 10, color: C.gray }}><strong>+</strong> {sc.avantages}</div>
+              <div style={{ fontSize: 10, color: C.gray }}><strong>−</strong> {sc.inconvenients}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// WIZARD R1 — Avec nouveaux steps Phase 1
+// ============================================================
 function WizardR1({ data, setData, appSettings, onPreview, onSave }) {
   const [step, setStep] = useState(0);
-
   const setClient = (p) => setData({ ...data, client: p });
   const setConjoint = (p) => setData({ ...data, conjoint: p });
 
   const labels = [
-    "Démarrage", "Identité (A)", "Objectifs (B)", "Professionnel (C)",
-    "AVS (D)", "LPP (E)", "3e P (F)", "Immo + Pat. (G+H)",
-    "Budget (I)", "France (J)", "Fiscalité (K)", "Risques + Succ. (L+M)",
-    "Hypothèses (N)", "Aperçu"
+    "Démarrage", "Identité", "Objectifs", "Professionnel",
+    "AVS", "LPP", "3e P", "Scénarios LPP",
+    "Immo + Pat.", "Budget", "Volet FR", "Arbitrage Santé",
+    "Fiscalité", "Risques + Succ.", "Hypothèses", "Plan actions + Gain",
+    "Aperçu"
   ];
 
   const renderStep = () => {
@@ -811,93 +1307,82 @@ function WizardR1({ data, setData, appSettings, onPreview, onSave }) {
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Démarrage du R1</div>
             <p style={{ fontSize: 13, color: C.gray, lineHeight: 1.6, marginTop: 0 }}>
-              Ce module suit la check-list interne <strong>WallSwiss R1 — Frontaliers / franco-suisses</strong>. Vous allez parcourir 14 sections (A → N) pour collecter l'ensemble des informations nécessaires à la planification de retraite croisée Suisse / France.
+              Check-list <strong>WallSwiss R1 — Frontaliers / franco-suisses</strong>. 17 sections, dont les <strong>4 modules différenciants</strong> : matrice santé/fiscalité, double scénario FR, 3 scénarios LPP, chiffrage du gain total.
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <Field label="Date du rendez-vous" value={data.dateRapport} onChange={(v) => setData({ ...data, dateRapport: v })} type="date" />
             </div>
-            <CheckRow label="Couple (saisir aussi le conjoint en parallèle)" checked={data.isCouple} onChange={(v) => setData({ ...data, isCouple: v })} hint="Recommandé si carrière professionnelle, prévoyance ou patrimoine partiellement partagés." />
+            <CheckRow label="Couple" checked={data.isCouple} onChange={(v) => setData({ ...data, isCouple: v })} />
             <div style={{ background: C.lightGray, padding: 16, marginTop: 16, borderLeft: `4px solid ${C.gold}`, fontSize: 12, color: C.darkGray, lineHeight: 1.6 }}>
-              <strong>Confidentialité.</strong> Les données seront utilisées uniquement pour la planification, conservées selon la LPD/RGPD, hébergées chez Google Firestore (région européenne).
+              <strong>Confidentialité.</strong> Données utilisées uniquement pour la planification, conservées selon LPD/RGPD, hébergées chez Google Firestore (région européenne).
             </div>
           </div>
         );
       case 1:
-        return (
-          <>
-            <PanneauIdentite p={data.client} setP={setClient} titre="Client principal" couleur={C.primary} />
-            {data.isCouple && <PanneauIdentite p={data.conjoint} setP={setConjoint} titre="Conjoint(e)" couleur={C.gold} />}
-            <PanneauEnfants enfants={data.enfants} setEnfants={(e) => setData({ ...data, enfants: e })} />
-          </>
-        );
+        return (<>
+          <PanneauIdentite p={data.client} setP={setClient} titre="Client principal" couleur={C.primary} />
+          {data.isCouple && <PanneauIdentite p={data.conjoint} setP={setConjoint} titre="Conjoint(e)" couleur={C.gold} />}
+          <PanneauEnfants enfants={data.enfants} setEnfants={(e) => setData({ ...data, enfants: e })} />
+        </>);
       case 2:
-        return (
-          <>
-            <PanneauObjectifs p={data.client} setP={setClient} titre="Objectifs — Client" couleur={C.primary} />
-            {data.isCouple && <PanneauObjectifs p={data.conjoint} setP={setConjoint} titre="Objectifs — Conjoint(e)" couleur={C.gold} />}
-          </>
-        );
+        return (<>
+          <PanneauObjectifs p={data.client} setP={setClient} titre="Objectifs — Client" couleur={C.primary} />
+          {data.isCouple && <PanneauObjectifs p={data.conjoint} setP={setConjoint} titre="Objectifs — Conjoint(e)" couleur={C.gold} />}
+        </>);
       case 3:
-        return (
-          <>
-            <PanneauPro p={data.client} setP={setClient} titre="Pro — Client" couleur={C.primary} />
-            {data.isCouple && <PanneauPro p={data.conjoint} setP={setConjoint} titre="Pro — Conjoint(e)" couleur={C.gold} />}
-          </>
-        );
+        return (<>
+          <PanneauPro p={data.client} setP={setClient} titre="Pro — Client" couleur={C.primary} />
+          {data.isCouple && <PanneauPro p={data.conjoint} setP={setConjoint} titre="Pro — Conjoint(e)" couleur={C.gold} />}
+        </>);
       case 4:
-        return (
-          <>
-            <PanneauAVS p={data.client} setP={setClient} titre="Client" couleur={C.primary} />
-            {data.isCouple && <PanneauAVS p={data.conjoint} setP={setConjoint} titre="Conjoint(e)" couleur={C.gold} />}
-          </>
-        );
+        return (<>
+          <PanneauAVS p={data.client} setP={setClient} titre="Client" couleur={C.primary} />
+          {data.isCouple && <PanneauAVS p={data.conjoint} setP={setConjoint} titre="Conjoint(e)" couleur={C.gold} />}
+        </>);
       case 5:
-        return (
-          <>
-            <PanneauLPP p={data.client} setP={setClient} titre="Client" couleur={C.primary} />
-            {data.isCouple && <PanneauLPP p={data.conjoint} setP={setConjoint} titre="Conjoint(e)" couleur={C.gold} />}
-          </>
-        );
+        return (<>
+          <PanneauLPP p={data.client} setP={setClient} titre="Client" couleur={C.primary} />
+          {data.isCouple && <PanneauLPP p={data.conjoint} setP={setConjoint} titre="Conjoint(e)" couleur={C.gold} />}
+        </>);
       case 6:
-        return (
-          <>
-            <Panneau3eP p={data.client} setP={setClient} titre="Client" couleur={C.primary} />
-            {data.isCouple && <Panneau3eP p={data.conjoint} setP={setConjoint} titre="Conjoint(e)" couleur={C.gold} />}
-          </>
-        );
+        return (<>
+          <Panneau3eP p={data.client} setP={setClient} titre="Client" couleur={C.primary} />
+          {data.isCouple && <Panneau3eP p={data.conjoint} setP={setConjoint} titre="Conjoint(e)" couleur={C.gold} />}
+        </>);
       case 7:
-        return (
-          <>
-            <PanneauImmobilier data={data} setData={setData} />
-            <PanneauPatFinancier data={data} setData={setData} />
-          </>
-        );
+        return <PanneauScenariosLPP data={data} setData={setData} />;
       case 8:
-        return <PanneauBudget data={data} setData={setData} />;
+        return (<>
+          <PanneauImmobilier data={data} setData={setData} />
+          <PanneauPatFinancier data={data} setData={setData} />
+        </>);
       case 9:
-        return (
-          <>
-            <PanneauFR p={data.client} setP={setClient} titre="Client" couleur={C.france} />
-            {data.isCouple && <PanneauFR p={data.conjoint} setP={setConjoint} titre="Conjoint(e)" couleur={C.france} />}
-          </>
-        );
+        return <PanneauBudget data={data} setData={setData} />;
       case 10:
-        return <PanneauFiscalite data={data} setData={setData} />;
+        return (<>
+          <PanneauFR p={data.client} setP={setClient} titre="Client" couleur={C.france} />
+          {data.isCouple && <PanneauFR p={data.conjoint} setP={setConjoint} titre="Conjoint(e)" couleur={C.france} />}
+        </>);
       case 11:
-        return (
-          <>
-            <PanneauRisques data={data} setData={setData} />
-            <PanneauSuccession data={data} setData={setData} />
-          </>
-        );
+        return <PanneauArbitrageSante data={data} setData={setData} />;
       case 12:
-        return (
-          <>
-            <PanneauHypotheses data={data} setData={setData} />
-            <PanneauConseiller data={data} setData={setData} appSettings={appSettings} />
-          </>
-        );
+        return <PanneauFiscalite data={data} setData={setData} />;
       case 13:
+        return (<>
+          <PanneauRisques data={data} setData={setData} />
+          <PanneauSuccession data={data} setData={setData} />
+        </>);
+      case 14:
+        return (<>
+          <PanneauHypotheses data={data} setData={setData} />
+          <PanneauConseiller data={data} setData={setData} appSettings={appSettings} />
+        </>);
+      case 15:
+        return (<>
+          <PanneauEconomiesPartenaires data={data} setData={setData} />
+          <PanneauPlanActions data={data} />
+        </>);
+      case 16:
         return <RecapEtAction data={data} onPreview={onPreview} onSave={onSave} />;
       default:
         return null;
@@ -909,24 +1394,16 @@ function WizardR1({ data, setData, appSettings, onPreview, onSave }) {
       <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 24 }}>
         {labels.map((l, i) => (
           <div key={i} onClick={() => setStep(i)} style={{
-            padding: "8px 10px",
-            fontSize: 10,
+            padding: "8px 10px", fontSize: 10,
             fontWeight: step === i ? 700 : 600,
             color: step === i ? C.white : step > i ? C.primary : C.gray,
             background: step === i ? C.primary : step > i ? "rgba(105,33,2,0.06)" : C.white,
             border: `1px solid ${step === i ? C.primary : step > i ? "rgba(105,33,2,0.1)" : C.mediumGray}`,
-            cursor: "pointer",
-            letterSpacing: "0.04em",
-            transition: "all 0.2s",
-            whiteSpace: "nowrap"
-          }}>
-            {i + 1}. {l}
-          </div>
+            cursor: "pointer", letterSpacing: "0.04em", transition: "all 0.2s", whiteSpace: "nowrap"
+          }}>{i + 1}. {l}</div>
         ))}
       </div>
-
       {renderStep()}
-
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24 }}>
         <button style={{ ...S.btnS, opacity: step === 0 ? 0.3 : 1, pointerEvents: step === 0 ? "none" : "auto" }} onClick={() => setStep(s => s - 1)}>← Précédent</button>
         {step < labels.length - 1 && <button style={S.btnP} onClick={() => setStep(s => s + 1)}>Étape suivante →</button>}
@@ -938,20 +1415,21 @@ function WizardR1({ data, setData, appSettings, onPreview, onSave }) {
 function RecapEtAction({ data, onPreview, onSave }) {
   const synthClient = useMemo(() => calcSyntheseRetraite(data.client, data), [data]);
   const synthConjoint = useMemo(() => data.isCouple ? calcSyntheseRetraite(data.conjoint, data) : null, [data]);
-
+  const gain = useMemo(() => calcGainTotal(data), [data]);
   return (
     <div style={S.card}>
       <div style={S.cardTitle}><div style={S.dot} /> Synthèse rapide avant génération</div>
-
       <div style={{ display: "grid", gridTemplateColumns: data.isCouple ? "1fr 1fr" : "1fr", gap: 16, marginBottom: 16 }}>
         <CarteSynthese titre={`${data.client.prenom} ${data.client.nom}`.trim() || "Client"} synth={synthClient} couleur={C.primary} />
         {data.isCouple && <CarteSynthese titre={`${data.conjoint.prenom} ${data.conjoint.nom}`.trim() || "Conjoint(e)"} synth={synthConjoint} couleur={C.gold} />}
       </div>
-
+      <div style={{ background: C.primary, color: C.white, padding: 16, marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: 12, color: C.gold, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Gain total estimé du conseil</span>
+        <span style={{ fontSize: 22, fontWeight: 900 }}>CHF {fmt(gain.total)}</span>
+      </div>
       <div style={{ background: C.lightGray, padding: 16, fontSize: 12, color: C.darkGray, lineHeight: 1.6 }}>
         <strong>Hypothèses :</strong> rendement {data.tauxRendement}% — inflation {data.tauxInflation}% — change EUR/CHF {data.tauxChangeEurChf} — résidence retraite : {data.paysResidenceRetraite}.
       </div>
-
       <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 24 }}>
         <button style={S.btnS} onClick={onPreview}>Aperçu rapport</button>
         <button style={S.btnP} onClick={onSave}>Enregistrer & ouvrir</button>
@@ -962,7 +1440,7 @@ function RecapEtAction({ data, onPreview, onSave }) {
 
 function CarteSynthese({ titre, synth, couleur }) {
   if (!synth) return null;
-  const ecartColor = synth.ecart > 0 ? "#EF4444" : "#10B981";
+  const ecartColor = synth.ecart > 0 ? C.bad : C.ok;
   return (
     <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 20, borderTop: `4px solid ${couleur}` }}>
       <div style={{ fontSize: 14, fontWeight: 800, color: couleur, marginBottom: 12 }}>{titre}</div>
@@ -982,52 +1460,53 @@ function CarteSynthese({ titre, synth, couleur }) {
   );
 }
 
-function PanneauFR({ p, setP, titre, couleur }) {
+function PanneauPlanActions({ data }) {
+  const actions = useMemo(() => generatePlanActions(data), [data]);
   return (
     <div style={S.card}>
-      <div style={{ ...S.cardTitle, color: couleur }}>
-        <div style={{ ...S.dot, background: couleur }} /> {titre} — Volet français
-      </div>
-      <CheckRow label="A déjà eu une carrière professionnelle en France" checked={p.frACarriereFrance} onChange={(v) => setP({ ...p, frACarriereFrance: v })} />
-      {p.frACarriereFrance && (
-        <>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12 }}>
-            <Field label="Régime de base" value={p.frRegimeBase} onChange={(v) => setP({ ...p, frRegimeBase: v })} select={["CNAV (salariés)", "MSA (agriculteurs)", "SSI (indépendants)", "Régime spécial"]} />
-            <Field label="Trimestres acquis" value={p.frTrimestresAcquis} onChange={(v) => setP({ ...p, frTrimestresAcquis: v })} type="number" />
-            <Field label="Trimestres requis pour taux plein" value={p.frTrimestresRequis} onChange={(v) => setP({ ...p, frTrimestresRequis: v })} type="number" placeholder="172" />
-            <Field label="Âge du taux plein" value={p.frAgeTauxPlein} onChange={(v) => setP({ ...p, frAgeTauxPlein: v })} type="number" suffix="ans" />
-            <Field label="SAM — Salaire annuel moyen (25 meilleures années)" value={p.frSAM} onChange={(v) => setP({ ...p, frSAM: v })} type="number" suffix="EUR/an" />
-            <Field label="Pension CNAV estimée (RIS)" value={p.frPensionCnavEstimee} onChange={(v) => setP({ ...p, frPensionCnavEstimee: v })} type="number" suffix="EUR/mois" />
-            <Field label="Points AGIRC-ARRCO" value={p.frPointsAgircArrco} onChange={(v) => setP({ ...p, frPointsAgircArrco: v })} type="number" />
-            <Field label="Autres régimes (IRCANTEC, spéciaux…)" value={p.frAutresRegimes} onChange={(v) => setP({ ...p, frAutresRegimes: v })} />
-          </div>
-          <Field label="Lacunes à régulariser (salaires, trimestres, France Travail)" value={p.frLacunesARegulariser} onChange={(v) => setP({ ...p, frLacunesARegulariser: v })} textarea />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <Field label="Décision retraite française" value={p.frDecisionRetraiteFR} onChange={(v) => setP({ ...p, frDecisionRetraiteFR: v })} select={["Accepter", "Différer", "Refuser"]} />
-            <Field label="Stratégie assurance maladie à la retraite" value={p.frAssuranceMaladie} onChange={(v) => setP({ ...p, frAssuranceMaladie: v })} select={["LAMal maintenue", "CMU + CSG/CRDS", "À déterminer"]} />
-          </div>
-        </>
-      )}
+      <div style={S.cardTitle}><div style={S.dot} /> Plan d'actions calendaire (généré automatiquement)</div>
+      <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginTop: 0 }}>
+        Ce plan est dérivé des données saisies : démarches AVS, LPP, retraite FR, succession… avec destinataire et priorité.
+      </p>
+      <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8, fontSize: 12 }}>
+        <thead>
+          <tr style={{ background: C.primary, color: C.white }}>
+            <th style={{ padding: "8px 10px", textAlign: "left" }}>Date</th>
+            <th style={{ padding: "8px 10px", textAlign: "left" }}>Action</th>
+            <th style={{ padding: "8px 10px", textAlign: "left" }}>Destinataire</th>
+            <th style={{ padding: "8px 10px", textAlign: "center" }}>Priorité</th>
+          </tr>
+        </thead>
+        <tbody>
+          {actions.map((a, i) => {
+            const color = a.importance === "haute" ? C.bad : a.importance === "moyenne" ? C.warn : C.ok;
+            return (
+              <tr key={i} style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                <td style={{ padding: "8px 10px", color: C.darkGray, fontWeight: 600 }}>{a.annee} · {a.mois}</td>
+                <td style={{ padding: "8px 10px", color: C.darkGray }}>{a.action}</td>
+                <td style={{ padding: "8px 10px", color: C.gray, fontStyle: "italic" }}>{a.destinataire}</td>
+                <td style={{ padding: "8px 10px", textAlign: "center" }}>
+                  <span style={{ display: "inline-block", padding: "2px 8px", background: color, color: C.white, fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>{a.importance}</span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-
-// ────────────────────── SLIDES PDF — FORMAT A4 PORTRAIT ──────────────────────
-// Dimensions A4 à 96 DPI : 794 × 1123 px.
-
+// ============================================================
+// SLIDES PDF — Format A4 portrait (794 × 1123 px)
+// ============================================================
 const PAGE_W = 794;
 const PAGE_H = 1123;
 
 const pageBase = {
-  width: `${PAGE_W}px`,
-  height: `${PAGE_H}px`,
-  position: "relative",
-  overflow: "hidden",
-  fontFamily: "'Montserrat', sans-serif",
-  background: C.white,
-  textAlign: "left",
-  boxSizing: "border-box",
+  width: `${PAGE_W}px`, height: `${PAGE_H}px`, position: "relative",
+  overflow: "hidden", fontFamily: "'Montserrat', sans-serif",
+  background: C.white, textAlign: "left", boxSizing: "border-box",
 };
 
 function PageHeader({ data, num, titreSection }) {
@@ -1059,7 +1538,6 @@ function PageFooter({ data }) {
   );
 }
 
-// ─── Slide 1 — Couverture ──────────────────────
 function SlideCouverture({ data }) {
   const fullName = data.isCouple && data.conjoint.prenom
     ? `${data.client.prenom} ${(data.client.nom || "").toUpperCase()} & ${data.conjoint.prenom} ${(data.conjoint.nom || "").toUpperCase()}`
@@ -1104,6 +1582,45 @@ function SlideCouverture({ data }) {
   );
 }
 
+function SlideSommaire({ data }) {
+  const sections = [
+    { num: "01", titre: "Profil & Objectifs", page: 4 },
+    { num: "02", titre: "Vue d'ensemble", page: 5 },
+    { num: "03", titre: "1er pilier — AVS", page: 6 },
+    { num: "04", titre: "2e pilier — LPP", page: 7 },
+    { num: "05", titre: "3e pilier", page: 8 },
+    { num: "06", titre: "Volet français — Double scénario", page: 9 },
+    { num: "07", titre: "Arbitrage santé / fiscalité", page: 10 },
+    { num: "08", titre: "3 scénarios de sortie LPP", page: 11 },
+    { num: "09", titre: "Patrimoine global", page: 12 },
+    { num: "10", titre: "Leviers d'optimisation", page: 13 },
+    { num: "11", titre: "Hypothèses retenues", page: 14 },
+    { num: "12", titre: "Plan d'actions calendaire", page: 15 },
+    { num: "13", titre: "Gain total du conseil", page: 16 },
+    { num: "14", titre: "Documents à fournir", page: 17 },
+    { num: "15", titre: "Prochaines étapes", page: 18 },
+  ];
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num="" titreSection="Sommaire" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 32 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Table des matières</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, color: C.primary, fontWeight: 700 }}>Sommaire <em style={{ color: C.gold }}>du rapport</em></div>
+        </div>
+        {sections.map((s, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${C.lightGray}` }}>
+            <div style={{ width: 36, fontSize: 11, color: C.gold, fontWeight: 800, letterSpacing: "0.05em" }}>{s.num}</div>
+            <div style={{ flex: 1, fontSize: 13, color: C.darkGray, fontWeight: 500 }}>{s.titre}</div>
+            <div style={{ fontSize: 11, color: C.gray }}>p. {s.page}</div>
+          </div>
+        ))}
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
 function CarteProfil({ p, couleur }) {
   return (
     <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 20, borderTop: `4px solid ${couleur}` }}>
@@ -1119,7 +1636,6 @@ function CarteProfil({ p, couleur }) {
   );
 }
 
-// ─── Slide 2 — Profil & Objectifs ──────────────
 function SlideProfil({ data, num }) {
   const c = data.client;
   return (
@@ -1130,6 +1646,9 @@ function SlideProfil({ data, num }) {
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Section 1</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Votre <em style={{ color: C.gold }}>profil</em> et vos <em style={{ color: C.gold }}>objectifs</em></div>
         </div>
+        <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
+          Cette synthèse rappelle votre situation personnelle, professionnelle et vos priorités de retraite. Le train de vie cible est défini <strong>net d'impôts, charges et crédits</strong>.
+        </p>
         <div style={{ display: "grid", gridTemplateColumns: data.isCouple ? "1fr 1fr" : "1fr", gap: 16, marginBottom: 24 }}>
           <CarteProfil p={c} couleur={C.primary} />
           {data.isCouple && <CarteProfil p={data.conjoint} couleur={C.gold} />}
@@ -1156,7 +1675,7 @@ function SlideProfil({ data, num }) {
           </div>
           {c.objProjets && (
             <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${C.mediumGray}`, fontSize: 12, color: C.darkGray, lineHeight: 1.6 }}>
-              <strong style={{ color: C.primary }}>Projets spécifiques :</strong> {c.objProjets}
+              <strong style={{ color: C.primary }}>Projets :</strong> {c.objProjets}
             </div>
           )}
         </div>
@@ -1209,7 +1728,6 @@ function Donut({ parts }) {
   );
 }
 
-// ─── Slide 3 — Vue d'ensemble (objectif vs projeté) ──────────────
 function SlideVueEnsemble({ data, num }) {
   const synthClient = calcSyntheseRetraite(data.client, data);
   const synthConjoint = data.isCouple ? calcSyntheseRetraite(data.conjoint, data) : null;
@@ -1237,18 +1755,10 @@ function SlideVueEnsemble({ data, num }) {
           </div>
         </div>
         {synthClient.ecart > 0 && (
-          <div style={{ background: "#FEF3F2", borderLeft: `4px solid #EF4444`, padding: "14px 18px", marginBottom: 24, display: "flex", alignItems: "center", gap: 12 }}>
-            <Icons.Alert size={20} color="#EF4444" />
+          <div style={{ background: "#FEF3F2", borderLeft: `4px solid ${C.bad}`, padding: "14px 18px", marginBottom: 24, display: "flex", alignItems: "center", gap: 12 }}>
+            <Icons.Alert size={20} color={C.bad} />
             <div style={{ fontSize: 12, color: "#991B1B" }}>
-              <strong>Écart constaté :</strong> il manque <strong>CHF {fmt(Math.abs(synthClient.ecartMensuel))} / mois</strong> ({synthClient.ecartPct}%) pour atteindre votre objectif. Des leviers d'optimisation sont présentés plus loin.
-            </div>
-          </div>
-        )}
-        {synthClient.ecart <= 0 && synthClient.objectifMensuel > 0 && (
-          <div style={{ background: "#F0FDF4", borderLeft: `4px solid #10B981`, padding: "14px 18px", marginBottom: 24, display: "flex", alignItems: "center", gap: 12 }}>
-            <Icons.Check size={20} color="#10B981" />
-            <div style={{ fontSize: 12, color: "#065F46" }}>
-              <strong>Objectif atteint :</strong> votre revenu projeté couvre votre train de vie cible avec un <strong>excédent de CHF {fmt(Math.abs(synthClient.ecartMensuel))} / mois</strong>.
+              <strong>Écart constaté :</strong> il manque <strong>CHF {fmt(Math.abs(synthClient.ecartMensuel))} / mois</strong> ({synthClient.ecartPct}%) pour atteindre votre objectif.
             </div>
           </div>
         )}
@@ -1283,49 +1793,6 @@ function SlideVueEnsemble({ data, num }) {
   );
 }
 
-// ─── Slide 4 — Détail AVS (1er pilier) ──────────────
-function SlideAVS({ data, num }) {
-  const avsC = calcAVS(data.client);
-  const avsCJ = data.isCouple ? calcAVS(data.conjoint) : null;
-  return (
-    <div style={pageBase}>
-      <PageHeader data={data} num={num} titreSection="1er Pilier — AVS" />
-      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
-        <div style={{ borderLeft: `4px solid ${C.swiss}`, paddingLeft: 16, marginBottom: 24 }}>
-          <div style={{ fontSize: 10, color: C.swiss, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Volet Suisse · Section 3</div>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Le <em style={{ color: C.swiss }}>1er pilier</em> — Prévoyance étatique (AVS)</div>
-        </div>
-        <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginBottom: 24, textAlign: "justify" }}>
-          L'AVS couvre les besoins vitaux à la retraite. Une carrière complète exige <strong>44 années de cotisation</strong>. La rente maximale 2026 s'élève à environ <strong>CHF 2'520 / mois</strong> et la minimale à <strong>CHF 1'260 / mois</strong>. Dès <strong>décembre 2026</strong>, une <strong>13e rente AVS</strong> sera versée chaque année.
-        </p>
-        <CartePilier titre={`${data.client.prenom} ${(data.client.nom || "").toUpperCase()}`} couleur={C.primary} data={[
-          ["N° AVS", data.client.avsNumero || "—"],
-          ["Caisse de compensation", data.client.avsCaisse || "—"],
-          ["Années cotisées", `${data.client.avsAnneesCotisation || 0} / 44`],
-          ["Taux de complétion", `${Math.round(avsC.tauxCompletion * 100)}%`],
-          ["Rente mensuelle estimée", `CHF ${fmt(avsC.renteMensuelle)} /mois`],
-          ["13e rente annuelle", data.client.avs13eRente ? `CHF ${fmt(avsC.treizieme)}` : "Non incluse"],
-          ["Rente annuelle totale", `CHF ${fmt(avsC.renteAnnuelle)} /an`],
-          ["Lacunes signalées", data.client.avsLacunes || "Aucune"]
-        ]} />
-        {data.isCouple && avsCJ && (
-          <div style={{ marginTop: 16 }}>
-            <CartePilier titre={`${data.conjoint.prenom} ${(data.conjoint.nom || "").toUpperCase()}`} couleur={C.gold} data={[
-              ["Années cotisées", `${data.conjoint.avsAnneesCotisation || 0} / 44`],
-              ["Rente mensuelle estimée", `CHF ${fmt(avsCJ.renteMensuelle)} /mois`],
-              ["Rente annuelle totale", `CHF ${fmt(avsCJ.renteAnnuelle)} /an`]
-            ]} />
-          </div>
-        )}
-        <div style={{ marginTop: 16, background: C.lightGray, padding: 14, borderLeft: `4px solid ${C.swiss}`, fontSize: 11, color: C.darkGray, lineHeight: 1.6 }}>
-          <strong>Points d'attention :</strong> Pour préserver vos droits, les éventuelles lacunes (jeunesse, périodes à l'étranger) doivent être identifiées. Une demande de <strong>relevé du compte individuel (CI)</strong> auprès de la Caisse cantonale de compensation permet de valider les périodes prises en compte.
-        </div>
-      </div>
-      <PageFooter data={data} />
-    </div>
-  );
-}
-
 function CartePilier({ titre, couleur, data }) {
   return (
     <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${couleur}`, padding: 20 }}>
@@ -1340,7 +1807,60 @@ function CartePilier({ titre, couleur, data }) {
   );
 }
 
-// ─── Slide 5 — Détail LPP avec graphique de capitalisation ──────────────
+function SlideAVS({ data, num }) {
+  const avsC = calcAVS(data.client);
+  const avsAnticipe = calcAVS(data.client, { scenario: "anticipe", anneesShift: 2 });
+  const avsAjourne = calcAVS(data.client, { scenario: "ajourne", anneesShift: 2 });
+  const annees = Math.max(1, 90 - Number(data.client.objAgeDepart || 65));
+  const cumulNormal = avsC.renteAnnuelle * annees;
+  const cumulAnticipe = avsAnticipe.renteAnnuelle * (annees + 2);
+  const cumulAjourne = avsAjourne.renteAnnuelle * Math.max(1, annees - 2);
+
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="1er Pilier — AVS" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.swiss}`, paddingLeft: 16, marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: C.swiss, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Volet Suisse · Section 3</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Le <em style={{ color: C.swiss }}>1er pilier</em> — AVS</div>
+        </div>
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
+          L'AVS couvre les besoins vitaux. Une carrière complète exige <strong>44 années de cotisation</strong>. La rente maximale 2026 ≈ <strong>CHF 2'520/mois</strong>, la minimale ≈ <strong>CHF 1'260/mois</strong>. <strong>13e rente AVS</strong> versée dès décembre 2026 (réforme AVS21).
+        </p>
+
+        {/* Comparatif Anticipation / Normal / Ajournement */}
+        <div style={{ marginBottom: 16, fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Comparatif des 3 options — cumul jusqu'à 90 ans</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 16 }}>
+          {[
+            { titre: "Anticipée (-2 ans)", rente: avsAnticipe.renteMensuelle, cumul: cumulAnticipe, color: C.warn },
+            { titre: "Normale (65 ans)", rente: avsC.renteMensuelle, cumul: cumulNormal, color: C.swiss },
+            { titre: "Ajournée (+2 ans)", rente: avsAjourne.renteMensuelle, cumul: cumulAjourne, color: C.ok },
+          ].map((s, i) => (
+            <div key={i} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${s.color}`, padding: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: s.color, marginBottom: 6 }}>{s.titre}</div>
+              <div style={{ fontSize: 18, fontWeight: 900, color: C.primaryDark }}>CHF {fmt(s.rente)}<span style={{ fontSize: 9, color: C.gray, fontWeight: 500 }}> /mois</span></div>
+              <div style={{ fontSize: 10, color: C.gray, marginTop: 4 }}>Cumul : <strong>CHF {fmt(s.cumul)}</strong></div>
+            </div>
+          ))}
+        </div>
+
+        <CartePilier titre={`${data.client.prenom} ${(data.client.nom || "").toUpperCase()}`} couleur={C.primary} data={[
+          ["N° AVS", data.client.avsNumero || "—"],
+          ["Caisse", data.client.avsCaisse || "—"],
+          ["Années cotisées", `${data.client.avsAnneesCotisation || 0} / 44`],
+          ["Rente mensuelle (sce normale)", `CHF ${fmt(avsC.renteMensuelle)} /mois`],
+          ["13e rente annuelle", data.client.avs13eRente ? `CHF ${fmt(avsC.treizieme)}` : "Non incluse"],
+          ["Lacunes signalées", data.client.avsLacunes || "Aucune"]
+        ]} />
+        <div style={{ marginTop: 12, background: "rgba(218,41,28,0.05)", padding: 12, borderLeft: `4px solid ${C.swiss}`, fontSize: 10, color: C.darkGray, lineHeight: 1.5 }}>
+          <strong>Le conseil :</strong> Dans la majorité des cas, l'anticipation n'est pas conseillée (perte définitive de 6.8% × N années). L'ajournement est rarement amorti. <em>Chiffre non opposable à la caisse — basé sur déclarations client.</em>
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
 function SlideLPP({ data, num }) {
   const lpp = calcLPP(data.client, Number(data.client.objAgeDepart || 65));
   const age = Number(data.client.age || 40);
@@ -1349,8 +1869,6 @@ function SlideLPP({ data, num }) {
   const avoirActuel = Number(data.client.lppAvoirActuel || 0);
   const cotis = Number(data.client.lppCotisationAnnuelle || 0);
   const taux = Number(data.client.lppTauxRendement || 1.25) / 100;
-
-  // Points de capitalisation
   const points = [];
   for (let y = 0; y <= annees; y += Math.max(1, Math.floor(annees / 8))) {
     const k = taux > 0 ? avoirActuel * Math.pow(1 + taux, y) + cotis * ((Math.pow(1 + taux, y) - 1) / taux) : avoirActuel + cotis * y;
@@ -1373,10 +1891,10 @@ function SlideLPP({ data, num }) {
       <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
         <div style={{ borderLeft: `4px solid ${C.primary}`, paddingLeft: 16, marginBottom: 24 }}>
           <div style={{ fontSize: 10, color: C.primary, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Volet Suisse · Section 4</div>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Le <em style={{ color: C.primary }}>2e pilier</em> — Prévoyance professionnelle</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Le <em style={{ color: C.primary }}>2e pilier</em> — LPP</div>
         </div>
         <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
-          La LPP vise le maintien de votre niveau de vie. Avec l'AVS, elle représente en moyenne <strong>60% de votre dernier salaire</strong>. Le <strong>taux de conversion</strong> appliqué à votre capital de retraite définit votre rente annuelle.
+          La LPP vise le maintien de votre niveau de vie. Avec l'AVS, elle représente en moyenne <strong>60% du dernier salaire</strong>. Le <strong>taux de conversion</strong> appliqué à votre capital définit votre rente annuelle.
         </p>
         <div style={{ background: C.primary, color: C.white, padding: 20, marginBottom: 20, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
           <div>
@@ -1393,7 +1911,7 @@ function SlideLPP({ data, num }) {
           </div>
         </div>
         <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 16, marginBottom: 16 }}>
-          <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12, textAlign: "center" }}>Évolution projetée de votre capital LPP</div>
+          <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12, textAlign: "center" }}>Évolution projetée du capital LPP</div>
           <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: "100%", height: svgH }}>
             {[0, 0.5, 1].map(pct => {
               const y = padT + h - pct * h;
@@ -1414,69 +1932,44 @@ function SlideLPP({ data, num }) {
             ))}
           </svg>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, fontSize: 11 }}>
-          <div style={{ background: C.lightGray, padding: 12 }}>
-            <div style={{ color: C.gray, fontWeight: 600, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Choix de sortie</div>
-            <div style={{ color: C.primaryDark, fontWeight: 700, fontSize: 13 }}>{data.client.lppChoixSortie} {data.client.lppChoixSortie === "Mixte" && `(${data.client.lppPartCapitalPct}% capital)`}</div>
-          </div>
-          <div style={{ background: C.lightGray, padding: 12 }}>
-            <div style={{ color: C.gray, fontWeight: 600, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Potentiel de rachat</div>
-            <div style={{ color: C.primaryDark, fontWeight: 700, fontSize: 13 }}>CHF {fmt(data.client.lppPotentielRachat)}</div>
-          </div>
-        </div>
-        {Number(data.client.lppRachats3Ans) > 0 && (
-          <div style={{ marginTop: 12, background: "#FEF3F2", borderLeft: `4px solid #EF4444`, padding: "10px 14px", fontSize: 11, color: "#991B1B" }}>
-            <strong>Délai de blocage :</strong> Vous avez effectué CHF {fmt(data.client.lppRachats3Ans)} de rachats sur les 3 dernières années — un retrait en capital sera bloqué pendant cette période.
-          </div>
-        )}
       </div>
       <PageFooter data={data} />
     </div>
   );
 }
 
-// ─── Slide 6 — Détail 3e Pilier ──────────────
 function Slide3eP({ data, num }) {
   const tp = calc3eP(data.client, Number(data.client.objAgeDepart || 65));
   return (
     <div style={pageBase}>
-      <PageHeader data={data} num={num} titreSection="3e Pilier — Prévoyance privée" />
+      <PageHeader data={data} num={num} titreSection="3e Pilier" />
       <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
         <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 24 }}>
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Volet Suisse · Section 5</div>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Le <em style={{ color: C.gold }}>3e pilier</em> — Pour combler les lacunes</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Le <em style={{ color: C.gold }}>3e pilier</em></div>
         </div>
-        <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginBottom: 24, textAlign: "justify" }}>
-          Le 3e pilier complète le 1er et 2e pour viser <strong>100% de votre revenu d'actif</strong>. Le pilier 3A permet en plus de réduire chaque année votre revenu imposable. Le plafond 2026 (avec caisse de pension) est de <strong>CHF 7'258</strong>.
+        <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
+          Complète les 1er et 2e piliers pour viser <strong>100% de votre revenu d'actif</strong>. Le 3a réduit votre revenu imposable. Plafond 2026 : <strong>CHF 7'258</strong> (avec caisse de pension). <em>Statut quasi-résident : à valider par fiduciaire pour bénéficier des déductions.</em>
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
           <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${C.gold}`, padding: 20 }}>
-            <div style={{ fontSize: 11, color: C.gold, fontWeight: 800, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>3a — Lié (fiscalement déductible)</div>
+            <div style={{ fontSize: 11, color: C.gold, fontWeight: 800, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>3a — Lié</div>
             <div style={{ fontSize: 28, fontWeight: 900, color: C.primaryDark, marginBottom: 4 }}>CHF {fmt(tp.capital3a)}</div>
             <div style={{ fontSize: 11, color: C.gray }}>Projection à {data.client.objAgeDepart} ans</div>
-            <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.lightGray}`, fontSize: 11, color: C.darkGray, lineHeight: 1.6 }}>
-              <div>Avoir actuel : <strong>CHF {fmt(data.client.troisPAvoir3a)}</strong></div>
-              <div>Cotisation : <strong>CHF {fmt(data.client.troisPCotisationAnnuelle)} /an</strong></div>
-              <div>Nb comptes : <strong>{data.client.troisPNbComptes || 1}</strong></div>
-            </div>
           </div>
           <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${C.darkGray}`, padding: 20 }}>
-            <div style={{ fontSize: 11, color: C.darkGray, fontWeight: 800, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>3b — Libre (flexible)</div>
+            <div style={{ fontSize: 11, color: C.darkGray, fontWeight: 800, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>3b — Libre</div>
             <div style={{ fontSize: 28, fontWeight: 900, color: C.primaryDark, marginBottom: 4 }}>CHF {fmt(tp.capital3b)}</div>
             <div style={{ fontSize: 11, color: C.gray }}>Projection à {data.client.objAgeDepart} ans</div>
-            <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.lightGray}`, fontSize: 11, color: C.darkGray, lineHeight: 1.6 }}>
-              <div>Avoir actuel : <strong>CHF {fmt(data.client.troisPAvoir3b)}</strong></div>
-              <div>Cotisation : <strong>CHF {fmt(data.client.troisPCotisation3b)} /an</strong></div>
-            </div>
           </div>
         </div>
-        <div style={{ background: C.primary, color: C.white, padding: 18, marginBottom: 16, textAlign: "center" }}>
+        <div style={{ background: C.primary, color: C.white, padding: 18, textAlign: "center" }}>
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>Capital 3e pilier total projeté</div>
           <div style={{ fontSize: 30, fontWeight: 900 }}>CHF {fmt(tp.capitalTotal)}</div>
         </div>
         {data.client.troisPStrategieEchelonnement && (
-          <div style={{ background: C.lightGray, padding: 14, borderLeft: `4px solid ${C.gold}`, fontSize: 11, color: C.darkGray, lineHeight: 1.6 }}>
-            <strong style={{ color: C.gold }}>Stratégie d'échelonnement des retraits 3a :</strong> {data.client.troisPStrategieEchelonnement}
+          <div style={{ marginTop: 12, background: C.lightGray, padding: 14, borderLeft: `4px solid ${C.gold}`, fontSize: 11, color: C.darkGray, lineHeight: 1.6 }}>
+            <strong style={{ color: C.gold }}>Stratégie d'échelonnement :</strong> {data.client.troisPStrategieEchelonnement}
           </div>
         )}
       </div>
@@ -1485,125 +1978,175 @@ function Slide3eP({ data, num }) {
   );
 }
 
-// ─── Slide 7 — Volet français ──────────────
-function SlideFR({ data, num }) {
-  if (!data.client.frACarriereFrance) {
+// ─── PHASE 1 SLIDE — Double scénario retraite française ───
+function SlideDoubleScenarioFR({ data, num }) {
+  const double = calcDoubleScenarioFR(data.client, data);
+  if (!double) {
     return (
       <div style={pageBase}>
         <PageHeader data={data} num={num} titreSection="Volet français" />
         <div style={{ padding: "120px 50px 60px", height: "100%", boxSizing: "border-box" }}>
           <div style={{ background: C.lightGray, padding: 60, textAlign: "center", borderLeft: `4px solid ${C.france}` }}>
-            <div style={{ fontSize: 14, color: C.darkGray }}>Aucune carrière professionnelle française renseignée pour le client.</div>
+            <div style={{ fontSize: 14, color: C.darkGray }}>Aucune carrière française renseignée pour le client.</div>
           </div>
         </div>
         <PageFooter data={data} />
       </div>
     );
   }
-  const fr = calcPensionsFR(data.client);
   const tauxChange = Number(data.tauxChangeEurChf || 0.95);
-
   return (
     <div style={pageBase}>
-      <PageHeader data={data} num={num} titreSection="Volet français" />
+      <PageHeader data={data} num={num} titreSection="Volet français — Double scénario" />
       <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
-        <div style={{ borderLeft: `4px solid ${C.france}`, paddingLeft: 16, marginBottom: 24 }}>
+        <div style={{ borderLeft: `4px solid ${C.france}`, paddingLeft: 16, marginBottom: 20 }}>
           <div style={{ fontSize: 10, color: C.france, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Volet France · Section 6</div>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Vos <em style={{ color: C.france }}>pensions françaises</em></div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Vos <em style={{ color: C.france }}>pensions FR</em> — Tôt vs Taux plein</div>
         </div>
-        <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginBottom: 24, textAlign: "justify" }}>
-          Grâce à la convention de sécurité sociale franco-suisse et aux règlements UE, vos périodes d'activité française sont totalisées pour ouvrir vos droits à pension. Deux régimes principaux : la <strong>{data.client.frRegimeBase}</strong> (base) et l'<strong>AGIRC-ARRCO</strong> (complémentaire).
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
+          Comparaison côte à côte de deux stratégies de liquidation française. <strong>Départ au plus tôt</strong> (âge légal, décote si trimestres insuffisants) vs <strong>Taux plein</strong> (différé pour atteindre les trimestres requis). Le différentiel cumulé jusqu'à 90 ans est chiffré.
         </p>
-        <div style={{ background: fr.tauxPlein ? "#F0FDF4" : "#FEF3F2", borderLeft: `4px solid ${fr.tauxPlein ? "#10B981" : "#F59E0B"}`, padding: 14, marginBottom: 16, fontSize: 12, color: C.darkGray }}>
-          <strong>{fr.tauxPlein ? "✓ Taux plein atteint" : "⚠ Taux plein non atteint"}</strong> — Trimestres acquis : <strong>{data.client.frTrimestresAcquis}</strong> sur <strong>{data.client.frTrimestresRequis}</strong> requis ({((Number(data.client.frTrimestresAcquis || 0) / Number(data.client.frTrimestresRequis || 172)) * 100).toFixed(1)}%).
-        </div>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${C.france}`, padding: 20 }}>
-            <div style={{ fontSize: 11, color: C.france, fontWeight: 800, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Régime de base — {data.client.frRegimeBase}</div>
-            <div style={{ fontSize: 24, fontWeight: 900, color: C.primaryDark, marginBottom: 4 }}>{fmtEUR(fr.pensionCnavMensuelle)} €<span style={{ fontSize: 11, fontWeight: 500, color: C.gray }}> /mois</span></div>
-            <div style={{ fontSize: 11, color: C.gray }}>SAM retenu : {fmtEUR(data.client.frSAM)} € /an</div>
+          {[
+            { titre: "Départ au plus tôt", sub: `${double.tot.ageDepart} ans (âge légal)`, sc: double.tot, color: C.warn },
+            { titre: "Taux plein", sub: `${double.plein.ageDepart} ans`, sc: double.plein, color: C.ok },
+          ].map((opt, i) => (
+            <div key={i} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${opt.color}`, padding: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: opt.color, marginBottom: 4 }}>{opt.titre}</div>
+              <div style={{ fontSize: 10, color: C.gray, marginBottom: 12 }}>{opt.sub}</div>
+              <table style={{ width: "100%", fontSize: 11 }}>
+                <tbody>
+                  <tr><td style={{ color: C.gray, padding: "4px 0" }}>CNAV (base)</td><td style={{ textAlign: "right", fontWeight: 700 }}>{fmtEUR(opt.sc.pensionCnavMensuelle)} €/mois</td></tr>
+                  <tr><td style={{ color: C.gray, padding: "4px 0" }}>AGIRC-ARRCO</td><td style={{ textAlign: "right", fontWeight: 700 }}>{fmtEUR(opt.sc.pensionAgircMensuelle)} €/mois</td></tr>
+                  <tr><td style={{ color: C.gray, padding: "4px 0", borderTop: `1px solid ${C.lightGray}` }}><strong>Total mensuel</strong></td><td style={{ textAlign: "right", fontWeight: 900, color: opt.color, borderTop: `1px solid ${C.lightGray}` }}>{fmtEUR(opt.sc.totalMensuel)} €/mois</td></tr>
+                  <tr><td style={{ color: C.gray, padding: "4px 0", fontSize: 10 }}>Cumul jusqu'à 90 ans</td><td style={{ textAlign: "right", fontWeight: 700, fontSize: 10 }}>{fmtEUR(opt.sc.cumulEur)} €</td></tr>
+                  {opt.sc.coefAgirc < 1 && (
+                    <tr><td colSpan={2} style={{ color: C.bad, padding: "4px 0", fontSize: 9 }}>⚠ Décote AGIRC -{Math.round((1 - opt.sc.coefAgirc) * 100)}%</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ background: double.recommandation === "taux_plein" ? "#F0FDF4" : "#FEF3F2", borderLeft: `4px solid ${double.recommandation === "taux_plein" ? C.ok : C.warn}`, padding: 16, marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: double.recommandation === "taux_plein" ? C.ok : C.warn, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
+            Recommandation : {double.recommandation === "taux_plein" ? "Attendre le taux plein" : "Partir au plus tôt"}
           </div>
-          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${C.france}`, padding: 20 }}>
-            <div style={{ fontSize: 11, color: C.france, fontWeight: 800, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>AGIRC-ARRCO (complémentaire)</div>
-            <div style={{ fontSize: 24, fontWeight: 900, color: C.primaryDark, marginBottom: 4 }}>{fmtEUR(fr.pensionAgircMensuelle)} €<span style={{ fontSize: 11, fontWeight: 500, color: C.gray }}> /mois</span></div>
-            <div style={{ fontSize: 11, color: C.gray }}>Points : {fmtEUR(data.client.frPointsAgircArrco)} × 1.4159 €</div>
+          <div style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.5 }}>
+            Différentiel cumulé : <strong>{fmtEUR(Math.abs(double.differentielCumuleEur))} €</strong> ({fmt(Math.abs(double.differentielCumuleChf))} CHF) {double.differentielCumuleEur > 0 ? "en faveur du taux plein" : "en faveur du départ anticipé"}.
           </div>
         </div>
-        <div style={{ background: C.france, color: C.white, padding: 18, marginBottom: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <div>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.8)", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>Total pensions FR</div>
-            <div style={{ fontSize: 24, fontWeight: 900 }}>{fmtEUR(fr.totalMensuel)} € /mois</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.8)", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>Équivalent CHF (×{tauxChange})</div>
-            <div style={{ fontSize: 24, fontWeight: 900 }}>CHF {fmt(fr.totalMensuel * tauxChange)} /mois</div>
-          </div>
+
+        <div style={{ background: C.lightGray, padding: 12, fontSize: 11, color: C.darkGray, lineHeight: 1.6 }}>
+          <strong>Méthode :</strong> CNAV = SAM × taux × (trimestres / requis). AGIRC-ARRCO = points × valeur (1.4159 € en 2024) × coef. décote. Trimestres acquis : <strong>{data.client.frTrimestresAcquis} / {data.client.frTrimestresRequis}</strong>.
         </div>
-        <div style={{ background: C.lightGray, padding: 14, fontSize: 11, color: C.darkGray, lineHeight: 1.6, borderLeft: `4px solid ${C.france}` }}>
-          <strong>Stratégies retenues :</strong>
-          <ul style={{ margin: "8px 0 0 16px", padding: 0 }}>
-            <li>Retraite française : <strong>{data.client.frDecisionRetraiteFR}</strong></li>
-            <li>Assurance maladie à la retraite : <strong>{data.client.frAssuranceMaladie}</strong></li>
-            <li>Pays de résidence prévu : <strong>{data.paysResidenceRetraite}</strong></li>
-          </ul>
-        </div>
-        {data.client.frLacunesARegulariser && (
-          <div style={{ marginTop: 12, background: "#FEF3F2", borderLeft: `4px solid #F59E0B`, padding: "10px 14px", fontSize: 11, color: "#92400E" }}>
-            <strong>Lacunes à régulariser :</strong> {data.client.frLacunesARegulariser}
-          </div>
-        )}
       </div>
       <PageFooter data={data} />
     </div>
   );
 }
 
-// ─── Slide 8 — Patrimoine global ──────────────
-function SlidePatrimoine({ data, num }) {
-  const immoBrut = Number(data.immoResidencePrincipaleValeur || 0);
-  const hypo = Number(data.immoResidencePrincipaleHypotheque || 0);
-  const immoNet = immoBrut - hypo;
-  const liq = Number(data.patComptesCourants || 0) + Number(data.patEpargne || 0);
-  const titres = Number(data.patDepotsTitres || 0);
-  const credits = Number(data.patCredits || 0) + Number(data.patLeasings || 0);
-  const tp = calc3eP(data.client, Number(data.client.objAgeDepart || 65));
-  const lpp = calcLPP(data.client, Number(data.client.objAgeDepart || 65));
-  const fortuneTotale = immoNet + liq + titres + tp.capitalTotal + lpp.capitalAge65 - credits;
-
+// ─── PHASE 1 SLIDE — Arbitrage transfrontalier santé / fiscalité ───
+function SlideArbitrageSante({ data, num }) {
+  const arbitrage = calcArbitrageSante(data.client, data);
   return (
     <div style={pageBase}>
-      <PageHeader data={data} num={num} titreSection="Patrimoine global" />
+      <PageHeader data={data} num={num} titreSection="Arbitrage santé / fiscalité" />
       <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
-        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 24 }}>
-          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Section 7</div>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Votre <em style={{ color: C.gold }}>patrimoine</em> aujourd'hui</div>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Cœur de la valeur ajoutée · Section 7</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>L'<em style={{ color: C.gold }}>arbitrage</em> santé / fiscalité</div>
         </div>
-        <div style={{ background: C.primary, color: C.white, padding: 22, textAlign: "center", marginBottom: 24 }}>
-          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Fortune nette estimée (projection retraite)</div>
-          <div style={{ fontSize: 36, fontWeight: 900 }}>CHF {fmt(fortuneTotale)}</div>
-        </div>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 14, textAlign: "justify" }}>
+          Pour un frontalier à la retraite en France, le choix du système maladie a un impact <strong>majeur</strong> sur 25 ans de retraite. Quatre stratégies sont comparées sur <strong>{arbitrage.dureeRetraite} ans</strong> ({arbitrage.ageDepart} → {arbitrage.ageFin} ans).
+        </p>
+
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, marginBottom: 14 }}>
+          <thead>
+            <tr style={{ background: C.primary, color: C.white }}>
+              <th style={{ padding: "8px 10px", textAlign: "left" }}>Scénario</th>
+              <th style={{ padding: "8px 10px", textAlign: "left" }}>Description</th>
+              <th style={{ padding: "8px 10px", textAlign: "right" }}>Coût total sur la période</th>
+            </tr>
+          </thead>
           <tbody>
-            <LignePat label="Immobilier — Résidence principale (valeur)" valeur={immoBrut} pos />
-            <LignePat label="Immobilier — Hypothèque restante" valeur={-hypo} />
-            <LignePat label="Immobilier net" valeur={immoNet} pos bold />
-            <LignePat label="Comptes & épargne (liquide)" valeur={liq} pos />
-            <LignePat label="Portefeuille titres" valeur={titres} pos />
-            <LignePat label="Capital LPP projeté" valeur={lpp.capitalAge65} pos />
-            <LignePat label="Capital 3e pilier projeté" valeur={tp.capitalTotal} pos />
-            <LignePat label="Crédits / Leasings" valeur={-credits} />
+            {arbitrage.scenarios.map((s) => {
+              const isMeilleur = s.id === arbitrage.meilleur.id;
+              const isPire = s.id === arbitrage.pire.id;
+              return (
+                <tr key={s.id} style={{ borderBottom: `1px solid ${C.lightGray}`, background: isMeilleur ? "rgba(16,185,129,0.08)" : isPire ? "rgba(239,68,68,0.05)" : "transparent" }}>
+                  <td style={{ padding: "10px", fontWeight: 800, color: isMeilleur ? C.ok : isPire ? C.bad : C.darkGray }}>
+                    {isMeilleur && "★ "}{s.id} — {s.label}
+                  </td>
+                  <td style={{ padding: "10px", color: C.gray, fontSize: 10 }}>{s.detail}<br/><em style={{ color: C.darkGray }}>{s.recommandePour}</em></td>
+                  <td style={{ padding: "10px", textAlign: "right", fontWeight: 700, color: isMeilleur ? C.ok : isPire ? C.bad : C.darkGray }}>CHF {fmt(s.cout)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
-        {data.immoBiensFrance && (
-          <div style={{ marginTop: 16, background: C.lightGray, padding: 14, borderLeft: `4px solid ${C.france}`, fontSize: 11, color: C.darkGray, lineHeight: 1.6 }}>
-            <strong style={{ color: C.france }}>Biens immobiliers en France :</strong> {data.immoBiensFrance}
-          </div>
-        )}
-        {data.patComptesFrance && (
-          <div style={{ marginTop: 12, background: C.lightGray, padding: 14, borderLeft: `4px solid ${C.france}`, fontSize: 11, color: C.darkGray, lineHeight: 1.6 }}>
-            <strong style={{ color: C.france }}>Comptes & placements en France :</strong> {data.patComptesFrance}
-          </div>
-        )}
+
+        <div style={{ background: C.ok, color: C.white, padding: 16, marginBottom: 14 }}>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.85)", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>Stratégie recommandée</div>
+          <div style={{ fontSize: 18, fontWeight: 900 }}>{arbitrage.meilleur.label}</div>
+          <div style={{ fontSize: 12, marginTop: 6, opacity: 0.9 }}>Gain par rapport au pire scénario : <strong>CHF {fmt(arbitrage.gainStrategie)}</strong></div>
+        </div>
+
+        <div style={{ background: C.lightGray, padding: 12, fontSize: 10, color: C.darkGray, lineHeight: 1.6, borderLeft: `4px solid ${C.gold}` }}>
+          <strong>Hypothèses :</strong> prime LAMal {fmt(arbitrage.hypotheses.primeLAMal)} CHF/an · prime CMU {fmt(arbitrage.hypotheses.primeCMU)} CHF/an · taux CSG/CRDS/CASA {arbitrage.hypotheses.tauxCSGCRDSCASA.toFixed(1)}% · âge de bascule hybride {arbitrage.hypotheses.ageBascule} ans.<br/>
+          <strong>Réserve :</strong> Les rattrapages de cotisations CMU peuvent intervenir rétroactivement — validation par fiduciaire recommandée. La CSG/CRDS dépend de votre revenu fiscal de référence (RFR).
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
+// ─── PHASE 1 SLIDE — 3 scénarios de sortie LPP ───
+function Slide3ScenariosLPP({ data, num }) {
+  const sc = calc3ScenariosLPP(data.client, data);
+  const max = Math.max(...sc.scenarios.map(s => s.netTotal));
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="3 scénarios sortie LPP" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.primary}`, paddingLeft: 16, marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: C.primary, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Volet Suisse · Section 8</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Sortie <em style={{ color: C.gold }}>LPP</em> — Rente, 50/50 ou Capital</div>
+        </div>
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 14, textAlign: "justify" }}>
+          Capital LPP projeté : <strong>CHF {fmt(sc.capital)}</strong>. Trois stratégies comparées sur <strong>{sc.dureeRetraite} ans</strong>. Le total net intègre l'imposition différenciée (capital : forfait ~{sc.hypotheses.tauxImpotCapital}% / rente : marginal ~{sc.hypotheses.tauxImpotRente}%).
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
+          {sc.scenarios.map((s) => {
+            const isMax = s.netTotal === max;
+            return (
+              <div key={s.id} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${isMax ? C.ok : C.gold}`, padding: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: isMax ? C.ok : C.primary, marginBottom: 10, minHeight: 30 }}>
+                  {isMax && "★ "}{s.label}
+                </div>
+                <div style={{ fontSize: 10, color: C.gray, lineHeight: 1.7 }}>
+                  <div>Capital perçu : <strong style={{ color: C.darkGray }}>CHF {fmt(s.capitalPercu)}</strong></div>
+                  <div>Rente / an : <strong style={{ color: C.darkGray }}>CHF {fmt(s.rentePercue)}</strong></div>
+                  <div>Impôts : <strong style={{ color: C.bad }}>CHF {fmt(s.impots)}</strong></div>
+                </div>
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.lightGray}` }}>
+                  <div style={{ fontSize: 9, color: C.gray, textTransform: "uppercase", letterSpacing: "0.05em" }}>NET TOTAL</div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: isMax ? C.ok : C.primary }}>CHF {fmt(s.netTotal)}</div>
+                </div>
+                <div style={{ marginTop: 10, fontSize: 9, color: C.darkGray, lineHeight: 1.4 }}>
+                  <div style={{ color: C.ok }}><strong>+</strong> {s.avantages}</div>
+                  <div style={{ color: C.bad, marginTop: 3 }}><strong>−</strong> {s.inconvenients}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ background: C.lightGray, padding: 12, fontSize: 10, color: C.darkGray, lineHeight: 1.6, borderLeft: `4px solid ${C.primary}` }}>
+          <strong>Le conseil :</strong> Le choix dépend de votre situation patrimoniale, de votre tolérance au risque de longévité, et de vos objectifs de transmission. La sortie mixte (50/50) reste la stratégie la plus équilibrée pour la majorité des frontaliers.
+        </div>
       </div>
       <PageFooter data={data} />
     </div>
@@ -1614,112 +2157,85 @@ function LignePat({ label, valeur, pos = false, bold = false }) {
   return (
     <tr style={{ borderBottom: `1px solid ${C.lightGray}`, background: bold ? "rgba(105,33,2,0.04)" : "transparent" }}>
       <td style={{ padding: "10px 0", color: bold ? C.primary : C.darkGray, fontWeight: bold ? 700 : 500 }}>{label}</td>
-      <td style={{ padding: "10px 0", textAlign: "right", color: valeur < 0 ? "#EF4444" : C.primary, fontWeight: bold ? 900 : 700 }}>{valeur < 0 ? "- " : ""}CHF {fmt(Math.abs(valeur))}</td>
+      <td style={{ padding: "10px 0", textAlign: "right", color: valeur < 0 ? C.bad : C.primary, fontWeight: bold ? 900 : 700 }}>{valeur < 0 ? "- " : ""}CHF {fmt(Math.abs(valeur))}</td>
     </tr>
   );
 }
 
-// ─── Slide 9 — Leviers & axes de travail ──────────────
-function SlideLeviers({ data, num }) {
-  const synth = calcSyntheseRetraite(data.client, data);
-  const leviers = [];
-
-  if (synth.ecart > 0) {
-    leviers.push({ titre: "Combler l'écart de revenu", desc: `Il manque CHF ${fmt(synth.ecartMensuel)} /mois pour atteindre votre train de vie cible de CHF ${fmt(synth.objectifMensuel)}.`, action: "Plusieurs leviers à modéliser ci-dessous." });
-  }
-  if (Number(data.client.lppPotentielRachat) > 0) {
-    leviers.push({ titre: "Rachat LPP", desc: `Potentiel de rachat identifié : CHF ${fmt(data.client.lppPotentielRachat)}.`, action: "Optimisation fiscale immédiate (déduction du revenu imposable) et amélioration de la rente future." });
-  }
-  if (Number(data.client.troisPCotisationAnnuelle || 0) < 7258) {
-    const manque = 7258 - Number(data.client.troisPCotisationAnnuelle || 0);
-    leviers.push({ titre: "Maximiser le 3a", desc: `Vous cotisez CHF ${fmt(data.client.troisPCotisationAnnuelle)} par an. Plafond 2026 : CHF 7'258.`, action: `Augmenter de CHF ${fmt(manque)} /an pour optimiser la déduction fiscale.` });
-  }
-  if (data.client.frACarriereFrance && !calcPensionsFR(data.client).tauxPlein) {
-    leviers.push({ titre: "Atteindre le taux plein FR", desc: "Vos trimestres acquis sont en-dessous du seuil requis.", action: "Étudier la régularisation des périodes manquantes ou différer la liquidation pour limiter la décote." });
-  }
-  if (data.client.lppAvoirsOublies) {
-    leviers.push({ titre: "Recherche d'avoirs LPP oubliés", desc: "Vous avez identifié un risque d'avoirs oubliés.", action: "Demande à la Centrale du 2e pilier et Fondation institution supplétive — service WallSwiss dédié." });
-  }
-  if (Number(data.client.objAgeDepart || 65) < 65) {
-    leviers.push({ titre: "Arrêt anticipé", desc: `Vous visez un départ à ${data.client.objAgeDepart} ans, soit avant l'âge de référence.`, action: "Anticiper les cotisations AVS sans activité lucrative et l'impact sur la rente (-6.8% /an d'anticipation)." });
-  }
-  if (Number(data.client.lppRachats3Ans) > 0) {
-    leviers.push({ titre: "Délai de blocage LPP", desc: `Vous avez effectué CHF ${fmt(data.client.lppRachats3Ans)} de rachats récents.`, action: "Un retrait en capital sera bloqué pendant 3 ans — sécuriser le calendrier." });
-  }
-
+function SlidePatrimoine({ data, num }) {
+  const immoBrut = Number(data.immoResidencePrincipaleValeur || 0);
+  const hypo = Number(data.immoResidencePrincipaleHypotheque || 0);
+  const immoNet = immoBrut - hypo;
+  const liq = Number(data.patComptesCourants || 0) + Number(data.patEpargne || 0);
+  const titres = Number(data.patDepotsTitres || 0);
+  const credits = Number(data.patCredits || 0) + Number(data.patLeasings || 0);
+  const tp = calc3eP(data.client, Number(data.client.objAgeDepart || 65));
+  const lpp = calcLPP(data.client, Number(data.client.objAgeDepart || 65));
+  const fortuneTotale = immoNet + liq + titres + tp.capitalTotal + lpp.capitalAge65 - credits;
   return (
     <div style={pageBase}>
-      <PageHeader data={data} num={num} titreSection="Leviers & axes de travail" />
+      <PageHeader data={data} num={num} titreSection="Patrimoine global" />
       <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
         <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 24 }}>
-          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Section 8</div>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Vos <em style={{ color: C.gold }}>leviers</em> d'optimisation</div>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Section 9</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Votre <em style={{ color: C.gold }}>patrimoine</em> aujourd'hui</div>
         </div>
-        <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginBottom: 20 }}>
-          Sur la base de votre situation, voici les axes prioritaires à modéliser en détail lors du second rendez-vous (R2).
-        </p>
-        {leviers.length === 0 ? (
-          <div style={{ background: C.lightGray, padding: 40, textAlign: "center", color: C.gray, fontStyle: "italic" }}>
-            Aucun levier critique identifié à ce stade. La situation paraît équilibrée.
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {leviers.slice(0, 6).map((l, i) => (
-              <div key={i} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderLeft: `4px solid ${C.gold}`, padding: 16, display: "flex", gap: 16 }}>
-                <div style={{ background: C.primary, color: C.white, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 900, flexShrink: 0 }}>{i + 1}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: C.primaryDark, marginBottom: 4 }}>{l.titre}</div>
-                  <div style={{ fontSize: 11, color: C.gray, marginBottom: 6, lineHeight: 1.5 }}>{l.desc}</div>
-                  <div style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.5 }}><strong style={{ color: C.gold }}>Action :</strong> {l.action}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <div style={{ background: C.primary, color: C.white, padding: 22, textAlign: "center", marginBottom: 24 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Fortune nette estimée (projection retraite)</div>
+          <div style={{ fontSize: 36, fontWeight: 900 }}>CHF {fmt(fortuneTotale)}</div>
+        </div>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <tbody>
+            <LignePat label="Résidence principale (valeur)" valeur={immoBrut} pos />
+            <LignePat label="Hypothèque restante" valeur={-hypo} />
+            <LignePat label="Immobilier net" valeur={immoNet} pos bold />
+            <LignePat label="Comptes & épargne (liquide)" valeur={liq} pos />
+            <LignePat label="Portefeuille titres" valeur={titres} pos />
+            <LignePat label="Capital LPP projeté" valeur={lpp.capitalAge65} pos />
+            <LignePat label="Capital 3e pilier projeté" valeur={tp.capitalTotal} pos />
+            <LignePat label="Crédits / Leasings" valeur={-credits} />
+          </tbody>
+        </table>
       </div>
       <PageFooter data={data} />
     </div>
   );
 }
 
-// ─── Slide 10 — Hypothèses validées ──────────────
-function SlideHypotheses({ data, num }) {
+function SlideLeviers({ data, num }) {
+  const synth = calcSyntheseRetraite(data.client, data);
+  const leviers = [];
+  if (synth.ecart > 0) leviers.push({ titre: "Combler l'écart de revenu", desc: `Il manque CHF ${fmt(synth.ecartMensuel)} /mois.`, action: "Voir leviers ci-dessous." });
+  if (Number(data.client.lppPotentielRachat) > 0) leviers.push({ titre: "Rachat LPP", desc: `Potentiel : CHF ${fmt(data.client.lppPotentielRachat)}.`, action: "Optimisation fiscale immédiate." });
+  if (Number(data.client.troisPCotisationAnnuelle || 0) < 7258) {
+    const manque = 7258 - Number(data.client.troisPCotisationAnnuelle || 0);
+    leviers.push({ titre: "Maximiser le 3a", desc: `Plafond 2026 : CHF 7'258.`, action: `Augmenter de CHF ${fmt(manque)} /an.` });
+  }
+  if (data.client.frACarriereFrance && !calcPensionsFR(data.client).tauxPlein) {
+    leviers.push({ titre: "Atteindre le taux plein FR", desc: "Trimestres acquis en-dessous du seuil.", action: "Régularisation ou différer la liquidation." });
+  }
+  if (data.client.lppAvoirsOublies) leviers.push({ titre: "Recherche avoirs LPP oubliés", desc: "Risque identifié.", action: "Demande à la Centrale du 2e pilier." });
+  if (Number(data.client.objAgeDepart || 65) < 65) leviers.push({ titre: "Arrêt anticipé", desc: `Départ à ${data.client.objAgeDepart} ans.`, action: "Anticiper cotisations AVS et impact rente." });
+
   return (
     <div style={pageBase}>
-      <PageHeader data={data} num={num} titreSection="Hypothèses de l'étude" />
+      <PageHeader data={data} num={num} titreSection="Leviers d'optimisation" />
       <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
         <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 24 }}>
-          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Section 9</div>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Les <em style={{ color: C.gold }}>hypothèses</em> retenues</div>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Section 10</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Vos <em style={{ color: C.gold }}>leviers</em> d'optimisation</div>
         </div>
-        <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginBottom: 24, textAlign: "justify" }}>
-          Toute projection repose sur un cadre d'hypothèses. Ces paramètres ont été <strong>discutés et validés ensemble</strong> lors de notre rendez-vous. Ils sont déterminants pour les chiffres présentés et peuvent être ajustés selon vos préférences.
-        </p>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginBottom: 24 }}>
-          <thead>
-            <tr style={{ background: C.primary, color: C.white }}>
-              <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 700 }}>Hypothèse</th>
-              <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 700 }}>Valeur retenue</th>
-            </tr>
-          </thead>
-          <tbody>
-            <LigneHypo label="Taux de rendement du patrimoine" valeur={`${data.tauxRendement} % /an`} />
-            <LigneHypo label="Taux d'inflation / indexation" valeur={`${data.tauxInflation} % /an`} />
-            <LigneHypo label="Taux de change EUR / CHF" valeur={`${data.tauxChangeEurChf} CHF par 1 €`} />
-            <LigneHypo label="Pays de résidence prévu à la retraite" valeur={data.paysResidenceRetraite} />
-            <LigneHypo label="Âge de fin de consommation du patrimoine" valeur={`${data.client.objAgeFinConsommation || 90} ans`} />
-            <LigneHypo label="Inclusion de la 13e rente AVS" valeur={data.client.avs13eRente ? "Oui (dès déc. 2026)" : "Non"} />
-          </tbody>
-        </table>
-        <div style={{ background: C.lightGray, padding: 16, borderLeft: `4px solid ${C.primary}` }}>
-          <div style={{ fontSize: 11, color: C.primary, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Scénarios à modéliser au R2</div>
-          <ul style={{ margin: 0, padding: 0, listStyle: "none", fontSize: 12, color: C.darkGray, lineHeight: 1.8 }}>
-            {(data.scenarios || []).map((s, i) => (
-              <li key={i} style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <span style={{ color: C.gold, fontWeight: 900 }}>✓</span> {s}
-              </li>
-            ))}
-          </ul>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {leviers.slice(0, 6).map((l, i) => (
+            <div key={i} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderLeft: `4px solid ${C.gold}`, padding: 16, display: "flex", gap: 16 }}>
+              <div style={{ background: C.primary, color: C.white, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 900, flexShrink: 0 }}>{i + 1}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: C.primaryDark, marginBottom: 4 }}>{l.titre}</div>
+                <div style={{ fontSize: 11, color: C.gray, marginBottom: 6 }}>{l.desc}</div>
+                <div style={{ fontSize: 11, color: C.darkGray }}><strong style={{ color: C.gold }}>Action :</strong> {l.action}</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
       <PageFooter data={data} />
@@ -1736,48 +2252,182 @@ function LigneHypo({ label, valeur }) {
   );
 }
 
-// ─── Slide 11 — Documents à fournir ──────────────
+function SlideHypotheses({ data, num }) {
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="Hypothèses de l'étude" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 24 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Section 11</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Les <em style={{ color: C.gold }}>hypothèses</em> retenues</div>
+        </div>
+        <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
+          Toute projection repose sur un cadre d'hypothèses, <strong>validées ensemble</strong>. Sources des données : caisse de compensation (AVS), caisse de pension (LPP), compagnies 3A. 3A assurance valorisée à la valeur de rachat annoncée ; 3A banque à valeur actuelle + rendement.
+        </p>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginBottom: 16 }}>
+          <thead>
+            <tr style={{ background: C.primary, color: C.white }}>
+              <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 700 }}>Hypothèse</th>
+              <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 700 }}>Valeur</th>
+            </tr>
+          </thead>
+          <tbody>
+            <LigneHypo label="Taux de rendement du patrimoine" valeur={`${data.tauxRendement} % /an`} />
+            <LigneHypo label="Taux d'inflation / indexation" valeur={`${data.tauxInflation} % /an`} />
+            <LigneHypo label="Taux de change EUR / CHF" valeur={`${data.tauxChangeEurChf} CHF par 1 €`} />
+            <LigneHypo label="Pays de résidence retraite" valeur={data.paysResidenceRetraite} />
+            <LigneHypo label="Âge de fin de consommation" valeur={`${data.client.objAgeFinConsommation || 90} ans`} />
+            <LigneHypo label="13e rente AVS (déc. 2026)" valeur={data.client.avs13eRente ? "Oui (+8.3%)" : "Non"} />
+            <LigneHypo label="Prime LAMal annuelle retenue" valeur={`CHF ${fmt(data.primeLAMalAnnuelle)} /an`} />
+            <LigneHypo label="Taux CSG/CRDS/CASA" valeur={`${data.tauxCSGCRDSCASA} %`} />
+          </tbody>
+        </table>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
+// ─── PHASE 1 SLIDE — Plan d'actions calendaire ───
+function SlidePlanActions({ data, num }) {
+  const actions = generatePlanActions(data);
+  const limited = actions.slice(0, 20);
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="Plan d'actions calendaire" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.primary}`, paddingLeft: 16, marginBottom: 16 }}>
+          <div style={{ fontSize: 10, color: C.primary, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Section 12 · De l'analyse à l'exécution</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Votre <em style={{ color: C.gold }}>plan d'actions</em></div>
+        </div>
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.5, marginBottom: 12, textAlign: "justify" }}>
+          Le tableau ci-dessous liste <strong>chaque démarche</strong> à entreprendre, son destinataire et sa priorité. Il sert de feuille de route opérationnelle, de l'audit (R1) à la liquidation effective de la retraite.
+        </p>
+        <div style={{ display: "flex", gap: 12, marginBottom: 10, fontSize: 9, color: C.gray }}>
+          <span><span style={{ display: "inline-block", width: 10, height: 10, background: C.bad, marginRight: 4, verticalAlign: "middle" }}/> Haute</span>
+          <span><span style={{ display: "inline-block", width: 10, height: 10, background: C.warn, marginRight: 4, verticalAlign: "middle" }}/> Moyenne</span>
+          <span><span style={{ display: "inline-block", width: 10, height: 10, background: C.ok, marginRight: 4, verticalAlign: "middle" }}/> Basse</span>
+        </div>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
+          <thead>
+            <tr style={{ background: C.primary, color: C.white }}>
+              <th style={{ padding: "6px 8px", textAlign: "left", width: 80 }}>Échéance</th>
+              <th style={{ padding: "6px 8px", textAlign: "left" }}>Action</th>
+              <th style={{ padding: "6px 8px", textAlign: "left", width: 180 }}>Destinataire</th>
+              <th style={{ padding: "6px 8px", textAlign: "center", width: 16 }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {limited.map((a, i) => {
+              const color = a.importance === "haute" ? C.bad : a.importance === "moyenne" ? C.warn : C.ok;
+              return (
+                <tr key={i} style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+                  <td style={{ padding: "6px 8px", color: C.darkGray, fontWeight: 700, fontSize: 10 }}>{a.annee} · {a.mois}</td>
+                  <td style={{ padding: "6px 8px", color: C.darkGray }}>{a.action}</td>
+                  <td style={{ padding: "6px 8px", color: C.gray, fontStyle: "italic" }}>{a.destinataire}</td>
+                  <td style={{ padding: "6px 8px", textAlign: "center" }}>
+                    <span style={{ display: "inline-block", width: 12, height: 12, background: color }} />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        <div style={{ marginTop: 12, background: "rgba(165,149,104,0.1)", padding: 10, fontSize: 10, color: C.darkGray, borderLeft: `3px solid ${C.gold}` }}>
+          <strong>Alerte délais :</strong> La demande de prestation LPP doit être annoncée à la caisse de pension <strong>12 mois avant</strong> la date prévue de retrait. La rente AVS se demande au moins 3 mois avant l'âge ordinaire.
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
+// ─── PHASE 1 SLIDE — Gain total du conseil ───
+function SlideGainTotal({ data, num }) {
+  const gain = calcGainTotal(data);
+  const arbitrage = calcArbitrageSante(data.client, data);
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="Gain total du conseil" />
+      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Section 13 · Valeur du conseil chiffrée</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Le <em style={{ color: C.gold }}>gain total</em> matérialisé</div>
+        </div>
+        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6, marginBottom: 16, textAlign: "justify" }}>
+          Le tableau suivant chiffre le <strong>gain consolidé</strong> que notre conseil vous fait gagner sur la période. Il combine les bonnes décisions retraite, le choix optimal santé/fiscalité et les économies obtenues via nos partenaires (change, frais bancaires).
+        </p>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginBottom: 16 }}>
+          <tbody>
+            <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+              <td style={{ padding: "12px 16px", color: C.darkGray, fontWeight: 600 }}>Gain choix âge AVS optimal</td>
+              <td style={{ padding: "12px 16px", textAlign: "right", color: C.primary, fontWeight: 700 }}>CHF {fmt(gain.gainAgeAVS)}</td>
+            </tr>
+            <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+              <td style={{ padding: "12px 16px", color: C.darkGray, fontWeight: 600 }}>Gain stratégie maladie ({arbitrage.meilleur.label})</td>
+              <td style={{ padding: "12px 16px", textAlign: "right", color: C.primary, fontWeight: 700 }}>CHF {fmt(gain.gainStrategieMaladie)}</td>
+            </tr>
+            <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+              <td style={{ padding: "12px 16px", color: C.darkGray, fontWeight: 600 }}>Économies de change (partenaire dédié)</td>
+              <td style={{ padding: "12px 16px", textAlign: "right", color: C.primary, fontWeight: 700 }}>CHF {fmt(gain.economiesChange)}</td>
+            </tr>
+            <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
+              <td style={{ padding: "12px 16px", color: C.darkGray, fontWeight: 600 }}>Économies frais bancaires</td>
+              <td style={{ padding: "12px 16px", textAlign: "right", color: C.primary, fontWeight: 700 }}>CHF {fmt(gain.economiesFrais)}</td>
+            </tr>
+            <tr style={{ background: C.primary, color: C.white }}>
+              <td style={{ padding: "16px", fontWeight: 900, fontSize: 16 }}>TOTAL GAIN ESTIMÉ</td>
+              <td style={{ padding: "16px", textAlign: "right", fontWeight: 900, fontSize: 22, color: C.gold }}>CHF {fmt(gain.total)}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style={{ background: C.lightGray, padding: 14, fontSize: 11, color: C.darkGray, lineHeight: 1.6, borderLeft: `4px solid ${C.gold}` }}>
+          <strong>Partenaires recommandés :</strong> {data.partenairesDescription || "B-Sharpe (solution de change frontalier), Banque du Léman (offre dédiée frontaliers)."}<br/>
+          <strong>Période d'estimation :</strong> {data.economiesPartenairesAnneesEstimees} ans · Économies frais annuelles : CHF {fmt(data.economiesFraisAnnuelles)}.
+        </div>
+        <div style={{ marginTop: 14, background: "rgba(255,255,255,0.7)", padding: 12, fontSize: 10, color: C.gray, fontStyle: "italic", borderLeft: `3px solid ${C.mediumGray}` }}>
+          Réserve : Ces estimations reposent sur les hypothèses validées en début d'étude. Les chiffres réels dépendront de l'évolution des taux, de la fiscalité et des règlements de caisse. Non opposable juridiquement.
+        </div>
+      </div>
+      <PageFooter data={data} />
+    </div>
+  );
+}
+
 function SlideDocuments({ data, num }) {
   const docsSuisse = [
-    "Pièce d'identité et permis de séjour (G)",
-    "Certificat AVS + extrait du compte individuel (CI)",
-    "Certificat de prévoyance LPP le plus récent + règlement de la caisse",
-    "Attestation du potentiel de rachat LPP",
-    "Attestations des comptes / polices de libre-passage",
-    "Relevés et attestations 3a (banque + assurance) avec valeurs de rachat",
+    "Pièce d'identité + permis G",
+    "Certificat AVS + extrait du CI",
+    "Certificat LPP récent + règlement de caisse",
+    "Attestation potentiel de rachat LPP",
+    "Attestations libre-passage",
+    "Relevés et attestations 3a (banque + assurance)",
     "Polices d'assurance-vie 3b",
-    "Fiches de salaire récentes (3 derniers mois) + dernier certificat de salaire",
-    "Dernière déclaration d'impôt et décision de taxation",
-    "Contrats hypothécaires et décomptes d'intérêts",
-    "Estimations ou actes des biens immobiliers",
-    "Baux et décomptes de charges des biens locatifs",
-    "Relevés bancaires (comptes et dépôts-titres)",
-    "Contrats de crédit / leasing",
+    "Fiches de salaire (3 mois) + certificat annuel",
+    "Dernière déclaration & décision de taxation",
+    "Contrats hypothécaires",
+    "Estimations / actes immobiliers",
+    "Relevés bancaires et dépôts-titres",
     "Police d'assurance maladie",
-    "Testament, pacte successoral ou contrat de mariage (le cas échéant)",
   ];
   const docsFrance = [
-    "Relevé de carrière / RIS (régime de base)",
-    "Relevé de points AGIRC-ARRCO (et IRCANTEC le cas échéant)",
-    "Bulletins de salaire et attestations France Travail pour les périodes manquantes",
+    "Relevé de carrière / RIS (info-retraite.fr)",
+    "Relevé de points AGIRC-ARRCO",
+    "Bulletins France Travail pour périodes manquantes",
     "Avis d'imposition français",
-    "Décompte d'impôt à la source / justificatif de quasi-résident",
+    "Justificatif de quasi-résident",
   ];
-
   return (
     <div style={pageBase}>
       <PageHeader data={data} num={num} titreSection="Documents à fournir" />
       <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
         <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 20 }}>
-          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Section 10 — Préparation du R2</div>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Section 14 — Préparation du R2</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Les <em style={{ color: C.gold }}>documents</em> à transmettre</div>
         </div>
-        <p style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.5, marginBottom: 16 }}>
-          Cette liste vous permet de réunir tous les éléments justificatifs avant le 2e rendez-vous. Vous pouvez nous les transmettre par e-mail ou via votre espace client sécurisé.
-        </p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <div>
-            <div style={{ background: C.swiss, color: C.white, padding: "8px 12px", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Volet suisse</div>
+            <div style={{ background: C.swiss, color: C.white, padding: "8px 12px", fontSize: 11, fontWeight: 800, textTransform: "uppercase", marginBottom: 8 }}>Volet suisse</div>
             {docsSuisse.map((d, i) => (
               <div key={i} style={{ display: "flex", gap: 8, padding: "6px 0", borderBottom: `1px solid ${C.lightGray}`, fontSize: 10.5, color: C.darkGray }}>
                 <div style={{ width: 12, height: 12, border: `1.5px solid ${C.swiss}`, flexShrink: 0, marginTop: 1 }} />
@@ -1786,7 +2436,7 @@ function SlideDocuments({ data, num }) {
             ))}
           </div>
           <div>
-            <div style={{ background: C.france, color: C.white, padding: "8px 12px", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Volet français</div>
+            <div style={{ background: C.france, color: C.white, padding: "8px 12px", fontSize: 11, fontWeight: 800, textTransform: "uppercase", marginBottom: 8 }}>Volet français</div>
             {docsFrance.map((d, i) => (
               <div key={i} style={{ display: "flex", gap: 8, padding: "6px 0", borderBottom: `1px solid ${C.lightGray}`, fontSize: 10.5, color: C.darkGray }}>
                 <div style={{ width: 12, height: 12, border: `1.5px solid ${C.france}`, flexShrink: 0, marginTop: 1 }} />
@@ -1794,7 +2444,7 @@ function SlideDocuments({ data, num }) {
               </div>
             ))}
             <div style={{ background: C.lightGray, padding: 12, marginTop: 16, fontSize: 10, color: C.gray, lineHeight: 1.5, borderLeft: `3px solid ${C.gold}` }}>
-              <strong>Astuce :</strong> Le relevé de carrière (RIS) est téléchargeable depuis votre compte personnel sur <strong>info-retraite.fr</strong>.
+              <strong>Astuce :</strong> Le RIS est téléchargeable sur <strong>info-retraite.fr</strong>.
             </div>
           </div>
         </div>
@@ -1804,7 +2454,6 @@ function SlideDocuments({ data, num }) {
   );
 }
 
-// ─── Slide 12 — Contact final ──────────────
 function SlideContact({ data, num }) {
   return (
     <div style={{ ...pageBase, background: `linear-gradient(180deg, ${C.lightGray} 0%, ${C.white} 100%)` }}>
@@ -1818,13 +2467,16 @@ function SlideContact({ data, num }) {
         <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, maxWidth: 480, margin: "0 auto", textAlign: "center" }}>
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 12 }}>Votre interlocuteur dédié</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, color: C.primary, fontWeight: 700, marginBottom: 4 }}>{data.conseiller || "—"}</div>
-          <div style={{ fontSize: 12, color: C.gray, marginBottom: 24, textTransform: "uppercase", letterSpacing: "0.05em" }}>{data.titreConseiller}</div>
+          <div style={{ fontSize: 12, color: C.gray, marginBottom: 24, textTransform: "uppercase" }}>{data.titreConseiller}</div>
           <div style={{ height: 1, background: C.lightGray, marginBottom: 20 }} />
           <div style={{ fontSize: 13, color: C.darkGray, lineHeight: 2 }}>
             <div><strong style={{ color: C.gray }}>T</strong>&nbsp;&nbsp;{data.telephone || "—"}</div>
             <div><strong style={{ color: C.gray }}>E</strong>&nbsp;&nbsp;{data.email || "—"}</div>
             <div><strong style={{ color: C.gray }}>A</strong>&nbsp;&nbsp;WallSwiss · Nyon, Suisse</div>
           </div>
+        </div>
+        <div style={{ marginTop: 30, textAlign: "center", fontSize: 9, color: C.gray, lineHeight: 1.5, maxWidth: 500, marginLeft: "auto", marginRight: "auto" }}>
+          <strong>Avertissement :</strong> Ce rapport est établi sur la base des informations fournies par le client et selon le cadre réglementaire en vigueur à la date d'édition. Les rendements ne sont pas garantis. WallSwiss SA décline toute responsabilité quant à l'évolution future des paramètres légaux, fiscaux et financiers.
         </div>
       </div>
       <PageFooter data={data} />
@@ -1837,7 +2489,6 @@ function SlideWallswiss({ data }) {
     <div style={{ ...pageBase, background: `linear-gradient(180deg, ${C.lightGray} 0%, ${C.white} 100%)` }}>
       <PageHeader data={data} num="" titreSection="Votre Partenaire" />
       <div style={{ padding: "80px 50px 50px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
-
         <div style={{ textAlign: "center", marginBottom: 20 }}>
           <div style={{ background: C.white, width: 64, height: 64, margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
             <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ width: 36, height: 36, objectFit: "contain" }} />
@@ -1845,72 +2496,20 @@ function SlideWallswiss({ data }) {
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>WallSwiss</div>
           <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginTop: 6 }}>L'excellence patrimoniale franco-suisse</div>
         </div>
-
-        <div style={{ background: C.white, padding: 20, borderLeft: `4px solid ${C.primary}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)", marginBottom: 20 }}>
+        <div style={{ background: C.white, padding: 20, borderLeft: `4px solid ${C.primary}`, marginBottom: 20 }}>
           <p style={{ fontSize: 11.5, color: C.darkGray, lineHeight: 1.6, margin: 0, textAlign: "justify" }}>
-            Spécialistes de la planification financière et successorale pour les frontaliers et résidents suisses, nous vous accompagnons dans la structuration globale de votre patrimoine. Forts d'une maîtrise pointue des réglementations croisées franco-suisses, nous transformons la complexité juridique et fiscale en opportunités concrètes. Notre mission : vous offrir une vision claire, optimiser vos flux financiers, protéger vos proches et pérenniser vos actifs avec une sérénité totale.
+            Spécialistes de la planification financière et successorale pour les frontaliers et résidents suisses, nous vous accompagnons dans la structuration globale de votre patrimoine. Forts d'une maîtrise pointue des réglementations croisées franco-suisses, nous transformons la complexité en opportunités concrètes.
           </p>
         </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 14 }}>
-            <div style={{ fontSize: 11, color: C.primary, fontWeight: 800, textTransform: "uppercase", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}><Icons.Users size={16} color={C.gold} /> Double Compétence</div>
-            <div style={{ fontSize: 10, color: C.gray, lineHeight: 1.5 }}>Maîtrise exhaustive des systèmes de prévoyance (AVS/LPP vs CNAV/AGIRC-ARRCO) et de la fiscalité (impôt source, quasi-résident, IFI) pour éviter la double imposition.</div>
-          </div>
-          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 14 }}>
-            <div style={{ fontSize: 11, color: C.primary, fontWeight: 800, textTransform: "uppercase", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}><Icons.Check size={16} color={C.gold} /> Indépendance Absolue</div>
-            <div style={{ fontSize: 10, color: C.gray, lineHeight: 1.5 }}>Libres de toute attache bancaire ou assurantielle, nous opérons en architecture ouverte. Nous sélectionnons les meilleures solutions du marché dans votre seul intérêt.</div>
-          </div>
-          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 14 }}>
-            <div style={{ fontSize: 11, color: C.primary, fontWeight: 800, textTransform: "uppercase", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}><Icons.Eye size={16} color={C.gold} /> Ingénierie Patrimoniale</div>
-            <div style={{ fontSize: 10, color: C.gray, lineHeight: 1.5 }}>De la structuration immobilière (SCI, démembrement) à l'optimisation successorale transfrontalière (choix de loi applicable, donations), nous couvrons tous vos enjeux.</div>
-          </div>
-          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 14 }}>
-            <div style={{ fontSize: 11, color: C.primary, fontWeight: 800, textTransform: "uppercase", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}><Icons.Alert size={16} color={C.gold} /> Suivi & Pérennité</div>
-            <div style={{ fontSize: 10, color: C.gray, lineHeight: 1.5 }}>Le cadre légal évolue sans cesse. Nous assurons une veille réglementaire active et adaptons pro-activement votre stratégie à chaque étape de votre vie.</div>
-          </div>
-        </div>
-
-        <div style={{ flex: 1, background: C.primary, color: C.white, padding: "16px 20px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", right: -20, top: -20, opacity: 0.05, transform: "scale(2)" }}>
-            <Icons.Check size={120} />
-          </div>
-          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 12, textAlign: "center", position: "relative", zIndex: 2 }}>Notre accompagnement de A à Z</div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, position: "relative", zIndex: 2 }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <div style={{ fontSize: 16, color: C.gold, fontWeight: 900 }}>1.</div>
-                <div style={{ fontSize: 11, fontWeight: 700 }}>Audit (R1)</div>
-              </div>
-              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.8)", lineHeight: 1.4 }}>Cartographie complète de votre patrimoine, droits de prévoyance et objectifs de vie.</div>
-            </div>
-            <div style={{ color: C.gold, marginTop: 4 }}>→</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <div style={{ fontSize: 16, color: C.gold, fontWeight: 900 }}>2.</div>
-                <div style={{ fontSize: 11, fontWeight: 700 }}>Stratégie (R2)</div>
-              </div>
-              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.8)", lineHeight: 1.4 }}>Modélisation mathématique des scénarios, identification des leviers et recommandations.</div>
-            </div>
-            <div style={{ color: C.gold, marginTop: 4 }}>→</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <div style={{ fontSize: 16, color: C.gold, fontWeight: 900 }}>3.</div>
-                <div style={{ fontSize: 11, fontWeight: 700 }}>Action & Suivi</div>
-              </div>
-              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.8)", lineHeight: 1.4 }}>Implémentation des solutions, aide aux démarches et bilan de révision annuel.</div>
-            </div>
-          </div>
-        </div>
-
       </div>
       <PageFooter data={data} />
     </div>
   );
 }
 
-// ────────────────────── MODALE D'APERÇU + GÉNÉRATION PDF ──────────────────────
-
+// ============================================================
+// MODALE D'APERÇU + GÉNÉRATION PDF
+// ============================================================
 const getBase64Image = async (url) => {
   try {
     const response = await fetch(url, { mode: 'cors' });
@@ -1921,9 +2520,7 @@ const getBase64Image = async (url) => {
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
-  } catch (error) {
-    return url;
-  }
+  } catch (error) { return url; }
 };
 
 const requirePdfLibs = async () => {
@@ -1956,12 +2553,16 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
     <SlideAVS data={data} num="03" />,
     <SlideLPP data={data} num="04" />,
     <Slide3eP data={data} num="05" />,
-    <SlideFR data={data} num="06" />,
-    <SlidePatrimoine data={data} num="07" />,
-    <SlideLeviers data={data} num="08" />,
-    <SlideHypotheses data={data} num="09" />,
-    <SlideDocuments data={data} num="10" />,
-    <SlideContact data={data} num="11" />,
+    <SlideDoubleScenarioFR data={data} num="06" />,
+    <SlideArbitrageSante data={data} num="07" />,
+    <Slide3ScenariosLPP data={data} num="08" />,
+    <SlidePatrimoine data={data} num="09" />,
+    <SlideLeviers data={data} num="10" />,
+    <SlideHypotheses data={data} num="11" />,
+    <SlidePlanActions data={data} num="12" />,
+    <SlideGainTotal data={data} num="13" />,
+    <SlideDocuments data={data} num="14" />,
+    <SlideContact data={data} num="15" />,
   ];
 
   const pdfFilename = `Planification_Retraite_${(data.client.prenom || "").trim()}_${(data.client.nom || "Client").trim()}.pdf`.replace(/\s+/g, '_');
@@ -1970,7 +2571,6 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
     setIsPdfLoading(true);
     const element = document.getElementById('r1-printable');
     if (!element) { setIsPdfLoading(false); return; }
-
     const images = element.querySelectorAll('img.pdf-image');
     await Promise.all(Array.from(images).map(async (img) => {
       if (img.src && !img.src.startsWith('data:')) {
@@ -1978,49 +2578,34 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
         img.src = base64;
       }
     }));
-
     await new Promise(r => setTimeout(r, 300));
-
     try {
       await requirePdfLibs();
       const html2canvas = window.html2canvas;
       const jsPDFClass = window.jspdf.jsPDF;
-      if (!html2canvas || !jsPDFClass) throw new Error("html2canvas/jsPDF non disponibles");
-
       const pages = element.querySelectorAll('.pdf-page');
-      const pdfW = PAGE_W / 96; // pouces
+      const pdfW = PAGE_W / 96;
       const pdfH = PAGE_H / 96;
       const pdf = new jsPDFClass({ unit: 'in', format: [pdfW, pdfH], orientation: 'portrait' });
-
       for (let i = 0; i < pages.length; i++) {
         const canvas = await html2canvas(pages[i], {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          width: PAGE_W,
-          height: PAGE_H,
-          windowWidth: PAGE_W,
-          windowHeight: PAGE_H,
-          logging: false,
+          scale: 2, useCORS: true, backgroundColor: '#ffffff',
+          width: PAGE_W, height: PAGE_H, windowWidth: PAGE_W, windowHeight: PAGE_H, logging: false,
         });
         const img = canvas.toDataURL('image/jpeg', 0.95);
         if (i > 0) pdf.addPage([pdfW, pdfH], 'portrait');
         pdf.addImage(img, 'JPEG', 0, 0, pdfW, pdfH, undefined, 'FAST');
       }
       pdf.save(pdfFilename);
-    } catch (e) {
-      console.error("Erreur PDF:", e);
-    } finally {
-      setIsPdfLoading(false);
-    }
+    } catch (e) { console.error("Erreur PDF:", e); }
+    finally { setIsPdfLoading(false); }
   };
 
   const openEmailModal = () => {
-    const fullName = data.isCouple ? `${data.client.prenom} ${(data.client.nom || "").toUpperCase()} & ${data.conjoint.prenom}` : `${data.client.prenom} ${(data.client.nom || "").toUpperCase()}`;
     setEmailForm({
       to: data.client.emailClient || "",
       subject: `Votre planification retraite — WallSwiss`,
-      body: `Bonjour ${data.client.prenom || ""},\n\nVeuillez trouver ci-joint votre rapport de planification retraite, préparé suite à notre rendez-vous du ${new Date(data.dateRapport).toLocaleDateString('fr-FR')}.\n\nN'hésitez pas à me contacter pour toute question avant le R2.\n\nBien à vous,\n${data.conseiller}`
+      body: `Bonjour ${data.client.prenom || ""},\n\nVeuillez trouver ci-joint votre rapport de planification retraite, préparé suite à notre rendez-vous du ${new Date(data.dateRapport).toLocaleDateString('fr-FR')}.\n\nBien à vous,\n${data.conseiller}`
     });
     setShowEmailModal(true);
   };
@@ -2030,7 +2615,6 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
     if (!webhookUrl) { alert("Configurez l'URL du Webhook dans Paramètres."); return; }
     setShowEmailModal(false);
     setIsEmailing(true);
-
     const element = document.getElementById('r1-printable');
     const images = element.querySelectorAll('img.pdf-image');
     await Promise.all(Array.from(images).map(async (img) => {
@@ -2040,29 +2624,15 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
       }
     }));
     await new Promise(r => setTimeout(r, 300));
-
     try {
       await requirePdfLibs();
       const html2canvas = window.html2canvas;
       const jsPDFClass = window.jspdf.jsPDF;
-      if (!html2canvas || !jsPDFClass) throw new Error("html2canvas/jsPDF non disponibles");
-
       const pages = element.querySelectorAll('.pdf-page');
-      const pdfW = PAGE_W / 96;
-      const pdfH = PAGE_H / 96;
+      const pdfW = PAGE_W / 96, pdfH = PAGE_H / 96;
       const pdf = new jsPDFClass({ unit: 'in', format: [pdfW, pdfH], orientation: 'portrait' });
-
       for (let i = 0; i < pages.length; i++) {
-        const canvas = await html2canvas(pages[i], {
-          scale: 1.5,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          width: PAGE_W,
-          height: PAGE_H,
-          windowWidth: PAGE_W,
-          windowHeight: PAGE_H,
-          logging: false,
-        });
+        const canvas = await html2canvas(pages[i], { scale: 1.5, useCORS: true, backgroundColor: '#ffffff', width: PAGE_W, height: PAGE_H, windowWidth: PAGE_W, windowHeight: PAGE_H, logging: false });
         const img = canvas.toDataURL('image/jpeg', 0.85);
         if (i > 0) pdf.addPage([pdfW, pdfH], 'portrait');
         pdf.addImage(img, 'JPEG', 0, 0, pdfW, pdfH, undefined, 'FAST');
@@ -2076,12 +2646,8 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
       if (!response.ok) throw new Error(`Webhook ${response.status}`);
       setEmailSuccess(true);
       setTimeout(() => setEmailSuccess(false), 3000);
-    } catch (e) {
-      console.error(e);
-      alert("Erreur d'envoi : " + e.message);
-    } finally {
-      setIsEmailing(false);
-    }
+    } catch (e) { console.error(e); alert("Erreur d'envoi : " + e.message); }
+    finally { setIsEmailing(false); }
   };
 
   return (
@@ -2094,7 +2660,7 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
           <button onClick={handleDownloadPDF} disabled={isPdfLoading || isEmailing} style={{ background: C.white, color: C.primaryDark, border: "none", padding: "6px 12px", cursor: "pointer", fontSize: 10, fontWeight: 700, opacity: isPdfLoading ? 0.7 : 1 }}>
             {isPdfLoading ? "GÉNÉRATION..." : "TÉLÉCHARGER PDF"}
           </button>
-          <button onClick={openEmailModal} disabled={isEmailing} style={{ background: emailSuccess ? "#10B981" : C.gold, color: C.white, border: "none", padding: "6px 12px", cursor: "pointer", fontSize: 10, fontWeight: 700 }}>
+          <button onClick={openEmailModal} disabled={isEmailing} style={{ background: emailSuccess ? C.ok : C.gold, color: C.white, border: "none", padding: "6px 12px", cursor: "pointer", fontSize: 10, fontWeight: 700 }}>
             {isEmailing ? "ENVOI..." : emailSuccess ? "ENVOYÉ" : "EMAIL"}
           </button>
           <span style={{ color: C.gold, fontSize: 11 }}>{currentSlide + 1} / {slides.length}</span>
@@ -2120,7 +2686,6 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
         ))}
       </div>
 
-      {/* Bloc caché pour la génération PDF */}
       <div style={{ position: "absolute", left: "-9999px", top: 0, zIndex: -1000, opacity: 1, pointerEvents: "none" }}>
         <div id="r1-printable" style={{ width: `${PAGE_W}px`, background: C.white }}>
           {slides.map((Sl, i) => (
@@ -2140,7 +2705,6 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
       {isEmailing && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(255,255,255,0.95)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700 }}>Envoi de l'email...</div>
-          <div style={{ fontSize: 12, color: C.gray, marginTop: 8 }}>Connexion au webhook Make.com</div>
         </div>
       )}
       {showEmailModal && (
@@ -2161,22 +2725,21 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
   );
 }
 
-// ────────────────────── COMPOSANT PRINCIPAL EXPORTÉ ──────────────────────
-
+// ============================================================
+// COMPOSANT PRINCIPAL EXPORTÉ
+// ============================================================
 export default function RetraiteR1Module({ user, db, appId, appSettings }) {
-  const [page, setPage] = useState("dashboard"); // dashboard | create
+  const [page, setPage] = useState("dashboard");
   const [data, setData] = useState(stateInitial());
   const [preview, setPreview] = useState(null);
   const [planifs, setPlanifs] = useState([]);
 
-  // Charger les planifications depuis Firebase
   useEffect(() => {
     if (!user || !db) return;
     const ref = collection(db, 'artifacts', appId, 'public', 'data', 'planifications_retraite');
     const unsub = onSnapshot(ref, (snap) => {
       const list = [];
       snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
-      // Filtre par agent sauf admin
       const adminEmail = "admin@wallswiss.ch";
       const filtered = user.email === adminEmail ? list : list.filter(r => r.agentId === user.uid);
       setPlanifs(filtered.sort((a, b) => (b.id || 0) - (a.id || 0)));
@@ -2184,7 +2747,6 @@ export default function RetraiteR1Module({ user, db, appId, appSettings }) {
     return () => unsub();
   }, [user, db, appId]);
 
-  // Pré-remplir le conseiller depuis appSettings au démarrage d'une nouvelle planif
   useEffect(() => {
     if (page === "create" && !data.id && !data.conseiller && appSettings) {
       setData(d => ({
@@ -2200,18 +2762,14 @@ export default function RetraiteR1Module({ user, db, appId, appSettings }) {
   const handleSave = async () => {
     const newId = data.id || Date.now();
     const newPlanif = {
-      ...data,
-      id: newId,
+      ...data, id: newId,
       agentId: user ? user.uid : "demo",
       agentEmail: user ? user.email : "demo@wallswiss.ch",
       dateCreation: data.dateCreation || new Date().toISOString(),
     };
     if (user && db) {
-      try {
-        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'planifications_retraite', newId.toString()), newPlanif);
-      } catch (e) {
-        console.error("Erreur sauvegarde", e);
-      }
+      try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'planifications_retraite', newId.toString()), newPlanif); }
+      catch (e) { console.error("Erreur sauvegarde", e); }
     } else {
       setPlanifs(p => [newPlanif, ...p.filter(x => x.id !== newId)]);
     }
@@ -2268,13 +2826,14 @@ export default function RetraiteR1Module({ user, db, appId, appSettings }) {
             {planifs.length === 0 ? (
               <div style={{ background: C.white, padding: 60, textAlign: "center", border: `1px solid ${C.mediumGray}` }}>
                 <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 22, color: C.primary, marginBottom: 8 }}>Aucune planification créée</div>
-                <p style={{ color: C.gray, fontSize: 13, marginBottom: 24 }}>Démarrez votre premier dossier R1 de planification retraite.</p>
+                <p style={{ color: C.gray, fontSize: 13, marginBottom: 24 }}>Démarrez votre premier dossier R1.</p>
                 <button style={S.btnP} onClick={() => { resetForm(); setPage("create"); }}>+ Nouveau R1</button>
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 20 }}>
                 {planifs.map(p => {
                   const synth = calcSyntheseRetraite(p.client, p);
+                  const gain = calcGainTotal(p);
                   return (
                     <div key={p.id} onClick={() => setPreview(p)} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 24, cursor: "pointer", position: "relative", borderTop: `4px solid ${C.gold}` }}>
                       <div style={{ fontSize: 10, color: C.gray, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Dossier R1</div>
@@ -2283,13 +2842,17 @@ export default function RetraiteR1Module({ user, db, appId, appSettings }) {
                         {p.isCouple && p.conjoint?.prenom && <span style={{ fontSize: 12, color: C.gold, fontWeight: 600 }}> & {p.conjoint.prenom}</span>}
                       </div>
                       <div style={{ fontSize: 12, color: C.darkGray, marginBottom: 16 }}>{p.client.age} ans · départ à {p.client.objAgeDepart} ans</div>
-                      <div style={{ background: C.lightGray, padding: 10, marginBottom: 12 }}>
+                      <div style={{ background: C.lightGray, padding: 10, marginBottom: 8 }}>
                         <div style={{ fontSize: 10, color: C.gray, marginBottom: 2 }}>Revenu rente projeté</div>
                         <div style={{ fontSize: 16, color: C.primary, fontWeight: 800 }}>CHF {fmt(synth.revenuRenteAjusteMensuel)} /mois</div>
                       </div>
+                      <div style={{ background: "rgba(165,149,104,0.12)", padding: 10, marginBottom: 12 }}>
+                        <div style={{ fontSize: 10, color: C.gold, marginBottom: 2, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Gain total estimé du conseil</div>
+                        <div style={{ fontSize: 16, color: C.primaryDark, fontWeight: 800 }}>CHF {fmt(gain.total)}</div>
+                      </div>
                       <div style={{ display: "flex", gap: 6 }}>
                         <button onClick={(e) => handleEdit(e, p)} style={{ flex: 1, background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primary, padding: "6px 0", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>ÉDITER</button>
-                        <button onClick={(e) => handleDelete(e, p.id)} style={{ flex: 1, background: C.white, border: `1px solid ${C.mediumGray}`, color: "#EF4444", padding: "6px 0", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>SUPPRIMER</button>
+                        <button onClick={(e) => handleDelete(e, p.id)} style={{ flex: 1, background: C.white, border: `1px solid ${C.mediumGray}`, color: C.bad, padding: "6px 0", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>SUPPRIMER</button>
                         <button onClick={(e) => { e.stopPropagation(); setPreview(p); }} style={{ flex: 1, background: C.gold, color: C.white, border: "none", padding: "6px 0", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>APERÇU</button>
                       </div>
                     </div>
@@ -2303,7 +2866,7 @@ export default function RetraiteR1Module({ user, db, appId, appSettings }) {
         {page === "create" && (
           <div style={{ maxWidth: 1100, margin: "0 auto" }}>
             <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, margin: "0 0 4px" }}>Collecte R1</h2>
-            <p style={{ color: C.gray, fontSize: 13, marginBottom: 24 }}>Parcourez les 14 sections de la check-list R1 frontaliers / franco-suisses.</p>
+            <p style={{ color: C.gray, fontSize: 13, marginBottom: 24 }}>17 sections — dont les 4 modules différenciants (arbitrage santé, double scénario FR, 3 scénarios LPP, gain total).</p>
             <WizardR1 data={data} setData={setData} appSettings={appSettings} onPreview={() => setPreview(data)} onSave={handleSave} />
           </div>
         )}

@@ -285,67 +285,152 @@ const stateInitial = () => ({
   templateId: "planification-retraite",
   hiddenSlides: [],
   dateRapport: new Date().toISOString().split('T')[0],
-  isCouple: false,
+  isCouple: true,
 
   // Personnes
-  client: personneVide(),
-  conjoint: personneVide(),
+  client: {
+    prenom: "Jean", nom: "Dupont", dateNaissance: "15.06.1965", age: "61", nationalite: "Français",
+    permisG: true, permisType: "G (Frontalier)",
+    statutMatrimonial: "Marié(e)", regimeMatrimonial: "Participation aux acquêts",
+    adresse: "12 rue du Lac, 74000 Annecy", domicileFiscal: "France (74)", santeGenerale: "Bonne",
+
+    statutPro: "Cadre", employeur: "Rolex SA", tauxOccupation: "100",
+    revenusBrut: "135000", revenusNet: "105000", dateFinActivite: "65",
+    autresRevenus: "0", revenusFR: "0", fluxEpargneMensuel: "1500",
+
+    avsNumero: "756.1234.5678.90", avsAnneesCotisation: "35", avsLacunes: "Études en France",
+    avsCaisse: "CCGC", avsRenteEstimee: "2150", avsAnticipation: false,
+    avsAjournement: false, avs13eRente: true, avsCotisationsArretAnticipe: "0",
+
+    lppCaisse: "Fondation LPP X", lppAvoirActuel: "485000", lppCotisationAnnuelle: "18500",
+    lppTauxRendement: "1.5", lppTauxConversion: "5.2",
+    lppCapitalProjete: "620000", lppRenteProjete: "2686",
+    lppLibrePassage: "45000", lppAvoirsOublies: true,
+    lppPotentielRachat: "85000", lppRachats3Ans: "25000", lppEPL: "0", lppMisesEnGage: "",
+    lppChoixSortie: "Mixte", lppPartCapitalPct: "50",
+    lppTauxCouverture: "108",
+
+    troisPAvoir3a: "115000", troisPCotisationAnnuelle: "7258",
+    troisPTauxRendement: "3", troisPNbComptes: "2",
+    troisPAvoir3b: "40000", troisPCotisation3b: "2400",
+    troisPStrategieEchelonnement: "Retrait espacé sur 2 ans.",
+    troisPClausesBeneficiaires: "Conjoint puis enfants.",
+
+    frACarriereFrance: true,
+    frRegimeBase: "CNAV (salariés)", frTrimestresAcquis: "62", frTrimestresRequis: "172",
+    frSAM: "34000", frAgeTauxPlein: "67",
+    frPensionCnavEstimee: "450", frPointsAgircArrco: "1850",
+    frAutresRegimes: "", frLacunesARegulariser: "3 trimestres en 1988",
+    frDecisionRetraiteFR: "Accepter",
+    frAssuranceMaladie: "LAMal",
+
+    objAgeDepart: "65", objPriorite: "train_vie",
+    objTrainVie: "9000", objDepartProgressif: true,
+    objProjets: "Achat d'un camping-car et voyage en Asie", objPreferenceSortie: "Mixte",
+    objAgeFinConsommation: "90", objToleranceRisque: "Équilibré",
+  },
+  conjoint: {
+    prenom: "Marie", nom: "Dupont", dateNaissance: "22.11.1968", age: "58", nationalite: "Française",
+    permisG: false, permisType: "Citoyen FR/UE",
+    statutMatrimonial: "Marié(e)", regimeMatrimonial: "Participation aux acquêts",
+    adresse: "12 rue du Lac, 74000 Annecy", domicileFiscal: "France (74)", santeGenerale: "Bonne",
+
+    statutPro: "Salarié", employeur: "Hôpital local", tauxOccupation: "80",
+    revenusBrut: "45000", revenusNet: "35000", dateFinActivite: "2032",
+    autresRevenus: "0", revenusFR: "45000", fluxEpargneMensuel: "500",
+
+    avsNumero: "", avsAnneesCotisation: "", avsLacunes: "",
+    avsCaisse: "", avsRenteEstimee: "", avsAnticipation: false,
+    avsAjournement: false, avs13eRente: true, avsCotisationsArretAnticipe: "",
+
+    lppCaisse: "", lppAvoirActuel: "", lppCotisationAnnuelle: "",
+    lppTauxRendement: "1.25", lppTauxConversion: "5.0",
+    lppCapitalProjete: "", lppRenteProjete: "",
+    lppLibrePassage: "0", lppAvoirsOublies: false,
+    lppPotentielRachat: "", lppRachats3Ans: "0", lppEPL: "0", lppMisesEnGage: "",
+    lppChoixSortie: "Mixte", lppPartCapitalPct: "50",
+    lppTauxCouverture: "",
+
+    troisPAvoir3a: "", troisPCotisationAnnuelle: "",
+    troisPTauxRendement: "3", troisPNbComptes: "1",
+    troisPAvoir3b: "", troisPCotisation3b: "",
+    troisPStrategieEchelonnement: "",
+    troisPClausesBeneficiaires: "",
+
+    frACarriereFrance: true,
+    frRegimeBase: "CNAV (salariés)", frTrimestresAcquis: "130", frTrimestresRequis: "170",
+    frSAM: "28000", frAgeTauxPlein: "67",
+    frPensionCnavEstimee: "1100", frPointsAgircArrco: "3200",
+    frAutresRegimes: "", frLacunesARegulariser: "",
+    frDecisionRetraiteFR: "Accepter",
+    frAssuranceMaladie: "LAMal",
+
+    objAgeDepart: "64", objPriorite: "train_vie",
+    objTrainVie: "", objDepartProgressif: false,
+    objProjets: "", objPreferenceSortie: "Rente",
+    objAgeFinConsommation: "90", objToleranceRisque: "Prudent",
+  },
 
   // Enfants
-  enfants: [],
+  enfants: [
+    { prenom: "Lucas", dateNaissance: "14.05.2001", aCharge: true, finEntretien: "2026" },
+    { prenom: "Emma", dateNaissance: "08.09.2004", aCharge: true, finEntretien: "2029" }
+  ],
 
   // G - Immobilier (commun au couple)
-  immoResidencePrincipaleValeur: "",
-  immoResidencePrincipaleHypotheque: "",
-  immoResidencePrincipaleTauxInt: "",
+  immoResidencePrincipaleValeur: "850000",
+  immoResidencePrincipaleHypotheque: "320000",
+  immoResidencePrincipaleTauxInt: "1.45",
   immoResidencePrincipaleTypeHypo: "Fixe",
   immoAmortissement: "Indirect",
   immoSecondaires: [],
   immoBiensLocatifs: [],
-  immoProjets: "",
-  immoBiensFrance: "",
+  immoProjets: "Revente de la résidence principale dans 5 ans pour plus petit.",
+  immoBiensFrance: "Appartement locatif à Lyon (250k€).",
 
   // H - Patrimoine financier
-  patComptesCourants: "", patEpargne: "", patDepotsTitres: "",
-  patCredits: "", patLeasings: "", patParticipations: "",
-  patComptesFrance: "",
+  patComptesCourants: "45000", patEpargne: "85000", patDepotsTitres: "125000",
+  patCredits: "15000", patLeasings: "0", patParticipations: "0",
+  patComptesFrance: "Livret A et LDD",
 
   // I - Budget
-  budCoutVieMensuel: "", budAssuranceMaladie: "",
-  budAutresAssurances: "", budChargeFiscale: "",
-  budChargesImmo: "", budPensionsVersees: "",
+  budCoutVieMensuel: "6500", budAssuranceMaladie: "820",
+  budAutresAssurances: "350", budChargeFiscale: "18500",
+  budChargesImmo: "12000", budPensionsVersees: "0",
 
   // K - Fiscalité
-  fiscDerniereTaxation: "", fiscImpositionSource: false,
-  fiscQuasiResident: false, fiscRevenuImposable: "",
-  fiscFortuneImposable: "", fiscImpotsFrance: "",
+  fiscDerniereTaxation: "2024", fiscImpositionSource: true,
+  fiscQuasiResident: true, fiscRevenuImposable: "125000",
+  fiscFortuneImposable: "350000", fiscImpotsFrance: "2500",
 
   // L - Risques
-  risqueCouvertureDeces: "", risqueCouvertureInvalidite: "",
-  risqueLacunesConjoint: "", risqueClausesBeneficiaires: "",
-  risqueLAARetraite: "",
+  risqueCouvertureDeces: "Capital LPP 250k + 3a 115k",
+  risqueCouvertureInvalidite: "Rente 54k/an",
+  risqueLacunesConjoint: "Baisse de revenu pour Marie (-60%)",
+  risqueClausesBeneficiaires: "Standard",
+  risqueLAARetraite: "À souscrire",
 
   // M - Succession
-  succTestament: false, succPacteSuccessoral: false,
+  succTestament: true, succPacteSuccessoral: false,
   succContratMariage: false, succMandatInaptitude: false,
-  succDonations: "", succObjectifsTransmission: "",
-  succLoiApplicable: "Suisse",
+  succDonations: "30k€ à chaque enfant", succObjectifsTransmission: "Protéger le conjoint en priorité",
+  succLoiApplicable: "France",
 
   // N - Hypothèses validées
   tauxRendement: "3", tauxInflation: "1.5",
-  tauxChangeEurChf: "0.95", paysResidenceRetraite: "Suisse",
+  tauxChangeEurChf: "0.95", paysResidenceRetraite: "France",
   scenarios: ["Âge cible", "Arrêt anticipé -3 ans", "Rente vs Capital"],
 
   // Documents reçus
   docsRecus: {},
 
   // Conseiller
-  conseiller: "", titreConseiller: "Conseiller en planification financière",
-  telephone: "", email: "",
+  conseiller: "Alexandre Dupuis", titreConseiller: "Conseiller Financier",
+  telephone: "+41 22 555 12 34", email: "a.dupuis@wallswiss.ch",
 
   // Notes
-  notesConseiller: "",
-  pointsAttention: "",
+  notesConseiller: "Client très organisé. Crainte fiscalité sur le capital.",
+  pointsAttention: "Attention au rachat LPP de 25k (blocage de 3 ans pour le capital).",
 });
 
 // ────────────────────── STYLES PARTAGÉS ──────────────────────

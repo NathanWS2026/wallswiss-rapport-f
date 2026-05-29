@@ -1826,45 +1826,6 @@ function SlideContact({ data, num }) {
             <div><strong style={{ color: C.gray }}>A</strong>&nbsp;&nbsp;WallSwiss · Nyon, Suisse</div>
           </div>
         </div>
-        <div style={{ textAlign: "center", marginTop: 32, padding: "0 40px" }}>
-          <p style={{ fontSize: 11, color: C.gray, fontStyle: "italic", lineHeight: 1.6, margin: 0 }}>
-            Ce document est confidentiel et préparé sur la base des éléments que vous nous avez transmis lors de notre 1er rendez-vous. Il sera affiné lors du R2 avec les pièces justificatives.
-          </p>
-        </div>
-      </div>
-      <PageFooter data={data} />
-    </div>
-  );
-}
-
-function SlideSommaire({ data }) {
-  return (
-    <div style={pageBase}>
-      <PageHeader data={data} num="" titreSection="Sommaire" />
-      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box" }}>
-        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 40 }}>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>Sommaire de <em style={{ color: C.gold }}>l'étude</em></div>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 20, paddingLeft: 20 }}>
-          {[
-            "1. Profil & Objectifs",
-            "2. Vue d'ensemble de la retraite",
-            "3. Le 1er Pilier — AVS",
-            "4. Le 2e Pilier — LPP",
-            "5. Le 3e Pilier — Prévoyance privée",
-            "6. Volet France — Pensions françaises",
-            "7. Patrimoine global",
-            "8. Leviers d'optimisation",
-            "9. Hypothèses de l'étude",
-            "10. Documents à fournir",
-            "11. Prochaines étapes"
-          ].map((item, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ width: 8, height: 8, background: C.gold, borderRadius: "50%" }} />
-              <div style={{ fontSize: 14, color: C.primaryDark, fontWeight: 600 }}>{item}</div>
-            </div>
-          ))}
-        </div>
       </div>
       <PageFooter data={data} />
     </div>
@@ -1875,29 +1836,73 @@ function SlideWallswiss({ data }) {
   return (
     <div style={{ ...pageBase, background: `linear-gradient(180deg, ${C.lightGray} 0%, ${C.white} 100%)` }}>
       <PageHeader data={data} num="" titreSection="Votre Partenaire" />
-      <div style={{ padding: "100px 50px 60px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-        <div style={{ textAlign: "center", marginBottom: 30 }}>
-          <div style={{ background: C.white, width: 72, height: 72, margin: "0 auto 20px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
-            <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ width: 40, height: 40, objectFit: "contain" }} />
+      <div style={{ padding: "80px 50px 50px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <div style={{ background: C.white, width: 64, height: 64, margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+            <img src={LOGO_URL} alt="WallSwiss" className="pdf-image" style={{ width: 36, height: 36, objectFit: "contain" }} />
           </div>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, color: C.primary, fontWeight: 700, margin: 0 }}>WallSwiss</div>
-          <div style={{ color: C.gold, fontSize: 12, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginTop: 8 }}>Votre partenaire patrimonial</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>WallSwiss</div>
+          <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginTop: 6 }}>L'excellence patrimoniale franco-suisse</div>
         </div>
-        <div style={{ background: C.white, padding: 30, borderLeft: `4px solid ${C.primary}`, boxShadow: "0 8px 24px rgba(0,0,0,0.04)", marginBottom: 30 }}>
-          <p style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.8, margin: 0, textAlign: "justify" }}>
-            Spécialistes de la planification financière et successorale pour les frontaliers et résidents suisses, nous vous accompagnons dans la structuration de votre patrimoine. Notre approche globale intègre la prévoyance, l'immobilier et la fiscalité de part et d'autre de la frontière pour vous garantir une sérénité totale à l'heure de la retraite.
+
+        <div style={{ background: C.white, padding: 20, borderLeft: `4px solid ${C.primary}`, boxShadow: "0 4px 16px rgba(0,0,0,0.04)", marginBottom: 20 }}>
+          <p style={{ fontSize: 11.5, color: C.darkGray, lineHeight: 1.6, margin: 0, textAlign: "justify" }}>
+            Spécialistes de la planification financière et successorale pour les frontaliers et résidents suisses, nous vous accompagnons dans la structuration globale de votre patrimoine. Forts d'une maîtrise pointue des réglementations croisées franco-suisses, nous transformons la complexité juridique et fiscale en opportunités concrètes. Notre mission : vous offrir une vision claire, optimiser vos flux financiers, protéger vos proches et pérenniser vos actifs avec une sérénité totale.
           </p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 20 }}>
-            <div style={{ fontSize: 12, color: C.primary, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}><Icons.Check size={16} color={C.gold} /> Indépendance</div>
-            <div style={{ fontSize: 11, color: C.gray, lineHeight: 1.6 }}>Des conseils impartiaux et des solutions sélectionnées en toute objectivité pour servir exclusivement vos intérêts.</div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 14 }}>
+            <div style={{ fontSize: 11, color: C.primary, fontWeight: 800, textTransform: "uppercase", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}><Icons.Users size={16} color={C.gold} /> Double Compétence</div>
+            <div style={{ fontSize: 10, color: C.gray, lineHeight: 1.5 }}>Maîtrise exhaustive des systèmes de prévoyance (AVS/LPP vs CNAV/AGIRC-ARRCO) et de la fiscalité (impôt source, quasi-résident, IFI) pour éviter la double imposition.</div>
           </div>
-          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 20 }}>
-            <div style={{ fontSize: 12, color: C.primary, fontWeight: 800, textTransform: "uppercase", marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}><Icons.Users size={16} color={C.gold} /> Sur-mesure</div>
-            <div style={{ fontSize: 11, color: C.gray, lineHeight: 1.6 }}>Une stratégie personnalisée, spécifiquement adaptée à vos objectifs et votre situation transfrontalière.</div>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 14 }}>
+            <div style={{ fontSize: 11, color: C.primary, fontWeight: 800, textTransform: "uppercase", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}><Icons.Check size={16} color={C.gold} /> Indépendance Absolue</div>
+            <div style={{ fontSize: 10, color: C.gray, lineHeight: 1.5 }}>Libres de toute attache bancaire ou assurantielle, nous opérons en architecture ouverte. Nous sélectionnons les meilleures solutions du marché dans votre seul intérêt.</div>
+          </div>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 14 }}>
+            <div style={{ fontSize: 11, color: C.primary, fontWeight: 800, textTransform: "uppercase", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}><Icons.Eye size={16} color={C.gold} /> Ingénierie Patrimoniale</div>
+            <div style={{ fontSize: 10, color: C.gray, lineHeight: 1.5 }}>De la structuration immobilière (SCI, démembrement) à l'optimisation successorale transfrontalière (choix de loi applicable, donations), nous couvrons tous vos enjeux.</div>
+          </div>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 14 }}>
+            <div style={{ fontSize: 11, color: C.primary, fontWeight: 800, textTransform: "uppercase", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}><Icons.Alert size={16} color={C.gold} /> Suivi & Pérennité</div>
+            <div style={{ fontSize: 10, color: C.gray, lineHeight: 1.5 }}>Le cadre légal évolue sans cesse. Nous assurons une veille réglementaire active et adaptons pro-activement votre stratégie à chaque étape de votre vie.</div>
           </div>
         </div>
+
+        <div style={{ flex: 1, background: C.primary, color: C.white, padding: "16px 20px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", right: -20, top: -20, opacity: 0.05, transform: "scale(2)" }}>
+            <Icons.Check size={120} />
+          </div>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 12, textAlign: "center", position: "relative", zIndex: 2 }}>Notre accompagnement de A à Z</div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, position: "relative", zIndex: 2 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <div style={{ fontSize: 16, color: C.gold, fontWeight: 900 }}>1.</div>
+                <div style={{ fontSize: 11, fontWeight: 700 }}>Audit (R1)</div>
+              </div>
+              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.8)", lineHeight: 1.4 }}>Cartographie complète de votre patrimoine, droits de prévoyance et objectifs de vie.</div>
+            </div>
+            <div style={{ color: C.gold, marginTop: 4 }}>→</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <div style={{ fontSize: 16, color: C.gold, fontWeight: 900 }}>2.</div>
+                <div style={{ fontSize: 11, fontWeight: 700 }}>Stratégie (R2)</div>
+              </div>
+              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.8)", lineHeight: 1.4 }}>Modélisation mathématique des scénarios, identification des leviers et recommandations.</div>
+            </div>
+            <div style={{ color: C.gold, marginTop: 4 }}>→</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <div style={{ fontSize: 16, color: C.gold, fontWeight: 900 }}>3.</div>
+                <div style={{ fontSize: 11, fontWeight: 700 }}>Action & Suivi</div>
+              </div>
+              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.8)", lineHeight: 1.4 }}>Implémentation des solutions, aide aux démarches et bilan de révision annuel.</div>
+            </div>
+          </div>
+        </div>
+
       </div>
       <PageFooter data={data} />
     </div>

@@ -3636,7 +3636,9 @@ export default function WallSwissApp() {
   const [compteChIdx, setCompteChIdx] = useState(0);
 
   // --- STATE RECHERCHE LPP ---
-  const [lppForm, setLppForm] = useState({
+    const [docsSelectionnes, setDocsSelectionnes] = useState({ mandat: true, sff5: true, suppletive: false });
+  const [previewActif, setPreviewActif] = useState("mandat");
+const [lppForm, setLppForm] = useState({
     nom: "", prenom: "", dateNaissance: "", avs: "",
     adresse: "", localite: "", pays: "Suisse", telephone: "", emailClient: "",
     nomEntreprise: "WallSwiss", adresseEntreprise: "Rue Kléberg 14", cpaVilleEntreprise: "1201 Genève", emailEntreprise: "contact@wallswiss.ch"
@@ -3730,7 +3732,12 @@ export default function WallSwissApp() {
   const handleDownloadLppDoc = async () => {
     setIsGeneratingLpp(true);
     try {
-          const pdfBytes = await genererSFF5Bytes({ nom: lppForm.nom, prenom: lppForm.prenom, dateNaissance: lppForm.dateNaissance, avsNumero: lppForm.avs, adresse: lppForm.adresse, localite: lppForm.localite, pays: lppForm.pays, telephone: lppForm.telephone, email: lppForm.emailClient });
+              const pdfs = [];
+    if (docsSelectionnes.sff5) { const sff5 = await genererSFF5Bytes({ nom: lppForm.nom, prenom: lppForm.prenom, dateNaissance: lppForm.dateNaissance, avsNumero: lppForm.avs, adresse: lppForm.adresse, localite: lppForm.localite, pays: lppForm.pays, telephone: lppForm.telephone, email: lppForm.emailClient }); pdfs.push(sff5); }
+    if (docsSelectionnes.mandat) { setToastMsg("Mandat PDF à venir"); setTimeout(()=>setToastMsg(""),3000); }
+    if (docsSelectionnes.suppletive) { setToastMsg("Recherche supplétive à venir"); setTimeout(()=>setToastMsg(""),3000); }
+    if (pdfs.length === 0) { setToastMsg("Sélectionnez au moins un document"); setTimeout(()=>setToastMsg(""),3000); setIsGeneratingLpp(false); return; }
+    const pdfBytes = pdfs.length === 1 ? pdfs[0] : await combinerPDFs(pdfs);
       
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const link = document.createElement('a');
@@ -5538,6 +5545,20 @@ export default function WallSwissApp() {
                 </div>
               </div>
     
+                            <div style={S.card}>
+                <div style={S.cardTitle}><div style={S.dot} /> Documents à générer</div>
+                {[
+                  { key: "mandat", label: "Mandat — Demande de recherche d'avoirs" },
+                  { key: "sff5", label: "Formulaire SF-F5-FR (Centrale 2e pilier)" },
+                  { key: "suppletive", label: "Recherche supplétive (à venir)" },
+                ].map(({ key, label }) => (
+                  <label key={key} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: "8px 0", borderBottom: `1px solid ${C.lightGray}` }}>
+                    <input type="checkbox" checked={docsSelectionnes[key]} disabled={key === "suppletive"} onChange={(e) => { setDocsSelectionnes({ ...docsSelectionnes, [key]: e.target.checked }); if (e.target.checked) setPreviewActif(key); }} style={{ accentColor: C.primary, width: 16, height: 16 }} />
+                    <span style={{ fontSize: 13, color: docsSelectionnes[key] ? C.darkGray : C.gray, fontWeight: docsSelectionnes[key] ? 600 : 400 }}>{label}</span>
+                  </label>
+                ))}
+              </div>
+
               {/* Prévisualisation Document */}
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 20 }}>
                 <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 40, boxShadow: "0 10px 40px rgba(0,0,0,0.05)", borderRadius: "0px", fontFamily: "'Times New Roman', Times, serif", fontSize: 14, color: C.black, lineHeight: 1.6 }}>

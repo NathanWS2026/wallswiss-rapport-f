@@ -6,6 +6,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 // Module Planification Retraite R1
 
 import RetraiteR1Module from "./RetraiteR1Module";
+import { genererSFF5Bytes, combinerPDFs, telechargerPDF, bytesToBlobUrl } from "./FormulaireLPP";
 
 // ────────────────────── FIREBASE SETUP ──────────────────────
 let app, auth, db, storage, appId = "wallswiss-app";
@@ -3729,7 +3730,7 @@ export default function WallSwissApp() {
   const handleDownloadLppDoc = async () => {
     setIsGeneratingLpp(true);
     try {
-      const pdfBytes = await generateOfficialLppPdf();
+          const pdfBytes = await genererSFF5Bytes({ nom: lppForm.nom, prenom: lppForm.prenom, dateNaissance: lppForm.dateNaissance, avsNumero: lppForm.avs, adresse: lppForm.adresse, localite: lppForm.localite, pays: lppForm.pays, telephone: lppForm.telephone, email: lppForm.emailClient });
       
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const link = document.createElement('a');

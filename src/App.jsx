@@ -5483,6 +5483,7 @@ export default function WallSwissApp() {
                   <button onClick={handleSendForSignature} disabled={isSendingSign} style={{ ...S.btnP, padding: "8px 16px", fontSize: 12, display: "flex", alignItems: "center", gap: 8, opacity: isSendingSign ? 0.7 : 1 }}>
                     <Icons.Mail size={14} /> {isSendingSign ? "ENVOI EN COURS..." : "SIGNATURE ÉLECTRONIQUE (YOUSIGN)"}
                   </button>
+              <button onClick={() => genererFormulaireLPP({ nom: lppForm.nom, prenom: lppForm.prenom, dateNaissance: lppForm.dateNaissance, avsNumero: lppForm.avs, adresse: lppForm.adresse + ", " + lppForm.localite + ", " + lppForm.pays, telephone: lppForm.telephone, email: lppForm.emailClient })} style={{ ...S.btnS, padding: "8px 16px", fontSize: 12 }}>REMPLIR SF-F5-FR</button>
                 </div>
               </div>
             </header>

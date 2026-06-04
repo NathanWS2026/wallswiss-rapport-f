@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
+import { initializeApp } from "firebase/app";
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "firebase/auth";
+import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
+
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+const app = firebaseConfig ? initializeApp(firebaseConfig) : null;
+const auth = app ? getAuth(app) : null;
+const db = app ? getFirestore(app) : null;
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
 // ────────────────────── CONSTANTES DESIGN ──────────────────────
 const C = {
@@ -190,7 +198,10 @@ function calcPensionsFR(person, options = {}) {
 function calcSyntheseRetraite(person, hypotheses) {
   const ageDepart = Number(person.objAgeDepart || 65);
   const tauxChange = Number(hypotheses.tauxChangeEurChf || 0.95);
-  const avs = calcAVS(person);
+  let avsScenario="normal";let avsAnneesShift=0;
+  if(ageDepart<65){avsScenario="anticipe";avsAnneesShift=Math.min(2,65-ageDepart);}
+  else if(ageDepart>65){avsScenario="ajourne";avsAnneesShift=Math.min(5,ageDepart-65);}
+  const avs = calcAVS(person, { scenario: avsScenario, anneesShift: avsAnneesShift });
   const lpp = calcLPP(person, ageDepart);
   const troisP = calc3eP(person, ageDepart);
   const pensionsFR = calcPensionsFR(person);
@@ -3783,24 +3794,42 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
 // ============================================================
 // COMPOSANT PRINCIPAL EXPORTÉ
 // ============================================================
-export default function RetraiteR1Module({ user, db, appId, appSettings }) {
+export default function App({ appSettings }) {
+  const [user, setUser] = useState(null);
   const [page, setPage] = useState("dashboard");
   const [data, setData] = useState(stateInitial());
   const [preview, setPreview] = useState(null);
   const [planifs, setPlanifs] = useState([]);
 
   useEffect(() => {
+    if (!auth) return;
+    const initAuth = async () => {
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        await signInWithCustomToken(auth, __initial_auth_token);
+      } else {
+        await signInAnonymously(auth);
+      }
+    };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
     if (!user || !db) return;
     const ref = collection(db, 'artifacts', appId, 'public', 'data', 'planifications_retraite');
-    const unsub = onSnapshot(ref, (snap) => {
-      const list = [];
-      snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
-      const adminEmail = "admin@wallswiss.ch";
-      const filtered = user.email === adminEmail ? list : list.filter(r => r.agentId === user.uid);
-      setPlanifs(filtered.sort((a, b) => (b.id || 0) - (a.id || 0)));
-    });
+    const unsub = onSnapshot(ref, 
+      (snap) => {
+        const list = [];
+        snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
+        const adminEmail = "admin@wallswiss.ch";
+        const filtered = user.email === adminEmail ? list : list.filter(r => r.agentId === user.uid);
+        setPlanifs(filtered.sort((a, b) => (b.id || 0) - (a.id || 0)));
+      },
+      (err) => console.error("Firebase onSnapshot error:", err)
+    );
     return () => unsub();
-  }, [user, db, appId]);
+  }, [user]);
 
   useEffect(() => {
     if (page === "create" && !data.id && !data.conseiller && appSettings) {

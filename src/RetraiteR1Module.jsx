@@ -27,22 +27,26 @@ const C = {
   bad: "#EF4444",
 };
 
-const LOGO_URL = "/logo blanc sans texte.png";
+const LOGO_COLOR = "/favicon.png"; // logo couleur (rouge + jaune) — fonds clairs
+const LOGO_WHITE = "/blanc.png";   // logo blanc — fonds foncés
 
-// ────────────────────── LOGO (SVG inline — toujours visible) ──────────────────────
-// Remplace l'<img> qui pouvait apparaître invisible (image manquante / filtres CSS).
-// Monogramme "WS" vectoriel, rendu fiable en aperçu ET dans le PDF.
-function Logo({ size = 32, color = C.primary, bg = "transparent", mono = false }) {
-  const stroke = mono ? color : color;
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block" }}>
-      {bg !== "transparent" && <rect x="0" y="0" width="64" height="64" rx="6" fill={bg} />}
-      {/* Sommets stylisés (W) */}
-      <path d="M12 16 L20 46 L28 26 L34 46 L44 16" stroke={stroke} strokeWidth="4.5" strokeLinejoin="round" strokeLinecap="round" fill="none" />
-      {/* Arc (S) */}
-      <path d="M52 20 C46 16 40 18 40 24 C40 30 52 30 52 36 C52 42 46 44 40 40" stroke={mono ? color : C.gold} strokeWidth="4.5" strokeLinecap="round" fill="none" />
-    </svg>
-  );
+// ────────────────────── LOGO ──────────────────────
+// Utilise les fichiers fournis. variant="white" sur fonds foncés, "color" sur fonds clairs.
+// Repli SVG (rouge/or) si l'image est introuvable, pour ne jamais avoir un logo invisible.
+function Logo({ size = 32, variant = "color", style }) {
+  const [err, setErr] = useState(false);
+  const src = variant === "white" ? LOGO_WHITE : LOGO_COLOR;
+  if (err) {
+    const w = variant === "white" ? "#FFFFFF" : C.swiss;
+    const s = variant === "white" ? "#FFFFFF" : C.gold;
+    return (
+      <svg width={size} height={size} viewBox="0 0 64 64" fill="none" style={{ display: "block", ...style }}>
+        <path d="M12 16 L20 46 L28 26 L34 46 L44 16" stroke={w} strokeWidth="5" strokeLinejoin="round" strokeLinecap="round" fill="none" />
+        <path d="M52 20 C46 16 40 18 40 24 C40 30 52 30 52 36 C52 42 46 44 40 40" stroke={s} strokeWidth="5" strokeLinecap="round" fill="none" />
+      </svg>
+    );
+  }
+  return <img src={src} className="pdf-image" alt="WallSwiss" onError={() => setErr(true)} style={{ width: size, height: size, objectFit: "contain", display: "block", ...style }} />;
 }
 
 // ────────────────────── ICÔNES ──────────────────────
@@ -795,6 +799,7 @@ const stateInitial = () => ({
   dateRapport: new Date().toISOString().split('T')[0],
   isCouple: true,
   coupleProjectionMode: "separee", // "separee" | "commune"
+  showCitations: true, // pages d'intercalaires / citations (pages de garde entre sections)
 
   // Type & présentation de l'étude (adapte titre / en-têtes)
   studyType: "retraite", // retraite | patrimoine | prevoyance | fiscalite
@@ -1606,6 +1611,7 @@ function WizardR1({ data, setData, appSettings, onPreview, onSave }) {
             {data.isCouple && (
               <Field label="Mode de projection" value={data.coupleProjectionMode === "commune" ? "Commune (synthèse ménage)" : "Séparée (Mr puis Mme)"} onChange={(v) => setData({ ...data, coupleProjectionMode: v.startsWith("Commune") ? "commune" : "separee" })} select={["Séparée (Mr puis Mme)", "Commune (synthèse ménage)"]} />
             )}
+            <CheckRow label="Afficher les pages d'intercalaires (citations / pages de garde entre les sections)" checked={data.showCitations !== false} onChange={(v) => setData({ ...data, showCitations: v })} hint="Pages de transition élégantes pour changer de sujet. Décochez pour un rapport plus compact." />
             <div style={{ background: C.lightGray, padding: 16, marginTop: 16, borderLeft: `4px solid ${C.gold}`, fontSize: 12, color: C.darkGray, lineHeight: 1.6 }}>
               <strong>Confidentialité.</strong> Données utilisées uniquement pour la planification, conservées selon LPD/RGPD.
             </div>
@@ -1789,7 +1795,7 @@ function PageHeader({ data, num, titreSection }) {
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60, background: C.white, borderBottom: `2px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px", zIndex: 10 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ background: C.primary, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 3 }}>
-          <Logo size={22} color={C.white} />
+          <Logo size={22} variant="white" />
         </div>
         <div>
           <div style={{ fontSize: 9, color: C.gold, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>WallSwiss · {typeLabel}</div>
@@ -1815,7 +1821,7 @@ function PageFooter({ data, num }) {
       </div>
       <div style={{ height: 30, background: C.primary, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px" }}>
         <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Logo size={14} color={C.white} />
+          <Logo size={14} variant="white" />
           <span style={{ color: C.white, fontSize: 9, fontWeight: 600, letterSpacing: "0.06em" }}>WallSwiss — {fullName}</span>
         </span>
         <span style={{ color: C.gold, fontSize: 9, fontWeight: 700 }}>{num ? `Page ${num}` : "Confidentiel"}</span>
@@ -1839,7 +1845,7 @@ function SlideCouverture({ data }) {
       <div style={{ padding: "80px 60px 40px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", boxSizing: "border-box" }}>
         <div>
           <div style={{ background: C.white, width: 72, height: 72, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 60, borderRadius: 4 }}>
-            <Logo size={48} color={C.primary} />
+            <Logo size={48} variant="color" />
           </div>
           <div style={{ color: C.gold, fontSize: 12, fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 20 }}>Étude personnalisée · {data.studyAudience || ""}</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.white, fontSize: 52, fontWeight: 700, lineHeight: 1.05, marginBottom: 16 }}>
@@ -2219,7 +2225,7 @@ function SlideWallswiss({ data }) {
       <div style={{ padding: "70px 40px 50px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <div style={{ textAlign: "center", marginBottom: 14 }}>
           <div style={{ background: C.white, width: 56, height: 56, margin: "0 auto 8px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", boxShadow: "0 4px 12px rgba(0,0,0,0.06)" }}>
-            <Logo size={34} color={C.primary} />
+            <Logo size={34} variant="color" />
           </div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, color: C.primary, fontWeight: 700, margin: 0 }}>WallSwiss</div>
           <div style={{ color: C.gold, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", marginTop: 4 }}>L'excellence patrimoniale franco-suisse</div>
@@ -2337,6 +2343,21 @@ function SlideAVS({ data, num }) {
             </tbody>
           </table>
         </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+          <div style={{ background: C.lightGray, padding: 10, fontSize: 9.5, color: C.darkGray, lineHeight: 1.55, borderLeft: `3px solid ${C.swiss}` }}>
+            <strong style={{ color: C.swiss }}>Identification</strong><br/>
+            N° AVS : <strong>{data.client.avsNumero || "—"}</strong><br/>
+            Caisse : <strong>{data.client.avsCaisse || "—"}</strong><br/>
+            Années cotisées : <strong>{data.client.avsAnneesCotisation || "—"} / 44</strong><br/>
+            Lacunes : <strong><MultiLine text={data.client.avsLacunes || "Aucune"} /></strong>
+          </div>
+          <div style={{ background: "rgba(165,149,104,0.1)", padding: 10, fontSize: 9.5, color: C.darkGray, lineHeight: 1.55, borderLeft: `3px solid ${C.gold}` }}>
+            <strong style={{ color: C.gold }}>Bonus de la formule légale</strong><br/>
+            Bonifications <em>éducatives</em> (par enfant) ajoutées au RAM<br/>
+            <em>Splitting</em> 50/50 des revenus pour les couples mariés<br/>
+            Bonifications <em>d'assistance</em> (soutien à un proche)
+          </div>
+        </div>
         <div style={{ background: "rgba(218,41,28,0.05)", padding: 10, borderLeft: `4px solid ${C.swiss}`, fontSize: 9.5, color: C.darkGray, lineHeight: 1.5 }}>
           <strong>Le conseil WallSwiss :</strong> L'anticipation coûte <strong>6.8%/an</strong> (max 2 ans, -13.6%). L'ajournement (1 à 5 ans) ajoute +5.2% à +31.5% mais nécessite ~12 ans pour être amorti. <em>Exiger l'extrait du CI pour validation — chiffres non opposables.</em>
         </div>
@@ -2409,6 +2430,11 @@ function SlideLPP({ data, num }) {
             <div style={{ fontSize: 11, color: C.darkGray, lineHeight: 1.6 }}>Le départ étant fixé à {ageDepart} ans (âge actuel), le capital de <strong>CHF {fmt(lppE.capitalAge65)}</strong> est disponible dès cette année. La projection se base sur l'avoir constaté, sans capitalisation future.</div>
           </div>
         )}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+          {[["Caisse", data.client.lppCaisse || "—"], ["Taux couverture", (data.client.lppTauxCouverture || "—") + "%"], ["Taux conversion", lppE.tauxConversion.toFixed(1) + "%"], ["Libre-passage", "CHF " + fmt(data.client.lppLibrePassage)], ["Potentiel rachat", "CHF " + fmt(data.client.lppPotentielRachat)], ["Rachats 3 ans", "CHF " + fmt(data.client.lppRachats3Ans)]].map(([k, v], i) => (
+            <div key={i} style={{ background: C.lightGray, padding: "6px 10px", fontSize: 9.5 }}><span style={{ color: C.gray }}>{k} : </span><strong style={{ color: C.primary }}>{v}</strong></div>
+          ))}
+        </div>
         {isCapital ? (
           <div style={{ background: "rgba(165,149,104,0.12)", padding: 12, fontSize: 10.5, color: C.darkGray, lineHeight: 1.55, borderLeft: `4px solid ${C.gold}` }}>
             <strong style={{ color: C.gold }}>Le conseil WallSwiss — sortie en capital.</strong> Vos priorités : <strong>(1) Fiscalité</strong> — le capital est imposé <em>une seule fois</em> à un taux réduit séparé (vs imposition annuelle de la rente au barème) ; échelonnez si possible avec les retraits 3a sur plusieurs années. <strong>(2) Succession</strong> — le capital reste <em>transmissible</em> à vos héritiers, contrairement à la rente (perdue au décès hors réversion). <strong>(3) Gestion</strong> — placez selon l'allocation par horizon (4 poches) pour piloter le risque de longévité. <strong>(4) Délai de blocage</strong> de 3 ans après un rachat LPP avant retrait en capital.
@@ -2465,6 +2491,20 @@ function Slide3eP({ data, num }) {
               <strong style={{ color: C.gold }}>Échelonnement :</strong> <MultiLine text={data.client.troisPStrategieEchelonnement} />
             </div>
           )}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+          <div style={{ background: C.lightGray, padding: 10, fontSize: 9.5, color: C.darkGray, lineHeight: 1.6, borderLeft: `3px solid ${C.gold}` }}>
+            <strong style={{ color: C.gold }}>Caractéristiques 3a</strong><br/>
+            Nombre de comptes : <strong>{data.client.troisPNbComptes || 1}</strong><br/>
+            Cotisation annuelle : <strong>CHF {fmt(data.client.troisPCotisationAnnuelle)}</strong><br/>
+            Plafond 2026 : <strong>CHF 7'258</strong> (avec caisse LPP)<br/>
+            Rendement supposé : <strong>{data.client.troisPTauxRendement}%</strong>
+          </div>
+          <div style={{ background: C.lightGray, padding: 10, fontSize: 9.5, color: C.darkGray, lineHeight: 1.6, borderLeft: `3px solid ${C.darkGray}` }}>
+            <strong style={{ color: C.darkGray }}>3b & clause bénéficiaire</strong><br/>
+            Avoir 3b : <strong>CHF {fmt(tp.capital3b)}</strong> · Cotis. 3b : <strong>CHF {fmt(data.client.troisPCotisation3b)}</strong><br/>
+            Bénéficiaires : <strong><MultiLine text={data.client.troisPClausesBeneficiaires || "Standard (conjoint puis enfants)"} /></strong>
+          </div>
         </div>
         <div style={{ background: "rgba(165,149,104,0.1)", padding: 12, fontSize: 10.5, color: C.darkGray, lineHeight: 1.55, borderLeft: `4px solid ${C.gold}` }}>
           <strong style={{ color: C.gold }}>Le conseil WallSwiss.</strong> Optimiser les retraits 3a : <strong>(1)</strong> plusieurs comptes 3a clôturés sur des <em>années fiscales différentes</em> (baisse de la progressivité) ; <strong>(2)</strong> retrait au plus tôt 5 ans avant l'âge AVS ; <strong>(3)</strong> vérifier la <em>clause bénéficiaire</em> pour la transmission.
@@ -2578,8 +2618,21 @@ function SlideDoubleScenarioFR({ data, num }) {
             {double.pointMortAge ? <> Point mort estimé vers <strong>{double.pointMortAge} ans</strong>.</> : null}
           </div>
         </div>
-        <div style={{ background: C.lightGray, padding: 12, fontSize: 11, color: C.darkGray, lineHeight: 1.6 }}>
-          <strong>Méthode :</strong> CNAV = SAM × taux (50% − décote) × (trim. retenus / requis). AGIRC-ARRCO = points × 1,4159 € × coef. Trimestres acquis : <strong>{data.client.frTrimestresAcquis} / {data.client.frTrimestresRequis}</strong>.
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ background: C.lightGray, padding: 12, fontSize: 10, color: C.darkGray, lineHeight: 1.65, borderLeft: `3px solid ${C.france}` }}>
+            <strong style={{ color: C.france }}>Votre carrière française</strong><br/>
+            Régime de base : <strong>{data.client.frRegimeBase}</strong><br/>
+            Trimestres : <strong>{data.client.frTrimestresAcquis} / {data.client.frTrimestresRequis}</strong> · SAM : <strong>{fmtEUR(data.client.frSAM)} €</strong><br/>
+            Points AGIRC-ARRCO : <strong>{fmtEUR(data.client.frPointsAgircArrco)}</strong><br/>
+            {data.client.frAutresRegimes ? <>Autres régimes : <strong>{data.client.frAutresRegimes}</strong><br/></> : null}
+            {data.client.frLacunesARegulariser ? <>Lacunes à régulariser : <strong><MultiLine text={data.client.frLacunesARegulariser} /></strong></> : <>Aucune lacune signalée.</>}
+          </div>
+          <div style={{ background: C.lightGray, padding: 12, fontSize: 10, color: C.darkGray, lineHeight: 1.65 }}>
+            <strong>Méthode de calcul</strong><br/>
+            CNAV = SAM × taux (50% − décote 1,25 %/trim. manquant, plafond 20) × (trim. retenus / requis).<br/>
+            AGIRC-ARRCO = points × 1,4159 € × coefficient de décote.<br/>
+            <em>Totalisation CH-FR :</em> les années cotisées en Suisse comptent pour atteindre le taux plein.
+          </div>
         </div>
       </div>
       <PageFooter data={data} num={num} />
@@ -3450,7 +3503,7 @@ function SlideContact({ data, num }) {
       <PageHeader data={data} num={num} titreSection="Prochaines étapes" />
       <div style={{ padding: "110px 50px 70px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <div style={{ textAlign: "center", marginBottom: 36 }}>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}><div style={{ background: C.primary, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4 }}><Logo size={34} color={C.white} /></div></div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}><div style={{ background: C.primary, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4 }}><Logo size={34} variant="white" /></div></div>
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 12 }}>Votre planification</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 34, color: C.primary, fontWeight: 700, lineHeight: 1.2, marginBottom: 16 }}>Construisons<br/><em style={{ color: C.gold }}>la suite ensemble</em></div>
           <div style={{ width: 60, height: 4, background: C.gold, margin: "0 auto" }} />
@@ -3548,17 +3601,17 @@ function buildSlides(data) {
   slides.push(<SlideCouverture data={data} />);
   slides.push(<SlideSommaire data={data} parts={sommaireParts(data)} />);
   slides.push(<SlideWallswiss data={data} />);
-  slides.push(<SlideCitation data={data} num={N()} citation="L'épargne est le meilleur des héritages que l'on peut laisser à ses enfants." auteur="Sénèque" contexte="Avant-propos" />);
+  if (data.showCitations !== false) slides.push(<SlideCitation data={data} num={N()} citation="L'épargne est le meilleur des héritages que l'on peut laisser à ses enfants." auteur="Sénèque" contexte="Avant-propos" />);
   slides.push(<SlideProfil data={data} num={N()} />);
   slides.push(<SlideCartographieDroits data={data} num={N()} />);
   slides.push(<SlideVueEnsemble data={data} num={N()} />);
   slides.push(<SlideTemple data={data} num={N()} />);
-  slides.push(<SlideCitation data={data} num={N()} citation="La vie, c'est ce qui vous arrive pendant que vous êtes occupés à faire d'autres projets." auteur="John Lennon" contexte="Volet prévoyance suisse" />);
+  if (data.showCitations !== false) slides.push(<SlideCitation data={data} num={N()} citation="La vie, c'est ce qui vous arrive pendant que vous êtes occupés à faire d'autres projets." auteur="John Lennon" contexte="Volet prévoyance suisse" />);
   slides.push(<SlideAVS data={data} num={N()} />);
   slides.push(<SlideLPP data={data} num={N()} />);
   slides.push(<Slide3eP data={data} num={N()} />);
   slides.push(<Slide3ScenariosLPP data={data} num={N()} />);
-  slides.push(<SlideCitation data={data} num={N()} citation="Personne ne peut revenir en arrière et faire un nouveau départ, mais chacun peut partir maintenant et faire une nouvelle fin." auteur="Mahatma Gandhi" contexte="Volet français & fiscalité" />);
+  if (data.showCitations !== false) slides.push(<SlideCitation data={data} num={N()} citation="Personne ne peut revenir en arrière et faire un nouveau départ, mais chacun peut partir maintenant et faire une nouvelle fin." auteur="Mahatma Gandhi" contexte="Volet français & fiscalité" />);
   if (fr) slides.push(<SlideDoubleScenarioFR data={data} num={N()} />);
   slides.push(<SlideArbitrageSante data={data} num={N()} />);
   slides.push(<SlideFiscaliteCompare data={data} num={N()} />);
@@ -3569,7 +3622,7 @@ function buildSlides(data) {
   slides.push(<SlideEvolutionPatrimoine data={data} num={N()} />);
   slides.push(<SlideHeatmap data={data} num={N()} />);
   slides.push(<SlideTrainDeVieMensuel data={data} num={N()} />);
-  slides.push(<SlideCitation data={data} num={N()} citation="Le futur appartient à ceux qui croient à la beauté de leurs rêves." auteur="Eleanor Roosevelt" contexte="Stratégie & action" />);
+  if (data.showCitations !== false) slides.push(<SlideCitation data={data} num={N()} citation="Le futur appartient à ceux qui croient à la beauté de leurs rêves." auteur="Eleanor Roosevelt" contexte="Stratégie & action" />);
   slides.push(<SlideSolutions data={data} num={N()} />);
   slides.push(<SlideLeviers data={data} num={N()} />);
   slides.push(<SlideFicheCapital data={data} num={N()} />);
@@ -3821,7 +3874,7 @@ export default function App({ appSettings }) {
       <header style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ background: C.primary, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 3 }}><Logo size={22} color={C.white} /></div>
+            <div style={{ background: C.primary, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 3 }}><Logo size={22} variant="white" /></div>
             <div>
               <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
               <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>{STUDY_LABELS[data.studyType] || "Planification"} — R1 Frontaliers / Franco-suisses</div>

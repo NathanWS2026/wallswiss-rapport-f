@@ -799,7 +799,8 @@ const stateInitial = () => ({
   dateRapport: new Date().toISOString().split('T')[0],
   isCouple: true,
   coupleProjectionMode: "separee", // "separee" | "commune"
-  showCitations: true, // pages d'intercalaires / citations (pages de garde entre sections)
+  showCitations: true, // pages de citation entre sections
+  showTransitions: false, // pages de garde / transition de section
 
   // Type & présentation de l'étude (adapte titre / en-têtes)
   studyType: "retraite", // retraite | patrimoine | prevoyance | fiscalite
@@ -1611,7 +1612,11 @@ function WizardR1({ data, setData, appSettings, onPreview, onSave }) {
             {data.isCouple && (
               <Field label="Mode de projection" value={data.coupleProjectionMode === "commune" ? "Commune (synthèse ménage)" : "Séparée (Mr puis Mme)"} onChange={(v) => setData({ ...data, coupleProjectionMode: v.startsWith("Commune") ? "commune" : "separee" })} select={["Séparée (Mr puis Mme)", "Commune (synthèse ménage)"]} />
             )}
-            <CheckRow label="Afficher les pages d'intercalaires (citations / pages de garde entre les sections)" checked={data.showCitations !== false} onChange={(v) => setData({ ...data, showCitations: v })} hint="Pages de transition élégantes pour changer de sujet. Décochez pour un rapport plus compact." />
+            <Field label="Pages d'intercalaires entre les sections" value={data.showTransitions && data.showCitations !== false ? "Pages de garde + citations" : data.showTransitions ? "Pages de garde uniquement" : data.showCitations !== false ? "Citations uniquement" : "Aucune"} onChange={(v) => {
+              const cit = v.includes("Citations") || v.includes("citations");
+              const tr = v.includes("Pages de garde");
+              setData({ ...data, showCitations: cit, showTransitions: tr });
+            }} select={["Citations uniquement", "Pages de garde uniquement", "Pages de garde + citations", "Aucune"]} />
             <div style={{ background: C.lightGray, padding: 16, marginTop: 16, borderLeft: `4px solid ${C.gold}`, fontSize: 12, color: C.darkGray, lineHeight: 1.6 }}>
               <strong>Confidentialité.</strong> Données utilisées uniquement pour la planification, conservées selon LPD/RGPD.
             </div>
@@ -3542,6 +3547,29 @@ function SlideCitation({ data, num, citation, auteur, contexte }) {
   );
 }
 
+// ─── Page de garde / transition de section ───
+function SlideTransition({ data, num, partie }) {
+  const parts = (partie || "").split("—");
+  const kicker = parts[0] ? parts[0].trim() : "";
+  const titre = parts[1] ? parts[1].trim() : partie;
+  return (
+    <div style={{ ...pageBase, background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryDark} 100%)` }}>
+      <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 8, background: C.gold }} />
+      <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: 8, background: C.gold }} />
+      <div style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 80px", boxSizing: "border-box" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28 }}>
+          <div style={{ background: C.white, width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4 }}><Logo size={32} variant="color" /></div>
+          <div style={{ width: 50, height: 2, background: C.gold }} />
+        </div>
+        {kicker ? <div style={{ color: C.gold, fontSize: 13, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 18 }}>{kicker}</div> : null}
+        <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 52, color: C.white, fontWeight: 700, lineHeight: 1.1 }}>{titre}</div>
+        <div style={{ width: 70, height: 4, background: C.gold, marginTop: 28 }} />
+      </div>
+      <div style={{ position: "absolute", bottom: 34, left: 0, right: 0, textAlign: "center", color: "rgba(255,255,255,0.45)", fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase" }}>WallSwiss · {num}</div>
+    </div>
+  );
+}
+
 // ============================================================
 // SOMMAIRE DYNAMIQUE
 // ============================================================
@@ -3598,20 +3626,25 @@ function buildSlides(data) {
   const couple = data.isCouple && data.conjoint && data.conjoint.prenom;
   const fr = data.client.frACarriereFrance;
   const slides = [];
+  // Intercalaires : page de garde (transition) et/ou citation, selon les choix.
+  const boundary = (partie, t, a) => {
+    if (data.showTransitions) slides.push(<SlideTransition data={data} num={N()} partie={partie} />);
+    if (data.showCitations !== false) slides.push(<SlideCitation data={data} num={N()} citation={t} auteur={a} contexte={partie} />);
+  };
   slides.push(<SlideCouverture data={data} />);
   slides.push(<SlideSommaire data={data} parts={sommaireParts(data)} />);
   slides.push(<SlideWallswiss data={data} />);
-  if (data.showCitations !== false) slides.push(<SlideCitation data={data} num={N()} citation="L'épargne est le meilleur des héritages que l'on peut laisser à ses enfants." auteur="Sénèque" contexte="Avant-propos" />);
+  boundary("Partie 1 — Diagnostic & droits", "L'épargne est le meilleur des héritages que l'on peut laisser à ses enfants.", "Sénèque");
   slides.push(<SlideProfil data={data} num={N()} />);
   slides.push(<SlideCartographieDroits data={data} num={N()} />);
   slides.push(<SlideVueEnsemble data={data} num={N()} />);
   slides.push(<SlideTemple data={data} num={N()} />);
-  if (data.showCitations !== false) slides.push(<SlideCitation data={data} num={N()} citation="La vie, c'est ce qui vous arrive pendant que vous êtes occupés à faire d'autres projets." auteur="John Lennon" contexte="Volet prévoyance suisse" />);
+  boundary("Partie 2 — Prévoyance suisse", "La vie, c'est ce qui vous arrive pendant que vous êtes occupés à faire d'autres projets.", "John Lennon");
   slides.push(<SlideAVS data={data} num={N()} />);
   slides.push(<SlideLPP data={data} num={N()} />);
   slides.push(<Slide3eP data={data} num={N()} />);
   slides.push(<Slide3ScenariosLPP data={data} num={N()} />);
-  if (data.showCitations !== false) slides.push(<SlideCitation data={data} num={N()} citation="Personne ne peut revenir en arrière et faire un nouveau départ, mais chacun peut partir maintenant et faire une nouvelle fin." auteur="Mahatma Gandhi" contexte="Volet français & fiscalité" />);
+  boundary("Partie 3 — Volet français & fiscalité", "Personne ne peut revenir en arrière et faire un nouveau départ, mais chacun peut partir maintenant et faire une nouvelle fin.", "Mahatma Gandhi");
   if (fr) slides.push(<SlideDoubleScenarioFR data={data} num={N()} />);
   slides.push(<SlideArbitrageSante data={data} num={N()} />);
   slides.push(<SlideFiscaliteCompare data={data} num={N()} />);
@@ -3622,7 +3655,7 @@ function buildSlides(data) {
   slides.push(<SlideEvolutionPatrimoine data={data} num={N()} />);
   slides.push(<SlideHeatmap data={data} num={N()} />);
   slides.push(<SlideTrainDeVieMensuel data={data} num={N()} />);
-  if (data.showCitations !== false) slides.push(<SlideCitation data={data} num={N()} citation="Le futur appartient à ceux qui croient à la beauté de leurs rêves." auteur="Eleanor Roosevelt" contexte="Stratégie & action" />);
+  boundary("Partie 4 — Stratégie & exécution", "Le futur appartient à ceux qui croient à la beauté de leurs rêves.", "Eleanor Roosevelt");
   slides.push(<SlideSolutions data={data} num={N()} />);
   slides.push(<SlideLeviers data={data} num={N()} />);
   slides.push(<SlideFicheCapital data={data} num={N()} />);

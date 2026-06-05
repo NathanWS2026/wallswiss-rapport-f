@@ -780,18 +780,34 @@ const personneVide = () => ({
 
 const solutionVide = () => ({
   id: Date.now() + Math.floor(Math.random() * 1000), actif: true,
-  nom: "", categorie: "Prévoyance", beneficiaire: "Client",
+  nom: "", categorie: "Prévoyance", beneficiaire: "Client", partenaire: "",
   capital: "", tauxConversion: "0", tauxRendement: "0", renteAnnuelle: "",
   dureeAnnees: "25", avantages: "", inconvenients: "",
 });
 
+// Catalogue WallSwiss — solutions & partenaires réels (source : Notion « Fiches Partenaires »)
 const catalogueSolutions = () => ([
-  { ...solutionVide(), id: 1001, actif: true, nom: "Rente viagère LPP", categorie: "Prévoyance 2e pilier", capital: "300000", tauxConversion: "5.0", tauxRendement: "0", dureeAnnees: "25", avantages: "Revenu garanti à vie\nProtection contre le risque de longévité\nAucune gestion à charge", inconvenients: "Capital non transmissible (hors réversion)\nImposition annuelle au barème\nRente figée (peu indexée)" },
-  { ...solutionVide(), id: 1002, actif: false, nom: "Retrait en capital + portefeuille géré", categorie: "Capital / placement", capital: "300000", tauxConversion: "0", tauxRendement: "3.5", renteAnnuelle: "18000", dureeAnnees: "25", avantages: "Liquidité et flexibilité totales\nCapital transmissible aux héritiers\nFiscalité unique avantageuse à la sortie", inconvenients: "Risque de marché et de longévité\nDiscipline de retraits nécessaire\nGestion à organiser" },
-  { ...solutionVide(), id: 1003, actif: false, nom: "Assurance-vie luxembourgeoise", categorie: "Enveloppe transfrontalière", capital: "150000", tauxConversion: "0", tauxRendement: "3", renteAnnuelle: "0", dureeAnnees: "30", avantages: "Neutralité fiscale (résident FR/CH)\nProtection du capital (triangle de sécurité)\nTransmission optimisée", inconvenients: "Frais d'enveloppe\nHorizon long recommandé" },
-  { ...solutionVide(), id: 1004, actif: false, nom: "3a échelonné (retraits fractionnés)", categorie: "3e pilier", capital: "115000", tauxConversion: "0", tauxRendement: "0", renteAnnuelle: "0", dureeAnnees: "3", avantages: "Fractionnement de l'impôt sur 2-3 ans\nDisponibilité dès 5 ans avant l'âge AVS", inconvenients: "Nécessite plusieurs comptes 3a\nPlanification fiscale fine" },
-  { ...solutionVide(), id: 1005, actif: false, nom: "Immobilier locatif (rendement)", categorie: "Immobilier", capital: "250000", tauxConversion: "0", tauxRendement: "3.5", renteAnnuelle: "10000", dureeAnnees: "30", avantages: "Revenu locatif récurrent\nProtection contre l'inflation\nEffet de levier possible", inconvenients: "Illiquidité\nGestion locative\nFiscalité foncière FR (IFI)" },
+  { ...solutionVide(), id: 1001, actif: true, nom: "3e pilier 3a / 3b — Liechtenstein Life", categorie: "Prévoyance 3e pilier", partenaire: "Liechtenstein Life", capital: "115000", tauxConversion: "0", tauxRendement: "3", renteAnnuelle: "0", dureeAnnees: "25", avantages: "Déduction fiscale du 3a (statut quasi-résident)\nGarantie Select possible\nStratégie de fonds personnalisée", inconvenients: "Blocage jusqu'à 5 ans avant l'âge AVS\nRé-augmentation de prime soumise à délai (4 mois)" },
+  { ...solutionVide(), id: 1002, actif: true, nom: "Compte-titres & change — Swissquote (WS Premium)", categorie: "Banque", partenaire: "Swissquote", capital: "300000", tauxConversion: "0", tauxRendement: "3.5", renteAnnuelle: "18000", dureeAnnees: "25", avantages: "Droits de garde 0,10 % (max 200 CHF / 1er M) puis 0,03 %\nChange 0,40 % puis 0,20 % > 100 000 CHF\nBlack Card incluse", inconvenients: "Frais AMC 0,25 % (min 50 CHF / transaction)\nRisque de marché" },
+  { ...solutionVide(), id: 1003, actif: false, nom: "Gestion sous mandat — PARFinance (AMC)", categorie: "Gestion de fortune", partenaire: "PARFinance", capital: "250000", tauxConversion: "0", tauxRendement: "4", renteAnnuelle: "10000", dureeAnnees: "25", avantages: "3 profils : Conservateur, Équilibre, Dynamique\nAMC cotée, liquidité quotidienne\nSuivi WallSwiss hebdomadaire", inconvenients: "Risque de marché\nFrais de gestion" },
+  { ...solutionVide(), id: 1004, actif: false, nom: "Gestion sous mandat — NS Partners", categorie: "Gestion de fortune", partenaire: "NS Partners", capital: "250000", tauxConversion: "0", tauxRendement: "4", renteAnnuelle: "10000", dureeAnnees: "25", avantages: "Swiss Excellence DPM (CHF)\nDGC Stock Selection (EUR)\nOption écologique (DGC Energy)", inconvenients: "Risque de marché\nHorizon moyen / long recommandé" },
+  { ...solutionVide(), id: 1005, actif: false, nom: "Private Equity — Altaroc", categorie: "Private Equity", partenaire: "Altaroc", capital: "100000", tauxConversion: "0", tauxRendement: "8", renteAnnuelle: "0", dureeAnnees: "10", avantages: "Diversification sur le non-coté\nAccès à des fonds institutionnels\nPotentiel de rendement élevé", inconvenients: "Illiquidité (capital engagé)\nHorizon long (8-10 ans)" },
+  { ...solutionVide(), id: 1006, actif: false, nom: "Libre passage — Lemania / Pictet / Liberty", categorie: "Libre passage 2e pilier", partenaire: "Lemania · Pictet · Liberty", capital: "45000", tauxConversion: "0", tauxRendement: "2.5", renteAnnuelle: "0", dureeAnnees: "20", avantages: "Maintien de la prévoyance hors emploi\nChoix de stratégie d'investissement\nFiscalité avantageuse à la sortie", inconvenients: "Capital bloqué jusqu'à la retraite (sauf cas légaux)" },
+  { ...solutionVide(), id: 1007, actif: false, nom: "Assurance-vie France — UAF Life Patrimoine", categorie: "Assurance-vie FR", partenaire: "UAF Life Patrimoine", capital: "150000", tauxConversion: "0", tauxRendement: "3", renteAnnuelle: "0", dureeAnnees: "30", avantages: "Cadre fiscal français avantageux (8 ans)\nTransmission optimisée (hors succession)\nGestion pilotée disponible", inconvenients: "Fiscalité selon la résidence\nFrais d'enveloppe" },
+  { ...solutionVide(), id: 1008, actif: false, nom: "PER & Assurance-vie — SwissLife", categorie: "Épargne FR", partenaire: "SwissLife", capital: "100000", tauxConversion: "0", tauxRendement: "3", renteAnnuelle: "0", dureeAnnees: "25", avantages: "PER déductible du revenu imposable FR\nSortie en capital ou en rente\nMulti-supports", inconvenients: "Blocage jusqu'à la retraite (PER)\nFiscalité à la sortie" },
+  { ...solutionVide(), id: 1009, actif: false, nom: "Actifs numériques (crypto) — Swissquote", categorie: "Actifs numériques", partenaire: "Swissquote", capital: "20000", tauxConversion: "0", tauxRendement: "0", renteAnnuelle: "0", dureeAnnees: "10", avantages: "Diversification\nDétention sécurisée via Swissquote", inconvenients: "Volatilité élevée\nÀ limiter dans l'allocation" },
 ]);
+
+// Partenaires WallSwiss — pour la page « Nos partenaires (A→Z) »
+const WS_PARTENAIRES = [
+  { categorie: "Banque dépositaire", color: "#692102", items: [{ nom: "Swissquote", desc: "Compte-titres & change, offre « WS Premium » (droits de garde 0,10 % max 200 CHF, change 0,40 %→0,20 %, Black Card)." }] },
+  { categorie: "Gestion de fortune", color: "#A59568", items: [{ nom: "PARFinance", desc: "AMC sur-mesure — profils Conservateur / Équilibre / Dynamique, liquidité quotidienne." }, { nom: "NS Partners", desc: "Mandats Swiss Excellence (CHF), DGC Stock Selection (EUR), option écologique DGC Energy." }] },
+  { categorie: "Private Equity", color: "#0055A4", items: [{ nom: "Altaroc", desc: "Accès au non-coté institutionnel pour clients privés — horizon long, potentiel élevé." }] },
+  { categorie: "Prévoyance 3e pilier", color: "#10B981", items: [{ nom: "Liechtenstein Life", desc: "3a / 3b, garantie Select, stratégies de fonds personnalisées." }] },
+  { categorie: "Libre passage (2e pilier)", color: "#692102", items: [{ nom: "Lemania", desc: "Fondation de libre passage." }, { nom: "Pictet", desc: "Libre passage, stratégies d'investissement." }, { nom: "Liberty", desc: "Libre passage flexible." }] },
+  { categorie: "Assurance-vie & épargne France", color: "#0055A4", items: [{ nom: "UAF Life Patrimoine", desc: "Assurance-vie française (cadre fiscal 8 ans, transmission optimisée)." }, { nom: "SwissLife", desc: "PER & assurance-vie multi-supports." }] },
+  { categorie: "Actifs numériques", color: "#374151", items: [{ nom: "Swissquote (Crypto)", desc: "Détention sécurisée de crypto-actifs — à doser dans l'allocation." }] },
+];
 
 const stateInitial = () => ({
   templateId: "planification-retraite",
@@ -1521,6 +1537,7 @@ function PanneauSolutions({ data, setData }) {
               <Field label="Nom de la solution" value={sol.nom} onChange={(v) => upd(i, "nom", v)} />
               <Field label="Catégorie" value={sol.categorie} onChange={(v) => upd(i, "categorie", v)} />
               <Field label="Bénéficiaire" value={sol.beneficiaire} onChange={(v) => upd(i, "beneficiaire", v)} select={["Client", "Conjoint(e)", "Ménage"]} />
+              <Field label="Partenaire" value={sol.partenaire} onChange={(v) => upd(i, "partenaire", v)} placeholder="Ex. Swissquote, Liechtenstein Life…" />
               <Field label="Capital alloué" value={sol.capital} onChange={(v) => upd(i, "capital", v)} type="number" suffix="CHF" />
               <Field label="Taux de conversion (→rente)" value={sol.tauxConversion} onChange={(v) => upd(i, "tauxConversion", v)} type="number" step="0.1" suffix="%" />
               <Field label="Rendement annuel" value={sol.tauxRendement} onChange={(v) => upd(i, "tauxRendement", v)} type="number" step="0.5" suffix="%" />
@@ -2795,7 +2812,7 @@ function SlideSolutions({ data, num }) {
           return (
             <div key={sol.id} style={{ border: `1px solid ${C.mediumGray}`, borderLeft: `4px solid ${C.gold}`, padding: 12, marginBottom: 10, display: "grid", gridTemplateColumns: "1.1fr 1.1fr 1.4fr", gap: 12 }}>
               <div>
-                <div style={{ fontSize: 9, color: C.gold, fontWeight: 700, textTransform: "uppercase" }}>{sol.categorie} · {sol.beneficiaire}</div>
+                <div style={{ fontSize: 9, color: C.gold, fontWeight: 700, textTransform: "uppercase" }}>{sol.categorie} · {sol.beneficiaire}{sol.partenaire ? " · " + sol.partenaire : ""}</div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: C.primary, marginBottom: 6 }}>{sol.nom}</div>
                 <div style={{ fontSize: 10, color: C.gray, lineHeight: 1.7 }}>
                   <div>Capital : <strong style={{ color: C.darkGray }}>CHF {fmt(proj.capital)}</strong></div>
@@ -2825,6 +2842,41 @@ function SlideSolutions({ data, num }) {
             </div>
           );
         })}
+      </div>
+      <PageFooter data={data} num={num} />
+    </div>
+  );
+}
+
+// NOUVEAU — Nos partenaires (A→Z)
+function SlidePartenaires({ data, num }) {
+  return (
+    <div style={pageBase}>
+      <PageHeader data={data} num={num} titreSection="Nos partenaires" />
+      <div style={{ padding: "78px 50px 70px", height: "100%", boxSizing: "border-box" }}>
+        <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16, marginBottom: 12 }}>
+          <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>Architecture ouverte · de A à Z</div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, color: C.primary, fontWeight: 700, margin: 0 }}>Nos <em style={{ color: C.gold }}>partenaires</em> sélectionnés</div>
+        </div>
+        <p style={{ fontSize: 10.5, color: C.darkGray, lineHeight: 1.5, marginBottom: 12, textAlign: "justify" }}>
+          WallSwiss opère en <strong>architecture ouverte</strong> : nous sélectionnons, sans rétrocession cachée, les meilleurs partenaires du marché pour chaque besoin — banque dépositaire, gestion de fortune, prévoyance, libre passage et enveloppes françaises.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {WS_PARTENAIRES.map((cat, i) => (
+            <div key={i} style={{ border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${cat.color}`, padding: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: cat.color, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 8 }}>{cat.categorie}</div>
+              {cat.items.map((it, j) => (
+                <div key={j} style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: C.primary }}>{it.nom}</div>
+                  <div style={{ fontSize: 9.5, color: C.gray, lineHeight: 1.45 }}>{it.desc}</div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 12, background: C.lightGray, padding: 12, borderLeft: `4px solid ${C.primary}`, fontSize: 10, color: C.darkGray, lineHeight: 1.6 }}>
+          <strong>Indépendance.</strong> Le choix d'un partenaire repose uniquement sur son adéquation à votre situation. Conditions tarifaires négociées (ex. offre « WS Premium » chez Swissquote) répercutées à votre bénéfice.
+        </div>
       </div>
       <PageFooter data={data} num={num} />
     </div>
@@ -3605,6 +3657,7 @@ function sommaireParts(data) {
     ]},
     { titre: "Partie 5 — Stratégie & exécution", sections: [
       { num: "5.1", titre: "Solutions recommandées" },
+      { num: "5.2", titre: "Nos partenaires (A→Z)" },
       { num: "5.2", titre: "Leviers d'optimisation" },
       { num: "5.3", titre: "Fiche sortie en capital" },
       { num: "5.4", titre: "Plan d'actions calendaire" },
@@ -3657,6 +3710,7 @@ function buildSlides(data) {
   slides.push(<SlideTrainDeVieMensuel data={data} num={N()} />);
   boundary("Partie 4 — Stratégie & exécution", "Le futur appartient à ceux qui croient à la beauté de leurs rêves.", "Eleanor Roosevelt");
   slides.push(<SlideSolutions data={data} num={N()} />);
+  slides.push(<SlidePartenaires data={data} num={N()} />);
   slides.push(<SlideLeviers data={data} num={N()} />);
   slides.push(<SlideFicheCapital data={data} num={N()} />);
   slides.push(<SlidePlanActions data={data} num={N()} />);

@@ -1816,8 +1816,8 @@ function PageHeader({ data, num, titreSection }) {
   return (
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60, background: C.white, borderBottom: `2px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px", zIndex: 10 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ background: C.primary, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 3 }}>
-          <Logo size={22} variant="white" />
+        <div style={{ background: C.primary, width: 46, height: 46, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4 }}>
+          <Logo size={34} variant="white" />
         </div>
         <div>
           <div style={{ fontSize: 9, color: C.gold, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>WallSwiss · {typeLabel}</div>
@@ -1843,7 +1843,7 @@ function PageFooter({ data, num }) {
       </div>
       <div style={{ height: 30, background: C.primary, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px" }}>
         <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Logo size={14} variant="white" />
+          <Logo size={20} variant="white" />
           <span style={{ color: C.white, fontSize: 9, fontWeight: 600, letterSpacing: "0.06em" }}>WallSwiss — {fullName}</span>
         </span>
         <span style={{ color: C.gold, fontSize: 9, fontWeight: 700 }}>{num ? `Page ${num}` : "Confidentiel"}</span>
@@ -1866,8 +1866,8 @@ function SlideCouverture({ data }) {
       <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 8, background: C.gold }} />
       <div style={{ padding: "80px 60px 40px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", boxSizing: "border-box" }}>
         <div>
-          <div style={{ background: C.white, width: 72, height: 72, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 60, borderRadius: 4 }}>
-            <Logo size={48} variant="color" />
+          <div style={{ background: C.white, width: 104, height: 104, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 56, borderRadius: 6 }}>
+            <Logo size={74} variant="color" />
           </div>
           <div style={{ color: C.gold, fontSize: 12, fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 20 }}>Étude personnalisée · {data.studyAudience || ""}</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", color: C.white, fontSize: 52, fontWeight: 700, lineHeight: 1.05, marginBottom: 16 }}>
@@ -2246,8 +2246,8 @@ function SlideWallswiss({ data }) {
       <PageHeader data={data} num="" titreSection="Votre Partenaire" />
       <div style={{ padding: "70px 40px 50px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <div style={{ textAlign: "center", marginBottom: 14 }}>
-          <div style={{ background: C.white, width: 56, height: 56, margin: "0 auto 8px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", boxShadow: "0 4px 12px rgba(0,0,0,0.06)" }}>
-            <Logo size={34} variant="color" />
+          <div style={{ background: C.white, width: 84, height: 84, margin: "0 auto 10px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", boxShadow: "0 4px 12px rgba(0,0,0,0.06)" }}>
+            <Logo size={54} variant="color" />
           </div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, color: C.primary, fontWeight: 700, margin: 0 }}>WallSwiss</div>
           <div style={{ color: C.gold, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", marginTop: 4 }}>L'excellence patrimoniale franco-suisse</div>
@@ -3560,7 +3560,7 @@ function SlideContact({ data, num }) {
       <PageHeader data={data} num={num} titreSection="Prochaines étapes" />
       <div style={{ padding: "110px 50px 70px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <div style={{ textAlign: "center", marginBottom: 36 }}>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}><div style={{ background: C.primary, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4 }}><Logo size={34} variant="white" /></div></div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}><div style={{ background: C.primary, width: 84, height: 84, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6 }}><Logo size={54} variant="white" /></div></div>
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 12 }}>Votre planification</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 34, color: C.primary, fontWeight: 700, lineHeight: 1.2, marginBottom: 16 }}>Construisons<br/><em style={{ color: C.gold }}>la suite ensemble</em></div>
           <div style={{ width: 60, height: 4, background: C.gold, margin: "0 auto" }} />
@@ -3610,7 +3610,7 @@ function SlideTransition({ data, num, partie }) {
       <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: 8, background: C.gold }} />
       <div style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 80px", boxSizing: "border-box" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28 }}>
-          <div style={{ background: C.white, width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4 }}><Logo size={32} variant="color" /></div>
+          <div style={{ background: C.white, width: 76, height: 76, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6 }}><Logo size={50} variant="color" /></div>
           <div style={{ width: 50, height: 2, background: C.gold }} />
         </div>
         {kicker ? <div style={{ color: C.gold, fontSize: 13, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 18 }}>{kicker}</div> : null}

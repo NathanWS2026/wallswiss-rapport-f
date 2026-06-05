@@ -1816,9 +1816,7 @@ function PageHeader({ data, num, titreSection }) {
   return (
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60, background: C.white, borderBottom: `2px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px", zIndex: 10 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ background: C.primary, width: 50, height: 50, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 0 }}>
-          <Logo size={48} variant="white" />
-        </div>
+        <Logo size={40} variant="color" />
         <div>
           <div style={{ fontSize: 9, color: C.gold, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>WallSwiss · {typeLabel}</div>
           <div style={{ fontSize: 11, color: C.primary, fontWeight: 700 }}>{titreSection}</div>
@@ -1841,9 +1839,9 @@ function PageFooter({ data, num }) {
       <div style={{ background: C.lightGray, padding: "3px 40px", fontSize: 7.5, color: C.gray, lineHeight: 1.3, borderTop: `1px solid ${C.mediumGray}` }}>
         {data.confidentialiteTexte || "Document confidentiel — usage strictement privé."}
       </div>
-      <div style={{ height: 42, background: C.primary, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px" }}>
+      <div style={{ height: 44, background: C.primary, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px" }}>
         <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Logo size={34} variant="white" />
+          <Logo size={40} variant="white" />
           <span style={{ color: C.white, fontSize: 9, fontWeight: 600, letterSpacing: "0.06em" }}>WallSwiss — {fullName}</span>
         </span>
         <span style={{ color: C.gold, fontSize: 9, fontWeight: 700 }}>{num ? `Page ${num}` : "Confidentiel"}</span>
@@ -2242,59 +2240,62 @@ function SlideTemple({ data, num }) {
 
 function SlideWallswiss({ data }) {
   return (
-    <div style={{ ...pageBase, background: `linear-gradient(180deg, ${C.lightGray} 0%, ${C.white} 100%)` }}>
+    <div style={{ ...pageBase, background: C.white }}>
       <PageHeader data={data} num="" titreSection="Votre Partenaire" />
-      <div style={{ padding: "70px 40px 50px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
-        <div style={{ textAlign: "center", marginBottom: 14 }}>
-          <div style={{ background: C.white, width: 84, height: 84, margin: "0 auto 10px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 0, boxShadow: "0 4px 12px rgba(0,0,0,0.06)" }}>
-            <Logo size={54} variant="color" />
-          </div>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, color: C.primary, fontWeight: 700, margin: 0 }}>WallSwiss</div>
-          <div style={{ color: C.gold, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", marginTop: 4 }}>L'excellence patrimoniale franco-suisse</div>
+      {/* Bandeau d'en-tête de marque */}
+      <div style={{ marginTop: 60, background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryDark} 100%)`, padding: "30px 40px", display: "flex", alignItems: "center", gap: 18 }}>
+        <div style={{ background: C.white, width: 70, height: 70, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Logo size={56} variant="color" />
         </div>
-        <div style={{ background: C.white, padding: 14, borderLeft: `4px solid ${C.primary}`, marginBottom: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
+        <div>
+          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 30, color: C.white, fontWeight: 700, lineHeight: 1 }}>WallSwiss</div>
+          <div style={{ color: "rgba(255,255,255,0.85)", fontSize: 10, fontWeight: 600, letterSpacing: "0.22em", textTransform: "uppercase", marginTop: 6 }}>L'excellence patrimoniale franco-suisse</div>
+        </div>
+      </div>
+      <div style={{ padding: "22px 40px 50px", height: "calc(100% - 60px - 130px)", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+        <div style={{ background: C.lightGray, padding: 14, borderLeft: `4px solid ${C.primary}`, marginBottom: 14 }}>
           <div style={{ fontSize: 10, color: C.primary, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Notre mission</div>
           <p style={{ fontSize: 10.5, color: C.darkGray, lineHeight: 1.55, margin: 0, textAlign: "justify" }}>
             Accompagner les <strong>frontaliers, pluripensionnés franco-suisses et résidents</strong> de Suisse romande dans la structuration globale de leur patrimoine et la préparation de leur retraite. Notre approche transforme la <strong>complexité réglementaire</strong> en <strong>opportunités d'optimisation concrètes</strong>, mesurables et opposables.
           </p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10, marginBottom: 14 }}>
           {[{ val: "15+", lbl: "années d'expertise" }, { val: "100%", lbl: "indépendance" }, { val: "350+", lbl: "familles accompagnées" }, { val: "EUR/CHF", lbl: "double maîtrise" }].map((c, i) => (
-            <div key={i} style={{ background: C.primary, color: C.white, padding: "10px 8px", textAlign: "center" }}>
-              <div style={{ fontSize: 18, fontWeight: 900, color: C.gold }}>{c.val}</div>
-              <div style={{ fontSize: 8, color: "rgba(255,255,255,0.85)", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 2 }}>{c.lbl}</div>
+            <div key={i} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `3px solid ${C.primary}`, padding: "12px 8px", textAlign: "center" }}>
+              <div style={{ fontSize: 20, fontWeight: 900, color: C.primary }}>{c.val}</div>
+              <div style={{ fontSize: 8, color: C.gray, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 3 }}>{c.lbl}</div>
             </div>
           ))}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
           {[
-            { icon: <Icons.Users size={14} color={C.gold} />, t: "Double Compétence", d: "Maîtrise des systèmes croisés (AVS/LPP vs CNAV/AGIRC-ARRCO) et de la fiscalité (impôt source, quasi-résident, IFI). Évite double imposition et rattrapages." },
-            { icon: <Icons.Check size={14} color={C.gold} />, t: "Indépendance Absolue", d: "Libres de toute attache bancaire ou assurantielle, en architecture ouverte. Les meilleures solutions du marché, sans rétrocession cachée." },
-            { icon: <Icons.Eye size={14} color={C.gold} />, t: "Ingénierie Patrimoniale", d: "Structuration immobilière (SCI, démembrement), succession transfrontalière (loi UE 650/2012), 3a/3b multi-comptes, assurance-vie lux." },
-            { icon: <Icons.Alert size={14} color={C.gold} />, t: "Suivi & Pérennité", d: "Le cadre légal évolue (AVS21, LPP21, réforme FR 2023). Veille réglementaire active et révision annuelle de votre dossier." },
+            { icon: <Icons.Users size={15} color={C.primary} />, t: "Double Compétence", d: "Maîtrise des systèmes croisés (AVS/LPP vs CNAV/AGIRC-ARRCO) et de la fiscalité (impôt source, quasi-résident, IFI). Évite double imposition et rattrapages." },
+            { icon: <Icons.Check size={15} color={C.primary} />, t: "Indépendance Absolue", d: "Libres de toute attache bancaire ou assurantielle, en architecture ouverte. Les meilleures solutions du marché, sans rétrocession cachée." },
+            { icon: <Icons.Eye size={15} color={C.primary} />, t: "Ingénierie Patrimoniale", d: "Structuration immobilière (SCI, démembrement), succession transfrontalière (loi UE 650/2012), 3a/3b multi-comptes, assurance-vie lux." },
+            { icon: <Icons.Alert size={15} color={C.primary} />, t: "Suivi & Pérennité", d: "Le cadre légal évolue (AVS21, LPP21, réforme FR 2023). Veille réglementaire active et révision annuelle de votre dossier." },
           ].map((c, i) => (
-            <div key={i} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 10 }}>
-              <div style={{ fontSize: 10, color: C.primary, fontWeight: 800, textTransform: "uppercase", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>{c.icon} {c.t}</div>
+            <div key={i} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 11 }}>
+              <div style={{ fontSize: 10.5, color: C.primary, fontWeight: 800, textTransform: "uppercase", marginBottom: 5, display: "flex", alignItems: "center", gap: 7 }}>{c.icon} {c.t}</div>
               <div style={{ fontSize: 9, color: C.gray, lineHeight: 1.45, textAlign: "justify" }}>{c.d}</div>
             </div>
           ))}
         </div>
-        <div style={{ background: C.primary, color: C.white, padding: "14px 16px", marginBottom: 12 }}>
-          <div style={{ fontSize: 9, color: C.gold, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 10, textAlign: "center" }}>Notre accompagnement de A à Z</div>
+        <div style={{ background: C.primary, color: C.white, padding: "16px 18px", marginBottom: 14 }}>
+          <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 12, textAlign: "center" }}>Notre accompagnement de A à Z</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr auto 1fr", gap: 8, alignItems: "flex-start" }}>
-            <div><div style={{ fontSize: 10, fontWeight: 700, marginBottom: 4 }}><span style={{ color: C.gold }}>1.</span> Audit (R1)</div><div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Cartographie complète : civil, prévoyance, patrimoine, fiscalité, objectifs.</div></div>
-            <div style={{ color: C.gold, fontSize: 16, alignSelf: "center" }}>→</div>
-            <div><div style={{ fontSize: 10, fontWeight: 700, marginBottom: 4 }}><span style={{ color: C.gold }}>2.</span> Stratégie (R2)</div><div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Scénarios, leviers, chiffrage du gain total, recommandations.</div></div>
-            <div style={{ color: C.gold, fontSize: 16, alignSelf: "center" }}>→</div>
-            <div><div style={{ fontSize: 10, fontWeight: 700, marginBottom: 4 }}><span style={{ color: C.gold }}>3.</span> Action & Suivi</div><div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Implémentation, démarches assistées, bilan de révision annuel.</div></div>
+            <div><div style={{ fontSize: 11, fontWeight: 700, marginBottom: 5 }}><span style={{ display: "inline-block", width: 18, height: 18, lineHeight: "18px", textAlign: "center", background: C.white, color: C.primary, fontWeight: 900, marginRight: 5 }}>1</span> Audit (R1)</div><div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Cartographie complète : civil, prévoyance, patrimoine, fiscalité, objectifs.</div></div>
+            <div style={{ color: C.white, fontSize: 18, alignSelf: "center" }}>→</div>
+            <div><div style={{ fontSize: 11, fontWeight: 700, marginBottom: 5 }}><span style={{ display: "inline-block", width: 18, height: 18, lineHeight: "18px", textAlign: "center", background: C.white, color: C.primary, fontWeight: 900, marginRight: 5 }}>2</span> Stratégie (R2)</div><div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Scénarios, leviers, chiffrage du gain total, recommandations.</div></div>
+            <div style={{ color: C.white, fontSize: 18, alignSelf: "center" }}>→</div>
+            <div><div style={{ fontSize: 11, fontWeight: 700, marginBottom: 5 }}><span style={{ display: "inline-block", width: 18, height: 18, lineHeight: "18px", textAlign: "center", background: C.white, color: C.primary, fontWeight: 900, marginRight: 5 }}>3</span> Action & Suivi</div><div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Implémentation, démarches assistées, bilan de révision annuel.</div></div>
           </div>
         </div>
-        <div style={{ background: C.gold, color: C.white, padding: 12, flex: 1 }}>
-          <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Nos valeurs</div>
-          <div style={{ fontSize: 9.5, lineHeight: 1.55 }}>
-            <div style={{ marginBottom: 6 }}><strong>Transparence.</strong> Honoraires clairs, aucune rétrocession dissimulée.</div>
-            <div style={{ marginBottom: 6 }}><strong>Exigence.</strong> Chaque recommandation est justifiée et chiffrée.</div>
-            <div style={{ marginBottom: 6 }}><strong>Engagement.</strong> Conseillers dédiés, joignables, disponibles.</div>
+        <div style={{ background: C.primaryDark, color: C.white, padding: 14, flex: 1 }}>
+          <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, color: "rgba(255,255,255,0.75)" }}>Nos valeurs</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 24px", fontSize: 9.5, lineHeight: 1.5 }}>
+            <div><strong>Transparence.</strong> Honoraires clairs, aucune rétrocession dissimulée.</div>
+            <div><strong>Exigence.</strong> Chaque recommandation est justifiée et chiffrée.</div>
+            <div><strong>Engagement.</strong> Conseillers dédiés, joignables, disponibles.</div>
             <div><strong>Long terme.</strong> Une relation de confiance, pas une transaction.</div>
           </div>
         </div>
@@ -2842,6 +2843,11 @@ function SlideSolutions({ data, num }) {
             </div>
           );
         })}
+        {actives.length > 0 && (
+          <div style={{ marginTop: 12, background: "rgba(105,33,2,0.06)", padding: 12, borderLeft: `4px solid ${C.primary}`, fontSize: 10.5, color: C.darkGray, lineHeight: 1.55 }}>
+            <strong style={{ color: C.primary }}>Recommandation WallSwiss.</strong> {actives.length} solution{actives.length > 1 ? "s" : ""} retenue{actives.length > 1 ? "s" : ""}, pour un capital alloué total de <strong>CHF {fmt(actives.reduce((s, x) => s + Number(x.capital || 0), 0))}</strong>. Compte tenu de votre préférence « {data.client.objPreferenceSortie} » et d'une tolérance au risque « {data.client.objToleranceRisque} », nous privilégions une combinaison {data.client.objPreferenceSortie === "Rente" ? "orientée sécurité du revenu (rente viagère et enveloppes garanties)" : data.client.objPreferenceSortie === "Capital" ? "orientée flexibilité et transmission (capital et gestion pilotée)" : "équilibrée entre rente sécurisée et capital flexible"}. La mise en œuvre passe par nos partenaires sélectionnés (page suivante), avec un suivi annuel et un ajustement selon l'évolution des marchés et de la fiscalité.
+          </div>
+        )}
       </div>
       <PageFooter data={data} num={num} />
     </div>
@@ -3074,6 +3080,18 @@ function SlideProjectionAnnuelle({ data, num }) {
           <span><span style={{ display: "inline-block", width: 10, height: 10, background: "rgba(165,149,104,0.3)", marginRight: 4, verticalAlign: "middle" }} /> Années en retraite</span>
           <span>Montants en CHF — Échantillon 1 an sur 2</span>
         </div>
+        {(() => {
+          const last = proj[proj.length - 1];
+          const ok = last && last.patTotal >= 0;
+          const ageFin = data.client.objAgeFinConsommation || 90;
+          return (
+            <div style={{ marginTop: 10, background: ok ? "rgba(16,185,129,0.08)" : "#FEF3F2", borderLeft: `4px solid ${ok ? C.ok : C.bad}`, padding: 12, fontSize: 10.5, color: C.darkGray, lineHeight: 1.55 }}>
+              <strong style={{ color: ok ? C.ok : C.bad }}>Recommandation.</strong> {ok
+                ? `Votre patrimoine reste positif jusqu'à ${ageFin} ans : la trajectoire est soutenable. Nous recommandons de sécuriser les 3 premières années de dépenses en liquidités, de conserver une poche dynamique pour le long terme et de réviser le plan chaque année.`
+                : `À ce rythme, le patrimoine s'épuiserait avant ${ageFin} ans. Plusieurs leviers permettent de rétablir l'équilibre : ajuster le train de vie cible, décaler l'âge de départ, privilégier la rente (revenu garanti à vie) ou mobiliser un actif (vente immobilière). Voir la page « Leviers d'optimisation ».`}
+            </div>
+          );
+        })()}
       </div>
       <PageFooter data={data} num={num} />
     </div>

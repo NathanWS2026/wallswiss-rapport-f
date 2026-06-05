@@ -969,14 +969,14 @@ const stateInitial = () => ({
 // ────────────────────── STYLES PARTAGÉS ──────────────────────
 const S = {
   label: { display: "block", fontSize: 11, fontWeight: 600, color: C.gray, marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase" },
-  input: { width: "100%", padding: "10px 12px", border: "1.5px solid " + C.mediumGray, fontSize: 13, fontFamily: "'Montserrat', sans-serif", color: C.black, background: C.white, outline: "none", boxSizing: "border-box", borderRadius: "0px" },
-  select: { width: "100%", padding: "10px 12px", border: "1.5px solid " + C.mediumGray, fontSize: 13, fontFamily: "'Montserrat', sans-serif", color: C.black, background: C.white, outline: "none", cursor: "pointer", boxSizing: "border-box", borderRadius: "0px" },
+  input: { width: "100%", padding: "10px 12px", border: "1.5px solid " + C.mediumGray, fontSize: 13, fontFamily: "'Montserrat', sans-serif", color: C.black, background: C.white, outline: "none", boxSizing: "border-box", borderRadius: 0 },
+  select: { width: "100%", padding: "10px 12px", border: "1.5px solid " + C.mediumGray, fontSize: 13, fontFamily: "'Montserrat', sans-serif", color: C.black, background: C.white, outline: "none", cursor: "pointer", boxSizing: "border-box", borderRadius: 0 },
   fg: { marginBottom: 16 },
-  card: { background: C.white, padding: 24, border: "1px solid " + C.mediumGray, borderRadius: "0px", marginBottom: 16 },
+  card: { background: C.white, padding: 24, border: "1px solid " + C.mediumGray, borderRadius: 0, marginBottom: 16 },
   cardTitle: { fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: C.primary, marginBottom: 18, display: "flex", alignItems: "center", gap: 10 },
   dot: { width: 8, height: 2, background: C.gold, flexShrink: 0 },
-  btnP: { background: C.primary, color: C.white, border: "none", padding: "12px 28px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.04em", borderRadius: "0px" },
-  btnS: { background: C.white, color: C.primary, border: "2px solid " + C.primary, padding: "10px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600, borderRadius: "0px" },
+  btnP: { background: C.primary, color: C.white, border: "none", padding: "12px 28px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.04em", borderRadius: 0 },
+  btnS: { background: C.white, color: C.primary, border: "2px solid " + C.primary, padding: "10px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600, borderRadius: 0 },
   sectionBadge: (color) => ({ display: "inline-block", background: color, color: C.white, padding: "4px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }),
 };
 
@@ -1816,8 +1816,8 @@ function PageHeader({ data, num, titreSection }) {
   return (
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60, background: C.white, borderBottom: `2px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px", zIndex: 10 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ background: C.primary, width: 46, height: 46, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4 }}>
-          <Logo size={34} variant="white" />
+        <div style={{ background: C.primary, width: 50, height: 50, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 0 }}>
+          <Logo size={48} variant="white" />
         </div>
         <div>
           <div style={{ fontSize: 9, color: C.gold, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>WallSwiss · {typeLabel}</div>
@@ -1826,7 +1826,7 @@ function PageHeader({ data, num, titreSection }) {
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 8, color: C.gray, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" }}>Confidentiel</span>
-        {num ? <span style={{ fontSize: 11, color: C.white, background: C.primary, padding: "3px 9px", fontWeight: 700, borderRadius: 2 }}>{num}</span> : null}
+        {num ? <span style={{ fontSize: 11, color: C.white, background: C.primary, padding: "3px 9px", fontWeight: 700, borderRadius: 0 }}>{num}</span> : null}
       </div>
     </div>
   );
@@ -1841,9 +1841,9 @@ function PageFooter({ data, num }) {
       <div style={{ background: C.lightGray, padding: "3px 40px", fontSize: 7.5, color: C.gray, lineHeight: 1.3, borderTop: `1px solid ${C.mediumGray}` }}>
         {data.confidentialiteTexte || "Document confidentiel — usage strictement privé."}
       </div>
-      <div style={{ height: 30, background: C.primary, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px" }}>
-        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Logo size={20} variant="white" />
+      <div style={{ height: 42, background: C.primary, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px" }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Logo size={34} variant="white" />
           <span style={{ color: C.white, fontSize: 9, fontWeight: 600, letterSpacing: "0.06em" }}>WallSwiss — {fullName}</span>
         </span>
         <span style={{ color: C.gold, fontSize: 9, fontWeight: 700 }}>{num ? `Page ${num}` : "Confidentiel"}</span>
@@ -1866,7 +1866,7 @@ function SlideCouverture({ data }) {
       <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 8, background: C.gold }} />
       <div style={{ padding: "80px 60px 40px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", boxSizing: "border-box" }}>
         <div>
-          <div style={{ background: C.white, width: 104, height: 104, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 56, borderRadius: 6 }}>
+          <div style={{ background: C.white, width: 104, height: 104, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 56, borderRadius: 0 }}>
             <Logo size={74} variant="color" />
           </div>
           <div style={{ color: C.gold, fontSize: 12, fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 20 }}>Étude personnalisée · {data.studyAudience || ""}</div>
@@ -2246,7 +2246,7 @@ function SlideWallswiss({ data }) {
       <PageHeader data={data} num="" titreSection="Votre Partenaire" />
       <div style={{ padding: "70px 40px 50px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <div style={{ textAlign: "center", marginBottom: 14 }}>
-          <div style={{ background: C.white, width: 84, height: 84, margin: "0 auto 10px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", boxShadow: "0 4px 12px rgba(0,0,0,0.06)" }}>
+          <div style={{ background: C.white, width: 84, height: 84, margin: "0 auto 10px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 0, boxShadow: "0 4px 12px rgba(0,0,0,0.06)" }}>
             <Logo size={54} variant="color" />
           </div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, color: C.primary, fontWeight: 700, margin: 0 }}>WallSwiss</div>
@@ -2927,6 +2927,35 @@ function SlidePatrimoine({ data, num }) {
             <LignePat label="Crédits / Leasings" valeur={-credits} />
           </tbody>
         </table>
+        {(() => {
+          const seg = [
+            { label: "Immobilier net", val: Math.max(0, immoNet), color: C.primary },
+            { label: "Liquidités", val: Math.max(0, liq), color: C.gold },
+            { label: "Titres", val: Math.max(0, titres), color: C.france },
+            { label: "Capital LPP", val: Math.max(0, lpp.capitalAge65), color: C.swiss },
+            { label: "Capital 3e P.", val: Math.max(0, tp.capitalTotal), color: C.ok },
+          ];
+          const tot = seg.reduce((s, x) => s + x.val, 0) || 1;
+          return (
+            <div style={{ marginTop: 18 }}>
+              <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Composition de votre patrimoine</div>
+              <div style={{ display: "flex", height: 30, width: "100%", overflow: "hidden", border: `1px solid ${C.mediumGray}` }}>
+                {seg.map((x, i) => (
+                  <div key={i} style={{ width: `${(x.val / tot) * 100}%`, background: x.color }} title={x.label} />
+                ))}
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 10 }}>
+                {seg.map((x, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10.5, color: C.darkGray }}>
+                    <span style={{ width: 12, height: 12, background: x.color, display: "inline-block" }} />
+                    <span style={{ fontWeight: 600 }}>{x.label}</span>
+                    <span style={{ color: C.gray }}>{Math.round((x.val / tot) * 100)}% · CHF {fmt(x.val)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
         {(data.immoEvents || []).length > 0 && (
           <div style={{ marginTop: 16, background: C.lightGray, padding: 12, borderLeft: `4px solid ${C.gold}`, fontSize: 11, color: C.darkGray }}>
             <strong>Évènements patrimoniaux pris en compte :</strong>
@@ -3364,6 +3393,31 @@ function SlideGainTotal({ data, num }) {
             <tr style={{ background: C.primary, color: C.white }}><td style={{ padding: "16px", fontWeight: 900, fontSize: 16 }}>TOTAL GAIN ESTIMÉ</td><td style={{ padding: "16px", textAlign: "right", fontWeight: 900, fontSize: 22, color: C.gold, whiteSpace: "nowrap" }}>CHF {fmt(gain.total)}</td></tr>
           </tbody>
         </table>
+        {(() => {
+          const items = [
+            { label: "Choix âge AVS", val: gain.gainAgeAVS, color: C.swiss },
+            { label: "Stratégie maladie", val: gain.gainStrategieMaladie, color: C.gold },
+            { label: "Économies de change", val: gain.economiesChange, color: C.france },
+            { label: "Frais bancaires", val: gain.economiesFrais, color: C.ok },
+          ];
+          const max = Math.max(...items.map(i => i.val), 1);
+          return (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Répartition du gain par levier</div>
+              {items.map((it, i) => (
+                <div key={i} style={{ marginBottom: 8 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, marginBottom: 3 }}>
+                    <span style={{ color: C.darkGray, fontWeight: 600 }}>{it.label}</span>
+                    <span style={{ color: it.color, fontWeight: 800, whiteSpace: "nowrap" }}>CHF {fmt(it.val)}</span>
+                  </div>
+                  <div style={{ height: 12, background: C.lightGray }}>
+                    <div style={{ height: "100%", width: `${(it.val / max) * 100}%`, background: it.color }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
         <div style={{ background: C.lightGray, padding: 14, fontSize: 11, color: C.darkGray, lineHeight: 1.6, borderLeft: `4px solid ${C.gold}` }}>
           <strong>Partenaires recommandés :</strong> <MultiLine text={data.partenairesDescription || "B-Sharpe (change), Banque du Léman (frais)."} /><br/>
           <strong>Période d'estimation :</strong> {data.economiesPartenairesAnneesEstimees} ans · Économies frais annuelles : CHF {fmt(data.economiesFraisAnnuelles)}.
@@ -3560,7 +3614,7 @@ function SlideContact({ data, num }) {
       <PageHeader data={data} num={num} titreSection="Prochaines étapes" />
       <div style={{ padding: "110px 50px 70px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <div style={{ textAlign: "center", marginBottom: 36 }}>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}><div style={{ background: C.primary, width: 84, height: 84, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6 }}><Logo size={54} variant="white" /></div></div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}><div style={{ background: C.primary, width: 104, height: 104, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 0 }}><Logo size={92} variant="white" /></div></div>
           <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 12 }}>Votre planification</div>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 34, color: C.primary, fontWeight: 700, lineHeight: 1.2, marginBottom: 16 }}>Construisons<br/><em style={{ color: C.gold }}>la suite ensemble</em></div>
           <div style={{ width: 60, height: 4, background: C.gold, margin: "0 auto" }} />
@@ -3610,7 +3664,7 @@ function SlideTransition({ data, num, partie }) {
       <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: 8, background: C.gold }} />
       <div style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 80px", boxSizing: "border-box" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28 }}>
-          <div style={{ background: C.white, width: 76, height: 76, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6 }}><Logo size={50} variant="color" /></div>
+          <div style={{ background: C.white, width: 76, height: 76, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 0 }}><Logo size={50} variant="color" /></div>
           <div style={{ width: 50, height: 2, background: C.gold }} />
         </div>
         {kicker ? <div style={{ color: C.gold, fontSize: 13, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 18 }}>{kicker}</div> : null}
@@ -3750,6 +3804,17 @@ const requirePdfLibs = async () => {
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
 };
 
+// Document imprimable + éditable (jamais re-rendu → conserve les modifications inline)
+const PrintableDoc = React.memo(function PrintableDoc({ slides }) {
+  return (
+    <div id="r1-printable" contentEditable suppressContentEditableWarning spellCheck={false} style={{ width: `${PAGE_W}px`, background: C.white, outline: "none" }}>
+      {slides.map((Sl, i) => (
+        <div key={i} id={`pg-${i}`} className="pdf-page" style={{ width: `${PAGE_W}px`, height: `${PAGE_H}px`, position: "relative", overflow: "hidden", display: "block" }}>{Sl}</div>
+      ))}
+    </div>
+  );
+}, () => true);
+
 function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
@@ -3757,9 +3822,24 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
   const [emailSuccess, setEmailSuccess] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailForm, setEmailForm] = useState({ to: "", subject: "", body: "" });
+  const [editMode, setEditMode] = useState(false);
 
   const slides = useMemo(() => buildSlides(data), [data]);
   const pdfFilename = `Planification_${(data.client.prenom || "").trim()}_${(data.client.nom || "Client").trim()}.pdf`.replace(/\s+/g, '_');
+
+  // Navigation au clavier (← → ↑ ↓ Page, Échap pour fermer)
+  useEffect(() => {
+    const onKey = (e) => {
+      if (showEmailModal) return;
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (["ArrowRight", "ArrowDown", "PageDown"].includes(e.key)) { setCurrentSlide(s => Math.min(slides.length - 1, s + 1)); e.preventDefault(); }
+      else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key)) { setCurrentSlide(s => Math.max(0, s - 1)); e.preventDefault(); }
+      else if (e.key === "Escape") { onClose(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [slides.length, showEmailModal, onClose]);
 
   const generatePdf = async (scale, quality) => {
     await requirePdfLibs();
@@ -3818,6 +3898,7 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           {onEdit && <button onClick={onEdit} style={{ background: "rgba(255,255,255,0.1)", color: C.white, border: "none", padding: "6px 12px", cursor: "pointer", fontSize: 10, fontWeight: 600 }}>ÉDITER</button>}
           {onDelete && <button onClick={onDelete} style={{ background: "transparent", color: "#FCA5A5", border: "1px solid rgba(252,165,165,0.3)", padding: "6px 12px", cursor: "pointer", fontSize: 10, fontWeight: 600 }}>SUPPRIMER</button>}
+          <button onClick={() => setEditMode(m => !m)} style={{ background: editMode ? C.gold : "rgba(255,255,255,0.1)", color: C.white, border: "none", padding: "6px 12px", cursor: "pointer", fontSize: 10, fontWeight: 700 }}>{editMode ? "✓ FIN ÉDITION" : "✎ ÉDITER TEXTE"}</button>
           <button onClick={handleDownloadPDF} disabled={isPdfLoading || isEmailing} style={{ background: C.white, color: C.primaryDark, border: "none", padding: "6px 12px", cursor: "pointer", fontSize: 10, fontWeight: 700, opacity: isPdfLoading ? 0.7 : 1 }}>{isPdfLoading ? "GÉNÉRATION..." : "TÉLÉCHARGER PDF"}</button>
           <button onClick={openEmailModal} disabled={isEmailing} style={{ background: emailSuccess ? C.ok : C.gold, color: C.white, border: "none", padding: "6px 12px", cursor: "pointer", fontSize: 10, fontWeight: 700 }}>{isEmailing ? "ENVOI..." : emailSuccess ? "ENVOYÉ" : "EMAIL"}</button>
           <span style={{ color: C.gold, fontSize: 11 }}>{currentSlide + 1} / {slides.length}</span>
@@ -3836,11 +3917,12 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
           <div key={i} onClick={() => setCurrentSlide(i)} style={{ width: 36, height: 28, background: i === currentSlide ? C.primary : "rgba(255,255,255,0.06)", border: i === currentSlide ? `1px solid ${C.gold}` : "1px solid rgba(255,255,255,0.04)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: i === currentSlide ? C.white : "rgba(255,255,255,0.35)", fontWeight: 600 }}>{i + 1}</div>
         ))}
       </div>
-      <div style={{ position: "absolute", left: "-9999px", top: 0, zIndex: -1000, opacity: 1, pointerEvents: "none" }}>
-        <div id="r1-printable" style={{ width: `${PAGE_W}px`, background: C.white }}>
-          {slides.map((Sl, i) => (
-            <div key={i} className="pdf-page" style={{ width: `${PAGE_W}px`, height: `${PAGE_H}px`, position: "relative", overflow: "hidden", display: "block" }}>{Sl}</div>
-          ))}
+      <div style={editMode
+        ? { position: "absolute", top: 50, bottom: 46, left: 0, right: 0, overflowY: "auto", background: "rgba(20,20,20,0.92)", display: "flex", flexDirection: "column", alignItems: "center", padding: "16px 0 40px", zIndex: 60 }
+        : { position: "absolute", left: "-9999px", top: 0, zIndex: -1000, opacity: 1, pointerEvents: "none" }}>
+        {editMode && <div style={{ color: C.white, fontSize: 12, marginBottom: 12, opacity: 0.9, textAlign: "center" }}>✎ Mode édition — cliquez dans n'importe quel texte pour le modifier. Vos changements sont repris dans le PDF et l'email. Cliquez « FIN ÉDITION » pour revenir.</div>}
+        <div style={editMode ? { transform: "scale(0.74)", transformOrigin: "top center", boxShadow: "0 8px 40px rgba(0,0,0,0.6)" } : undefined}>
+          <PrintableDoc slides={slides} />
         </div>
       </div>
       {isPdfLoading && (
@@ -3961,7 +4043,7 @@ export default function App({ appSettings }) {
       <header style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ background: C.primary, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 3 }}><Logo size={22} variant="white" /></div>
+            <div style={{ background: C.primary, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 0 }}><Logo size={22} variant="white" /></div>
             <div>
               <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
               <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>{STUDY_LABELS[data.studyType] || "Planification"} — R1 Frontaliers / Franco-suisses</div>

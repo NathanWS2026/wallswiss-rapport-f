@@ -3973,6 +3973,19 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
 }
 
 // ============================================================
+// PERSISTANCE — cache local (fallback + survit au rechargement)
+// ============================================================
+const LS_KEY = `wallswiss_planifs_${appId}`;
+const loadLocal = () => {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch { return []; }
+};
+const saveLocal = (list) => {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(list)); } catch (e) { console.error(e); }
+};
+// Firestore refuse les valeurs `undefined` → on nettoie en profondeur avant écriture.
+const stripUndefined = (obj) => JSON.parse(JSON.stringify(obj));
+
+// ============================================================
 // COMPOSANT PRINCIPAL EXPORTÉ
 // ============================================================
 export default function App({ appSettings }) {
@@ -3980,16 +3993,18 @@ export default function App({ appSettings }) {
   const [page, setPage] = useState("dashboard");
   const [data, setData] = useState(stateInitial());
   const [preview, setPreview] = useState(null);
-  const [planifs, setPlanifs] = useState([]);
+  const [planifs, setPlanifs] = useState(() => loadLocal()); // ← chargé depuis le cache local au démarrage
 
   useEffect(() => {
     if (!auth) return;
     const initAuth = async () => {
-      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-        await signInWithCustomToken(auth, __initial_auth_token);
-      } else {
-        await signInAnonymously(auth);
-      }
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (e) { console.error("Auth error:", e); }
     };
     initAuth();
     const unsubscribe = onAuthStateChanged(auth, setUser);
@@ -4005,7 +4020,9 @@ export default function App({ appSettings }) {
         snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
         const adminEmail = "admin@wallswiss.ch";
         const filtered = user.email === adminEmail ? list : list.filter(r => r.agentId === user.uid);
-        setPlanifs(filtered.sort((a, b) => (b.id || 0) - (a.id || 0)));
+        const sorted = filtered.sort((a, b) => (b.id || 0) - (a.id || 0));
+        setPlanifs(sorted);
+        saveLocal(sorted); // ← synchronise le cache local avec le cloud
       },
       (err) => console.error("Firebase onSnapshot error:", err)
     );
@@ -4026,13 +4043,31 @@ export default function App({ appSettings }) {
 
   const handleSave = async () => {
     const newId = data.id || Date.now();
-    const newPlanif = { ...data, id: newId, agentId: user ? user.uid : "demo", agentEmail: user ? user.email : "demo@wallswiss.ch", dateCreation: data.dateCreation || new Date().toISOString() };
+    const newPlanif = stripUndefined({
+      ...data, id: newId,
+      agentId: user ? user.uid : "demo",
+      agentEmail: user ? user.email : "demo@wallswiss.ch",
+      dateCreation: data.dateCreation || new Date().toISOString(),
+    });
+
+    // 1) Sauvegarde locale immédiate (optimiste) → le rapport ne disparaît jamais au rechargement
+    setPlanifs(prev => {
+      const next = [newPlanif, ...prev.filter(x => String(x.id) !== String(newId))];
+      saveLocal(next);
+      return next;
+    });
+
+    // 2) Persistance cloud (Firestore) si disponible
     if (user && db) {
-      try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'planifications_retraite', newId.toString()), newPlanif); }
-      catch (e) { console.error("Erreur sauvegarde", e); }
-    } else {
-      setPlanifs(p => [newPlanif, ...p.filter(x => x.id !== newId)]);
+      try {
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'planifications_retraite', newId.toString()), newPlanif);
+      } catch (e) {
+        console.error("Erreur sauvegarde Firestore:", e);
+        alert("Sauvegarde cloud impossible (" + e.message + "). Le rapport reste enregistré localement sur cet appareil.");
+      }
     }
+
+    setData(newPlanif); // ← conserve l'id : un nouveau « Enregistrer » met à jour au lieu de dupliquer
     setPreview(newPlanif);
     setPage("dashboard");
   };
@@ -4040,11 +4075,14 @@ export default function App({ appSettings }) {
   const handleDelete = async (e, id) => {
     if (e) e.stopPropagation();
     if (!confirm("Supprimer définitivement cette planification ?")) return;
+    setPlanifs(prev => {
+      const next = prev.filter(r => String(r.id) !== String(id));
+      saveLocal(next);
+      return next;
+    });
     if (user && db) {
       try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'planifications_retraite', id.toString())); }
       catch (err) { console.error(err); }
-    } else {
-      setPlanifs(p => p.filter(r => r.id !== id));
     }
   };
 

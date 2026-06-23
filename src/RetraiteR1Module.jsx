@@ -1,7 +1,25 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
+
+/* ============================================================================
+   WallSwiss — RetraiteR1Module.jsx (FUSIONNÉ)
+   ----------------------------------------------------------------------------
+   Ton outil R1 d'origine (assistant WizardR1 + générateur de rapport buildSlides
+   / PreviewR1 + Firebase) — INTACT — sous un nouvel onglet « Planification
+   Retraite » à 6 sections (liste déroulante) :
+     1. Test de pertinence (QCM)   2. Grille tarifaire + aide au choix
+     3. Guide de formation          4. Gabarit (plan témoin → ton vrai rapport)
+     5. Check-list & collecte (→ ton WizardR1) + export Excel
+     6. Ressources indispensables (+ lettre de mission DA, mini-guide cas clients)
+
+   L'export par défaut est désormais <PlanificationRetraite /> (la coquille).
+   Ton ancien App est conservé tel quel sous le nom RetraiteR1App (utilisé par
+   la section « Check-list & collecte »). Rien n'est perdu.
+
+   Excel : SheetJS chargé via CDN (comme jsPDF). Aucune dépendance à installer.
+   ============================================================================ */
 
 const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
 const app = firebaseConfig ? initializeApp(firebaseConfig) : null;
@@ -27,12 +45,16 @@ const C = {
   bad: "#EF4444",
 };
 
+// Coordonnées légales (réutilisées par les documents DA ajoutés)
+const FIRM = {
+  nom: "The WallSwiss Partner's SA", finma: "FINMA F01496591", orias: "ORIAS 24004947",
+  pied: "The WallSwiss Partner's SA · Nyon – Rte de Saint-Cergue 295 · Genève – Rue Kléberg 14 · FINMA F01496591 · wallswiss.ch",
+};
+
 const LOGO_COLOR = "/favicon.png"; // logo couleur (rouge + jaune) — fonds clairs
 const LOGO_WHITE = "/blanc.png";   // logo blanc — fonds foncés
 
 // ────────────────────── LOGO ──────────────────────
-// Utilise les fichiers fournis. variant="white" sur fonds foncés, "color" sur fonds clairs.
-// Repli SVG (rouge/or) si l'image est introuvable, pour ne jamais avoir un logo invisible.
 function Logo({ size = 32, variant = "color", style }) {
   const [err, setErr] = useState(false);
   const src = variant === "white" ? LOGO_WHITE : LOGO_COLOR;
@@ -63,6 +85,19 @@ const Icons = {
   Mail: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>,
   User: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
   Users: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+  // ── Icônes ajoutées pour l'onglet Planification Retraite ──
+  ArrowRight: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
+  ChevronDown: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
+  Star: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+  Printer: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>,
+  Search: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+  External: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
+  Book: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
+  Grid: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>,
+  Clipboard: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>,
+  Link: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>,
+  Info: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>,
+  FileText: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
 };
 
 // ────────────────────── FORMATTERS ──────────────────────
@@ -96,14 +131,12 @@ function partCapitalLPP(person) {
 // ============================================================
 // SECTION 1 — HELPERS DE PROJECTION (CŒUR DES CALCULS)
 // ============================================================
-
 // AVS Suisse — 13e rente 2026, anticipation, ajournement
 function calcAVS(person, options = {}) {
   const annees = Number(person.avsAnneesCotisation || 0);
   const renteMaxBase = 2520; // CHF/mois 2026
   const renteMinBase = 1260;
   const tauxCompletion = Math.min(annees / 44, 1);
-
   let renteMensuelle;
   let source;
   if (person.avsRenteEstimee && Number(person.avsRenteEstimee) > 0) {
@@ -118,7 +151,6 @@ function calcAVS(person, options = {}) {
     renteMensuelle = Math.round(renteBase);
     source = "Estimation indicative";
   }
-
   const scenario = options.scenario || "normal";
   let coefficient = 1;
   let anneesShift = options.anneesShift || 0;
@@ -141,7 +173,6 @@ function calcAVS(person, options = {}) {
     anneesShift,
   };
 }
-
 // LPP — Capitalisation & conversion. annees=0 si déjà à l'âge de départ (déblocage immédiat).
 function calcLPP(person, ageDepart = 65) {
   const avoirActuel = Number(person.lppAvoirActuel || 0);
@@ -149,7 +180,6 @@ function calcLPP(person, ageDepart = 65) {
   const tauxRendement = Number(person.lppTauxRendement || 1.25) / 100;
   const age = Number(person.age || 40);
   const annees = Math.max(0, ageDepart - age);
-
   let capitalAge65 = avoirActuel;
   if (annees > 0 && tauxRendement > 0) {
     capitalAge65 = avoirActuel * Math.pow(1 + tauxRendement, annees) +
@@ -157,7 +187,6 @@ function calcLPP(person, ageDepart = 65) {
   } else if (annees > 0) {
     capitalAge65 = avoirActuel + cotisationAnnuelle * annees;
   }
-  // Si déjà à l'âge de départ (annees === 0) : pas de capitalisation, capital = avoir actuel.
   if (person.lppCapitalProjete && Number(person.lppCapitalProjete) > 0) {
     capitalAge65 = Number(person.lppCapitalProjete);
   }
@@ -176,7 +205,6 @@ function calcLPP(person, ageDepart = 65) {
     immediat: annees === 0,
   };
 }
-
 // Rente LPP réellement perçue selon le choix rente/capital, et capital sorti.
 function lppEffectif(person, ageDepart) {
   const lpp = calcLPP(person, ageDepart);
@@ -189,7 +217,6 @@ function lppEffectif(person, ageDepart) {
     renteMensuelleEff: Math.round((lpp.renteAnnuelle * (1 - part)) / 12),
   };
 }
-
 // 3e Pilier
 function calc3eP(person, ageDepart = 65) {
   const avoir3a = Number(person.troisPAvoir3a || 0);
@@ -212,34 +239,24 @@ function calc3eP(person, ageDepart = 65) {
     capitalTotal: Math.round(capital3a + capital3b),
   };
 }
-
 // Impôt sur retrait en capital du 3e pilier (prestation en capital, imposition séparée).
 function calc3ePImpot(capital3a, hypotheses) {
   const taux = Number(hypotheses.tauxImpotCapital3a || 6) / 100;
   return Math.round(capital3a * taux);
 }
-
 // Pensions françaises — décote / taux plein corrigés (réforme 2023)
 function calcPensionsFR(person, options = {}) {
   const trimAcquis = Number(person.frTrimestresAcquis || 0);
   const trimRequis = Number(person.frTrimestresRequis || 172);
   const sam = Number(person.frSAM || 0);
-  const scenario = options.scenario || "normal"; // "tot" | "taux_plein" | "normal"
-
-  // Taux plein : on suppose l'attente jusqu'à validation (durée ou âge automatique 67 ans).
+  const scenario = options.scenario || "normal";
   const trimRetenus = scenario === "taux_plein" ? Math.max(trimAcquis, trimRequis) : trimAcquis;
   const trimManquants = Math.max(0, trimRequis - trimRetenus);
-
-  // Décote : 1,25 % du taux plein par trimestre manquant, plafond 20 trimestres (-25%).
   const trimDecote = Math.min(20, trimManquants);
   const decote = scenario === "taux_plein" ? 0 : trimDecote * 0.0125;
   const tauxLiquidation = 0.50 * (1 - decote);
-  // Proratisation par la durée d'assurance.
   const prorata = Math.min(1, trimRequis > 0 ? trimRetenus / trimRequis : 0);
-
   let pensionCnavAnnuelle = sam * tauxLiquidation * prorata;
-
-  // Estimation RIS fournie : base "taux courant" ; rehaussée si scénario taux plein.
   if (person.frPensionCnavEstimee && Number(person.frPensionCnavEstimee) > 0) {
     const baseMensuelle = Number(person.frPensionCnavEstimee);
     if (scenario === "taux_plein" && trimAcquis > 0 && trimAcquis < trimRequis) {
@@ -251,13 +268,10 @@ function calcPensionsFR(person, options = {}) {
       pensionCnavAnnuelle = baseMensuelle * 12;
     }
   }
-
-  // AGIRC-ARRCO : minoration temporaire -10% (3 ans) si liquidation sans taux plein.
   const points = Number(person.frPointsAgircArrco || 0);
   const valeurPoint = 1.4159;
   const coefAgirc = (scenario !== "taux_plein" && trimManquants > 0) ? 0.90 : 1;
   const pensionAgircAnnuelle = points * valeurPoint * coefAgirc;
-
   const totalAnnuel = pensionCnavAnnuelle + pensionAgircAnnuelle;
   return {
     pensionCnavAnnuelle: Math.round(pensionCnavAnnuelle),
@@ -273,7 +287,6 @@ function calcPensionsFR(person, options = {}) {
     coefAgirc,
   };
 }
-
 // Synthèse globale d'une personne — rente LPP cohérente avec le choix rente/capital
 function calcSyntheseRetraite(person, hypotheses) {
   const ageDepart = Number(person.objAgeDepart || 65);
@@ -316,7 +329,6 @@ function calcSyntheseRetraite(person, hypotheses) {
     ecartPct: ecartPct.toFixed(1),
   };
 }
-
 // Synthèse consolidée du ménage (mode "commune")
 function calcSyntheseMenage(data) {
   const a = calcSyntheseRetraite(data.client, data);
@@ -333,57 +345,44 @@ function calcSyntheseMenage(data) {
     ecartMensuel: add(a.ecartMensuel, b ? b.ecartMensuel : 0),
   };
 }
-
-// ============================================================
-// MODULES DIFFÉRENCIANTS
-// ============================================================
-
 // ─── Arbitrage santé / fiscalité — montants ANNUELS (sur 1 an) ───
 function calcArbitrageSante(person, hypotheses) {
   const ageDepart = Number(person.objAgeDepart || 65);
   const ageFin = Number(person.objAgeFinConsommation || 90);
   const dureeRetraite = Math.max(1, ageFin - ageDepart);
   const tauxChange = Number(hypotheses.tauxChangeEurChf || 0.95);
-
   const avs = calcAVS(person);
   const lppE = lppEffectif(person, ageDepart);
   const pensionsFR = calcPensionsFR(person);
   const pensionsFRChf = pensionsFR.totalAnnuel * tauxChange;
   const renteAnnuelleTotale = avs.renteAnnuelle + lppE.renteAnnuelleEff + pensionsFRChf;
-
   const primeLAMal = Number(hypotheses.primeLAMalAnnuelle || 9600);
   const primeCMU = Number(hypotheses.primeCMUAnnuelle || 0);
   const tauxCSG = Number(hypotheses.tauxCSGCRDSCASA || 9.1) / 100;
   const cotCMU = Number(hypotheses.cotisationCMUSubsidiaire || 0);
-
-  // Coûts ANNUELS
-  const csgLAMal = pensionsFRChf * (tauxCSG * 0.3); // CSG limitée sur pension FR en LAMal
+  const csgLAMal = pensionsFRChf * (tauxCSG * 0.3);
   const totalA = primeLAMal + csgLAMal;
   const csgB = renteAnnuelleTotale * tauxCSG;
   const totalB = primeCMU + cotCMU + csgB;
-  const totalC = (totalA + totalB) / 2; // hybride : coût moyen annuel indicatif
-  const totalD = primeLAMal + pensionsFRChf; // refus retraite FR : LAMal + perte de la pension FR (par an)
-
+  const totalC = (totalA + totalB) / 2;
+  const totalD = primeLAMal + pensionsFRChf;
   const scenarios = [
     { id: "A", label: "LAMal maintenue", coutAnnuel: totalA, detail: "Prime LAMal + CSG limitée sur pension FR", recommandePour: "Patrimoine élevé, peu de pension FR" },
     { id: "B", label: "CMU + CSG/CRDS", coutAnnuel: totalB, detail: "CMU gratuite mais 9.1% sur toutes pensions", recommandePour: "Pensions globales faibles" },
     { id: "C", label: "Hybride (LAMal→CMU)", coutAnnuel: totalC, detail: "Coût annuel moyen sur la transition", recommandePour: "Compromis prudent" },
     { id: "D", label: "Refus retraite FR", coutAnnuel: totalD, detail: "LAMal + perte de la pension FR annuelle", recommandePour: "Très rares cas" },
   ].map((s) => ({ ...s, coutAnnuel: Math.round(s.coutAnnuel) }));
-
   const meilleur = scenarios.reduce((a, b) => (b.coutAnnuel < a.coutAnnuel ? b : a));
   const pire = scenarios.reduce((a, b) => (b.coutAnnuel > a.coutAnnuel ? b : a));
   const gainAnnuel = pire.coutAnnuel - meilleur.coutAnnuel;
-
   return {
     scenarios, meilleur, pire,
     gainAnnuel: Math.round(gainAnnuel),
-    gainStrategie: Math.round(gainAnnuel * dureeRetraite), // cumul (pour le « gain total »)
+    gainStrategie: Math.round(gainAnnuel * dureeRetraite),
     dureeRetraite, ageDepart, ageFin,
     hypotheses: { primeLAMal, primeCMU, tauxCSGCRDSCASA: tauxCSG * 100 },
   };
 }
-
 // ─── Double scénario retraite française : départ au plus tôt vs taux plein ───
 function calcDoubleScenarioFR(person, hypotheses) {
   if (!person.frACarriereFrance) return null;
@@ -391,19 +390,14 @@ function calcDoubleScenarioFR(person, hypotheses) {
   const ageTauxPlein = Number(person.frAgeTauxPlein || 67);
   const ageFin = Number(person.objAgeFinConsommation || 90);
   const tauxChange = Number(hypotheses.tauxChangeEurChf || 0.95);
-
   const totScenario = calcPensionsFR(person, { scenario: "tot" });
   const pleinScenario = calcPensionsFR(person, { scenario: "taux_plein" });
-
   const cumulTot = totScenario.totalAnnuel * Math.max(0, ageFin - ageMinLegal);
   const cumulPlein = pleinScenario.totalAnnuel * Math.max(0, ageFin - ageTauxPlein);
   const differentielCumule = cumulPlein - cumulTot;
-
-  // Point mort : nombre d'années après le taux plein pour rattraper les années perçues en plus au plus tôt
   const ecartAnnuel = pleinScenario.totalAnnuel - totScenario.totalAnnuel;
   const dejaPercuTot = totScenario.totalAnnuel * Math.max(0, ageTauxPlein - ageMinLegal);
   const pointMortAns = ecartAnnuel > 0 ? Math.round(dejaPercuTot / ecartAnnuel) : null;
-
   return {
     tot: { ...totScenario, ageDepart: ageMinLegal, cumulEur: Math.round(cumulTot), cumulChf: Math.round(cumulTot * tauxChange) },
     plein: { ...pleinScenario, ageDepart: ageTauxPlein, cumulEur: Math.round(cumulPlein), cumulChf: Math.round(cumulPlein * tauxChange) },
@@ -413,7 +407,6 @@ function calcDoubleScenarioFR(person, hypotheses) {
     recommandation: differentielCumule > 0 ? "taux_plein" : "tot",
   };
 }
-
 // ─── 3 scénarios de sortie LPP : 100% rente / 50-50 / 100% capital ───
 function calc3ScenariosLPP(person, hypotheses) {
   const ageDepart = Number(person.objAgeDepart || 65);
@@ -423,24 +416,19 @@ function calc3ScenariosLPP(person, hypotheses) {
   const capital = lpp.capitalAge65;
   const tauxConv = (Number(person.lppTauxConversion || 5)) / 100;
   const renteAnnuellePleine = capital * tauxConv;
-
   const tauxImpotCapital = Number(hypotheses.tauxImpotCapitalLPP || 8) / 100;
   const tauxImpotRente = Number(hypotheses.tauxImpotRenteLPP || 25) / 100;
-
   const renteCumulee = renteAnnuellePleine * dureeRetraite;
   const impotsRente = renteCumulee * tauxImpotRente;
   const netRente = renteCumulee - impotsRente;
-
   const cap50 = capital * 0.5;
   const rente50Annuelle = (capital * 0.5) * tauxConv;
   const rente50Cumulee = rente50Annuelle * dureeRetraite;
   const impotCap50 = cap50 * tauxImpotCapital;
   const impotRente50 = rente50Cumulee * tauxImpotRente;
   const netMixte = (cap50 - impotCap50) + (rente50Cumulee - impotRente50);
-
   const impotCapTotal = capital * tauxImpotCapital;
   const netCapital = capital - impotCapTotal;
-
   return {
     capital,
     renteAnnuellePleine: Math.round(renteAnnuellePleine),
@@ -453,8 +441,7 @@ function calc3ScenariosLPP(person, hypotheses) {
     hypotheses: { tauxImpotCapital: tauxImpotCapital * 100, tauxImpotRente: tauxImpotRente * 100 },
   };
 }
-
-// ─── Comparatif fiscal transfrontalier (NOUVEAU) : net-net rente vs capital, CH vs FR ───
+// ─── Comparatif fiscal transfrontalier : net-net rente vs capital, CH vs FR ───
 function calcFiscaliteComparative(person, data) {
   const ageDepart = Number(person.objAgeDepart || 65);
   const ageFin = Number(person.objAgeFinConsommation || 90);
@@ -463,21 +450,15 @@ function calcFiscaliteComparative(person, data) {
   const capital = lpp.capitalAge65;
   const tauxConv = Number(person.lppTauxConversion || 5) / 100;
   const renteAnnuelle = capital * tauxConv;
-
-  // CAPITAL — imposition Suisse (prestation en capital, barème séparé réduit)
   const tCapCH = Number(data.fiscTauxCapitalCH || 7) / 100;
   const impotCapCH = capital * tCapCH;
-  // CAPITAL — imposition France (résident FR : PFL 7,5% art.163 bis CGI + prélèvements sociaux)
   const tCapFR = Number(data.fiscTauxCapitalFR || 7.5) / 100;
   const tPSCapFR = Number(data.fiscTauxPSCapitalFR || 0) / 100;
   const impotCapFR = capital * (tCapFR + tPSCapFR);
-
-  // RENTE — imposition annuelle (barème) puis cumul sur la durée
   const tRenteCH = Number(data.fiscTauxRenteCH || 20) / 100;
   const renteNetteAnCH = renteAnnuelle * (1 - tRenteCH);
   const tRenteFR = Number(data.fiscTauxRenteFR || 17) / 100;
   const renteNetteAnFR = renteAnnuelle * (1 - tRenteFR);
-
   return {
     capital, renteAnnuelle: Math.round(renteAnnuelle), duree,
     capitalCH: { tauxPct: +(tCapCH * 100).toFixed(1), impot: Math.round(impotCapCH), net: Math.round(capital - impotCapCH) },
@@ -487,7 +468,6 @@ function calcFiscaliteComparative(person, data) {
     meilleurCapital: (capital - impotCapCH) >= (capital - impotCapFR) ? "Suisse" : "France",
   };
 }
-
 // ─── Projection d'une solution (capital → rente + tableau de rendement) ───
 function projetteSolution(sol) {
   const capital = Number(sol.capital || 0);
@@ -511,7 +491,6 @@ function projetteSolution(sol) {
     epuisement: epuiseAn >= 0 ? rows[epuiseAn].annee : null,
   };
 }
-
 // ─── Chiffrage du GAIN TOTAL du conseil ───
 function calcGainTotal(data) {
   const avsAnticipe = calcAVS(data.client, { scenario: "anticipe", anneesShift: 2 });
@@ -519,15 +498,12 @@ function calcGainTotal(data) {
   const cumulAnticipe = avsAnticipe.renteAnnuelle * 27;
   const cumulNormal = avsNormal.renteAnnuelle * 25;
   const gainAgeAVS = Math.max(0, cumulNormal - cumulAnticipe);
-
   const arbitrage = calcArbitrageSante(data.client, data);
   const gainStrategieMaladie = arbitrage.gainStrategie;
-
   const flowAnnuelEur = Number(data.client.revenusFR || 0) + calcPensionsFR(data.client).totalAnnuel;
   const economieChange = flowAnnuelEur * 0.015;
   const economiesChange = Math.round(economieChange * (Number(data.economiesPartenairesAnneesEstimees || 20)));
   const economiesFrais = Number(data.economiesFraisAnnuelles || 800) * Number(data.economiesPartenairesAnneesEstimees || 20);
-
   const total = gainAgeAVS + gainStrategieMaladie + economiesChange + economiesFrais;
   return {
     gainAgeAVS: Math.round(gainAgeAVS),
@@ -537,7 +513,6 @@ function calcGainTotal(data) {
     total: Math.round(total),
   };
 }
-
 // ─── Plan d'actions calendaire (généré automatiquement) ───
 function generatePlanActions(data) {
   const ageActuel = Number(data.client.age || 50);
@@ -566,7 +541,6 @@ function generatePlanActions(data) {
   if (!data.succTestament) actions.push({ annee: anneeActuelle, mois: "Q2", action: "Rédiger ou actualiser le testament avec choix de loi applicable", destinataire: "Notaire", importance: "moyenne" });
   return actions.sort((a, b) => (a.annee !== b.annee ? a.annee - b.annee : a.mois.localeCompare(b.mois)));
 }
-
 // ─── Projection annuelle (avec évènements patrimoniaux + montant libre) ───
 function calcProjectionAnnuelle(data) {
   const ageActuel = Number(data.client.age || 50);
@@ -575,28 +549,22 @@ function calcProjectionAnnuelle(data) {
   const anneeActuelle = new Date().getFullYear();
   const tauxRdt = Number(data.tauxRendement || 1.5) / 100;
   const inflation = Number(data.tauxInflation || 1.5) / 100;
-
   const synth = calcSyntheseRetraite(data.client, data);
   const lpp = calcLPP(data.client, ageDepart);
   const tp = calc3eP(data.client, ageDepart);
   const partCap = partCapitalLPP(data.client);
   const trainVieInitial = Number(data.client.objTrainVie || 0) * 12;
-
   const salaireAnnuel = Number(data.client.revenusNet || 0);
   const epargneAnnuelle = Number(data.client.fluxEpargneMensuel || 0) * 12;
   const chargesActuelles = (Number(data.budCoutVieMensuel || 0) + Number(data.budAssuranceMaladie || 0) + Number(data.budAutresAssurances || 0)) * 12 + Number(data.budChargeFiscale || 0);
-
   let patFinancierInitial = Number(data.patComptesCourants || 0) + Number(data.patEpargne || 0) + Number(data.patDepotsTitres || 0);
   if (data.useCapitalLibre && Number(data.patCapitalLibre) > 0) patFinancierInitial = Number(data.patCapitalLibre);
   let patImmoInitial = Number(data.immoResidencePrincipaleValeur || 0) - Number(data.immoResidencePrincipaleHypotheque || 0);
-
   const events = data.immoEvents || [];
-
   const rows = [];
   let patLiquide = patFinancierInitial, patImmo = patImmoInitial;
   let capital3a = tp.capital3a, capital3b = tp.capital3b, capitalLPP = lpp.capitalAge65;
   let trainVie = trainVieInitial;
-
   const maxYears = Math.min(40, Math.max(1, ageFin - ageActuel));
   for (let annee = anneeActuelle; annee <= anneeActuelle + maxYears; annee++) {
     const age = ageActuel + (annee - anneeActuelle);
@@ -605,7 +573,6 @@ function calcProjectionAnnuelle(data) {
     let rentes = 0, capitalsLib = 0;
     let charges = chargesActuelles * Math.pow(1 + inflation, annee - anneeActuelle);
     let trainVieAnnee = trainVie * Math.pow(1 + inflation, annee - anneeActuelle);
-
     if (enRetraite) {
       rentes = synth.avs.renteAnnuelle + lpp.renteAnnuelle * (1 - partCap) + synth.pensionsFRChfAnnuelle;
       if (age === ageDepart) {
@@ -614,7 +581,6 @@ function calcProjectionAnnuelle(data) {
       }
       charges *= 0.75;
     }
-
     let evtCash = 0; const evtLabels = [];
     events.filter(e => Number(e.annee) === annee).forEach(e => {
       const montant = Number(e.montantNet || 0);
@@ -623,13 +589,10 @@ function calcProjectionAnnuelle(data) {
       else { evtCash += montant; }
       if (e.libelle) evtLabels.push(e.libelle);
     });
-
     const fluxNet = salaires + rentes - charges - trainVieAnnee + (enRetraite ? 0 : epargneAnnuelle);
-    // Le rendement ne s'applique qu'à un solde positif (évite l'explosion d'un découvert)
     patLiquide = (patLiquide > 0 ? patLiquide * (1 + tauxRdt) : patLiquide) + fluxNet + capitalsLib + evtCash;
     patImmo = patImmo * (1 + inflation * 0.5);
     if (!enRetraite) { capital3a *= (1 + tauxRdt); capital3b *= (1 + tauxRdt); }
-
     rows.push({
       annee, age, enRetraite,
       salaires: Math.round(salaires), rentes: Math.round(rentes),
@@ -641,7 +604,6 @@ function calcProjectionAnnuelle(data) {
   }
   return rows;
 }
-
 // ─── Pré-allocation par horizon (4 poches) ───
 function calcAllocationPoches(data) {
   const tp = calc3eP(data.client, Number(data.client.objAgeDepart || 65));
@@ -658,7 +620,6 @@ function calcAllocationPoches(data) {
     { id: "tresLong", label: "Très long terme", horizon: "> 15 ans", pct: 30, montant: Math.round(capitalDisponible * 0.30), color: C.ok, support: "Actions, immobilier, fonds dynamiques" },
   ];
 }
-
 // ─── Heatmap train de vie par âge de départ ───
 function calcHeatmapAges(data) {
   const ages = [58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70];
@@ -682,7 +643,6 @@ function calcHeatmapAges(data) {
   const maxVal = Math.max(...rows.map(r => Math.max(r.trainDeVieRente, r.trainDeVieCapital)));
   return { rows, maxVal };
 }
-
 // ─── Train de vie mensuel détaillé ───
 function calcTrainDeVieMensuel(data) {
   const synth = calcSyntheseRetraite(data.client, data);
@@ -705,8 +665,7 @@ function calcTrainDeVieMensuel(data) {
     patImmoRestant: Number(data.immoResidencePrincipaleValeur || 0) - Number(data.immoResidencePrincipaleHypotheque || 0),
   };
 }
-
-// ─── Cartographie des droits (respecte le choix rente/capital + FR détaillé pour les 2) ───
+// ─── Cartographie des droits ───
 function calcCartographieDroits(data) {
   const lignes = [];
   const addPersonne = (p, isClient) => {
@@ -716,7 +675,6 @@ function calcCartographieDroits(data) {
     const tp = calc3eP(p, ageDepart);
     const prenom = p.prenom || (isClient ? "Client" : "Conjoint(e)");
     if (avs.renteMensuelle > 0) lignes.push({ qui: prenom, intitule: "Rente AVS", type: "Rente viagère", institut: p.avsCaisse || "Caisse de compensation", montant: "CHF " + fmt(avs.renteMensuelle) + " /mois", ageDebut: 65 });
-    // LPP selon le choix de sortie
     if (lppE.partCapital >= 0.999) {
       lignes.push({ qui: prenom, intitule: "Capital LPP", type: "Capital", institut: p.lppCaisse || "Caisse de pension", montant: "CHF " + fmt(lppE.capitalAge65), ageDebut: ageDepart });
     } else if (lppE.partCapital <= 0.001) {
@@ -777,15 +735,12 @@ const personneVide = () => ({
   objProjets: "", objPreferenceSortie: "Mixte",
   objAgeFinConsommation: "90", objToleranceRisque: "Équilibré",
 });
-
 const solutionVide = () => ({
   id: Date.now() + Math.floor(Math.random() * 1000), actif: true,
   nom: "", categorie: "Prévoyance", beneficiaire: "Client", partenaire: "",
   capital: "", tauxConversion: "0", tauxRendement: "0", renteAnnuelle: "",
   dureeAnnees: "25", avantages: "", inconvenients: "",
 });
-
-// Catalogue WallSwiss — solutions & partenaires réels (source : Notion « Fiches Partenaires »)
 const catalogueSolutions = () => ([
   { ...solutionVide(), id: 1001, actif: true, nom: "3e pilier 3a / 3b — Liechtenstein Life", categorie: "Prévoyance 3e pilier", partenaire: "Liechtenstein Life", capital: "115000", tauxConversion: "0", tauxRendement: "3", renteAnnuelle: "0", dureeAnnees: "25", avantages: "Déduction fiscale du 3a (statut quasi-résident)\nGarantie Select possible\nStratégie de fonds personnalisée", inconvenients: "Blocage jusqu'à 5 ans avant l'âge AVS\nRé-augmentation de prime soumise à délai (4 mois)" },
   { ...solutionVide(), id: 1002, actif: true, nom: "Compte-titres & change — Swissquote (WS Premium)", categorie: "Banque", partenaire: "Swissquote", capital: "300000", tauxConversion: "0", tauxRendement: "3.5", renteAnnuelle: "18000", dureeAnnees: "25", avantages: "Droits de garde 0,10 % (max 200 CHF / 1er M) puis 0,03 %\nChange 0,40 % puis 0,20 % > 100 000 CHF\nBlack Card incluse", inconvenients: "Frais AMC 0,25 % (min 50 CHF / transaction)\nRisque de marché" },
@@ -797,8 +752,6 @@ const catalogueSolutions = () => ([
   { ...solutionVide(), id: 1008, actif: false, nom: "PER & Assurance-vie — SwissLife", categorie: "Épargne FR", partenaire: "SwissLife", capital: "100000", tauxConversion: "0", tauxRendement: "3", renteAnnuelle: "0", dureeAnnees: "25", avantages: "PER déductible du revenu imposable FR\nSortie en capital ou en rente\nMulti-supports", inconvenients: "Blocage jusqu'à la retraite (PER)\nFiscalité à la sortie" },
   { ...solutionVide(), id: 1009, actif: false, nom: "Actifs numériques (crypto) — Swissquote", categorie: "Actifs numériques", partenaire: "Swissquote", capital: "20000", tauxConversion: "0", tauxRendement: "0", renteAnnuelle: "0", dureeAnnees: "10", avantages: "Diversification\nDétention sécurisée via Swissquote", inconvenients: "Volatilité élevée\nÀ limiter dans l'allocation" },
 ]);
-
-// Partenaires WallSwiss — pour la page « Nos partenaires (A→Z) »
 const WS_PARTENAIRES = [
   { categorie: "Banque dépositaire", color: "#692102", items: [{ nom: "Swissquote", desc: "Compte-titres & change, offre « WS Premium » (droits de garde 0,10 % max 200 CHF, change 0,40 %→0,20 %, Black Card)." }] },
   { categorie: "Gestion de fortune", color: "#A59568", items: [{ nom: "PARFinance", desc: "AMC sur-mesure — profils Conservateur / Équilibre / Dynamique, liquidité quotidienne." }, { nom: "NS Partners", desc: "Mandats Swiss Excellence (CHF), DGC Stock Selection (EUR), option écologique DGC Energy." }] },
@@ -808,23 +761,19 @@ const WS_PARTENAIRES = [
   { categorie: "Assurance-vie & épargne France", color: "#0055A4", items: [{ nom: "UAF Life Patrimoine", desc: "Assurance-vie française (cadre fiscal 8 ans, transmission optimisée)." }, { nom: "SwissLife", desc: "PER & assurance-vie multi-supports." }] },
   { categorie: "Actifs numériques", color: "#374151", items: [{ nom: "Swissquote (Crypto)", desc: "Détention sécurisée de crypto-actifs — à doser dans l'allocation." }] },
 ];
-
 const stateInitial = () => ({
   templateId: "planification-retraite",
   hiddenSlides: [],
   dateRapport: new Date().toISOString().split('T')[0],
   isCouple: true,
-  coupleProjectionMode: "separee", // "separee" | "commune"
-  showCitations: true, // pages de citation entre sections
-  showTransitions: false, // pages de garde / transition de section
-
-  // Type & présentation de l'étude (adapte titre / en-têtes)
-  studyType: "retraite", // retraite | patrimoine | prevoyance | fiscalite
+  coupleProjectionMode: "separee",
+  showCitations: true,
+  showTransitions: false,
+  studyType: "retraite",
   studyTitle: "Planification de votre retraite",
   studySubtitle: "Une étude croisée Suisse / France pour bâtir votre stratégie de revenu à la retraite, en cohérence avec votre situation de frontalier(ère) ou franco-suisse.",
   studyAudience: "Frontaliers / Franco-suisses",
   confidentialiteTexte: "Document strictement confidentiel. Données traitées selon la LPD suisse et le RGPD. Reproduction et diffusion soumises à autorisation écrite de WallSwiss SA.",
-
   client: {
     prenom: "Jean", nom: "Dupont", dateNaissance: "15.06.1966", age: "60", nationalite: "Français",
     permisG: true, permisType: "G (Frontalier)",
@@ -895,12 +844,10 @@ const stateInitial = () => ({
     objProjets: "", objPreferenceSortie: "Rente",
     objAgeFinConsommation: "90", objToleranceRisque: "Prudent",
   },
-
   enfants: [
     { prenom: "Lucas", dateNaissance: "14.05.2001", aCharge: true, finEntretien: "2026" },
     { prenom: "Emma", dateNaissance: "08.09.2004", aCharge: true, finEntretien: "2029" }
   ],
-
   immoResidencePrincipaleValeur: "850000",
   immoResidencePrincipaleHypotheque: "320000",
   immoResidencePrincipaleTauxInt: "1.45",
@@ -910,62 +857,48 @@ const stateInitial = () => ({
   immoBiensLocatifs: [],
   immoProjets: "Revente de la résidence principale dans 5 ans pour un bien plus petit.",
   immoBiensFrance: "Appartement locatif à Lyon (250k€).",
-  // Évènements patrimoniaux datés (vente / achat / donation)
   immoEvents: [
     { id: 1, annee: String(new Date().getFullYear() + 5), type: "vente", libelle: "Vente résidence principale", montantNet: "530000", valeurBien: "850000" },
   ],
-  // Montant de base libre (écrase le calcul auto du patrimoine financier de départ)
   useCapitalLibre: false,
   patCapitalLibre: "",
-
   patComptesCourants: "45000", patEpargne: "85000", patDepotsTitres: "125000",
   patCredits: "15000", patLeasings: "0", patParticipations: "0",
   patComptesFrance: "Livret A et LDD",
-
   budCoutVieMensuel: "6500", budAssuranceMaladie: "820",
   budAutresAssurances: "350", budChargeFiscale: "18500",
   budChargesImmo: "12000", budPensionsVersees: "0",
-
   fiscDerniereTaxation: "2024", fiscImpositionSource: true,
   fiscQuasiResident: true, fiscRevenuImposable: "125000",
   fiscFortuneImposable: "350000", fiscImpotsFrance: "2500",
-  // Paramètres du comparatif fiscal transfrontalier
   fiscTauxCapitalCH: "7", fiscTauxCapitalFR: "7.5", fiscTauxPSCapitalFR: "0",
   fiscTauxRenteCH: "20", fiscTauxRenteFR: "17",
   tauxImpotCapital3a: "6",
-
   risqueCouvertureDeces: "Capital LPP 250k + 3a 115k",
   risqueCouvertureInvalidite: "Rente 54k/an",
   risqueLacunesConjoint: "Baisse de revenu pour le conjoint (-60%)",
   risqueClausesBeneficiaires: "Standard",
   risqueLAARetraite: "À souscrire",
-
   succTestament: true, succPacteSuccessoral: false,
   succContratMariage: false, succMandatInaptitude: false,
   succDonations: "30k€ à chaque enfant", succObjectifsTransmission: "Protéger le conjoint en priorité.",
   succLoiApplicable: "France",
-
   tauxRendement: "3", tauxInflation: "1.5",
   tauxChangeEurChf: "0.95", paysResidenceRetraite: "France",
   scenarios: ["Âge cible", "Arrêt anticipé -3 ans", "Rente vs Capital"],
-
   primeLAMalAnnuelle: "9600", primeCMUAnnuelle: "0", cotisationCMUSubsidiaire: "0",
   tauxCSGCRDSCASA: "9.1", ageBasculeHybride: "70",
   arbitrageSanteRetenu: "A", arbitrageSanteCommentaire: "",
   tauxImpotCapitalLPP: "8", tauxImpotRenteLPP: "25",
   economiesFraisAnnuelles: "800", economiesPartenairesAnneesEstimees: "20",
   partenairesDescription: "B-Sharpe (change), Banque du Léman (frais), Notaire spécialisé",
-
-  // Onglet Solutions (catalogue éditable)
   solutions: catalogueSolutions(),
-
   docsRecus: {},
   conseiller: "Alexandre Dupuis", titreConseiller: "Conseiller Financier",
   telephone: "+41 22 555 12 34", email: "a.dupuis@wallswiss.ch",
   notesConseiller: "Client très organisé. Crainte fiscalité sur le capital.",
   pointsAttention: "Attention au rachat LPP de 25k (blocage de 3 ans pour le capital).",
 });
-
 // ────────────────────── STYLES PARTAGÉS ──────────────────────
 const S = {
   label: { display: "block", fontSize: 11, fontWeight: 600, color: C.gray, marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase" },
@@ -975,11 +908,11 @@ const S = {
   card: { background: C.white, padding: 24, border: "1px solid " + C.mediumGray, borderRadius: 0, marginBottom: 16 },
   cardTitle: { fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: C.primary, marginBottom: 18, display: "flex", alignItems: "center", gap: 10 },
   dot: { width: 8, height: 2, background: C.gold, flexShrink: 0 },
-  btnP: { background: C.primary, color: C.white, border: "none", padding: "12px 28px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.04em", borderRadius: 0 },
-  btnS: { background: C.white, color: C.primary, border: "2px solid " + C.primary, padding: "10px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600, borderRadius: 0 },
+  btnP: { background: C.primary, color: C.white, border: "none", padding: "12px 28px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.04em", borderRadius: 0, display: "inline-flex", alignItems: "center", gap: 8 },
+  btnS: { background: C.white, color: C.primary, border: "2px solid " + C.primary, padding: "10px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600, borderRadius: 0, display: "inline-flex", alignItems: "center", gap: 8 },
+  btnGold: { background: C.gold, color: C.white, border: "none", padding: "12px 28px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "0.04em", borderRadius: 0, display: "inline-flex", alignItems: "center", gap: 8 },
   sectionBadge: (color) => ({ display: "inline-block", background: color, color: C.white, padding: "4px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }),
 };
-
 function Field({ label, value, onChange, type = "text", placeholder = "", select = null, textarea = false, suffix = "", colSpan = 1, step = null }) {
   return (
     <div style={{ ...S.fg, gridColumn: "span " + colSpan }}>
@@ -999,7 +932,6 @@ function Field({ label, value, onChange, type = "text", placeholder = "", select
     </div>
   );
 }
-
 function CheckRow({ label, checked, onChange, hint = "" }) {
   return (
     <label style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 0", cursor: "pointer", borderBottom: "1px solid " + C.lightGray }}>
@@ -1011,7 +943,6 @@ function CheckRow({ label, checked, onChange, hint = "" }) {
     </label>
   );
 }
-
 // ============================================================
 // PANNEAUX WIZARD
 // ============================================================
@@ -1037,7 +968,6 @@ function PanneauIdentite({ p, setP, titre, couleur }) {
     </div>
   );
 }
-
 function PanneauPro({ p, setP, titre, couleur }) {
   return (
     <div style={S.card}>
@@ -1056,7 +986,6 @@ function PanneauPro({ p, setP, titre, couleur }) {
     </div>
   );
 }
-
 function PanneauObjectifs({ p, setP, titre, couleur }) {
   return (
     <div style={S.card}>
@@ -1074,7 +1003,6 @@ function PanneauObjectifs({ p, setP, titre, couleur }) {
     </div>
   );
 }
-
 function PanneauAVS({ p, setP, titre, couleur }) {
   return (
     <div style={S.card}>
@@ -1093,7 +1021,6 @@ function PanneauAVS({ p, setP, titre, couleur }) {
     </div>
   );
 }
-
 function PanneauLPP({ p, setP, titre, couleur }) {
   const part = partCapitalLPP(p);
   return (
@@ -1125,7 +1052,6 @@ function PanneauLPP({ p, setP, titre, couleur }) {
     </div>
   );
 }
-
 function Panneau3eP({ p, setP, titre, couleur }) {
   return (
     <div style={S.card}>
@@ -1147,7 +1073,6 @@ function Panneau3eP({ p, setP, titre, couleur }) {
     </div>
   );
 }
-
 function PanneauFR({ p, setP, titre, couleur }) {
   return (
     <div style={S.card}>
@@ -1179,7 +1104,6 @@ function PanneauFR({ p, setP, titre, couleur }) {
     </div>
   );
 }
-
 function PanneauEnfants({ enfants, setEnfants }) {
   return (
     <div style={S.card}>
@@ -1200,7 +1124,6 @@ function PanneauEnfants({ enfants, setEnfants }) {
     </div>
   );
 }
-
 function PanneauImmobilier({ data, setData }) {
   const u = (k, v) => setData({ ...data, [k]: v });
   return (
@@ -1220,8 +1143,6 @@ function PanneauImmobilier({ data, setData }) {
     </div>
   );
 }
-
-// NOUVEAU — Évènements patrimoniaux datés + montant de base libre
 function PanneauPatrimoineEvents({ data, setData }) {
   const events = data.immoEvents || [];
   const setEvents = (e) => setData({ ...data, immoEvents: e });
@@ -1254,7 +1175,6 @@ function PanneauPatrimoineEvents({ data, setData }) {
     </div>
   );
 }
-
 function PanneauPatFinancier({ data, setData }) {
   const u = (k, v) => setData({ ...data, [k]: v });
   return (
@@ -1272,7 +1192,6 @@ function PanneauPatFinancier({ data, setData }) {
     </div>
   );
 }
-
 function PanneauBudget({ data, setData }) {
   const u = (k, v) => setData({ ...data, [k]: v });
   return (
@@ -1289,7 +1208,6 @@ function PanneauBudget({ data, setData }) {
     </div>
   );
 }
-
 function PanneauFiscalite({ data, setData }) {
   const u = (k, v) => setData({ ...data, [k]: v });
   return (
@@ -1315,7 +1233,6 @@ function PanneauFiscalite({ data, setData }) {
     </div>
   );
 }
-
 function PanneauRisques({ data, setData }) {
   const u = (k, v) => setData({ ...data, [k]: v });
   return (
@@ -1329,7 +1246,6 @@ function PanneauRisques({ data, setData }) {
     </div>
   );
 }
-
 function PanneauSuccession({ data, setData }) {
   const u = (k, v) => setData({ ...data, [k]: v });
   return (
@@ -1345,7 +1261,6 @@ function PanneauSuccession({ data, setData }) {
     </div>
   );
 }
-
 function PanneauHypotheses({ data, setData }) {
   const u = (k, v) => setData({ ...data, [k]: v });
   return (
@@ -1373,7 +1288,6 @@ function PanneauHypotheses({ data, setData }) {
     </div>
   );
 }
-
 function PanneauConseiller({ data, setData, appSettings }) {
   const u = (k, v) => setData({ ...data, [k]: v });
   return (
@@ -1397,8 +1311,6 @@ function PanneauConseiller({ data, setData, appSettings }) {
     </div>
   );
 }
-
-// ─── Arbitrage santé — affichage ANNUEL (1 an) ───
 function PanneauArbitrageSante({ data, setData }) {
   const u = (k, v) => setData({ ...data, [k]: v });
   const arbitrage = useMemo(() => calcArbitrageSante(data.client, data), [data]);
@@ -1447,7 +1359,6 @@ function PanneauArbitrageSante({ data, setData }) {
     </div>
   );
 }
-
 function PanneauEconomiesPartenaires({ data, setData }) {
   const u = (k, v) => setData({ ...data, [k]: v });
   const gain = useMemo(() => calcGainTotal(data), [data]);
@@ -1475,7 +1386,6 @@ function PanneauEconomiesPartenaires({ data, setData }) {
     </div>
   );
 }
-
 function PanneauScenariosLPP({ data, setData }) {
   const u = (k, v) => setData({ ...data, [k]: v });
   const scenarios = useMemo(() => calc3ScenariosLPP(data.client, data), [data]);
@@ -1510,8 +1420,6 @@ function PanneauScenariosLPP({ data, setData }) {
     </div>
   );
 }
-
-// NOUVEAU — Onglet Solutions (catalogue éditable)
 function PanneauSolutions({ data, setData }) {
   const sols = data.solutions || [];
   const setSols = (s) => setData({ ...data, solutions: s });
@@ -1561,7 +1469,6 @@ function PanneauSolutions({ data, setData }) {
     </div>
   );
 }
-
 function PanneauPlanActions({ data }) {
   const actions = useMemo(() => generatePlanActions(data), [data]);
   return (
@@ -1595,15 +1502,10 @@ function PanneauPlanActions({ data }) {
     </div>
   );
 }
-
-// ============================================================
-// WIZARD R1
-// ============================================================
 function WizardR1({ data, setData, appSettings, onPreview, onSave }) {
   const [step, setStep] = useState(0);
   const setClient = (p) => setData({ ...data, client: p });
   const setConjoint = (p) => setData({ ...data, conjoint: p });
-
   const labels = [
     "Démarrage", "Identité", "Objectifs", "Professionnel",
     "AVS", "LPP", "3e P", "Scénarios LPP",
@@ -1611,7 +1513,6 @@ function WizardR1({ data, setData, appSettings, onPreview, onSave }) {
     "Fiscalité", "Risques + Succ.", "Solutions", "Hypothèses",
     "Plan + Gain", "Aperçu"
   ];
-
   const renderStep = () => {
     switch (step) {
       case 0:
@@ -1713,7 +1614,6 @@ function WizardR1({ data, setData, appSettings, onPreview, onSave }) {
         return null;
     }
   };
-
   return (
     <div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 24 }}>
@@ -1736,7 +1636,6 @@ function WizardR1({ data, setData, appSettings, onPreview, onSave }) {
     </div>
   );
 }
-
 function RecapEtAction({ data, onPreview, onSave }) {
   const synthClient = useMemo(() => calcSyntheseRetraite(data.client, data), [data]);
   const synthConjoint = useMemo(() => data.isCouple ? calcSyntheseRetraite(data.conjoint, data) : null, [data]);
@@ -1769,7 +1668,6 @@ function RecapEtAction({ data, onPreview, onSave }) {
     </div>
   );
 }
-
 function CarteSynthese({ titre, synth, couleur }) {
   if (!synth) return null;
   const ecartColor = synth.ecart > 0 ? C.bad : C.ok;
@@ -1791,26 +1689,22 @@ function CarteSynthese({ titre, synth, couleur }) {
     </div>
   );
 }
-
 // ============================================================
 // SLIDES PDF — A4 portrait (794 × 1123 px)
 // ============================================================
 const PAGE_W = 794;
 const PAGE_H = 1123;
-
 const pageBase = {
   width: `${PAGE_W}px`, height: `${PAGE_H}px`, position: "relative",
   overflow: "hidden", fontFamily: "'Montserrat', sans-serif",
   background: C.white, textAlign: "left", boxSizing: "border-box",
 };
-
 const STUDY_LABELS = {
   retraite: "Planification retraite",
   patrimoine: "Étude patrimoniale",
   prevoyance: "Étude de prévoyance",
   fiscalite: "Étude fiscale",
 };
-
 function PageHeader({ data, num, titreSection }) {
   const typeLabel = STUDY_LABELS[data.studyType] || "Planification";
   return (
@@ -1829,7 +1723,6 @@ function PageHeader({ data, num, titreSection }) {
     </div>
   );
 }
-
 function PageFooter({ data, num }) {
   const fullName = data.isCouple && data.conjoint.prenom
     ? `${data.client.prenom} ${(data.client.nom || "").toUpperCase()} & ${data.conjoint.prenom} ${(data.conjoint.nom || "").toUpperCase()}`
@@ -1849,7 +1742,6 @@ function PageFooter({ data, num }) {
     </div>
   );
 }
-
 function SlideCouverture({ data }) {
   const fullName = data.isCouple && data.conjoint.prenom
     ? `${data.client.prenom} ${(data.client.nom || "").toUpperCase()} & ${data.conjoint.prenom} ${(data.conjoint.nom || "").toUpperCase()}`
@@ -1897,7 +1789,6 @@ function SlideCouverture({ data }) {
     </div>
   );
 }
-
 function SlideSommaire({ data, parts }) {
   return (
     <div style={pageBase}>
@@ -1925,7 +1816,6 @@ function SlideSommaire({ data, parts }) {
     </div>
   );
 }
-
 function CarteProfil({ p, couleur }) {
   return (
     <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 20, borderTop: `4px solid ${couleur}` }}>
@@ -1941,7 +1831,6 @@ function CarteProfil({ p, couleur }) {
     </div>
   );
 }
-
 function BlocVision({ p, couleur, titre }) {
   return (
     <div style={{ background: C.lightGray, padding: 18, borderLeft: `4px solid ${couleur}` }}>
@@ -1960,7 +1849,6 @@ function BlocVision({ p, couleur, titre }) {
     </div>
   );
 }
-
 function SlideProfil({ data, num }) {
   return (
     <div style={pageBase}>
@@ -1986,7 +1874,6 @@ function SlideProfil({ data, num }) {
     </div>
   );
 }
-
 function Bar({ label, value, max, color, isCapital = false }) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
   return (
@@ -2001,7 +1888,6 @@ function Bar({ label, value, max, color, isCapital = false }) {
     </div>
   );
 }
-
 function Donut({ parts }) {
   const total = parts.reduce((s, p) => s + p.value, 0) || 1;
   let offset = 0;
@@ -2029,7 +1915,6 @@ function Donut({ parts }) {
     </div>
   );
 }
-
 function SlideVueEnsemble({ data, num }) {
   const synthClient = calcSyntheseRetraite(data.client, data);
   const synthConjoint = data.isCouple ? calcSyntheseRetraite(data.conjoint, data) : null;
@@ -2041,7 +1926,6 @@ function SlideVueEnsemble({ data, num }) {
   const partFr = (synthClient.pensionsFRChfAnnuelle / totalRevenu) * 100;
   const revenuAffiche = commune ? menage.revenuRenteMensuel : synthClient.revenuRenteAjusteMensuel;
   const objectifAffiche = commune ? menage.objectifMensuel : synthClient.objectifMensuel;
-
   return (
     <div style={pageBase}>
       <PageHeader data={data} num={num} titreSection="Vue d'ensemble" />
@@ -2102,7 +1986,6 @@ function SlideVueEnsemble({ data, num }) {
     </div>
   );
 }
-
 function CartePilier({ titre, couleur, data }) {
   return (
     <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${couleur}`, padding: 20 }}>
@@ -2116,7 +1999,6 @@ function CartePilier({ titre, couleur, data }) {
     </div>
   );
 }
-
 function SlideCartographieDroits({ data, num }) {
   const lignes = calcCartographieDroits(data);
   return (
@@ -2162,7 +2044,6 @@ function SlideCartographieDroits({ data, num }) {
     </div>
   );
 }
-
 function SlideTemple({ data, num }) {
   const buildPiliers = (p) => {
     const ageDepart = Number(p.objAgeDepart || 65);
@@ -2215,7 +2096,6 @@ function SlideTemple({ data, num }) {
         </div>
         <div style={{ width: "95%", margin: "8px auto 0", height: 10, background: C.primary }} />
         <div style={{ width: "98%", margin: "0 auto", height: 6, background: `linear-gradient(180deg, ${C.primaryDark} 0%, ${C.gold} 100%)` }} />
-
         {pilConj && (
           <div style={{ marginTop: 18 }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: C.gold, marginBottom: 6 }}>Madame — {data.conjoint.prenom}</div>
@@ -2237,12 +2117,10 @@ function SlideTemple({ data, num }) {
     </div>
   );
 }
-
 function SlideWallswiss({ data }) {
   return (
     <div style={{ ...pageBase, background: C.white }}>
       <PageHeader data={data} num="" titreSection="Votre Partenaire" />
-      {/* Bandeau d'en-tête de marque */}
       <div style={{ marginTop: 60, background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryDark} 100%)`, padding: "30px 40px", display: "flex", alignItems: "center", gap: 18 }}>
         <div style={{ background: C.white, width: 70, height: 70, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           <Logo size={56} variant="color" />
@@ -2304,7 +2182,6 @@ function SlideWallswiss({ data }) {
     </div>
   );
 }
-
 function SlideAVS({ data, num }) {
   const avsC = calcAVS(data.client);
   const avsAnticipe = calcAVS(data.client, { scenario: "anticipe", anneesShift: 2 });
@@ -2324,7 +2201,6 @@ function SlideAVS({ data, num }) {
   else renteEch44 = renteMin + (renteMax - renteMin) * ((ramApprox - 15120) / (seuilSup - 15120));
   const renteEchClient = renteEch44 * (echelle / 44);
   const renteCalculee = avsC.renteMensuelle;
-
   return (
     <div style={pageBase}>
       <PageHeader data={data} num={num} titreSection="1er Pilier — AVS" />
@@ -2389,7 +2265,6 @@ function SlideAVS({ data, num }) {
     </div>
   );
 }
-
 function SlideLPP({ data, num }) {
   const ageDepart = Number(data.client.objAgeDepart || 65);
   const lppE = lppEffectif(data.client, ageDepart);
@@ -2415,7 +2290,6 @@ function SlideLPP({ data, num }) {
   const getY = (v) => padT + h - (v / maxV) * h;
   const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(p.val)}`).join(' ');
   const areaPath = points.length ? `${path} L ${getX(points.length - 1)} ${getY(0)} L ${getX(0)} ${getY(0)} Z` : "";
-
   return (
     <div style={pageBase}>
       <PageHeader data={data} num={num} titreSection="2e Pilier — LPP" />
@@ -2472,7 +2346,6 @@ function SlideLPP({ data, num }) {
     </div>
   );
 }
-
 function Slide3eP({ data, num }) {
   const tp = calc3eP(data.client, Number(data.client.objAgeDepart || 65));
   const impot3a = calc3ePImpot(tp.capital3a, data);
@@ -2537,7 +2410,6 @@ function Slide3eP({ data, num }) {
     </div>
   );
 }
-
 function Slide3ScenariosLPP({ data, num }) {
   const sc = calc3ScenariosLPP(data.client, data);
   const max = Math.max(...sc.scenarios.map(s => s.netTotal));
@@ -2585,7 +2457,6 @@ function Slide3ScenariosLPP({ data, num }) {
     </div>
   );
 }
-
 function SlideDoubleScenarioFR({ data, num }) {
   const double = calcDoubleScenarioFR(data.client, data);
   if (!double) {
@@ -2662,7 +2533,6 @@ function SlideDoubleScenarioFR({ data, num }) {
     </div>
   );
 }
-
 function SlideArbitrageSante({ data, num }) {
   const arbitrage = calcArbitrageSante(data.client, data);
   return (
@@ -2711,8 +2581,6 @@ function SlideArbitrageSante({ data, num }) {
     </div>
   );
 }
-
-// NOUVEAU — Comparatif fiscal transfrontalier
 function SlideFiscaliteCompare({ data, num }) {
   const f = calcFiscaliteComparative(data.client, data);
   const renteGagnante = f.renteCH.cumuleeNette >= f.renteFR.cumuleeNette ? "Suisse" : "France";
@@ -2727,7 +2595,6 @@ function SlideFiscaliteCompare({ data, num }) {
         <p style={{ fontSize: 10.5, color: C.darkGray, lineHeight: 1.5, marginBottom: 12, textAlign: "justify" }}>
           Comparaison <strong>nette d'impôt</strong> du déblocage du capital LPP (<strong>CHF {fmt(f.capital)}</strong>) selon le lieu d'imposition, et de la rente viagère équivalente (<strong>CHF {fmt(f.renteAnnuelle)}/an</strong>) cumulée sur {f.duree} ans. La résidence fiscale au moment du retrait change radicalement le résultat.
         </p>
-
         <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", marginBottom: 8 }}>Capital LPP — imposition Suisse vs France</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
           {[
@@ -2747,7 +2614,6 @@ function SlideFiscaliteCompare({ data, num }) {
             </div>
           ))}
         </div>
-
         <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", marginBottom: 8 }}>Rente viagère équivalente — net cumulé sur {f.duree} ans</div>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, marginBottom: 14 }}>
           <thead>
@@ -2791,8 +2657,6 @@ function SlideFiscaliteCompare({ data, num }) {
     </div>
   );
 }
-
-// NOUVEAU — Solutions recommandées
 function SlideSolutions({ data, num }) {
   const actives = (data.solutions || []).filter(s => s.actif).slice(0, 4);
   return (
@@ -2853,8 +2717,6 @@ function SlideSolutions({ data, num }) {
     </div>
   );
 }
-
-// NOUVEAU — Nos partenaires (A→Z)
 function SlidePartenaires({ data, num }) {
   return (
     <div style={pageBase}>
@@ -2888,7 +2750,6 @@ function SlidePartenaires({ data, num }) {
     </div>
   );
 }
-
 function LignePat({ label, valeur, pos = false, bold = false }) {
   return (
     <tr style={{ borderBottom: `1px solid ${C.lightGray}`, background: bold ? "rgba(105,33,2,0.04)" : "transparent" }}>
@@ -2897,7 +2758,6 @@ function LignePat({ label, valeur, pos = false, bold = false }) {
     </tr>
   );
 }
-
 function SlidePatrimoine({ data, num }) {
   const immoBrut = Number(data.immoResidencePrincipaleValeur || 0);
   const hypo = Number(data.immoResidencePrincipaleHypotheque || 0);
@@ -2977,7 +2837,6 @@ function SlidePatrimoine({ data, num }) {
     </div>
   );
 }
-
 function SlideHorizons({ data, num }) {
   const poches = calcAllocationPoches(data);
   const total = poches.reduce((s, p) => s + p.montant, 0) || 1;
@@ -3029,7 +2888,6 @@ function SlideHorizons({ data, num }) {
     </div>
   );
 }
-
 function SlideProjectionAnnuelle({ data, num }) {
   const proj = calcProjectionAnnuelle(data);
   const sample = proj.filter((_, i) => i % 2 === 0).slice(0, 14);
@@ -3097,7 +2955,6 @@ function SlideProjectionAnnuelle({ data, num }) {
     </div>
   );
 }
-
 function SlideEvolutionPatrimoine({ data, num }) {
   const proj = calcProjectionAnnuelle(data);
   const sample = proj.filter((_, i) => i % 3 === 0).slice(0, 12);
@@ -3139,7 +2996,6 @@ function SlideEvolutionPatrimoine({ data, num }) {
     </div>
   );
 }
-
 function SlideHeatmap({ data, num }) {
   const hm = calcHeatmapAges(data);
   const getColor = (v) => {
@@ -3193,7 +3049,6 @@ function SlideHeatmap({ data, num }) {
     </div>
   );
 }
-
 function SlideTrainDeVieMensuel({ data, num }) {
   const tv = calcTrainDeVieMensuel(data);
   return (
@@ -3237,7 +3092,6 @@ function SlideTrainDeVieMensuel({ data, num }) {
     </div>
   );
 }
-
 function SlideLeviers({ data, num }) {
   const synth = calcSyntheseRetraite(data.client, data);
   const leviers = [];
@@ -3275,7 +3129,6 @@ function SlideLeviers({ data, num }) {
     </div>
   );
 }
-
 function SlideFicheCapital({ data, num }) {
   const ageDepart = Number(data.client.objAgeDepart || 65);
   const lpp = calcLPP(data.client, ageDepart);
@@ -3337,7 +3190,6 @@ function SlideFicheCapital({ data, num }) {
     </div>
   );
 }
-
 function SlidePlanActions({ data, num }) {
   const actions = generatePlanActions(data).slice(0, 20);
   return (
@@ -3387,7 +3239,6 @@ function SlidePlanActions({ data, num }) {
     </div>
   );
 }
-
 function SlideGainTotal({ data, num }) {
   const gain = calcGainTotal(data);
   const arbitrage = calcArbitrageSante(data.client, data);
@@ -3448,7 +3299,6 @@ function SlideGainTotal({ data, num }) {
     </div>
   );
 }
-
 function LigneHypo({ label, valeur }) {
   return (
     <tr style={{ borderBottom: `1px solid ${C.lightGray}` }}>
@@ -3457,7 +3307,6 @@ function LigneHypo({ label, valeur }) {
     </tr>
   );
 }
-
 function SlideHypotheses({ data, num }) {
   return (
     <div style={pageBase}>
@@ -3501,7 +3350,6 @@ function SlideHypotheses({ data, num }) {
     </div>
   );
 }
-
 function SlideConjoint({ data, num }) {
   if (!data.isCouple || !data.conjoint.prenom) return null;
   const synth = calcSyntheseRetraite(data.conjoint, data);
@@ -3553,7 +3401,6 @@ function SlideConjoint({ data, num }) {
     </div>
   );
 }
-
 function SlideNotes({ data, num }) {
   return (
     <div style={pageBase}>
@@ -3570,7 +3417,6 @@ function SlideNotes({ data, num }) {
     </div>
   );
 }
-
 function SlideDisclaimer({ data, num }) {
   return (
     <div style={pageBase}>
@@ -3597,7 +3443,6 @@ function SlideDisclaimer({ data, num }) {
     </div>
   );
 }
-
 function SlideDocuments({ data, num }) {
   const docsSuisse = ["Pièce d'identité + permis G", "Certificat AVS + extrait du CI", "Certificat LPP récent + règlement de caisse", "Attestation potentiel de rachat LPP", "Attestations libre-passage", "Relevés et attestations 3a (banque + assurance)", "Polices d'assurance-vie 3b", "Fiches de salaire + certificat annuel", "Dernière décision de taxation", "Contrats hypothécaires", "Estimations / actes immobiliers", "Relevés bancaires et dépôts-titres", "Police d'assurance maladie"];
   const docsFrance = ["Relevé de carrière / RIS (info-retraite.fr)", "Relevé de points AGIRC-ARRCO", "Bulletins France Travail pour périodes manquantes", "Avis d'imposition français", "Justificatif de quasi-résident"];
@@ -3625,7 +3470,6 @@ function SlideDocuments({ data, num }) {
     </div>
   );
 }
-
 function SlideContact({ data, num }) {
   return (
     <div style={{ ...pageBase, background: `linear-gradient(180deg, ${C.lightGray} 0%, ${C.white} 100%)` }}>
@@ -3653,7 +3497,6 @@ function SlideContact({ data, num }) {
     </div>
   );
 }
-
 function SlideCitation({ data, num, citation, auteur, contexte }) {
   return (
     <div style={{ ...pageBase, background: `linear-gradient(135deg, ${C.primaryDark} 0%, ${C.primary} 100%)` }}>
@@ -3670,8 +3513,6 @@ function SlideCitation({ data, num, citation, auteur, contexte }) {
     </div>
   );
 }
-
-// ─── Page de garde / transition de section ───
 function SlideTransition({ data, num, partie }) {
   const parts = (partie || "").split("—");
   const kicker = parts[0] ? parts[0].trim() : "";
@@ -3693,10 +3534,6 @@ function SlideTransition({ data, num, partie }) {
     </div>
   );
 }
-
-// ============================================================
-// SOMMAIRE DYNAMIQUE
-// ============================================================
 function sommaireParts(data) {
   const couple = data.isCouple && data.conjoint && data.conjoint.prenom;
   const fr = data.client.frACarriereFrance;
@@ -3744,14 +3581,12 @@ function sommaireParts(data) {
     ]},
   ];
 }
-
 function buildSlides(data) {
   let n = 0;
   const N = () => String(++n).padStart(2, "0");
   const couple = data.isCouple && data.conjoint && data.conjoint.prenom;
   const fr = data.client.frACarriereFrance;
   const slides = [];
-  // Intercalaires : page de garde (transition) et/ou citation, selon les choix.
   const boundary = (partie, t, a) => {
     if (data.showTransitions) slides.push(<SlideTransition data={data} num={N()} partie={partie} />);
     if (data.showCitations !== false) slides.push(<SlideCitation data={data} num={N()} citation={t} auteur={a} contexte={partie} />);
@@ -3794,7 +3629,6 @@ function buildSlides(data) {
   slides.push(<SlideContact data={data} num={N()} />);
   return slides;
 }
-
 // ============================================================
 // MODALE D'APERÇU + GÉNÉRATION PDF
 // ============================================================
@@ -3810,7 +3644,6 @@ const getBase64Image = async (url) => {
     });
   } catch (error) { return url; }
 };
-
 const requirePdfLibs = async () => {
   if (window.html2canvas && window.jspdf) return;
   const loadScript = (src) => new Promise((resolve, reject) => {
@@ -3821,8 +3654,6 @@ const requirePdfLibs = async () => {
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
 };
-
-// Document imprimable + éditable (jamais re-rendu → conserve les modifications inline)
 const PrintableDoc = React.memo(function PrintableDoc({ slides }) {
   return (
     <div id="r1-printable" contentEditable suppressContentEditableWarning spellCheck={false} style={{ width: `${PAGE_W}px`, background: C.white, outline: "none" }}>
@@ -3832,7 +3663,6 @@ const PrintableDoc = React.memo(function PrintableDoc({ slides }) {
     </div>
   );
 }, () => true);
-
 function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
@@ -3841,11 +3671,8 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailForm, setEmailForm] = useState({ to: "", subject: "", body: "" });
   const [editMode, setEditMode] = useState(false);
-
   const slides = useMemo(() => buildSlides(data), [data]);
   const pdfFilename = `Planification_${(data.client.prenom || "").trim()}_${(data.client.nom || "Client").trim()}.pdf`.replace(/\s+/g, '_');
-
-  // Navigation au clavier (← → ↑ ↓ Page, Échap pour fermer)
   useEffect(() => {
     const onKey = (e) => {
       if (showEmailModal) return;
@@ -3858,7 +3685,6 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [slides.length, showEmailModal, onClose]);
-
   const generatePdf = async (scale, quality) => {
     await requirePdfLibs();
     const html2canvas = window.html2canvas;
@@ -3875,7 +3701,6 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
     }
     return pdf;
   };
-
   const handleDownloadPDF = async () => {
     setIsPdfLoading(true);
     await new Promise(r => setTimeout(r, 200));
@@ -3883,7 +3708,6 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
     catch (e) { console.error("Erreur PDF:", e); }
     finally { setIsPdfLoading(false); }
   };
-
   const openEmailModal = () => {
     setEmailForm({
       to: data.client.emailClient || "",
@@ -3892,7 +3716,6 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
     });
     setShowEmailModal(true);
   };
-
   const handleConfirmEmail = async () => {
     const webhookUrl = appSettings?.reportWebhookUrl?.trim();
     if (!webhookUrl) { alert("Configurez l'URL du Webhook dans Paramètres."); return; }
@@ -3908,7 +3731,6 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
     } catch (e) { console.error(e); alert("Erreur d'envoi : " + e.message); }
     finally { setIsEmailing(false); }
   };
-
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 200, display: "flex", flexDirection: "column" }}>
       <div style={{ background: C.black, padding: "10px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
@@ -3971,7 +3793,6 @@ function PreviewR1({ data, onClose, onEdit, onDelete, appSettings }) {
     </div>
   );
 }
-
 // ============================================================
 // PERSISTANCE — cache local (fallback + survit au rechargement)
 // ============================================================
@@ -3982,19 +3803,16 @@ const loadLocal = () => {
 const saveLocal = (list) => {
   try { localStorage.setItem(LS_KEY, JSON.stringify(list)); } catch (e) { console.error(e); }
 };
-// Firestore refuse les valeurs `undefined` → on nettoie en profondeur avant écriture.
 const stripUndefined = (obj) => JSON.parse(JSON.stringify(obj));
-
 // ============================================================
-// COMPOSANT PRINCIPAL EXPORTÉ
+// TON APP D'ORIGINE (renommé RetraiteR1App — utilisé par la section Collecte)
 // ============================================================
-export default function App({ appSettings }) {
+function RetraiteR1App({ appSettings }) {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState("dashboard");
   const [data, setData] = useState(stateInitial());
   const [preview, setPreview] = useState(null);
-  const [planifs, setPlanifs] = useState(() => loadLocal()); // ← chargé depuis le cache local au démarrage
-
+  const [planifs, setPlanifs] = useState(() => loadLocal());
   useEffect(() => {
     if (!auth) return;
     const initAuth = async () => {
@@ -4010,7 +3828,6 @@ export default function App({ appSettings }) {
     const unsubscribe = onAuthStateChanged(auth, setUser);
     return () => unsubscribe();
   }, []);
-
   useEffect(() => {
     if (!user || !db) return;
     const ref = collection(db, 'artifacts', appId, 'public', 'data', 'planifications_retraite');
@@ -4022,13 +3839,12 @@ export default function App({ appSettings }) {
         const filtered = user.email === adminEmail ? list : list.filter(r => r.agentId === user.uid);
         const sorted = filtered.sort((a, b) => (b.id || 0) - (a.id || 0));
         setPlanifs(sorted);
-        saveLocal(sorted); // ← synchronise le cache local avec le cloud
+        saveLocal(sorted);
       },
       (err) => console.error("Firebase onSnapshot error:", err)
     );
     return () => unsub();
   }, [user]);
-
   useEffect(() => {
     if (page === "create" && !data.id && !data.conseiller && appSettings) {
       setData(d => ({
@@ -4040,7 +3856,6 @@ export default function App({ appSettings }) {
       }));
     }
   }, [page, appSettings, data.id, data.conseiller]);
-
   const handleSave = async () => {
     const newId = data.id || Date.now();
     const newPlanif = stripUndefined({
@@ -4049,15 +3864,11 @@ export default function App({ appSettings }) {
       agentEmail: user ? user.email : "demo@wallswiss.ch",
       dateCreation: data.dateCreation || new Date().toISOString(),
     });
-
-    // 1) Sauvegarde locale immédiate (optimiste) → le rapport ne disparaît jamais au rechargement
     setPlanifs(prev => {
       const next = [newPlanif, ...prev.filter(x => String(x.id) !== String(newId))];
       saveLocal(next);
       return next;
     });
-
-    // 2) Persistance cloud (Firestore) si disponible
     if (user && db) {
       try {
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'planifications_retraite', newId.toString()), newPlanif);
@@ -4066,12 +3877,10 @@ export default function App({ appSettings }) {
         alert("Sauvegarde cloud impossible (" + e.message + "). Le rapport reste enregistré localement sur cet appareil.");
       }
     }
-
-    setData(newPlanif); // ← conserve l'id : un nouveau « Enregistrer » met à jour au lieu de dupliquer
+    setData(newPlanif);
     setPreview(newPlanif);
     setPage("dashboard");
   };
-
   const handleDelete = async (e, id) => {
     if (e) e.stopPropagation();
     if (!confirm("Supprimer définitivement cette planification ?")) return;
@@ -4085,15 +3894,12 @@ export default function App({ appSettings }) {
       catch (err) { console.error(err); }
     }
   };
-
   const handleEdit = (e, planif) => {
     if (e) e.stopPropagation();
     setData(planif);
     setPage("create");
   };
-
   const resetForm = () => setData(stateInitial());
-
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <header style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
@@ -4112,7 +3918,6 @@ export default function App({ appSettings }) {
           </nav>
         </div>
       </header>
-
       <main style={{ flex: 1, padding: 40, boxSizing: "border-box", overflowY: "auto", background: C.lightGray }}>
         {page === "dashboard" && (
           <div style={{ maxWidth: 1200, margin: "0 auto" }}>
@@ -4162,7 +3967,6 @@ export default function App({ appSettings }) {
             )}
           </div>
         )}
-
         {page === "create" && (
           <div style={{ maxWidth: 1100, margin: "0 auto" }}>
             <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, margin: "0 0 4px" }}>Collecte R1</h2>
@@ -4171,8 +3975,668 @@ export default function App({ appSettings }) {
           </div>
         )}
       </main>
-
       {preview && <PreviewR1 data={preview} appSettings={appSettings} onClose={() => setPreview(null)} onEdit={(e) => { handleEdit(e, preview); setPreview(null); }} onDelete={async (e) => { await handleDelete(e, preview.id); setPreview(null); }} />}
+    </div>
+  );
+}
+// ============================================================
+// ░░░ ONGLET « PLANIFICATION RETRAITE » — 6 SECTIONS (NOUVEAU) ░░░
+// ============================================================
+function SectionHead({ kicker, title, emphasis, intro }) {
+  return (
+    <div style={{ marginBottom: 22 }}>
+      <div style={{ borderLeft: `4px solid ${C.gold}`, paddingLeft: 16 }}>
+        {kicker && <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 6 }}>{kicker}</div>}
+        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, color: C.primary, fontWeight: 700, margin: 0 }}>{title} {emphasis && <em style={{ color: C.gold, fontStyle: "italic" }}>{emphasis}</em>}</h2>
+      </div>
+      {intro && <p style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, marginTop: 14, maxWidth: 820 }}>{intro}</p>}
+    </div>
+  );
+}
+const printNow = () => window.print();
+function PrintableSheet({ rubrique, children }) {
+  return (
+    <div className="ws-print-area" style={{ width: 794, margin: "0 auto", background: C.white, boxShadow: "0 4px 24px rgba(0,0,0,0.12)" }}>
+      <div style={{ background: C.primary, color: C.white, padding: "16px 48px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontWeight: 800, letterSpacing: "0.34em", fontSize: 15 }}>WALLSWISS</span>
+        <span style={{ fontSize: 10.5, color: "rgba(255,255,255,0.8)" }}>{rubrique}</span>
+      </div>
+      <div style={{ height: 4, background: C.gold }} />
+      <div style={{ padding: "32px 48px 24px", minHeight: 900, boxSizing: "border-box" }}>{children}</div>
+      <div style={{ borderTop: `1px solid ${C.mediumGray}`, margin: "0 48px", padding: "8px 0 18px", fontSize: 8.5, color: C.gray }}>{FIRM.pied}</div>
+    </div>
+  );
+}
+
+// ── Section 1 : QCM ──
+const QUESTIONS = [
+  { q: "À combien d'années êtes-vous de la retraite ?", opts: [["Moins de 15 ans", 2], ["Entre 15 et 25 ans", 1], ["Plus de 25 ans", 0]] },
+  { q: "Savez-vous quel revenu mensuel vous toucherez à la retraite (AVS + LPP + éventuelle retraite française) ?", opts: [["Non, aucune idée précise", 2], ["Une idée approximative", 1], ["Oui, presque au franc près", 0]] },
+  { q: "Avez-vous (ou avez-vous eu) une carrière à la fois en France et en Suisse — frontalier, expatrié ?", opts: [["Oui", 2], ["En partie", 1], ["Non, uniquement la Suisse", 0]] },
+  { q: "Pour votre 2e pilier (LPP), sauriez-vous choisir entre rente et capital, et en mesurer l'impact fiscal ?", opts: [["Non", 2], ["Pas vraiment sûr(e)", 1], ["Oui, clairement", 0]] },
+  { q: "Avez-vous un 3e pilier (3a/3b) et une stratégie de rachats LPP optimisée ?", opts: [["Non, ou je ne sais pas", 2], ["Partiellement", 1], ["Oui, déjà optimisée", 0]] },
+  { q: "Savez-vous quand déclencher vos droits (France et Suisse) pour éviter une décote définitive ?", opts: [["Non", 2], ["Vaguement", 1], ["Oui", 0]] },
+  { q: "En cas de décès, savez-vous ce que toucherait votre conjoint (survivants AVS/LPP, réversion) ?", opts: [["Non", 2], ["Approximativement", 1], ["Oui", 0]] },
+  { q: "Votre couverture santé à la retraite (LAMal / CMU, formulaire S1) est-elle claire pour vous ?", opts: [["Non", 2], ["Un peu", 1], ["Oui", 0]] },
+];
+const VERDICTS = {
+  essentiel: { plage: "11 – 16", titre: "Oui, c'est essentiel.", texte: "Plusieurs décisions irréversibles vous attendent ; une planification peut vous faire gagner des dizaines de milliers d'euros.", color: C.bad },
+  recommande: { plage: "6 – 10", titre: "Oui, c'est recommandé.", texte: "Des angles morts subsistent : un bilan sécurise vos choix avant qu'ils ne deviennent définitifs.", color: C.warn },
+  prepare: { plage: "0 – 5", titre: "Vous semblez bien préparé(e).", texte: "Un second regard ne coûte rien — et confirme que tout est optimisé.", color: C.ok },
+};
+const verdictKey = (s) => (s >= 11 ? "essentiel" : s >= 6 ? "recommande" : "prepare");
+function TestPertinence({ flow, setFlow, goto }) {
+  const [mode, setMode] = useState("interactif");
+  const [answers, setAnswers] = useState(Array(8).fill(null));
+  const answered = answers.filter((a) => a !== null).length;
+  const score = useMemo(() => answers.reduce((s, a) => s + (a !== null ? a : 0), 0), [answers]);
+  const complete = answered === 8;
+  const verdict = VERDICTS[verdictKey(score)];
+  const pick = (qi, p) => setAnswers((a) => { const n = [...a]; n[qi] = p; return n; });
+  const choisirFormule = () => { setFlow((f) => ({ ...f, qcmScore: score, qcmVerdict: verdictKey(score) })); goto("grille"); };
+  return (
+    <div>
+      <div className="ws-no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
+        <SectionHead kicker="Section 1 · Auto-évaluation" title="Faut-il" emphasis="planifier votre retraite ?" intro="Le test en 8 questions — 3 minutes pour le savoir. Score sur 16 et recommandation, puis passage au choix du forfait." />
+        <div style={{ display: "flex", border: `1.5px solid ${C.primary}` }}>
+          {[["interactif", "Interactif"], ["papier", "Version papier (DA)"]].map(([k, l]) => (<button key={k} onClick={() => setMode(k)} style={{ background: mode === k ? C.primary : C.white, color: mode === k ? C.white : C.primary, border: "none", padding: "9px 16px", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 700 }}>{l}</button>))}
+        </div>
+      </div>
+      {mode === "interactif" ? (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20, alignItems: "start" }}>
+          <div>
+            {QUESTIONS.map((item, qi) => (
+              <div key={qi} style={{ ...S.card, marginBottom: 14 }}>
+                <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                  <span style={{ width: 26, height: 26, flexShrink: 0, background: answers[qi] !== null ? C.primary : C.lightGray, color: answers[qi] !== null ? C.white : C.gray, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 13 }}>{qi + 1}</span>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.darkGray, lineHeight: 1.4, paddingTop: 3 }}>{item.q}</div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {item.opts.map(([label, pts]) => { const sel = answers[qi] === pts; return (
+                    <button key={label} onClick={() => pick(qi, pts)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, textAlign: "left", padding: "11px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: 13, border: `1.5px solid ${sel ? C.primary : C.mediumGray}`, background: sel ? "rgba(105,33,2,0.05)" : C.white, color: sel ? C.primary : C.darkGray, fontWeight: sel ? 700 : 500 }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 10 }}><span style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${sel ? C.primary : C.mediumGray}`, background: sel ? C.primary : C.white, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{sel && <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.white }} />}</span>{label}</span>
+                      <span style={{ fontSize: 11, color: C.gray }}>({pts})</span>
+                    </button>); })}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ position: "sticky", top: 16 }}>
+            <div style={{ background: C.primary, color: C.white, padding: 22 }}>
+              <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase" }}>Votre score</div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6, margin: "6px 0 10px" }}><span style={{ fontSize: 46, fontWeight: 900, lineHeight: 1 }}>{score}</span><span style={{ fontSize: 20, fontWeight: 700, opacity: 0.7 }}>/ 16</span></div>
+              <div style={{ height: 8, background: "rgba(255,255,255,0.2)", marginBottom: 6 }}><div style={{ height: "100%", width: `${(score / 16) * 100}%`, background: C.gold }} /></div>
+              <div style={{ fontSize: 11, opacity: 0.85 }}>{answered} / 8 questions répondues</div>
+            </div>
+            <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, borderTop: `4px solid ${verdict.color}`, padding: 18 }}>
+              <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, marginBottom: 4 }}>Plage {verdict.plage}</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: verdict.color, marginBottom: 6 }}>{verdict.titre}</div>
+              <div style={{ fontSize: 12.5, color: C.darkGray, lineHeight: 1.55 }}>{verdict.texte}</div>
+              {!complete && <div style={{ marginTop: 10, fontSize: 11, color: C.gray, fontStyle: "italic" }}>Score provisoire — répondez aux 8 questions.</div>}
+            </div>
+            <button onClick={choisirFormule} style={{ ...S.btnP, width: "100%", justifyContent: "center", marginTop: 12, padding: "14px 20px", fontSize: 14 }}>Choisir la formule pour le client <Icons.ArrowRight size={17} color={C.white} /></button>
+            <button onClick={() => setAnswers(Array(8).fill(null))} style={{ ...S.btnS, width: "100%", justifyContent: "center", marginTop: 8, border: `1.5px solid ${C.mediumGray}`, color: C.gray }}>Réinitialiser</button>
+            <div style={{ background: "rgba(165,149,104,0.12)", borderLeft: `4px solid ${C.gold}`, padding: 12, marginTop: 12, fontSize: 11, color: C.darkGray, lineHeight: 1.5 }}><strong style={{ color: C.gold }}>★ Le premier pas est gratuit.</strong> Le premier rendez-vous (R1) est offert et sans engagement.</div>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div className="ws-no-print" style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+            <button onClick={printNow} style={S.btnP}><Icons.Printer size={16} color={C.white} /> Imprimer / Enregistrer en PDF</button>
+            <span style={{ fontSize: 12, color: C.gray, alignSelf: "center" }}>Version vierge pour les clients « papier » (DA WallSwiss).</span>
+          </div>
+          <QcmPapier />
+        </div>
+      )}
+    </div>
+  );
+}
+function QcmPapier() {
+  return (
+    <PrintableSheet rubrique="Planification Retraite · Auto-évaluation">
+      <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 30, color: C.primary, fontWeight: 700 }}>Faut-il planifier votre retraite ?</div>
+      <div style={{ fontStyle: "italic", color: C.gray, fontSize: 13, marginTop: 2, marginBottom: 12 }}>Le test en 8 questions — 3 minutes pour le savoir.</div>
+      <div style={{ height: 2, background: C.gold, width: 90, marginBottom: 14 }} />
+      <p style={{ fontSize: 11.5, color: C.darkGray, lineHeight: 1.55, marginTop: 0 }}>Cochez la réponse qui vous correspond et notez les points entre parenthèses. Faites le total : vous saurez si une planification est <strong>essentielle dans votre situation</strong>.</p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 28px" }}>
+        {QUESTIONS.map((item, qi) => (
+          <div key={qi} style={{ marginBottom: 8, breakInside: "avoid" }}>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: C.primary, marginBottom: 4 }}>{qi + 1}. {item.q}</div>
+            {item.opts.map(([label, pts]) => (<div key={label} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, color: C.darkGray, padding: "1px 0" }}><span style={{ width: 11, height: 11, border: `1.4px solid ${C.darkGray}`, display: "inline-block", flexShrink: 0 }} />{label} <span style={{ color: C.gray }}>({pts})</span></div>))}
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop: 12, fontSize: 13, fontWeight: 700, color: C.primary }}>Votre score : ________ / 16</div>
+      <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8, fontSize: 11 }}>
+        <thead><tr style={{ background: C.primary, color: C.white }}><th style={{ padding: "6px 10px", textAlign: "left", width: 90 }}>Votre total</th><th style={{ padding: "6px 10px", textAlign: "left" }}>Ce que cela signifie pour vous</th></tr></thead>
+        <tbody>{Object.values(VERDICTS).map((v, i) => (<tr key={i} style={{ background: i % 2 ? "rgba(105,33,2,0.03)" : C.white, borderBottom: `1px solid ${C.lightGray}` }}><td style={{ padding: "7px 10px", fontWeight: 700, color: C.darkGray }}>{v.plage}</td><td style={{ padding: "7px 10px", color: C.darkGray }}><strong>{v.titre}</strong> {v.texte}</td></tr>))}</tbody>
+      </table>
+      <div style={{ marginTop: 12, background: "rgba(165,149,104,0.14)", borderLeft: `4px solid ${C.gold}`, padding: 12, fontSize: 11, color: C.darkGray, lineHeight: 1.55 }}><strong style={{ color: C.gold }}>★ DANS TOUS LES CAS, LE PREMIER PAS EST GRATUIT.</strong> Le premier rendez-vous (R1) est offert et sans engagement.</div>
+    </PrintableSheet>
+  );
+}
+
+// ── Section 2 : Grille tarifaire ──
+const FORFAITS = [
+  { id: "Essentiel", prix: 590, pour: "Personne seule, situation standard", inclus: "Analyse des 3 piliers (+ volet France si frontalier), 1 scénario, rapport + restitution" },
+  { id: "Duo", prix: 890, pour: "Couple / partenaires", inclus: "Étude pour deux, coordination des dates de départ, 1 scénario commun, rapport + restitution" },
+  { id: "Premium", prix: 1390, pour: "Patrimoine ou situation complexe", inclus: "Multi-scénarios (départ anticipé, rente/capital…), rapport, restitution + 1 RDV de suivi" },
+];
+const OPTIONS = [
+  { id: "scenario", label: "Scénario supplémentaire", desc: "Variante d'âge de départ ou rente/capital", prix: 150, unit: "" },
+  { id: "personne", label: "Personne supplémentaire", desc: "Membre du foyer intégré à l'étude", prix: 250, unit: "" },
+  { id: "locatif", label: "Bien locatif additionnel", desc: "Analyse d'un bien de rendement (par bien)", prix: 100, unit: "" },
+  { id: "maj", label: "Mise à jour annuelle", desc: "Révision (changement de situation ou de loi)", prix: 200, unit: "/ an" },
+  { id: "suivi", label: "Rendez-vous de suivi", desc: "Au-delà de ceux inclus dans le forfait", prix: 130, unit: "" },
+];
+const COMPLEX_FLAGS = ["Indépendant / dirigeant", "Immobilier locatif", "Plusieurs caisses de pension", "Gros patrimoine", "Frontalier à arbitrages multiples", "Transmission / succession"];
+function GrilleTarifaire({ flow, setFlow, goto }) {
+  const [persons, setPersons] = useState("");
+  const [complexFlags, setComplexFlags] = useState([]);
+  const [scenarios, setScenarios] = useState("");
+  const [qty, setQty] = useState({});
+  const toggleFlag = (f) => setComplexFlags((a) => (a.includes(f) ? a.filter((x) => x !== f) : [...a, f]));
+  const reco = useMemo(() => {
+    if (!persons && complexFlags.length === 0 && !scenarios) return null;
+    const complex = complexFlags.length > 0, multi = scenarios === "oui";
+    if (complex || multi) return { id: "Premium", raison: complex ? `Situation complexe (${complexFlags.join(", ")}).` : "Plusieurs scénarios ou suivi souhaité." };
+    if (persons === "couple") return { id: "Duo", raison: "Couple / partenaires, situation standard." };
+    if (persons === "seule") return { id: "Essentiel", raison: "Personne seule, situation standard." };
+    return null;
+  }, [persons, complexFlags, scenarios]);
+  const selected = flow.forfait;
+  const choose = (id, source = "manuel") => setFlow((f) => ({ ...f, forfait: id, forfaitSource: source }));
+  const fObj = FORFAITS.find((x) => x.id === selected);
+  const optionsTotal = OPTIONS.reduce((s, o) => s + (qty[o.id] || 0) * o.prix, 0);
+  const total = (fObj ? fObj.prix : 0) + optionsTotal;
+  return (
+    <div>
+      <SectionHead kicker="Section 2 · Honoraires 2026" title="Grille tarifaire" emphasis="& aide au choix" intro="Le forfait reflète la complexité réelle du dossier : nombre de personnes, scénarios à comparer, besoin de suivi. Le R1 est offert et sans engagement." />
+      {flow.qcmScore != null && (<div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(105,33,2,0.05)", borderLeft: `4px solid ${C.primary}`, padding: "10px 14px", marginBottom: 16, fontSize: 12.5, color: C.darkGray }}><Icons.Check size={16} color={C.primary} /> Test de pertinence : <strong>{flow.qcmScore}/16</strong> — choisissez le forfait adapté.</div>)}
+      <div style={{ ...S.card, borderTop: `4px solid ${C.gold}` }}>
+        <div style={S.cardTitle}><div style={S.dot} /> Aide au choix — 3 réflexes</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 18 }}>
+          <div><div style={{ fontSize: 12, fontWeight: 800, color: C.primary, marginBottom: 8 }}>1 · Combien de personnes ?</div>{[["seule", "Une seule personne", "→ Essentiel"], ["couple", "Couple / partenaires", "→ Duo"]].map(([v, l, h]) => <Choice key={v} active={persons === v} onClick={() => setPersons(v)} label={l} hint={h} />)}</div>
+          <div><div style={{ fontSize: 12, fontWeight: 800, color: C.primary, marginBottom: 8 }}>2 · Situation complexe ?</div><div style={{ fontSize: 10.5, color: C.gray, marginBottom: 6 }}>Cochez ce qui s'applique → Premium</div>{COMPLEX_FLAGS.map((f) => (<label key={f} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", fontSize: 12, color: C.darkGray, cursor: "pointer" }}><input type="checkbox" checked={complexFlags.includes(f)} onChange={() => toggleFlag(f)} style={{ accentColor: C.primary, width: 15, height: 15 }} />{f}</label>))}</div>
+          <div><div style={{ fontSize: 12, fontWeight: 800, color: C.primary, marginBottom: 8 }}>3 · Plusieurs scénarios ou un suivi ?</div>{[["oui", "Oui (comparer / suivre)", "→ Premium"], ["non", "Non, un seul scénario", "→ Essentiel/Duo"]].map(([v, l, h]) => <Choice key={v} active={scenarios === v} onClick={() => setScenarios(v)} label={l} hint={h} />)}</div>
+        </div>
+        {reco && (<div style={{ marginTop: 16, background: C.primary, color: C.white, padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}><div><div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>Forfait recommandé</div><div style={{ fontSize: 22, fontWeight: 900 }}>{reco.id} — CHF {fmt(FORFAITS.find((x) => x.id === reco.id).prix)}</div><div style={{ fontSize: 11.5, opacity: 0.85, marginTop: 2 }}>{reco.raison}</div></div><button onClick={() => choose(reco.id, "selecteur")} style={{ background: selected === reco.id ? C.ok : C.gold, color: C.white, border: "none", padding: "12px 22px", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 8 }}>{selected === reco.id ? <><Icons.Check size={16} color={C.white} /> Forfait retenu</> : "Adopter ce forfait"}</button></div>)}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
+        {FORFAITS.map((f) => { const isSel = selected === f.id, isReco = reco?.id === f.id; return (
+          <div key={f.id} onClick={() => choose(f.id)} style={{ background: C.white, border: `1px solid ${isSel ? C.primary : C.mediumGray}`, borderTop: `5px solid ${isSel ? C.primary : C.gold}`, padding: 20, cursor: "pointer", position: "relative", boxShadow: isSel ? "0 6px 24px rgba(105,33,2,0.14)" : "none" }}>
+            {isReco && <span style={{ position: "absolute", top: -11, right: 14, background: C.gold, color: C.white, fontSize: 9, fontWeight: 800, padding: "3px 9px", letterSpacing: "0.08em", display: "inline-flex", alignItems: "center", gap: 4 }}><Icons.Star size={10} color={C.white} /> RECOMMANDÉ</span>}
+            <div style={{ fontSize: 17, fontWeight: 900, color: C.primary }}>{f.id}</div>
+            <div style={{ fontSize: 11, color: C.gray, minHeight: 32, marginTop: 2 }}>{f.pour}</div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: "10px 0" }}><span style={{ fontSize: 30, fontWeight: 900, color: C.primaryDark }}>{fmt(f.prix)}</span><span style={{ fontSize: 13, color: C.gray, fontWeight: 700 }}>CHF</span></div>
+            <div style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.5, minHeight: 72 }}>{f.inclus}</div>
+            <div style={{ marginTop: 12, padding: "9px 0", textAlign: "center", border: `1.5px solid ${isSel ? C.primary : C.mediumGray}`, color: isSel ? C.white : C.primary, background: isSel ? C.primary : C.white, fontSize: 12.5, fontWeight: 700 }}>{isSel ? "✓ Sélectionné" : "Choisir ce forfait"}</div>
+          </div>); })}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 16 }}>
+        <div style={S.card}>
+          <div style={S.cardTitle}><div style={S.dot} /> Options</div>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
+            <thead><tr style={{ background: C.primary, color: C.white }}><th style={{ padding: "8px 10px", textAlign: "left" }}>Option</th><th style={{ padding: "8px 10px", textAlign: "left" }}>Description</th><th style={{ padding: "8px 10px", textAlign: "right" }}>CHF</th><th style={{ padding: "8px 10px", textAlign: "center", width: 92 }}>Nb</th></tr></thead>
+            <tbody>{OPTIONS.map((o, i) => (<tr key={o.id} style={{ borderBottom: `1px solid ${C.lightGray}`, background: i % 2 ? "rgba(105,33,2,0.02)" : C.white }}><td style={{ padding: "8px 10px", fontWeight: 700, color: C.darkGray }}>{o.label}</td><td style={{ padding: "8px 10px", color: C.gray, fontSize: 11.5 }}>{o.desc}</td><td style={{ padding: "8px 10px", textAlign: "right", whiteSpace: "nowrap", fontWeight: 700, color: C.primary }}>+ {fmt(o.prix)} {o.unit}</td><td style={{ padding: "8px 10px", textAlign: "center" }}><input type="number" min="0" value={qty[o.id] || 0} onChange={(e) => setQty((q) => ({ ...q, [o.id]: Math.max(0, parseInt(e.target.value || "0", 10)) }))} style={{ width: 56, padding: "5px 6px", border: `1.5px solid ${C.mediumGray}`, fontFamily: "inherit", textAlign: "center" }} /></td></tr>))}</tbody>
+          </table>
+        </div>
+        <div>
+          <div style={{ background: C.primaryDark, color: C.white, padding: 18 }}>
+            <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>Estimation indicative</div>
+            <Line k={`Forfait ${selected || "—"}`} v={fObj ? `CHF ${fmt(fObj.prix)}` : "—"} />
+            {OPTIONS.filter((o) => qty[o.id] > 0).map((o) => <Line key={o.id} k={`${o.label} × ${qty[o.id]}`} v={`CHF ${fmt(qty[o.id] * o.prix)}`} small />)}
+            <div style={{ height: 1, background: "rgba(255,255,255,0.2)", margin: "10px 0" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}><span style={{ fontSize: 12, fontWeight: 700 }}>TOTAL</span><span style={{ fontSize: 24, fontWeight: 900, color: C.gold }}>CHF {fmt(total)}</span></div>
+            <div style={{ fontSize: 9.5, opacity: 0.7, marginTop: 6 }}>TVA incluse · R1 offert · tarifs indicatifs 2026</div>
+          </div>
+          <button disabled={!selected} onClick={() => goto("gabarit")} style={{ ...S.btnGold, width: "100%", justifyContent: "center", marginTop: 12, padding: "14px 18px", fontSize: 13.5, opacity: selected ? 1 : 0.5, cursor: selected ? "pointer" : "not-allowed" }}>Voir le plan témoin {selected || ""} <Icons.ArrowRight size={16} color={C.white} /></button>
+          {!selected && <div style={{ fontSize: 11, color: C.gray, textAlign: "center", marginTop: 6 }}>Sélectionnez d'abord un forfait.</div>}
+        </div>
+      </div>
+      <div style={{ ...S.card, background: "rgba(165,149,104,0.08)", borderLeft: `4px solid ${C.gold}`, marginTop: 16 }}>
+        <div style={{ fontSize: 12, fontWeight: 800, color: C.primary, marginBottom: 8 }}>Comment choisir — en 3 réflexes</div>
+        <div style={{ fontSize: 12.5, color: C.darkGray, lineHeight: 1.6 }}>Le forfait reflète la <strong>complexité réelle du dossier</strong>.<ol style={{ margin: "8px 0 0", paddingLeft: 20 }}><li><strong>Combien de personnes ?</strong> Une seule → <strong>Essentiel</strong> ; couple → <strong>Duo</strong>.</li><li><strong>Situation complexe ?</strong> Indépendant, locatif, plusieurs caisses, gros patrimoine, frontalier à arbitrages multiples, transmission → <strong>Premium</strong>.</li><li><strong>Plusieurs scénarios ou un suivi ?</strong> → <strong>Premium</strong> (multi-scénarios + 1 RDV de suivi).</li></ol></div>
+      </div>
+      <div style={{ ...S.card, marginTop: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 800, color: C.primary, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: C.gold }} /> Conditions</div>
+        <div style={{ fontSize: 12, color: C.darkGray, lineHeight: 1.6 }}>Le <strong>R1 est offert</strong> et sans engagement. Prix en CHF, <strong>TVA incluse</strong>. L'étude est <strong>déductible d'un futur mandat de gestion</strong>. Un <strong>mandat de gestion signé</strong> est requis avant la mise en place d'un 3e pilier.<div style={{ fontSize: 10.5, color: C.gray, fontStyle: "italic", marginTop: 6 }}>Tarifs indicatifs 2026, susceptibles d'évoluer. Détail définitif dans l'offre personnalisée remise au R1.</div></div>
+      </div>
+    </div>
+  );
+}
+function Choice({ active, onClick, label, hint }) {
+  return (<button onClick={onClick} style={{ width: "100%", textAlign: "left", padding: "9px 12px", marginBottom: 6, cursor: "pointer", fontFamily: "inherit", border: `1.5px solid ${active ? C.primary : C.mediumGray}`, background: active ? "rgba(105,33,2,0.05)" : C.white, display: "flex", flexDirection: "column", gap: 1 }}><span style={{ fontSize: 12.5, fontWeight: active ? 700 : 500, color: active ? C.primary : C.darkGray }}>{label}</span><span style={{ fontSize: 10.5, color: C.gray }}>{hint}</span></button>);
+}
+function Line({ k, v, small }) {
+  return <div style={{ display: "flex", justifyContent: "space-between", fontSize: small ? 11 : 12.5, marginBottom: 5, opacity: small ? 0.85 : 1 }}><span>{k}</span><span style={{ fontWeight: 700 }}>{v}</span></div>;
+}
+
+// ── Section 3 : Guide de formation ──
+const BOOK_PDF = "/Book_Planification_Retraite_V15.pdf";
+const CHAPITRES = [
+  { id: "systeme", num: 1, titre: "Le système franco-suisse en un coup d'œil", duree: 6, objectif: "Poser le cadre : 3 piliers suisses + régime français, et pourquoi la coordination change tout.", points: ["Suisse : AVS (1er), LPP (2e), 3e pilier individuel.", "France : base CNAV + complémentaire Agirc-Arrco par points.", "Convention CH-FR : totalisation des périodes (E-205).", "Les angles morts naissent à la jonction : fiscalité, santé, calendrier."], aRetenir: "Un seul dossier croisé, jamais deux retraites séparées." },
+  { id: "avs", num: 2, titre: "1er pilier — AVS", duree: 8, objectif: "Calcul de la rente AVS et leviers anticipation / ajournement.", points: ["Carrière complète = 44 ans ; max 2026 ≈ 2'520, min ≈ 1'260 CHF/mois.", "13e rente AVS dès décembre 2026 (AVS21).", "Anticipation −6,8 %/an (max 2 ans) ; ajournement +5,2 % à +31,5 %.", "Splitting couples mariés + bonifications.", "Chiffre non opposable : exiger l'extrait CI."], aRetenir: "Ne jamais anticiper l'AVS sans calcul." },
+  { id: "lpp", num: 3, titre: "2e pilier — LPP", duree: 10, objectif: "Capital, taux de conversion et mécanique des rachats.", points: ["Capital → rente via le taux de conversion (LPP21 à la baisse).", "Rachats (art. 79b) : déductibles, blocage 3 ans avant un retrait en capital.", "Vérifier le taux de couverture de la caisse.", "Recenser les avoirs de libre passage.", "Réversion conjoint ≈ 60 %."], aRetenir: "Séquence : rachats → arrêt ≥ 3 ans → retrait. Préavis caisse ~12 mois." },
+  { id: "3p", num: 4, titre: "3e pilier — 3a / 3b", duree: 7, objectif: "Cotisations, échelonnement des retraits, clause bénéficiaire.", points: ["Plafond 3a 2026 : 7'258 (avec LPP) ; indépendant jusqu'à 36'288.", "Frontalier : déduction 3a conditionnée au quasi-résident.", "Échelonner les retraits sur plusieurs comptes / années.", "Retrait au plus tôt 5 ans avant l'âge AVS.", "Vérifier la clause bénéficiaire."], aRetenir: "Plusieurs comptes 3a clôturés sur des années différentes = impôt réduit." },
+  { id: "france", num: 5, titre: "La retraite française", duree: 9, objectif: "Lire un RIS et arbitrer départ au plus tôt vs taux plein.", points: ["CNAV = SAM × taux (50 % − décote 1,25 %/trim, plafond 20) × prorata.", "Agirc-Arrco = points × valeur ; minoration −10 % (3 ans) sans taux plein.", "Réforme 2023 : âge légal 64, taux plein auto 67.", "Totalisation CH-FR (E-205).", "RIS gratuit sur info-retraite.fr."], aRetenir: "Toujours comparer tôt vs taux plein avec le point mort." },
+  { id: "rente-capital", num: 6, titre: "Rente ou capital ? L'arbitrage central", duree: 8, objectif: "Méthode de décision sur la sortie LPP.", points: ["Rente = revenu à vie, couvre la longévité, imposée chaque année.", "Capital = liquidité, transmissible, fiscalité unique réduite.", "Mixte (50/50) pour équilibrer.", "Décision irréversible : selon tolérance au risque et objectifs."], aRetenir: "Le « net total » le plus élevé n'est pas toujours le bon choix." },
+  { id: "sante", num: 7, titre: "Santé à la retraite (LAMal / CMU)", duree: 8, objectif: "Le droit d'option santé, arbitrage le plus structurant.", points: ["LAMal maintenue / CMU / régime avec CSG-CRDS-CASA (jusqu'à 9,1 %).", "Décision définitive sous 3 mois — vigilance N−2.", "Conserver la LAMal l'année d'un capital LPP.", "Formulaire S1 ; E-205 via caisse / CPAM."], aRetenir: "Le bon choix santé = des dizaines de milliers d'euros (cas BEL : ~22'000 €)." },
+  { id: "fiscalite", num: 8, titre: "Fiscalité transfrontalière", duree: 7, objectif: "Imposition CH vs FR du capital et de la rente + change.", points: ["Capital LPP : barème séparé réduit en CH (≈ 5 % GE) ; PFL 7,5 % côté FR sous conditions.", "Rente : imposée chaque année au barème du pays de résidence.", "Quasi-résident (≥ 90 % revenus en CH).", "Change EUR/CHF de référence : 0,92 (BNS, 2026)."], aRetenir: "La résidence fiscale au retrait change radicalement le net." },
+  { id: "calendrier", num: 9, titre: "Le bon calendrier", duree: 6, objectif: "Éviter décotes définitives et délais ratés.", points: ["Sortie LPP : annoncer ~12 mois avant.", "Rente AVS : demander ≥ 3 mois avant l'âge ordinaire.", "Pensions FR : demande unique via info-retraite.fr.", "Caler le calendrier des deux pays."], aRetenir: "Beaucoup de pertes = un simple retard de démarche." },
+  { id: "patrimoine", num: 10, titre: "Patrimoine & décumulation", duree: 8, objectif: "Transformer un capital en revenu durable.", points: ["Règle des 4 % (≈ 4'000 CHF/mois sur 1 M).", "Architecture en 4 poches / tirelires par horizon.", "Immobilier : tenue de charges post-retraite.", "Frais bas = performance préservée (cas Oberson)."], aRetenir: "La décumulation se pilote : 3 ans de liquidités + poche dynamique long terme." },
+  { id: "prevoyance", num: 11, titre: "Prévoyance risques & succession", duree: 6, objectif: "Protéger le conjoint, organiser la transmission.", points: ["Survivants AVS/LPP et réversion.", "Clauses bénéficiaires 3a/3b à jour.", "Loi applicable : Règlement UE 650/2012.", "LAA cesse à la retraite : assurance accident privée."], aRetenir: "La protection du conjoint se vérifie AVANT le départ." },
+  { id: "methode", num: 12, titre: "Méthode WallSwiss & cas clients", duree: 7, objectif: "Dérouler R1 → R2 et reconnaître l'archétype.", points: ["Règle d'or : tout chiffre vient d'une pièce officielle.", "R1 (audit, offert) → étude → R2 → action & suivi.", "6 archétypes repères (frontalière, couple, cadre, indépendant, retraité, propriétaire).", "Repères, pas des cases."], aRetenir: "Rattacher vite le client à l'archétype le plus proche." },
+];
+const TOTAL_DUREE = CHAPITRES.reduce((s, c) => s + c.duree, 0);
+function GuideFormation() {
+  const [mode, setMode] = useState("lecture");
+  const [activeId, setActiveId] = useState(CHAPITRES[0].id);
+  const [query, setQuery] = useState("");
+  const [lus, setLus] = useState(() => new Set());
+  const filtered = useMemo(() => { const q = query.trim().toLowerCase(); return q ? CHAPITRES.filter((c) => (c.titre + " " + c.objectif + " " + c.points.join(" ")).toLowerCase().includes(q)) : CHAPITRES; }, [query]);
+  const active = CHAPITRES.find((c) => c.id === activeId) || CHAPITRES[0];
+  const idx = CHAPITRES.findIndex((c) => c.id === activeId);
+  const pct = Math.round((lus.size / CHAPITRES.length) * 100);
+  const toggleLu = (id) => setLus((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const go = (d) => { const ni = Math.min(CHAPITRES.length - 1, Math.max(0, idx + d)); setActiveId(CHAPITRES[ni].id); };
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
+        <SectionHead kicker="Guide de formation conseiller" title="Le Book" emphasis="Planification Retraite" intro="Navigation rapide par chapitres pour réviser un point en quelques secondes — ou lecture intégrale dans le Book PDF." />
+        <div style={{ display: "flex", border: `1.5px solid ${C.primary}` }}>{[["lecture", "Lecture interactive", Icons.Book], ["pdf", "Book PDF", Icons.FileText]].map(([k, l, I]) => (<button key={k} onClick={() => setMode(k)} style={{ background: mode === k ? C.primary : C.white, color: mode === k ? C.white : C.primary, border: "none", padding: "9px 15px", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 700, display: "flex", alignItems: "center", gap: 7 }}><I size={15} color={mode === k ? C.white : C.primary} /> {l}</button>))}</div>
+      </div>
+      {mode === "lecture" ? (
+        <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 18, alignItems: "start" }}>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, position: "sticky", top: 16 }}>
+            <div style={{ padding: 14, borderBottom: `1px solid ${C.lightGray}` }}>
+              <div style={{ position: "relative" }}><span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", display: "flex" }}><Icons.Search size={15} color={C.gray} /></span><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un chapitre…" style={{ ...S.input, paddingLeft: 32 }} /></div>
+              <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", fontSize: 10.5, color: C.gray, fontWeight: 600 }}><span>Progression</span><span>{lus.size}/{CHAPITRES.length} · {TOTAL_DUREE} min</span></div>
+              <div style={{ height: 6, background: C.lightGray, marginTop: 4 }}><div style={{ height: "100%", width: `${pct}%`, background: C.ok }} /></div>
+            </div>
+            <div style={{ maxHeight: 520, overflowY: "auto" }}>{filtered.map((c) => { const a = c.id === activeId, lu = lus.has(c.id); return (<button key={c.id} onClick={() => setActiveId(c.id)} style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: "none", borderLeft: `3px solid ${a ? C.gold : "transparent"}`, borderBottom: `1px solid ${C.lightGray}`, background: a ? "rgba(105,33,2,0.05)" : C.white, cursor: "pointer", fontFamily: "inherit" }}><span style={{ width: 24, height: 24, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: lu ? C.ok : a ? C.primary : C.lightGray, color: lu || a ? C.white : C.gray, fontSize: 11, fontWeight: 800 }}>{lu ? <Icons.Check size={13} color={C.white} /> : c.num}</span><span style={{ flex: 1 }}><span style={{ display: "block", fontSize: 12.5, fontWeight: a ? 700 : 600, color: a ? C.primary : C.darkGray, lineHeight: 1.25 }}>{c.titre}</span><span style={{ fontSize: 10, color: C.gray }}>{c.duree} min</span></span></button>); })}</div>
+          </div>
+          <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 28 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 4 }}><span style={{ fontSize: 11, color: C.gold, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>Chapitre {active.num} · {active.duree} min</span><button onClick={() => toggleLu(active.id)} style={{ ...S.btnS, padding: "7px 14px", fontSize: 11.5, border: `1.5px solid ${lus.has(active.id) ? C.ok : C.mediumGray}`, color: lus.has(active.id) ? C.ok : C.gray }}>{lus.has(active.id) ? <><Icons.Check size={14} color={C.ok} /> Lu</> : "Marquer comme lu"}</button></div>
+            <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, color: C.primary, fontWeight: 700, margin: "2px 0 14px" }}>{active.titre}</h3>
+            <div style={{ background: "rgba(105,33,2,0.04)", borderLeft: `4px solid ${C.primary}`, padding: 14, fontSize: 13, color: C.darkGray, lineHeight: 1.6, marginBottom: 18 }}><strong style={{ color: C.primary }}>Objectif.</strong> {active.objectif}</div>
+            <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Points clés</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>{active.points.map((p, i) => (<div key={i} style={{ display: "flex", gap: 11, fontSize: 13.5, color: C.darkGray, lineHeight: 1.5 }}><span style={{ width: 22, height: 22, flexShrink: 0, background: C.lightGray, color: C.primary, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 11 }}>{i + 1}</span><span>{p}</span></div>))}</div>
+            <div style={{ background: "rgba(165,149,104,0.14)", borderLeft: `4px solid ${C.gold}`, padding: 14, fontSize: 13, color: C.darkGray, lineHeight: 1.55 }}><strong style={{ color: C.gold }}>À retenir.</strong> {active.aRetenir}</div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 22, paddingTop: 16, borderTop: `1px solid ${C.lightGray}` }}><button onClick={() => go(-1)} disabled={idx === 0} style={{ ...S.btnS, padding: "9px 16px", opacity: idx === 0 ? 0.4 : 1 }}><Icons.ChevronLeft size={15} color={C.primary} /> Précédent</button><button onClick={() => setMode("pdf")} style={{ background: "transparent", border: "none", color: C.gray, fontSize: 12, cursor: "pointer", fontFamily: "inherit", textDecoration: "underline" }}>Texte intégral dans le Book PDF</button><button onClick={() => go(1)} disabled={idx === CHAPITRES.length - 1} style={{ ...S.btnP, padding: "9px 16px", opacity: idx === CHAPITRES.length - 1 ? 0.4 : 1 }}>Suivant <Icons.ChevronRight size={15} color={C.white} /></button></div>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}><div style={{ fontSize: 13, color: C.darkGray }}><strong>Book Planification Retraite — V15</strong></div><a href={BOOK_PDF} download style={{ ...S.btnP, textDecoration: "none" }}><Icons.Download size={16} color={C.white} /> Télécharger le PDF</a></div>
+          <div style={{ border: `1px solid ${C.mediumGray}`, background: C.white, height: 720 }}><object data={BOOK_PDF} type="application/pdf" width="100%" height="100%"><div style={{ padding: 40, textAlign: "center", color: C.gray }}><Icons.FileText size={40} color={C.mediumGray} /><p style={{ fontSize: 13, marginTop: 12 }}>Déposez <code>Book_Planification_Retraite_V15.pdf</code> dans <code>/public</code> (ou ajustez <code>BOOK_PDF</code>).</p></div></object></div>
+        </div>
+      )}
+      <div style={{ marginTop: 16, background: "rgba(0,85,164,0.06)", borderLeft: `4px solid ${C.france}`, padding: 12, fontSize: 11.5, color: C.darkGray, lineHeight: 1.55 }}><strong style={{ color: C.france }}>Note.</strong> Synthèses alignées sur la méthodologie WallSwiss ; le Book PDF intégré fait foi. Chapitres éditables dans <code>CHAPITRES</code>.</div>
+    </div>
+  );
+}
+
+// ── Section 4 : Gabarit (relié à TON rapport) ──
+const REPORT_PAGES = [
+  { titre: "Page de garde", part: "Ouverture", tiers: "EDP" }, { titre: "Sommaire", part: "Ouverture", tiers: "EDP" }, { titre: "WallSwiss — votre partenaire", part: "Ouverture", tiers: "EDP" },
+  { titre: "Profil & objectifs", part: "1 · Diagnostic & droits", tiers: "EDP" }, { titre: "Cartographie de vos droits", part: "1 · Diagnostic & droits", tiers: "EDP" }, { titre: "Vue d'ensemble — revenu projeté", part: "1 · Diagnostic & droits", tiers: "EDP" }, { titre: "Temple des revenus", part: "1 · Diagnostic & droits", tiers: "EDP" },
+  { titre: "1er pilier — AVS", part: "2 · Prévoyance suisse", tiers: "EDP" }, { titre: "2e pilier — LPP", part: "2 · Prévoyance suisse", tiers: "EDP" }, { titre: "3e pilier — 3a + 3b", part: "2 · Prévoyance suisse", tiers: "EDP" }, { titre: "3 scénarios de sortie LPP", part: "2 · Prévoyance suisse", tiers: "P", tag: "multi-scénarios" },
+  { titre: "Pensions FR — tôt vs taux plein", part: "3 · Volet FR & fiscalité", tiers: "EDP", cond: "fr" }, { titre: "Arbitrage santé / fiscalité", part: "3 · Volet FR & fiscalité", tiers: "EDP" }, { titre: "Fiscalité transfrontalière (CH vs FR)", part: "3 · Volet FR & fiscalité", tiers: "P", tag: "multi-scénarios" }, { titre: "Vue complète — conjoint(e)", part: "3 · Volet FR & fiscalité", tiers: "DP", cond: "couple" },
+  { titre: "Patrimoine global", part: "4 · Patrimoine", tiers: "EDP" }, { titre: "Pré-allocation par horizon (4 poches)", part: "4 · Patrimoine", tiers: "DP" }, { titre: "Projection annuelle", part: "4 · Patrimoine", tiers: "EDP" }, { titre: "Évolution du patrimoine", part: "4 · Patrimoine", tiers: "DP" }, { titre: "Heatmap — âge de départ", part: "4 · Patrimoine", tiers: "P", tag: "multi-scénarios" }, { titre: "Train de vie mensuel", part: "4 · Patrimoine", tiers: "EDP" },
+  { titre: "Solutions recommandées", part: "5 · Stratégie & exécution", tiers: "P" }, { titre: "Nos partenaires (A→Z)", part: "5 · Stratégie & exécution", tiers: "DP" }, { titre: "Leviers d'optimisation", part: "5 · Stratégie & exécution", tiers: "EDP" }, { titre: "Fiche sortie en capital", part: "5 · Stratégie & exécution", tiers: "EDP" }, { titre: "Plan d'actions calendaire", part: "5 · Stratégie & exécution", tiers: "EDP" }, { titre: "Gain total du conseil", part: "5 · Stratégie & exécution", tiers: "P" },
+  { titre: "Hypothèses retenues", part: "6 · Annexes", tiers: "EDP" }, { titre: "Documents pour le R2", part: "6 · Annexes", tiers: "EDP" }, { titre: "Espace notes", part: "6 · Annexes", tiers: "EDP" }, { titre: "Avertissement légal", part: "6 · Annexes", tiers: "EDP" }, { titre: "Contact & prochaines étapes", part: "6 · Annexes", tiers: "EDP" },
+];
+const TIER_CODE = { Essentiel: "E", Duo: "D", Premium: "P" };
+function tierPages(forfait, { couple, fr }) { const c = TIER_CODE[forfait] || "E"; return REPORT_PAGES.filter((p) => p.tiers.includes(c) && !(p.cond === "couple" && !couple) && !(p.cond === "fr" && !fr)); }
+function pagesParPartie(pages) { const m = new Map(); pages.forEach((p) => { if (!m.has(p.part)) m.set(p.part, []); m.get(p.part).push(p); }); return [...m.entries()]; }
+// Données VIERGES pour le plan témoin (à partir de TON stateInitial) — champs personnels en {{…}}
+function makeBlankData({ forfait, couple, fr }) {
+  const data = JSON.parse(JSON.stringify(stateInitial()));
+  const blankPerson = (p) => { if (!p) return p; const out = { ...p }; Object.keys(out).forEach((k) => { const v = out[k]; if (typeof v === "string" && v.trim() !== "" && isNaN(Number(v))) out[k] = "{{…}}"; else if (typeof v === "string") out[k] = ""; }); out.prenom = "{{Prénom}}"; out.nom = "{{NOM}}"; return out; };
+  data.client = blankPerson(data.client); data.conjoint = blankPerson(data.conjoint);
+  data.isCouple = !!couple; if (data.client) data.client.frACarriereFrance = !!fr; if (data.conjoint) data.conjoint.frACarriereFrance = !!fr;
+  data.studySubtitle = "Plan témoin — exemple de structure de rapport (forfait " + forfait + ")."; data.conseiller = "{{Conseiller}}"; data.notesConseiller = ""; data.pointsAttention = "";
+  return data;
+}
+function PRToggle({ label, checked, onChange, disabled, hint }) {
+  return (<div><label style={S.label}>{label}</label><button onClick={() => !disabled && onChange(!checked)} style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 14px", cursor: disabled ? "not-allowed" : "pointer", border: `1.5px solid ${checked ? C.primary : C.mediumGray}`, background: checked ? "rgba(105,33,2,0.05)" : C.white, color: checked ? C.primary : C.gray, fontFamily: "inherit", fontSize: 12.5, fontWeight: 600, opacity: disabled ? 0.55 : 1 }}><span style={{ width: 34, height: 18, borderRadius: 10, background: checked ? C.primary : C.mediumGray, position: "relative" }}><span style={{ position: "absolute", top: 2, left: checked ? 18 : 2, width: 14, height: 14, borderRadius: "50%", background: C.white }} /></span>{checked ? "Inclus" : "Exclu"}</button>{hint && <div style={{ fontSize: 10, color: C.gray, marginTop: 3 }}>{hint}</div>}</div>);
+}
+function GabaritTemoin({ flow, setFlow, goto, onOpenReport }) {
+  const FORFAIT_IDS = ["Essentiel", "Duo", "Premium"];
+  const [forfait, setForfait] = useState(flow.forfait || "Essentiel");
+  const [couple, setCouple] = useState((flow.forfait || "Essentiel") !== "Essentiel");
+  const [fr, setFr] = useState(flow.profil === "Frontalier");
+  useEffect(() => { if (flow.forfait) { setForfait(flow.forfait); setCouple(flow.forfait !== "Essentiel"); } }, [flow.forfait]);
+  useEffect(() => { if (forfait === "Essentiel") setCouple(false); }, [forfait]);
+  const setForfaitSync = (f) => { setForfait(f); setFlow((s) => ({ ...s, forfait: f })); };
+  const pages = tierPages(forfait, { couple, fr });
+  const parties = pagesParPartie(pages);
+  return (
+    <div>
+      <SectionHead kicker="Section 3 · Plan témoin" title="Gabarit —" emphasis="plan témoin vierge" intro="Présentez au client la structure exacte du rapport qu'il recevra, selon le forfait. Le rapport vierge complet est généré par TON générateur existant." />
+      <div className="ws-no-print" style={S.card}>
+        <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
+          <div><label style={S.label}>Forfait</label><div style={{ display: "flex", border: `1.5px solid ${C.primary}` }}>{FORFAIT_IDS.map((f) => <button key={f} onClick={() => setForfaitSync(f)} style={{ background: forfait === f ? C.primary : C.white, color: forfait === f ? C.white : C.primary, border: "none", padding: "9px 18px", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 700 }}>{f}</button>)}</div></div>
+          <PRToggle label="Couple / conjoint(e)" checked={couple} disabled={forfait === "Essentiel"} onChange={setCouple} hint={forfait === "Essentiel" ? "Essentiel = personne seule" : ""} />
+          <PRToggle label="Volet France (frontalier)" checked={fr} onChange={setFr} />
+          <div style={{ marginLeft: "auto", textAlign: "right" }}><div style={{ fontSize: 10, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>Pages du rapport</div><div style={{ fontSize: 26, fontWeight: 900, color: C.primary }}>{pages.length}</div></div>
+        </div>
+      </div>
+      <div className="ws-print-area" style={{ display: "grid", gridTemplateColumns: "minmax(300px, 380px) 1fr", gap: 20, alignItems: "start" }}>
+        <div>
+          <div className="ws-no-print" style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Couverture (vierge)</div>
+          <div style={{ aspectRatio: "794 / 1123", background: `linear-gradient(180deg, ${C.primary} 0%, ${C.primaryDark} 100%)`, color: C.white, padding: 26, position: "relative", boxShadow: "0 8px 30px rgba(0,0,0,0.18)" }}>
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: C.gold }} />
+            <div style={{ background: C.white, width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 26 }}><Logo size={46} variant="color" /></div>
+            <div style={{ color: C.gold, fontSize: 9, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 12 }}>Étude personnalisée · Forfait {forfait}</div>
+            <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 30, fontWeight: 700, lineHeight: 1.1 }}>Planification<br /><em style={{ color: C.gold }}>de votre retraite</em></div>
+            <div style={{ width: 44, height: 3, background: C.gold, margin: "18px 0" }} />
+            <div style={{ fontSize: 11, opacity: 0.9, lineHeight: 1.5 }}>Étude croisée Suisse / France{fr ? " — volet frontalier" : ""}{couple ? " — pour le couple" : ""}.</div>
+            <div style={{ position: "absolute", bottom: 26, left: 26, right: 26, borderTop: "1px solid rgba(255,255,255,0.25)", paddingTop: 14 }}><div style={{ color: C.gold, fontSize: 8, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase" }}>Préparé pour</div><div style={{ fontSize: 16, fontWeight: 700 }}>{couple ? "{{Prénom NOM}} & {{Prénom NOM}}" : "{{Prénom NOM}}"}</div><div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, fontSize: 9, opacity: 0.85 }}><span>Date : {"{{__/__/____}}"}</span><span>Conseiller : {"{{Nom}}"}</span></div></div>
+          </div>
+        </div>
+        <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 22 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}><div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 20, color: C.primary, fontWeight: 700 }}>Sommaire du plan témoin <em style={{ color: C.gold }}>— {forfait}</em></div><span style={{ fontSize: 11, color: C.gray }}>{pages.length} pages</span></div>
+          <div style={{ columns: 2, columnGap: 22 }}>{parties.map(([part, ps]) => (<div key={part} style={{ breakInside: "avoid", marginBottom: 12 }}><div style={{ background: C.primary, color: C.white, padding: "4px 9px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em" }}>{part}</div>{ps.map((p) => (<div key={p.titre} style={{ display: "flex", alignItems: "center", gap: 7, padding: "3px 6px", borderBottom: `1px solid ${C.lightGray}`, fontSize: 11 }}><span style={{ width: 5, height: 5, background: C.gold, flexShrink: 0 }} /><span style={{ flex: 1, color: C.darkGray }}>{p.titre}</span>{p.tag && <span style={{ fontSize: 8, color: C.gold, fontWeight: 700, textTransform: "uppercase" }}>{p.tag}</span>}</div>))}</div>))}</div>
+          <div style={{ marginTop: 6, fontSize: 9, color: C.gray, fontStyle: "italic" }}>{FIRM.pied}</div>
+        </div>
+      </div>
+      <div className="ws-no-print" style={{ display: "flex", gap: 12, marginTop: 18, flexWrap: "wrap", alignItems: "center" }}>
+        <button onClick={() => onOpenReport(makeBlankData({ forfait, couple, fr }))} style={S.btnP}><Icons.FileText size={16} color={C.white} /> Générer le rapport vierge complet (PDF)</button>
+        <button onClick={printNow} style={S.btnS}><Icons.Printer size={15} color={C.primary} /> Imprimer couverture + sommaire</button>
+        <button onClick={() => goto("collecte")} style={S.btnGold}>Le client valide → passer à la collecte <Icons.ArrowRight size={16} color={C.white} /></button>
+      </div>
+      <div className="ws-no-print" style={{ marginTop: 14, background: "rgba(16,185,129,0.08)", borderLeft: `4px solid ${C.ok}`, padding: 12, fontSize: 11.5, color: C.darkGray, lineHeight: 1.55 }}><Icons.Check size={13} color={C.ok} /> <strong>Branché sur ton rapport.</strong> « Générer le rapport vierge complet » ouvre ton générateur existant (<code>buildSlides</code> / <code>PreviewR1</code>) avec des données vierges {"{{…}}"} filtrées par forfait — prêt à présenter au client.</div>
+      <div className="ws-no-print" style={{ ...S.card, marginTop: 16, borderLeft: `4px solid ${C.gold}` }}>
+        <div style={S.cardTitle}><div style={S.dot} /> Après validation — conforter le client (anti-annulation)</div>
+        <p style={{ fontSize: 12.5, color: C.darkGray, lineHeight: 1.6, marginTop: 0 }}>Dès que le client valide, remettez-lui le <strong>mini-guide des cas clients</strong> (flyer) : il s'y reconnaît et comprend le gain typique — ce qui réduit les annulations post-R1.</p>
+        <button onClick={() => goto("ressources")} style={{ ...S.btnS, padding: "8px 16px", fontSize: 12 }}><Icons.External size={14} color={C.primary} /> Ouvrir le mini-guide cas clients</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Section 5 : Check-list + Collecte + Excel ──
+const AGE_BANDS = [
+  { id: "45-55", label: "45 – 55 ans", prio: "Ouvrir / alimenter plusieurs 3a · viser les rachats LPP · poser les fondations" },
+  { id: "56-62", label: "56 – 62 ans", prio: "Estimation AVS (ESCAL) · certificat LPP projeté · arrêter les rachats ≥ 3 ans avant un capital" },
+  { id: "63-64", label: "63 – 64 ans", prio: "Trancher rente / capital · calendrier France–Suisse · santé (S1)" },
+  { id: "65+", label: "65 ans +", prio: "Exécuter · piloter la décumulation (règle des 4 %)" },
+];
+const PROFILS = ["Frontalier", "Résident suisse", "Expatrié"];
+const CHECKLIST = [
+  { cat: "1 · Identité et famille", items: ["Pièce d'identité ou passeport (et du conjoint)", "Permis de séjour / frontalier (G, B ou C)", "Livret de famille ou documents d'état civil", "Contrat de mariage / convention, jugement de divorce éventuel"] },
+  { cat: "2 · Prévoyance suisse", items: ["Certificat(s) LPP — le plus récent", "Attestation(s) de libre passage", "Contrats et relevés 3a (banque / assurance)", "Contrats d'assurance-vie ou 3b", "Extrait du compte individuel AVS (CI)", "Justificatif d'un retrait EPL déjà effectué"] },
+  { cat: "3 · Carrière et revenus", items: ["Fiches de salaire récentes (3 derniers mois)", "Certificat de salaire annuel", "Relevé de carrière France — RIS (info-retraite.fr)", "Attestations de périodes à l'étranger / chômage"] },
+  { cat: "4 · Fiscalité", items: ["Dernier avis d'imposition suisse (ou impôt à la source)", "Dernier avis d'imposition français", "Taxe foncière / déclaration IFI le cas échéant"] },
+  { cat: "5 · Patrimoine financier", items: ["Relevés de comptes bancaires (Suisse et France)", "Relevés de comptes-titres / portefeuilles", "Contrats d'assurance-vie (FR / Lux) et valeurs de rachat", "Tableaux d'amortissement des crédits en cours"] },
+  { cat: "6 · Immobilier", items: ["Titres de propriété ou actes d'achat", "Estimation(s) de valeur récente(s)", "Baux et décomptes si bien locatif", "Décompte hypothécaire (solde, taux, échéance)"] },
+  { cat: "7 · Projets et objectifs", items: ["Âge de départ envisagé", "Projet de résidence à la retraite", "Train de vie mensuel souhaité", "Projets : donation, achat, transmission"] },
+];
+const FICHE = [
+  { id: "s1", titre: "1 · Identité et famille", champs: [{ k: "residenceFiscale", label: "Résidence fiscale", type: "select", select: ["", "France", "Suisse"] }, { k: "nomPrenom", label: "Nom / Prénom", type: "text" }, { k: "dateNaissance", label: "Date de naissance", type: "text", ph: "JJ.MM.AAAA" }, { k: "etatCivil", label: "État civil / régime matrimonial", type: "text" }, { k: "enfants", label: "Enfants / personnes à charge", type: "text" }] },
+  { id: "s2", titre: "2 · Carrière", champs: [{ k: "employeurs", label: "Employeur(s) — pays (FR / CH)", type: "text" }, { k: "caissesLPP", label: "Caisse(s) de pension LPP", type: "text" }, { k: "librePassageOu", label: "Avoirs de libre passage (où)", type: "text" }] },
+  { id: "s3", titre: "3 · 1er pilier — AVS", source: "source : extrait CI", champs: [{ k: "avsRente", label: "Rente AVS mensuelle estimée · échelle", type: "text", suffix: "CHF" }, { k: "avsOption", label: "Option étudiée", type: "select", select: ["", "Âge de référence", "Anticipation", "Ajournement"] }, { k: "avsAnneesShift", label: "Nb d'années anticip. / ajourn.", type: "num" }] },
+  { id: "s4", titre: "4 · 2e pilier — LPP", source: "source : certificat de caisse", champs: [{ k: "lppCapital", label: "Capital (avoir de vieillesse)", type: "num", suffix: "CHF" }, { k: "lppRente", label: "Rente annuelle si rente", type: "num", suffix: "CHF" }, { k: "lppTauxConv", label: "Taux de conversion", type: "num", suffix: "%" }, { k: "lppLibrePassage", label: "Avoirs de libre passage", type: "num", suffix: "CHF" }, { k: "lppObliSurobli", label: "Part obligatoire / surobligatoire", type: "text" }] },
+  { id: "s5", titre: "5 · 3e pilier", champs: [{ k: "p3a", label: "Avoirs 3a (par compte)", type: "text", suffix: "CHF" }, { k: "p3b", label: "3b / assurance-vie — valeur rachat", type: "text", suffix: "CHF" }] },
+  { id: "s6", titre: "6 · Retraite française", source: "source : RIS", fr: true, champs: [{ k: "frSAM", label: "Salaire annuel moyen (SAM)", type: "num", suffix: "€" }, { k: "frTrimestres", label: "Trimestres acquis / requis (… / 172)", type: "text" }, { k: "frAgeTauxPlein", label: "Âge du taux plein", type: "num", suffix: "ans" }, { k: "frPoints", label: "Points Agirc-Arrco", type: "num" }, { k: "frValeurPoint", label: "Valeur du point", type: "num", suffix: "€" }] },
+  { id: "s7", titre: "7 · Patrimoine", champs: [{ k: "immoRP", label: "Résidence principale (valeur, hypothèque)", type: "text" }, { k: "immoLocatif", label: "Locatif (valeur, loyers, charges)", type: "text" }, { k: "comptes", label: "Comptes / titres — CHF & €", type: "text" }, { k: "patReemploi", label: "Patrimoine à réemployer", type: "num", suffix: "€" }, { k: "dettes", label: "Dettes / crédits en cours", type: "text" }] },
+  { id: "s8", titre: "8 · Revenus, charges et objectifs", champs: [{ k: "revenuNet", label: "Revenu net actuel", type: "num", suffix: "CHF/mois" }, { k: "trainVie", label: "Train de vie souhaité", type: "num", suffix: "CHF/mois" }, { k: "ageDepart", label: "Âge de départ envisagé", type: "num", suffix: "ans" }, { k: "preference", label: "Préférence a priori", type: "select", select: ["", "Rente", "Capital", "Mixte", "À étudier"] }, { k: "projetResidence", label: "Projet de résidence", type: "text" }, { k: "projets", label: "Donation / achat / transmission", type: "text" }] },
+  { id: "s9", titre: "9 · Santé et coordination", champs: [{ k: "santeCouverture", label: "Couverture santé visée", type: "select", select: ["", "LAMal", "CMU", "À étudier"] }, { k: "santeS1", label: "Formulaire S1 / vigilance N−2", type: "text" }] },
+  { id: "s10", titre: "10 · Hypothèses de l'étude", champs: [{ k: "hypRendement", label: "Taux de rendement", type: "num", suffix: "%" }, { k: "hypInflation", label: "Inflation", type: "num", suffix: "%" }, { k: "hypChange", label: "Change EUR/CHF (défaut 0,92)", type: "num", suffix: "CHF/€" }, { k: "hypAgeFin", label: "Âge de fin de consommation", type: "num", suffix: "ans" }] },
+  { id: "s11", titre: "11 · Notes et points de vigilance", champs: [{ k: "notes", label: "Notes et points de vigilance", type: "textarea" }] },
+];
+const COLLECTE_DEFAULTS = { hypChange: "0.92", frTrimestres: " / 172" };
+let _xlsxPromise = null;
+function loadSheetJS() {
+  if (typeof window !== "undefined" && window.XLSX) return Promise.resolve(window.XLSX);
+  if (!_xlsxPromise) { _xlsxPromise = new Promise((resolve, reject) => { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; s.onload = () => resolve(window.XLSX); s.onerror = reject; document.body.appendChild(s); }); }
+  return _xlsxPromise;
+}
+function Collecte({ flow, setFlow }) {
+  const [tab, setTab] = useState("checklist");
+  const [checked, setChecked] = useState(() => new Set());
+  const [collecte, setCollecte] = useState(() => ({ ...COLLECTE_DEFAULTS }));
+  const [tranche, setTranche] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const profil = flow.profil || "Frontalier";
+  const setProfil = (p) => setFlow((f) => ({ ...f, profil: p }));
+  const franceActive = profil !== "Résident suisse";
+  const set = (k, v) => setCollecte((c) => ({ ...c, [k]: v }));
+  const toggle = (key) => setChecked((s) => { const n = new Set(s); n.has(key) ? n.delete(key) : n.add(key); return n; });
+  const totalItems = CHECKLIST.reduce((s, c) => s + c.items.length, 0);
+  const pct = Math.round((checked.size / totalItems) * 100);
+  const visibleSections = useMemo(() => FICHE.filter((s) => !s.fr || franceActive), [franceActive]);
+  const exportExcel = async () => {
+    setBusy(true);
+    try {
+      const XLSX = await loadSheetJS();
+      const wb = XLSX.utils.book_new();
+      const rows = [["WallSwiss — Fiche de collecte R1"], [], ["Section", "Champ", "Valeur"]];
+      rows.push(["Cadre", "Profil", profil]); rows.push(["Cadre", "Tranche d'âge", tranche || ""]); rows.push(["Cadre", "Volet France actif", franceActive ? "Oui" : "Non"]);
+      visibleSections.forEach((sec) => sec.champs.forEach((c) => rows.push([sec.titre, c.label, collecte[c.k] || ""])));
+      const ws1 = XLSX.utils.aoa_to_sheet(rows); ws1["!cols"] = [{ wch: 30 }, { wch: 44 }, { wch: 34 }]; XLSX.utils.book_append_sheet(wb, ws1, "Collecte R1");
+      const rows2 = [["Catégorie", "Document", "Présent"]]; CHECKLIST.forEach((c) => c.items.forEach((it) => rows2.push([c.cat, it, checked.has(c.cat + "|" + it) ? "Oui" : "Non"])));
+      const ws2 = XLSX.utils.aoa_to_sheet(rows2); ws2["!cols"] = [{ wch: 24 }, { wch: 62 }, { wch: 10 }]; XLSX.utils.book_append_sheet(wb, ws2, "Check-list");
+      const nom = (collecte.nomPrenom || "client").trim().replace(/[^\w\-À-ÿ]+/g, "_") || "client";
+      XLSX.writeFile(wb, `Collecte_R1_${nom}.xlsx`);
+    } catch (e) { alert("Export Excel impossible : " + e.message); } finally { setBusy(false); }
+  };
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
+        <SectionHead kicker="Section 5 · Premier rendez-vous" title="Check-list &" emphasis="collecte d'information" intro="Réunir les pièces, saisir la fiche R1 sur pièces officielles, puis exporter vers Excel pour le logiciel de planification. Socle de données unique." />
+        <button onClick={exportExcel} disabled={busy} style={{ ...S.btnGold, opacity: busy ? 0.6 : 1 }}><Icons.Download size={16} color={C.white} /> {busy ? "Export…" : "Exporter vers Excel (.xlsx)"}</button>
+      </div>
+      <div style={{ display: "flex", border: `1.5px solid ${C.primary}`, width: "fit-content", marginBottom: 16 }}>{[["checklist", "Check-list documents"], ["fiche", "Fiche de collecte R1"]].map(([k, l]) => <button key={k} onClick={() => setTab(k)} style={{ background: tab === k ? C.primary : C.white, color: tab === k ? C.white : C.primary, border: "none", padding: "9px 18px", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 700 }}>{l}</button>)}</div>
+      {tab === "checklist" ? (
+        <div>
+          <div style={{ background: C.primary, color: C.white, padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 16 }}><div><div style={{ fontSize: 10, color: C.gold, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>Documents réunis</div><div style={{ fontSize: 13, opacity: 0.9 }}>Plus le dossier est complet, plus la planification est précise.</div></div><div style={{ textAlign: "right" }}><div style={{ fontSize: 26, fontWeight: 900 }}>{pct}%</div><div style={{ fontSize: 11, opacity: 0.8 }}>{checked.size}/{totalItems} pièces</div></div></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>{CHECKLIST.map((c) => { const got = c.items.filter((it) => checked.has(c.cat + "|" + it)).length; return (<div key={c.cat} style={S.card}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}><div style={{ fontSize: 12.5, fontWeight: 800, color: C.primary }}>{c.cat}</div><span style={{ fontSize: 10, color: got === c.items.length ? C.ok : C.gray, fontWeight: 700 }}>{got}/{c.items.length}</span></div>{c.items.map((it) => { const key = c.cat + "|" + it, on = checked.has(key); return (<label key={it} style={{ display: "flex", alignItems: "flex-start", gap: 9, padding: "6px 0", cursor: "pointer", borderBottom: `1px solid ${C.lightGray}` }}><input type="checkbox" checked={on} onChange={() => toggle(key)} style={{ marginTop: 2, accentColor: C.primary, width: 15, height: 15 }} /><span style={{ fontSize: 12, color: on ? C.gray : C.darkGray, textDecoration: on ? "line-through" : "none" }}>{it}</span></label>); })}</div>); })}</div>
+          <div style={{ marginTop: 14, background: "rgba(165,149,104,0.12)", borderLeft: `4px solid ${C.gold}`, padding: 12, fontSize: 11.5, color: C.darkGray, lineHeight: 1.55 }}><strong style={{ color: C.gold }}>Deux pièces faciles à obtenir.</strong> Le relevé de carrière France sur <strong>info-retraite.fr</strong> ; l'extrait AVS (CI) auprès de la caisse de compensation.</div>
+        </div>
+      ) : (
+        <div>
+          <div style={{ background: "rgba(105,33,2,0.05)", borderLeft: `4px solid ${C.primary}`, padding: "12px 14px", marginBottom: 14, fontSize: 12, color: C.darkGray, lineHeight: 1.5 }}><strong style={{ color: C.primary }}>◆ Règle d'or.</strong> Tout chiffre provient d'une pièce officielle (certificat LPP, extrait CI AVS, RIS). Aucun montant « à la main ». Notez la source et la date.</div>
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Priorités selon l'âge — sélectionnez la tranche</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>{AGE_BANDS.map((b) => { const on = tranche === b.id; return (<button key={b.id} onClick={() => setTranche(on ? null : b.id)} style={{ textAlign: "left", padding: 12, cursor: "pointer", fontFamily: "inherit", border: `1.5px solid ${on ? C.primary : C.mediumGray}`, background: on ? C.primary : C.white, color: on ? C.white : C.darkGray }}><div style={{ fontSize: 13, fontWeight: 800, color: on ? C.white : C.primary, marginBottom: 4 }}>{b.label}</div><div style={{ fontSize: 10.5, lineHeight: 1.4, color: on ? "rgba(255,255,255,0.9)" : C.gray }}>{b.prio}</div></button>); })}</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>Profil</span>
+            <div style={{ display: "flex", border: `1.5px solid ${C.primary}` }}>{PROFILS.map((p) => <button key={p} onClick={() => setProfil(p)} style={{ background: profil === p ? C.primary : C.white, color: profil === p ? C.white : C.primary, border: "none", padding: "8px 16px", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 700 }}>{p}</button>)}</div>
+            <span style={{ fontSize: 11.5, color: franceActive ? C.france : C.gray, display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: franceActive ? C.france : C.mediumGray }} /> Volet France {franceActive ? "activé" : "désactivé"}</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>{visibleSections.map((sec) => (<div key={sec.id} style={{ ...S.card, borderTop: `3px solid ${sec.fr ? C.france : C.gold}`, marginBottom: 0 }}><div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}><div style={{ fontSize: 12.5, fontWeight: 800, color: sec.fr ? C.france : C.primary }}>{sec.titre}</div>{sec.source && <span style={{ fontSize: 10, color: C.gray, fontStyle: "italic" }}>{sec.source}</span>}</div><div style={{ display: "grid", gridTemplateColumns: sec.champs.some((c) => c.type === "textarea") ? "1fr" : "1fr 1fr", gap: 10 }}>{sec.champs.map((c) => <Field key={c.k} label={c.label} value={collecte[c.k]} onChange={(v) => set(c.k, v)} type={c.type === "num" ? "number" : "text"} textarea={c.type === "textarea"} select={c.type === "select" ? c.select : null} suffix={c.suffix || ""} placeholder={c.ph || ""} colSpan={c.type === "textarea" || c.type === "select" ? 2 : 1} />)}</div></div>))}</div>
+          <div style={{ display: "flex", gap: 12, marginTop: 16, alignItems: "center", flexWrap: "wrap" }}><button onClick={exportExcel} disabled={busy} style={{ ...S.btnP, opacity: busy ? 0.6 : 1 }}><Icons.Download size={16} color={C.white} /> {busy ? "Export…" : "Exporter vers Excel (.xlsx)"}</button><span style={{ fontSize: 11.5, color: C.gray }}>2 feuilles : <strong>Collecte R1</strong> (à importer) + <strong>Check-list</strong> (état des pièces).</span></div>
+        </div>
+      )}
+    </div>
+  );
+}
+// Section 5 — hub : check-list/Excel + ton assistant R1 complet
+function CollecteHub({ flow, setFlow, appSettings }) {
+  const [tab, setTab] = useState("checklist");
+  return (
+    <div>
+      <div className="ws-no-print" style={{ display: "flex", border: `1.5px solid ${C.primary}`, width: "fit-content", marginBottom: 16 }}>
+        {[["checklist", "Check-list & Excel"], ["assistant", "Assistant R1 complet + rapport"]].map(([k, l]) => <button key={k} onClick={() => setTab(k)} style={{ background: tab === k ? C.primary : C.white, color: tab === k ? C.white : C.primary, border: "none", padding: "10px 18px", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 700 }}>{l}</button>)}
+      </div>
+      {tab === "checklist" ? <Collecte flow={flow} setFlow={setFlow} /> : (
+        <div style={{ border: `1px solid ${C.mediumGray}`, height: "78vh", overflow: "auto", background: C.lightGray }}>
+          <RetraiteR1App appSettings={appSettings} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Section 6 : Ressources + Lettre de mission + Mini-guide ──
+const LINKS = [
+  { bloc: "France", color: C.france, items: [{ l: "info-retraite.fr — Mon compte retraite", u: "https://www.info-retraite.fr/", note: "RIS, demande en ligne" }, { l: "Simulateur de calcul retraite", u: "https://services.info-retraite.fr/service/calcul-retraite/" }, { l: "L'Assurance retraite / CNAV", u: "https://www.lassuranceretraite.fr/" }, { l: "Agirc-Arrco", u: "https://www.agirc-arrco.fr/" }] },
+  { bloc: "Suisse", color: C.swiss, items: [{ l: "ESCAL — estimation AVS", u: "https://www.ahv-iv.ch/r/escal" }, { l: "Extrait CI + formulaires AVS (3.04 / 3.06)", u: "https://www.ahv-iv.ch/" }, { l: "Certificat LPP", u: null, note: "à demander à la caisse" }, { l: "Fonds de garantie LPP — recherche d'avoirs", u: "https://sfbvg.ch/fr/missions/recherche-davoirs-de-la-prevoyance-professionnelle" }, { l: "Institution supplétive LPP", u: "https://aeis.ch/" }] },
+  { bloc: "Coordination FR–CH & santé", color: C.gold, items: [{ l: "CLEISS — sécurité sociale internationale", u: "https://www.cleiss.fr/" }, { l: "Relevé E-205 + formulaire S1", u: null, note: "via caisse / CPAM" }] },
+  { bloc: "Fiscalité", color: C.darkGray, items: [{ l: "service-public.fr", u: "https://www.service-public.fr/" }, { l: "impots.gouv.fr", u: "https://www.impots.gouv.fr/" }, { l: "Fiscalité cantonale", u: null, note: "selon le canton" }, { l: "Change EUR/CHF — BNS", u: "https://www.snb.ch/fr/", note: "0,92 en 2026" }] },
+];
+function Ressources({ goto }) {
+  const [doc, setDoc] = useState(null);
+  if (doc === "lettre") return <DocView title="Lettre de mission" onBack={() => setDoc(null)}><LettreMission /></DocView>;
+  if (doc === "miniguide") return <DocView title="Mini-guide cas clients (flyer)" onBack={() => setDoc(null)}><MiniGuideFlyer /></DocView>;
+  const FORMS = [
+    { l: "QCM — Faut-il planifier sa retraite ?", desc: "Test 8 questions, version papier DA", icon: Icons.Check, action: () => goto("test") },
+    { l: "Check-list R1 (client)", desc: "Documents à préparer — 7 catégories", icon: Icons.Clipboard, href: "/WallSwiss_Checklist_R1_Client.pdf", alt: () => goto("collecte") },
+    { l: "Fiche de collecte R1 (conseiller)", desc: "Saisie + export Excel", icon: Icons.FileText, alt: () => goto("collecte") },
+    { l: "Lettre de mission (DA WallSwiss)", desc: "Refondue — champs {{…}}, imprimable", icon: Icons.FileText, action: () => setDoc("lettre") },
+    { l: "Mini-guide cas clients (flyer)", desc: "Anti-annulation — à imprimer (Canva)", icon: Icons.Users, action: () => setDoc("miniguide") },
+  ];
+  return (
+    <div>
+      <SectionHead kicker="Section 6 · Boîte à outils" title="Ressources" emphasis="indispensables" intro="Liens officiels (France, Suisse, coordination FR–CH, fiscalité) et formulaires vierges téléchargeables." />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>{LINKS.map((b) => (<div key={b.bloc} style={{ ...S.card, borderTop: `4px solid ${b.color}`, marginBottom: 0 }}><div style={{ fontSize: 12.5, fontWeight: 800, color: b.color, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10 }}>{b.bloc}</div>{b.items.map((it) => (<div key={it.l} style={{ display: "flex", alignItems: "flex-start", gap: 9, padding: "7px 0", borderBottom: `1px solid ${C.lightGray}` }}><span style={{ marginTop: 2, flexShrink: 0 }}>{it.u ? <Icons.Link size={14} color={b.color} /> : <Icons.Info size={14} color={C.gray} />}</span><div style={{ flex: 1 }}>{it.u ? <a href={it.u} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12.5, color: C.primary, fontWeight: 600, textDecoration: "none" }}>{it.l} <Icons.External size={11} color={C.gray} /></a> : <span style={{ fontSize: 12.5, color: C.darkGray, fontWeight: 600 }}>{it.l}</span>}{it.note && <div style={{ fontSize: 10.5, color: C.gray }}>{it.note}</div>}</div></div>))}</div>))}</div>
+      <div style={S.card}>
+        <div style={S.cardTitle}><div style={S.dot} /> Formulaires vierges téléchargeables</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>{FORMS.map((f) => (<div key={f.l} style={{ border: `1px solid ${C.mediumGray}`, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}><div style={{ display: "flex", alignItems: "center", gap: 9 }}><span style={{ width: 32, height: 32, background: C.lightGray, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><f.icon size={16} color={C.primary} /></span><div><div style={{ fontSize: 12.5, fontWeight: 700, color: C.primary, lineHeight: 1.2 }}>{f.l}</div><div style={{ fontSize: 10.5, color: C.gray }}>{f.desc}</div></div></div><div style={{ display: "flex", gap: 8, marginTop: "auto" }}>{f.action && <button onClick={f.action} style={{ ...S.btnS, padding: "6px 12px", fontSize: 11 }}><Icons.Printer size={13} color={C.primary} /> Ouvrir / imprimer</button>}{f.href && <a href={f.href} download style={{ ...S.btnS, padding: "6px 12px", fontSize: 11, textDecoration: "none" }}><Icons.Download size={13} color={C.primary} /> PDF</a>}{f.alt && !f.action && <button onClick={f.alt} style={{ ...S.btnS, padding: "6px 12px", fontSize: 11 }}>Saisir dans l'outil</button>}</div></div>))}</div>
+        <div style={{ marginTop: 12, fontSize: 10.5, color: C.gray, fontStyle: "italic" }}>Les PDF d'origine se déposent dans <code>/public</code> pour activer les boutons « PDF ».</div>
+      </div>
+      <div style={{ marginTop: 16, fontSize: 11, color: C.gray, textAlign: "center" }}>{FIRM.pied}</div>
+    </div>
+  );
+}
+function DocView({ title, onBack, children }) {
+  return (<div><div className="ws-no-print" style={{ display: "flex", gap: 10, marginBottom: 14, alignItems: "center" }}><button onClick={onBack} style={S.btnS}><Icons.ChevronLeft size={15} color={C.primary} /> Ressources</button><button onClick={printNow} style={S.btnP}><Icons.Printer size={16} color={C.white} /> Imprimer / PDF</button><span style={{ fontSize: 13, color: C.gray }}>{title} — version DA WallSwiss</span></div>{children}</div>);
+}
+const phF = (t) => <em style={{ color: C.gold, fontStyle: "italic" }}>{`{{${t}}}`}</em>;
+function LettreMission() {
+  const H = ({ children }) => <div style={{ fontSize: 12.5, fontWeight: 800, color: C.primary, margin: "14px 0 5px" }}>{children}</div>;
+  const P = ({ children }) => <p style={{ fontSize: 11.5, color: C.darkGray, lineHeight: 1.55, margin: "0 0 6px" }}>{children}</p>;
+  return (
+    <PrintableSheet rubrique="Planification Retraite · Lettre de mission">
+      <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 27, color: C.primary, fontWeight: 700, lineHeight: 1.1 }}>Lettre de mission — étude de planification retraite</div>
+      <div style={{ fontStyle: "italic", color: C.gray, fontSize: 12.5, marginTop: 3, marginBottom: 10 }}>Cadre et conditions de l'étude confiée à {FIRM.nom}</div>
+      <div style={{ height: 2, background: C.gold, width: 90, marginBottom: 12 }} />
+      <H>1 · Les parties</H>
+      <P><strong>Le client :</strong> {phF("Prénom NOM")}, {phF("adresse")} — ci-après « le client ».</P>
+      <P><strong>Le cabinet :</strong> {FIRM.nom}, conseiller financier indépendant ({FIRM.finma} · {FIRM.orias}), représenté par {phF("nom du conseiller")}.</P>
+      <H>2 · Objet de la mission</H>
+      <P>Réaliser une <strong>étude de planification retraite</strong> : analyse des trois piliers suisses (AVS, LPP, 3e pilier) et, le cas échéant, de la <strong>retraite française</strong> ; étude du <strong>bon moment</strong> pour déclencher les droits, de l'arbitrage <strong>rente / capital</strong>, des optimisations (rachats, échelonnement) ; <strong>projection du train de vie</strong> ; remise d'un <strong>rapport écrit personnalisé</strong> et d'un <strong>rendez-vous de restitution</strong> (R2).</P>
+      <H>3 · Forfait retenu</H>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+        <thead><tr style={{ background: C.primary, color: C.white }}><th style={{ padding: "6px 9px", textAlign: "left" }}>Forfait</th><th style={{ padding: "6px 9px", textAlign: "left" }}>Pour qui</th><th style={{ padding: "6px 9px", textAlign: "right" }}>CHF</th><th style={{ padding: "6px 9px", textAlign: "center", width: 56 }}>Retenu</th></tr></thead>
+        <tbody>{[["Essentiel", "Personne seule, situation standard", "590"], ["Duo", "Couple / partenaires", "890"], ["Premium", "Patrimoine ou situation complexe", "1'390"]].map((r, i) => (<tr key={r[0]} style={{ borderBottom: `1px solid ${C.lightGray}`, background: i % 2 ? "rgba(105,33,2,0.03)" : C.white }}><td style={{ padding: "6px 9px", fontWeight: 700, color: C.darkGray }}>{r[0]}</td><td style={{ padding: "6px 9px", color: C.darkGray }}>{r[1]}</td><td style={{ padding: "6px 9px", textAlign: "right", fontWeight: 700, color: C.primary }}>{r[2]}</td><td style={{ padding: "6px 9px", textAlign: "center" }}><span style={{ width: 12, height: 12, border: `1.4px solid ${C.darkGray}`, display: "inline-block" }} /></td></tr>))}</tbody>
+      </table>
+      <P>Options éventuelles : {phF("scénario +150 / personne +250 / bien locatif +100 / suivi 130")}.<br /><strong>Montant convenu : {phF("____ CHF")}</strong> (TVA incluse).</P>
+      <H>4 · Conditions</H>
+      <ul style={{ margin: "0 0 6px", paddingLeft: 18, fontSize: 11.5, color: C.darkGray, lineHeight: 1.55 }}>
+        <li>Le <strong>1er rendez-vous (R1) est offert</strong> et sans engagement.</li>
+        <li>L'étude est <strong>déductible d'un futur mandat</strong> de gestion (souscription d'un produit WallSwiss).</li>
+        <li>Un <strong>mandat de gestion signé</strong> est requis <strong>avant toute mise en place d'un 3e pilier</strong>.</li>
+        <li>Conseil <strong>indépendant</strong> (LSFin). Projections <strong>indicatives</strong> ; rendements non garantis.</li>
+        <li>Données traitées de façon <strong>confidentielle</strong> (nLPD) ; droits d'accès et de rectification.</li>
+      </ul>
+      <H>5 · Livrables et délai</H>
+      <P>Rapport écrit remis sous {phF("X")} jours ouvrés après réception des pièces, suivi d'un <strong>rendez-vous de restitution</strong>. Validité de l'offre : {phF("30")} jours.</P>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 22 }}>{[["Le client", ""], [`Le conseiller — ${FIRM.nom}`, "{{Nom du conseiller}}"]].map(([t, sub]) => (<div key={t} style={{ border: `1px solid ${C.mediumGray}` }}><div style={{ background: C.primary, color: C.white, padding: "5px 10px", fontSize: 11, fontWeight: 700 }}>{t}</div><div style={{ padding: 12, fontSize: 11, color: C.darkGray, minHeight: 70 }}>{sub && <div style={{ color: C.gold, fontStyle: "italic", marginBottom: 8 }}>{sub}</div>}<div>Date : <em style={{ color: C.gold }}>{"{{__________}}"}</em></div><div style={{ marginTop: 14 }}>Signature :</div></div></div>))}</div>
+    </PrintableSheet>
+  );
+}
+const CAS = [
+  { t: "1 · La frontalière proche de la retraite", f: "Essentiel / Premium", profil: "Carrière France + Suisse, personne seule, départ dans 1 à 3 ans.", enjeux: "Décote française avant le taux plein · arbitrage rente/capital LPP · droit d'option santé (LAMal vs CMU, règle N−2) · change EUR/CHF.", gain: "Gain observé ~32'840 €, dont ~22'000 € rien que par la stratégie d'assurance maladie." },
+  { t: "2 · Le couple franco-suisse", f: "Duo / Premium", profil: "Deux carrières, patrimoine constitué, départs proches.", enjeux: "Coordination des deux calendriers · réversion / survivants · rente ou capital à l'échelle du couple · fiscalité commune.", gain: "Gain observé ~53'387 €." },
+  { t: "3 · Le cadre résident suisse", f: "Premium", profil: "Bon salaire, 2e pilier important, capacité de rachats LPP.", enjeux: "Arbitrage rente / capital · rachats LPP (art. 79b, blocage 3 ans) · échelonnement · fiscalité du capital (≈ 5 % à Genève).", gain: "Économie d'impôt sur les rachats + bon choix capital/rente." },
+  { t: "4 · L'indépendant / le dirigeant", f: "Premium", profil: "Pas de LPP (ou prévoyance des cadres), parfois une entreprise à céder.", enjeux: "3a « grand plafond » (jusqu'à 36'288 CHF) · prévoyance des cadres · cession et réemploi · transmission.", gain: "Levier : structuration de la sortie d'entreprise et réemploi des liquidités." },
+  { t: "5 · Le retraité avec un capital à faire travailler", f: "Premium", profil: "Retraité, portefeuille important (~1,15 M CHF) peu rentable.", enjeux: "Décumulation sans épuiser le capital · frais de l'ancien mandat · transmission.", gain: "Gain simulé : +10,5 % contre −0,84 %, soit ~+121'000 CHF." },
+  { t: "6 · Le propriétaire immobilier", f: "Duo / Premium", profil: "Résidence principale (+ éventuel locatif), hypothèque en cours.", enjeux: "Tenue de charges après la retraite · amortir ou non · valeur locative · EPL déjà utilisé.", gain: "Levier : éviter le refus de tenue de charges à la retraite." },
+];
+function MiniGuideFlyer() {
+  return (
+    <PrintableSheet rubrique="Planification Retraite · Cas clients fréquents">
+      <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, color: C.primary, fontWeight: 700 }}>Mini-guide des cas clients fréquents</div>
+      <div style={{ fontStyle: "italic", color: C.gray, fontSize: 12, marginTop: 2, marginBottom: 10 }}>Reconnaître vite la situation, l'enjeu central et le gain typique.</div>
+      <div style={{ height: 2, background: C.gold, width: 90, marginBottom: 12 }} />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>{CAS.map((c) => (<div key={c.t} style={{ border: `1px solid ${C.mediumGray}`, borderTop: `3px solid ${C.gold}`, padding: 11, breakInside: "avoid" }}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}><div style={{ fontSize: 12, fontWeight: 800, color: C.primary, lineHeight: 1.2 }}>{c.t}</div><span style={{ fontSize: 8.5, color: C.white, background: C.primary, padding: "2px 6px", fontWeight: 700, whiteSpace: "nowrap" }}>{c.f}</span></div><div style={{ fontSize: 10, color: C.gray, fontStyle: "italic", margin: "4px 0 6px", lineHeight: 1.4 }}>{c.profil}</div><div style={{ fontSize: 10, color: C.darkGray, lineHeight: 1.45 }}><strong style={{ color: C.primary }}>Enjeux —</strong> {c.enjeux}</div><div style={{ fontSize: 10, color: C.darkGray, lineHeight: 1.45, marginTop: 5, background: "rgba(16,185,129,0.08)", borderLeft: `3px solid ${C.ok}`, padding: "5px 7px" }}><strong style={{ color: C.ok }}>Gain —</strong> {c.gain}</div></div>))}</div>
+      <div style={{ marginTop: 12, background: "rgba(165,149,104,0.14)", borderLeft: `4px solid ${C.gold}`, padding: 11, fontSize: 10.5, color: C.darkGray, lineHeight: 1.5 }}><strong style={{ color: C.gold }}>☞ Comment s'en servir.</strong> Rattachez vite le client à l'archétype le plus proche pour nommer l'enjeu central et orienter la collecte. Ces cas sont des repères, pas des cases.</div>
+    </PrintableSheet>
+  );
+}
+
+// ── COQUILLE : onglet + liste déroulante + état partagé ──
+const SECTIONS = [
+  { key: "test", label: "Test de pertinence", sub: "QCM 8 questions · score /16", Icon: Icons.Clipboard, num: 1, flow: true },
+  { key: "grille", label: "Grille tarifaire & aide au choix", sub: "Essentiel · Duo · Premium", Icon: Icons.Grid, num: 2, flow: true },
+  { key: "guide", label: "Guide de formation", sub: "Book interactif + PDF", Icon: Icons.Book, num: null, flow: false },
+  { key: "gabarit", label: "Gabarit — plan témoin vierge", sub: "Rapport vierge par forfait", Icon: Icons.FileText, num: 3, flow: true },
+  { key: "collecte", label: "Check-list & collecte", sub: "Documents + fiche R1 + Excel + assistant", Icon: Icons.Clipboard, num: 4, flow: true },
+  { key: "ressources", label: "Ressources indispensables", sub: "Liens officiels + formulaires", Icon: Icons.Link, num: null, flow: false },
+];
+const FLOW_KEYS = SECTIONS.filter((s) => s.flow);
+export default function PlanificationRetraite({ appSettings }) {
+  const [section, setSection] = useState("test");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  const [flow, setFlow] = useState({ qcmScore: null, qcmVerdict: null, forfait: null, forfaitSource: null, profil: "Frontalier" });
+  const [reportData, setReportData] = useState(null);
+  const goto = (key) => { setSection(key); setMenuOpen(false); };
+  useEffect(() => {
+    const onDoc = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
+    const onKey = (e) => { if (e.key === "Escape") setMenuOpen(false); };
+    document.addEventListener("mousedown", onDoc); document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
+  }, []);
+  const current = SECTIONS.find((s) => s.key === section) || SECTIONS[0];
+  const props = { flow, setFlow, goto };
+  return (
+    <div style={{ minHeight: "100%", display: "flex", flexDirection: "column", background: C.lightGray, fontFamily: "'Montserrat', system-ui, sans-serif" }}>
+      <style>{`@media print { *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;} body *{visibility:hidden;} .ws-print-area,.ws-print-area *{visibility:visible;} .ws-print-area{position:absolute;left:0;top:0;width:100%;} .ws-no-print{display:none!important;} @page{margin:10mm;} }`}</style>
+      <header className="ws-no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 50 }}>
+        <div style={{ padding: "14px 36px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ background: C.primary, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center" }}><Logo size={24} variant="white" /></div>
+            <div><div style={{ color: C.gold, fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase" }}>WallSwiss · WallSmart</div><div style={{ fontSize: 19, fontWeight: 800, color: C.primary, lineHeight: 1.1 }}>Planification Retraite</div></div>
+          </div>
+          <div ref={menuRef} style={{ position: "relative", minWidth: 320 }}>
+            <button onClick={() => setMenuOpen((o) => !o)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, background: C.white, border: `1.5px solid ${C.primary}`, padding: "11px 16px", cursor: "pointer", fontFamily: "inherit", color: C.primary, fontWeight: 700, fontSize: 14 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 10 }}><current.Icon size={18} color={C.gold} />{current.label}</span>
+              <span style={{ transform: menuOpen ? "rotate(180deg)" : "none", display: "flex" }}><Icons.ChevronDown size={18} color={C.primary} /></span>
+            </button>
+            {menuOpen && (
+              <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, left: 0, background: C.white, border: `1px solid ${C.mediumGray}`, boxShadow: "0 12px 40px rgba(0,0,0,0.16)", zIndex: 60 }}>
+                {SECTIONS.map((s) => { const active = s.key === section; return (
+                  <button key={s.key} onClick={() => goto(s.key)} style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", border: "none", borderLeft: `3px solid ${active ? C.gold : "transparent"}`, background: active ? "rgba(105,33,2,0.05)" : C.white, cursor: "pointer", fontFamily: "inherit", borderBottom: `1px solid ${C.lightGray}` }}>
+                    <span style={{ width: 30, height: 30, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: active ? C.primary : C.lightGray }}><s.Icon size={16} color={active ? C.white : C.gray} /></span>
+                    <span style={{ flex: 1 }}><span style={{ display: "block", fontSize: 13.5, fontWeight: 700, color: active ? C.primary : C.darkGray }}>{s.num ? <span style={{ color: C.gold }}>{s.num}. </span> : null}{s.label}</span><span style={{ display: "block", fontSize: 11, color: C.gray }}>{s.sub}</span></span>
+                    {s.flow && <span style={{ fontSize: 9, color: C.gold, fontWeight: 700, letterSpacing: "0.08em" }}>PARCOURS</span>}
+                  </button>); })}
+              </div>
+            )}
+          </div>
+        </div>
+        <div style={{ padding: "0 36px 12px", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          {FLOW_KEYS.map((s, i) => { const active = s.key === section, done = flow.forfait && (s.key === "test" || s.key === "grille"); return (
+            <React.Fragment key={s.key}>
+              <button onClick={() => goto(s.key)} style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 11px", cursor: "pointer", border: `1px solid ${active ? C.primary : C.mediumGray}`, background: active ? C.primary : C.white, color: active ? C.white : C.darkGray, fontFamily: "inherit", fontSize: 11.5, fontWeight: 600 }}>
+                <span style={{ width: 18, height: 18, borderRadius: "50%", background: active ? C.gold : done ? C.ok : C.lightGray, color: active || done ? C.white : C.gray, fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{s.num}</span>{s.label.split(" ")[0]}
+              </button>
+              {i < FLOW_KEYS.length - 1 && <Icons.ChevronRight size={14} color={C.mediumGray} />}
+            </React.Fragment>); })}
+          {flow.forfait && <span style={{ marginLeft: "auto", fontSize: 11, color: C.gray }}>Forfait : <strong style={{ color: C.primary }}>{flow.forfait}</strong> · Profil : <strong style={{ color: C.primary }}>{flow.profil}</strong></span>}
+        </div>
+      </header>
+      <main style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "28px 36px 60px" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+          {section === "test" && <TestPertinence {...props} />}
+          {section === "grille" && <GrilleTarifaire {...props} />}
+          {section === "guide" && <GuideFormation {...props} />}
+          {section === "gabarit" && <GabaritTemoin {...props} onOpenReport={(d) => setReportData(d)} />}
+          {section === "collecte" && <CollecteHub flow={flow} setFlow={setFlow} appSettings={appSettings} />}
+          {section === "ressources" && <Ressources {...props} />}
+        </div>
+      </main>
+      <footer className="ws-no-print" style={{ background: C.primaryDark, color: "rgba(255,255,255,0.75)", padding: "8px 36px", fontSize: 10, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <span>{FIRM.nom} · {FIRM.finma} · {FIRM.orias}</span>
+        <span>Module Planification Retraite — usage interne conseillers</span>
+      </footer>
+      {reportData && <PreviewR1 data={reportData} appSettings={appSettings} onClose={() => setReportData(null)} />}
     </div>
   );
 }

@@ -274,3 +274,29 @@ export async function genererFormulaireLPP(client, options = {}) {
   telechargerPDF(bytes, nom);
   return bytes;
 }
+// ============================================================
+// SIGNATURE — coordonnées du champ signature pour Yousign
+// Page 2, zone "Signature" sous "Lieu et date".
+// Repère Yousign : origine HAUT-gauche, y vers le bas, en points PDF,
+// page indexée à partir de 1. Ajuste x/y/width après calibration visuelle.
+// ============================================================
+export const SIGNATURE_FIELD = {
+  page: 2,
+  x: 334,
+  y: 445,
+  width: 200,
+  height: 60,
+};
+
+export function getSignatureFieldYousign(documentId) {
+  return {
+    document_id: documentId,
+    type: "signature",
+    page: SIGNATURE_FIELD.page,
+    x: Math.round(SIGNATURE_FIELD.x),
+    y: Math.round(SIGNATURE_FIELD.y),
+    // Pour un champ "signature", Yousign n'utilise que `width`
+    // (la hauteur est dérivée automatiquement).
+    width: Math.round(SIGNATURE_FIELD.width),
+  };
+}

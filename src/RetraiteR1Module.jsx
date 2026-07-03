@@ -3,22 +3,19 @@ import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
 
+// ── MOTEUR DE CALCUL (source unique de vérité, corrections 2026) ──
+import {
+  fmt, fmtEUR, partCapitalLPP, calcAVS, calcLPP, lppEffectif, calc3eP, calc3ePImpot,
+  calcPensionsFR, calcSyntheseRetraite, calcSyntheseMenage, calcArbitrageSante,
+  calcDoubleScenarioFR, calc3ScenariosLPP, calcFiscaliteComparative, projetteSolution,
+  calcGainTotal, generatePlanActions, calcProjectionAnnuelle, calcAllocationPoches,
+  calcHeatmapAges, calcTrainDeVieMensuel, calcCartographieDroits
+} from "./matriceCalculs";
+
 /* ============================================================================
-   WallSwiss — RetraiteR1Module.jsx (FUSIONNÉ)
-   ----------------------------------------------------------------------------
-   Ton outil R1 d'origine (assistant WizardR1 + générateur de rapport buildSlides
-   / PreviewR1 + Firebase) — INTACT — sous un nouvel onglet « Planification
-   Retraite » à 6 sections (liste déroulante) :
-     1. Test de pertinence (QCM)   2. Grille tarifaire + aide au choix
-     3. Guide de formation          4. Gabarit (plan témoin → ton vrai rapport)
-     5. Check-list & collecte (→ ton WizardR1) + export Excel
-     6. Ressources indispensables (+ lettre de mission DA, mini-guide cas clients)
-
-   L'export par défaut est désormais <PlanificationRetraite /> (la coquille).
-   Ton ancien App est conservé tel quel sous le nom RetraiteR1App (utilisé par
-   la section « Check-list & collecte »). Rien n'est perdu.
-
-   Excel : SheetJS chargé via CDN (comme jsPDF). Aucune dépendance à installer.
+   WallSwiss — RetraiteR1Module.jsx
+   Les calculs vivent désormais dans ./matriceCalculs.js (importés ci-dessus).
+   Ce fichier ne contient plus que l'interface (UI), le rapport et Firebase.
    ============================================================================ */
 
 const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
@@ -45,14 +42,13 @@ const C = {
   bad: "#EF4444",
 };
 
-// Coordonnées légales (réutilisées par les documents DA ajoutés)
 const FIRM = {
   nom: "The WallSwiss Partner's SA", finma: "FINMA F01496591", orias: "ORIAS 24004947",
   pied: "The WallSwiss Partner's SA · Nyon – Rte de Saint-Cergue 295 · Genève – Rue Kléberg 14 · FINMA F01496591 · wallswiss.ch",
 };
 
-const LOGO_COLOR = "/favicon.png"; // logo couleur (rouge + jaune) — fonds clairs
-const LOGO_WHITE = "/blanc.png";   // logo blanc — fonds foncés
+const LOGO_COLOR = "/favicon.png";
+const LOGO_WHITE = "/blanc.png";
 
 // ────────────────────── LOGO ──────────────────────
 function Logo({ size = 32, variant = "color", style }) {
@@ -85,7 +81,6 @@ const Icons = {
   Mail: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>,
   User: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
   Users: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-  // ── Icônes ajoutées pour l'onglet Planification Retraite ──
   ArrowRight: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
   ChevronDown: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
   Star: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
@@ -100,10 +95,7 @@ const Icons = {
   FileText: ({ size = 16, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
 };
 
-// ────────────────────── FORMATTERS ──────────────────────
-const fmt = (n) => Number(n || 0).toLocaleString("fr-CH", { maximumFractionDigits: 0 }).replace(/’/g, "'");
-const fmtEUR = (n) => Number(n || 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 });
-
+// ────────────────────── UTILITAIRES D'AFFICHAGE ──────────────────────
 // Montant insécable : empêche que "CHF 2'520 /mois" se coupe en fin de ligne.
 function Money({ value, prefix = "CHF", suffix = "", color, bold = false }) {
   return (
@@ -117,584 +109,6 @@ function Money({ value, prefix = "CHF", suffix = "", color, bold = false }) {
 function MultiLine({ text, style }) {
   if (!text) return null;
   return <span style={{ whiteSpace: "pre-line", ...style }}>{text}</span>;
-}
-
-// Part de la LPP prise en capital (0 → 1) en respectant le choix de sortie.
-function partCapitalLPP(person) {
-  const choix = person.lppChoixSortie || "Mixte";
-  if (choix === "Capital") return 1;
-  if (choix === "Rente") return 0;
-  const p = Number(person.lppPartCapitalPct || 0) / 100;
-  return Math.max(0, Math.min(1, p));
-}
-
-// ============================================================
-// SECTION 1 — HELPERS DE PROJECTION (CŒUR DES CALCULS)
-// ============================================================
-// AVS Suisse — 13e rente 2026, anticipation, ajournement
-function calcAVS(person, options = {}) {
-  const annees = Number(person.avsAnneesCotisation || 0);
-  const renteMaxBase = 2520; // CHF/mois 2026
-  const renteMinBase = 1260;
-  const tauxCompletion = Math.min(annees / 44, 1);
-  let renteMensuelle;
-  let source;
-  if (person.avsRenteEstimee && Number(person.avsRenteEstimee) > 0) {
-    renteMensuelle = Number(person.avsRenteEstimee);
-    source = "Estimation client";
-  } else {
-    const revenuMoyen = Number(person.revenusBrut || 0);
-    let renteBase = renteMinBase + (renteMaxBase - renteMinBase) * tauxCompletion;
-    if (revenuMoyen > 0 && revenuMoyen < 88200) {
-      renteBase = Math.max(renteMinBase, renteBase * (revenuMoyen / 88200));
-    }
-    renteMensuelle = Math.round(renteBase);
-    source = "Estimation indicative";
-  }
-  const scenario = options.scenario || "normal";
-  let coefficient = 1;
-  let anneesShift = options.anneesShift || 0;
-  if (scenario === "anticipe" && anneesShift > 0) {
-    coefficient = 1 - 0.068 * anneesShift; // -6.8% / année anticipée
-  } else if (scenario === "ajourne" && anneesShift > 0) {
-    const taux = { 1: 0.052, 2: 0.108, 3: 0.171, 4: 0.241, 5: 0.315 };
-    coefficient = 1 + (taux[anneesShift] || 0);
-  }
-  renteMensuelle = Math.round(renteMensuelle * coefficient);
-  const treizieme = person.avs13eRente !== false ? renteMensuelle : 0;
-  return {
-    renteMensuelle,
-    renteAnnuelle: renteMensuelle * 12 + treizieme,
-    treizieme,
-    tauxCompletion,
-    source,
-    coefficient,
-    scenario,
-    anneesShift,
-  };
-}
-// LPP — Capitalisation & conversion. annees=0 si déjà à l'âge de départ (déblocage immédiat).
-function calcLPP(person, ageDepart = 65) {
-  const avoirActuel = Number(person.lppAvoirActuel || 0);
-  const cotisationAnnuelle = Number(person.lppCotisationAnnuelle || 0);
-  const tauxRendement = Number(person.lppTauxRendement || 1.25) / 100;
-  const age = Number(person.age || 40);
-  const annees = Math.max(0, ageDepart - age);
-  let capitalAge65 = avoirActuel;
-  if (annees > 0 && tauxRendement > 0) {
-    capitalAge65 = avoirActuel * Math.pow(1 + tauxRendement, annees) +
-                   cotisationAnnuelle * ((Math.pow(1 + tauxRendement, annees) - 1) / tauxRendement);
-  } else if (annees > 0) {
-    capitalAge65 = avoirActuel + cotisationAnnuelle * annees;
-  }
-  if (person.lppCapitalProjete && Number(person.lppCapitalProjete) > 0) {
-    capitalAge65 = Number(person.lppCapitalProjete);
-  }
-  const librePassage = Number(person.lppLibrePassage || 0);
-  const lpProj = annees > 0 ? librePassage * Math.pow(1 + tauxRendement, annees) : librePassage;
-  capitalAge65 += lpProj;
-  const tauxConversion = Number(person.lppTauxConversion || 5.0) / 100;
-  const renteAnnuelle = capitalAge65 * tauxConversion;
-  return {
-    capitalAge65: Math.round(capitalAge65),
-    renteAnnuelle: Math.round(renteAnnuelle),
-    renteMensuelle: Math.round(renteAnnuelle / 12),
-    librePassageProj: Math.round(lpProj),
-    tauxConversion: tauxConversion * 100,
-    annees,
-    immediat: annees === 0,
-  };
-}
-// Rente LPP réellement perçue selon le choix rente/capital, et capital sorti.
-function lppEffectif(person, ageDepart) {
-  const lpp = calcLPP(person, ageDepart);
-  const part = partCapitalLPP(person);
-  return {
-    ...lpp,
-    partCapital: part,
-    capitalSorti: Math.round(lpp.capitalAge65 * part),
-    renteAnnuelleEff: Math.round(lpp.renteAnnuelle * (1 - part)),
-    renteMensuelleEff: Math.round((lpp.renteAnnuelle * (1 - part)) / 12),
-  };
-}
-// 3e Pilier
-function calc3eP(person, ageDepart = 65) {
-  const avoir3a = Number(person.troisPAvoir3a || 0);
-  const cotisationAnnuelle = Number(person.troisPCotisationAnnuelle || 0);
-  const tauxRendement = Number(person.troisPTauxRendement || 3) / 100;
-  const age = Number(person.age || 40);
-  const annees = Math.max(0, ageDepart - age);
-  let capital3a = avoir3a;
-  if (annees > 0 && tauxRendement > 0) {
-    capital3a = avoir3a * Math.pow(1 + tauxRendement, annees) +
-                cotisationAnnuelle * ((Math.pow(1 + tauxRendement, annees) - 1) / tauxRendement);
-  } else if (annees > 0) {
-    capital3a = avoir3a + cotisationAnnuelle * annees;
-  }
-  const avoir3b = Number(person.troisPAvoir3b || 0);
-  const capital3b = annees > 0 ? avoir3b * Math.pow(1 + tauxRendement, annees) : avoir3b;
-  return {
-    capital3a: Math.round(capital3a),
-    capital3b: Math.round(capital3b),
-    capitalTotal: Math.round(capital3a + capital3b),
-  };
-}
-// Impôt sur retrait en capital du 3e pilier (prestation en capital, imposition séparée).
-function calc3ePImpot(capital3a, hypotheses) {
-  const taux = Number(hypotheses.tauxImpotCapital3a || 6) / 100;
-  return Math.round(capital3a * taux);
-}
-// Pensions françaises — décote / taux plein corrigés (réforme 2023)
-function calcPensionsFR(person, options = {}) {
-  const trimAcquis = Number(person.frTrimestresAcquis || 0);
-  const trimRequis = Number(person.frTrimestresRequis || 172);
-  const sam = Number(person.frSAM || 0);
-  const scenario = options.scenario || "normal";
-  const trimRetenus = scenario === "taux_plein" ? Math.max(trimAcquis, trimRequis) : trimAcquis;
-  const trimManquants = Math.max(0, trimRequis - trimRetenus);
-  const trimDecote = Math.min(20, trimManquants);
-  const decote = scenario === "taux_plein" ? 0 : trimDecote * 0.0125;
-  const tauxLiquidation = 0.50 * (1 - decote);
-  const prorata = Math.min(1, trimRequis > 0 ? trimRetenus / trimRequis : 0);
-  let pensionCnavAnnuelle = sam * tauxLiquidation * prorata;
-  if (person.frPensionCnavEstimee && Number(person.frPensionCnavEstimee) > 0) {
-    const baseMensuelle = Number(person.frPensionCnavEstimee);
-    if (scenario === "taux_plein" && trimAcquis > 0 && trimAcquis < trimRequis) {
-      const decoteActuelle = Math.min(20, Math.max(0, trimRequis - trimAcquis)) * 0.0125;
-      const tauxActuel = 0.50 * (1 - decoteActuelle);
-      const facteur = tauxActuel > 0 ? 0.50 / tauxActuel : 1;
-      pensionCnavAnnuelle = baseMensuelle * 12 * facteur;
-    } else {
-      pensionCnavAnnuelle = baseMensuelle * 12;
-    }
-  }
-  const points = Number(person.frPointsAgircArrco || 0);
-  const valeurPoint = 1.4159;
-  const coefAgirc = (scenario !== "taux_plein" && trimManquants > 0) ? 0.90 : 1;
-  const pensionAgircAnnuelle = points * valeurPoint * coefAgirc;
-  const totalAnnuel = pensionCnavAnnuelle + pensionAgircAnnuelle;
-  return {
-    pensionCnavAnnuelle: Math.round(pensionCnavAnnuelle),
-    pensionCnavMensuelle: Math.round(pensionCnavAnnuelle / 12),
-    pensionAgircAnnuelle: Math.round(pensionAgircAnnuelle),
-    pensionAgircMensuelle: Math.round(pensionAgircAnnuelle / 12),
-    totalAnnuel: Math.round(totalAnnuel),
-    totalMensuel: Math.round(totalAnnuel / 12),
-    tauxPlein: trimManquants === 0,
-    decotePct: +(decote * 100).toFixed(2),
-    trimManquants,
-    scenario,
-    coefAgirc,
-  };
-}
-// Synthèse globale d'une personne — rente LPP cohérente avec le choix rente/capital
-function calcSyntheseRetraite(person, hypotheses) {
-  const ageDepart = Number(person.objAgeDepart || 65);
-  const tauxChange = Number(hypotheses.tauxChangeEurChf || 0.95);
-  let avsScenario = "normal"; let avsAnneesShift = 0;
-  if (ageDepart < 65) { avsScenario = "anticipe"; avsAnneesShift = Math.min(2, 65 - ageDepart); }
-  else if (ageDepart > 65) { avsScenario = "ajourne"; avsAnneesShift = Math.min(5, ageDepart - 65); }
-  const avs = calcAVS(person, { scenario: avsScenario, anneesShift: avsAnneesShift });
-  const lpp = calcLPP(person, ageDepart);
-  const troisP = calc3eP(person, ageDepart);
-  const pensionsFR = calcPensionsFR(person);
-  const pensionsFRChfAnnuelle = pensionsFR.totalAnnuel * tauxChange;
-  const pensionsFRChfMensuelle = pensionsFR.totalMensuel * tauxChange;
-  const partCap = partCapitalLPP(person);
-  const capitalLPPSorti = lpp.capitalAge65 * partCap;
-  const renteLPPAjustee = lpp.renteAnnuelle * (1 - partCap);
-  const revenuRenteAnnuel = avs.renteAnnuelle + lpp.renteAnnuelle + pensionsFRChfAnnuelle;
-  const revenuRenteAjuste = avs.renteAnnuelle + renteLPPAjustee + pensionsFRChfAnnuelle;
-  const capitalTotal = troisP.capitalTotal + capitalLPPSorti;
-  const trainVie = Number(person.objTrainVie || 0);
-  const objectifAnnuel = trainVie * 12;
-  const ecart = objectifAnnuel - revenuRenteAjuste;
-  const ecartPct = objectifAnnuel > 0 ? (ecart / objectifAnnuel) * 100 : 0;
-  return {
-    ageDepart, avs, lpp, troisP, pensionsFR, partCap,
-    renteLPPAjusteeAnnuelle: Math.round(renteLPPAjustee),
-    renteLPPAjusteeMensuelle: Math.round(renteLPPAjustee / 12),
-    pensionsFRChfAnnuelle: Math.round(pensionsFRChfAnnuelle),
-    pensionsFRChfMensuelle: Math.round(pensionsFRChfMensuelle),
-    revenuRenteAnnuel: Math.round(revenuRenteAnnuel),
-    revenuRenteMensuel: Math.round(revenuRenteAnnuel / 12),
-    revenuRenteAjuste: Math.round(revenuRenteAjuste),
-    revenuRenteAjusteMensuel: Math.round(revenuRenteAjuste / 12),
-    capitalLPPSorti: Math.round(capitalLPPSorti),
-    capitalTotal: Math.round(capitalTotal),
-    objectifAnnuel: Math.round(objectifAnnuel),
-    objectifMensuel: trainVie,
-    ecart: Math.round(ecart),
-    ecartMensuel: Math.round(ecart / 12),
-    ecartPct: ecartPct.toFixed(1),
-  };
-}
-// Synthèse consolidée du ménage (mode "commune")
-function calcSyntheseMenage(data) {
-  const a = calcSyntheseRetraite(data.client, data);
-  const b = (data.isCouple && data.conjoint && data.conjoint.prenom) ? calcSyntheseRetraite(data.conjoint, data) : null;
-  const add = (x, y) => Math.round((x || 0) + (y || 0));
-  return {
-    a, b,
-    revenuRenteMensuel: add(a.revenuRenteAjusteMensuel, b ? b.revenuRenteAjusteMensuel : 0),
-    avsMensuel: add(a.avs.renteMensuelle, b ? b.avs.renteMensuelle : 0),
-    lppMensuel: add(a.renteLPPAjusteeMensuelle, b ? b.renteLPPAjusteeMensuelle : 0),
-    frMensuel: add(a.pensionsFRChfMensuelle, b ? b.pensionsFRChfMensuelle : 0),
-    capitalTotal: add(a.capitalTotal, b ? b.capitalTotal : 0),
-    objectifMensuel: add(a.objectifMensuel, b ? b.objectifMensuel : 0),
-    ecartMensuel: add(a.ecartMensuel, b ? b.ecartMensuel : 0),
-  };
-}
-// ─── Arbitrage santé / fiscalité — montants ANNUELS (sur 1 an) ───
-function calcArbitrageSante(person, hypotheses) {
-  const ageDepart = Number(person.objAgeDepart || 65);
-  const ageFin = Number(person.objAgeFinConsommation || 90);
-  const dureeRetraite = Math.max(1, ageFin - ageDepart);
-  const tauxChange = Number(hypotheses.tauxChangeEurChf || 0.95);
-  const avs = calcAVS(person);
-  const lppE = lppEffectif(person, ageDepart);
-  const pensionsFR = calcPensionsFR(person);
-  const pensionsFRChf = pensionsFR.totalAnnuel * tauxChange;
-  const renteAnnuelleTotale = avs.renteAnnuelle + lppE.renteAnnuelleEff + pensionsFRChf;
-  const primeLAMal = Number(hypotheses.primeLAMalAnnuelle || 9600);
-  const primeCMU = Number(hypotheses.primeCMUAnnuelle || 0);
-  const tauxCSG = Number(hypotheses.tauxCSGCRDSCASA || 9.1) / 100;
-  const cotCMU = Number(hypotheses.cotisationCMUSubsidiaire || 0);
-  const csgLAMal = pensionsFRChf * (tauxCSG * 0.3);
-  const totalA = primeLAMal + csgLAMal;
-  const csgB = renteAnnuelleTotale * tauxCSG;
-  const totalB = primeCMU + cotCMU + csgB;
-  const totalC = (totalA + totalB) / 2;
-  const totalD = primeLAMal + pensionsFRChf;
-  const scenarios = [
-    { id: "A", label: "LAMal maintenue", coutAnnuel: totalA, detail: "Prime LAMal + CSG limitée sur pension FR", recommandePour: "Patrimoine élevé, peu de pension FR" },
-    { id: "B", label: "CMU + CSG/CRDS", coutAnnuel: totalB, detail: "CMU gratuite mais 9.1% sur toutes pensions", recommandePour: "Pensions globales faibles" },
-    { id: "C", label: "Hybride (LAMal→CMU)", coutAnnuel: totalC, detail: "Coût annuel moyen sur la transition", recommandePour: "Compromis prudent" },
-    { id: "D", label: "Refus retraite FR", coutAnnuel: totalD, detail: "LAMal + perte de la pension FR annuelle", recommandePour: "Très rares cas" },
-  ].map((s) => ({ ...s, coutAnnuel: Math.round(s.coutAnnuel) }));
-  const meilleur = scenarios.reduce((a, b) => (b.coutAnnuel < a.coutAnnuel ? b : a));
-  const pire = scenarios.reduce((a, b) => (b.coutAnnuel > a.coutAnnuel ? b : a));
-  const gainAnnuel = pire.coutAnnuel - meilleur.coutAnnuel;
-  return {
-    scenarios, meilleur, pire,
-    gainAnnuel: Math.round(gainAnnuel),
-    gainStrategie: Math.round(gainAnnuel * dureeRetraite),
-    dureeRetraite, ageDepart, ageFin,
-    hypotheses: { primeLAMal, primeCMU, tauxCSGCRDSCASA: tauxCSG * 100 },
-  };
-}
-// ─── Double scénario retraite française : départ au plus tôt vs taux plein ───
-function calcDoubleScenarioFR(person, hypotheses) {
-  if (!person.frACarriereFrance) return null;
-  const ageMinLegal = Number(person.frAgeMinLegal || 64);
-  const ageTauxPlein = Number(person.frAgeTauxPlein || 67);
-  const ageFin = Number(person.objAgeFinConsommation || 90);
-  const tauxChange = Number(hypotheses.tauxChangeEurChf || 0.95);
-  const totScenario = calcPensionsFR(person, { scenario: "tot" });
-  const pleinScenario = calcPensionsFR(person, { scenario: "taux_plein" });
-  const cumulTot = totScenario.totalAnnuel * Math.max(0, ageFin - ageMinLegal);
-  const cumulPlein = pleinScenario.totalAnnuel * Math.max(0, ageFin - ageTauxPlein);
-  const differentielCumule = cumulPlein - cumulTot;
-  const ecartAnnuel = pleinScenario.totalAnnuel - totScenario.totalAnnuel;
-  const dejaPercuTot = totScenario.totalAnnuel * Math.max(0, ageTauxPlein - ageMinLegal);
-  const pointMortAns = ecartAnnuel > 0 ? Math.round(dejaPercuTot / ecartAnnuel) : null;
-  return {
-    tot: { ...totScenario, ageDepart: ageMinLegal, cumulEur: Math.round(cumulTot), cumulChf: Math.round(cumulTot * tauxChange) },
-    plein: { ...pleinScenario, ageDepart: ageTauxPlein, cumulEur: Math.round(cumulPlein), cumulChf: Math.round(cumulPlein * tauxChange) },
-    differentielCumuleEur: Math.round(differentielCumule),
-    differentielCumuleChf: Math.round(differentielCumule * tauxChange),
-    pointMortAge: pointMortAns != null ? ageTauxPlein + pointMortAns : null,
-    recommandation: differentielCumule > 0 ? "taux_plein" : "tot",
-  };
-}
-// ─── 3 scénarios de sortie LPP : 100% rente / 50-50 / 100% capital ───
-function calc3ScenariosLPP(person, hypotheses) {
-  const ageDepart = Number(person.objAgeDepart || 65);
-  const ageFin = Number(person.objAgeFinConsommation || 90);
-  const dureeRetraite = Math.max(1, ageFin - ageDepart);
-  const lpp = calcLPP(person, ageDepart);
-  const capital = lpp.capitalAge65;
-  const tauxConv = (Number(person.lppTauxConversion || 5)) / 100;
-  const renteAnnuellePleine = capital * tauxConv;
-  const tauxImpotCapital = Number(hypotheses.tauxImpotCapitalLPP || 8) / 100;
-  const tauxImpotRente = Number(hypotheses.tauxImpotRenteLPP || 25) / 100;
-  const renteCumulee = renteAnnuellePleine * dureeRetraite;
-  const impotsRente = renteCumulee * tauxImpotRente;
-  const netRente = renteCumulee - impotsRente;
-  const cap50 = capital * 0.5;
-  const rente50Annuelle = (capital * 0.5) * tauxConv;
-  const rente50Cumulee = rente50Annuelle * dureeRetraite;
-  const impotCap50 = cap50 * tauxImpotCapital;
-  const impotRente50 = rente50Cumulee * tauxImpotRente;
-  const netMixte = (cap50 - impotCap50) + (rente50Cumulee - impotRente50);
-  const impotCapTotal = capital * tauxImpotCapital;
-  const netCapital = capital - impotCapTotal;
-  return {
-    capital,
-    renteAnnuellePleine: Math.round(renteAnnuellePleine),
-    dureeRetraite,
-    scenarios: [
-      { id: "rente", label: "100% Rente viagère", capitalPercu: 0, rentePercue: Math.round(renteAnnuellePleine), impots: Math.round(impotsRente), netTotal: Math.round(netRente), avantages: "Revenu garanti à vie, protection longévité", inconvenients: "Imposition annuelle élevée, pas de transmission" },
-      { id: "mixte", label: "50% Rente / 50% Capital", capitalPercu: Math.round(cap50 - impotCap50), rentePercue: Math.round(rente50Annuelle), impots: Math.round(impotCap50 + impotRente50), netTotal: Math.round(netMixte), avantages: "Équilibre sécurité + flexibilité", inconvenients: "Compromis sur les deux dimensions" },
-      { id: "capital", label: "100% Capital", capitalPercu: Math.round(netCapital), rentePercue: 0, impots: Math.round(impotCapTotal), netTotal: Math.round(netCapital), avantages: "Liquidité totale, transmissible, fiscalité unique", inconvenients: "Risque de longévité, gestion à la charge" },
-    ],
-    hypotheses: { tauxImpotCapital: tauxImpotCapital * 100, tauxImpotRente: tauxImpotRente * 100 },
-  };
-}
-// ─── Comparatif fiscal transfrontalier : net-net rente vs capital, CH vs FR ───
-function calcFiscaliteComparative(person, data) {
-  const ageDepart = Number(person.objAgeDepart || 65);
-  const ageFin = Number(person.objAgeFinConsommation || 90);
-  const duree = Math.max(1, ageFin - ageDepart);
-  const lpp = calcLPP(person, ageDepart);
-  const capital = lpp.capitalAge65;
-  const tauxConv = Number(person.lppTauxConversion || 5) / 100;
-  const renteAnnuelle = capital * tauxConv;
-  const tCapCH = Number(data.fiscTauxCapitalCH || 7) / 100;
-  const impotCapCH = capital * tCapCH;
-  const tCapFR = Number(data.fiscTauxCapitalFR || 7.5) / 100;
-  const tPSCapFR = Number(data.fiscTauxPSCapitalFR || 0) / 100;
-  const impotCapFR = capital * (tCapFR + tPSCapFR);
-  const tRenteCH = Number(data.fiscTauxRenteCH || 20) / 100;
-  const renteNetteAnCH = renteAnnuelle * (1 - tRenteCH);
-  const tRenteFR = Number(data.fiscTauxRenteFR || 17) / 100;
-  const renteNetteAnFR = renteAnnuelle * (1 - tRenteFR);
-  return {
-    capital, renteAnnuelle: Math.round(renteAnnuelle), duree,
-    capitalCH: { tauxPct: +(tCapCH * 100).toFixed(1), impot: Math.round(impotCapCH), net: Math.round(capital - impotCapCH) },
-    capitalFR: { tauxPct: +((tCapFR + tPSCapFR) * 100).toFixed(1), impot: Math.round(impotCapFR), net: Math.round(capital - impotCapFR) },
-    renteCH: { tauxPct: +(tRenteCH * 100).toFixed(1), annuelleNette: Math.round(renteNetteAnCH), cumuleeNette: Math.round(renteNetteAnCH * duree) },
-    renteFR: { tauxPct: +(tRenteFR * 100).toFixed(1), annuelleNette: Math.round(renteNetteAnFR), cumuleeNette: Math.round(renteNetteAnFR * duree) },
-    meilleurCapital: (capital - impotCapCH) >= (capital - impotCapFR) ? "Suisse" : "France",
-  };
-}
-// ─── Projection d'une solution (capital → rente + tableau de rendement) ───
-function projetteSolution(sol) {
-  const capital = Number(sol.capital || 0);
-  const tauxConv = Number(sol.tauxConversion || 0) / 100;
-  const rendement = Number(sol.tauxRendement || 0) / 100;
-  const duree = Math.max(1, Number(sol.dureeAnnees || 25));
-  const renteAnnuelle = (sol.renteAnnuelle && Number(sol.renteAnnuelle) > 0) ? Number(sol.renteAnnuelle) : capital * tauxConv;
-  const rows = [];
-  let val = capital;
-  const N = Math.min(duree, 30);
-  for (let y = 1; y <= N; y++) {
-    val = val * (1 + rendement) - renteAnnuelle;
-    rows.push({ annee: y, capital: Math.max(0, Math.round(val)), rente: Math.round(renteAnnuelle) });
-  }
-  const epuiseAn = rows.findIndex(r => r.capital <= 0);
-  return {
-    capital,
-    renteAnnuelle: Math.round(renteAnnuelle),
-    renteMensuelle: Math.round(renteAnnuelle / 12),
-    rows,
-    epuisement: epuiseAn >= 0 ? rows[epuiseAn].annee : null,
-  };
-}
-// ─── Chiffrage du GAIN TOTAL du conseil ───
-function calcGainTotal(data) {
-  const avsAnticipe = calcAVS(data.client, { scenario: "anticipe", anneesShift: 2 });
-  const avsNormal = calcAVS(data.client);
-  const cumulAnticipe = avsAnticipe.renteAnnuelle * 27;
-  const cumulNormal = avsNormal.renteAnnuelle * 25;
-  const gainAgeAVS = Math.max(0, cumulNormal - cumulAnticipe);
-  const arbitrage = calcArbitrageSante(data.client, data);
-  const gainStrategieMaladie = arbitrage.gainStrategie;
-  const flowAnnuelEur = Number(data.client.revenusFR || 0) + calcPensionsFR(data.client).totalAnnuel;
-  const economieChange = flowAnnuelEur * 0.015;
-  const economiesChange = Math.round(economieChange * (Number(data.economiesPartenairesAnneesEstimees || 20)));
-  const economiesFrais = Number(data.economiesFraisAnnuelles || 800) * Number(data.economiesPartenairesAnneesEstimees || 20);
-  const total = gainAgeAVS + gainStrategieMaladie + economiesChange + economiesFrais;
-  return {
-    gainAgeAVS: Math.round(gainAgeAVS),
-    gainStrategieMaladie: Math.round(gainStrategieMaladie),
-    economiesChange: Math.round(economiesChange),
-    economiesFrais: Math.round(economiesFrais),
-    total: Math.round(total),
-  };
-}
-// ─── Plan d'actions calendaire (généré automatiquement) ───
-function generatePlanActions(data) {
-  const ageActuel = Number(data.client.age || 50);
-  const ageDepart = Number(data.client.objAgeDepart || 65);
-  const anneeActuelle = new Date().getFullYear();
-  const anneeDepart = anneeActuelle + (ageDepart - ageActuel);
-  const actions = [];
-  actions.push({ annee: anneeActuelle, mois: "Q1", action: "Demander le relevé du compte individuel (CI) AVS", destinataire: "Caisse cantonale de compensation", importance: "haute" });
-  actions.push({ annee: anneeActuelle, mois: "Q1", action: "Demander une attestation détaillée de la caisse de pension LPP", destinataire: "Institution de prévoyance", importance: "haute" });
-  if (data.client.frACarriereFrance) actions.push({ annee: anneeActuelle, mois: "Q1", action: "Télécharger le RIS sur info-retraite.fr et le transmettre au conseiller", destinataire: "info-retraite.fr (CNAV)", importance: "haute" });
-  if (Number(data.client.lppPotentielRachat) > 0 && Number(data.client.lppRachats3Ans) === 0) actions.push({ annee: anneeActuelle, mois: "Q4", action: "Étudier rachat LPP (potentiel CHF " + fmt(data.client.lppPotentielRachat) + ")", destinataire: "Caisse de pension", importance: "haute" });
-  if (data.client.lppAvoirsOublies) actions.push({ annee: anneeActuelle, mois: "Q2", action: "Recherche d'avoirs LPP oubliés", destinataire: "Centrale du 2e pilier + Institution supplétive", importance: "moyenne" });
-  if (anneeDepart > anneeActuelle) {
-    actions.push({ annee: anneeDepart - 1, mois: "Q1", action: "Annoncer la sortie LPP à la caisse de pension (préavis 12 mois)", destinataire: "Caisse de pension", importance: "haute" });
-    actions.push({ annee: anneeDepart - 1, mois: "Q3", action: "Déposer la demande de rente AVS (min. 3 mois avant l'âge ordinaire)", destinataire: "Caisse de compensation", importance: "haute" });
-    if (data.client.frACarriereFrance) actions.push({ annee: anneeDepart - 1, mois: "Q2", action: "Liquider les pensions FR via demande unique (info-retraite.fr)", destinataire: "CNAV + AGIRC-ARRCO", importance: "haute" });
-    actions.push({ annee: anneeDepart - 1, mois: "Q4", action: "Décider du basculement LAMal → CMU ou statut quasi-résident", destinataire: "Conseiller + fiduciaire", importance: "haute" });
-    actions.push({ annee: anneeDepart, mois: "Q1", action: "Décider de l'échelonnement des retraits 3a (sur 2-3 ans pour fractionner l'impôt)", destinataire: "Banque(s) 3a", importance: "moyenne" });
-    actions.push({ annee: anneeDepart, mois: "Q1", action: "Souscrire une assurance accident privée (LAA cesse à la retraite)", destinataire: "Assureur privé", importance: "moyenne" });
-  } else {
-    actions.push({ annee: anneeActuelle, mois: "Q1", action: "Annoncer la sortie LPP / le retrait en capital à la caisse", destinataire: "Caisse de pension", importance: "haute" });
-    actions.push({ annee: anneeActuelle, mois: "Q1", action: "Déposer la demande de rente AVS", destinataire: "Caisse de compensation", importance: "haute" });
-  }
-  actions.push({ annee: anneeDepart + 1, mois: "Q1", action: "Réviser le portefeuille en allocation de retraite (4 poches)", destinataire: "Conseiller", importance: "moyenne" });
-  actions.push({ annee: anneeDepart + 1, mois: "Q4", action: "Première déclaration d'impôt en tant que retraité — vérifier convention CH-FR", destinataire: "Fiduciaire", importance: "haute" });
-  if (!data.succTestament) actions.push({ annee: anneeActuelle, mois: "Q2", action: "Rédiger ou actualiser le testament avec choix de loi applicable", destinataire: "Notaire", importance: "moyenne" });
-  return actions.sort((a, b) => (a.annee !== b.annee ? a.annee - b.annee : a.mois.localeCompare(b.mois)));
-}
-// ─── Projection annuelle (avec évènements patrimoniaux + montant libre) ───
-function calcProjectionAnnuelle(data) {
-  const ageActuel = Number(data.client.age || 50);
-  const ageDepart = Number(data.client.objAgeDepart || 65);
-  const ageFin = Number(data.client.objAgeFinConsommation || 90);
-  const anneeActuelle = new Date().getFullYear();
-  const tauxRdt = Number(data.tauxRendement || 1.5) / 100;
-  const inflation = Number(data.tauxInflation || 1.5) / 100;
-  const synth = calcSyntheseRetraite(data.client, data);
-  const lpp = calcLPP(data.client, ageDepart);
-  const tp = calc3eP(data.client, ageDepart);
-  const partCap = partCapitalLPP(data.client);
-  const trainVieInitial = Number(data.client.objTrainVie || 0) * 12;
-  const salaireAnnuel = Number(data.client.revenusNet || 0);
-  const epargneAnnuelle = Number(data.client.fluxEpargneMensuel || 0) * 12;
-  const chargesActuelles = (Number(data.budCoutVieMensuel || 0) + Number(data.budAssuranceMaladie || 0) + Number(data.budAutresAssurances || 0)) * 12 + Number(data.budChargeFiscale || 0);
-  let patFinancierInitial = Number(data.patComptesCourants || 0) + Number(data.patEpargne || 0) + Number(data.patDepotsTitres || 0);
-  if (data.useCapitalLibre && Number(data.patCapitalLibre) > 0) patFinancierInitial = Number(data.patCapitalLibre);
-  let patImmoInitial = Number(data.immoResidencePrincipaleValeur || 0) - Number(data.immoResidencePrincipaleHypotheque || 0);
-  const events = data.immoEvents || [];
-  const rows = [];
-  let patLiquide = patFinancierInitial, patImmo = patImmoInitial;
-  let capital3a = tp.capital3a, capital3b = tp.capital3b, capitalLPP = lpp.capitalAge65;
-  let trainVie = trainVieInitial;
-  const maxYears = Math.min(40, Math.max(1, ageFin - ageActuel));
-  for (let annee = anneeActuelle; annee <= anneeActuelle + maxYears; annee++) {
-    const age = ageActuel + (annee - anneeActuelle);
-    const enRetraite = age >= ageDepart;
-    let salaires = enRetraite ? 0 : salaireAnnuel;
-    let rentes = 0, capitalsLib = 0;
-    let charges = chargesActuelles * Math.pow(1 + inflation, annee - anneeActuelle);
-    let trainVieAnnee = trainVie * Math.pow(1 + inflation, annee - anneeActuelle);
-    if (enRetraite) {
-      rentes = synth.avs.renteAnnuelle + lpp.renteAnnuelle * (1 - partCap) + synth.pensionsFRChfAnnuelle;
-      if (age === ageDepart) {
-        capitalsLib = capitalLPP * partCap + capital3a + capital3b;
-        capitalLPP = capitalLPP * (1 - partCap); capital3a = 0; capital3b = 0;
-      }
-      charges *= 0.75;
-    }
-    let evtCash = 0; const evtLabels = [];
-    events.filter(e => Number(e.annee) === annee).forEach(e => {
-      const montant = Number(e.montantNet || 0);
-      if (e.type === "vente") { evtCash += montant; patImmo = Math.max(0, patImmo - Number(e.valeurBien || montant)); }
-      else if (e.type === "achat") { evtCash -= montant; patImmo += Number(e.valeurBien || montant); }
-      else { evtCash += montant; }
-      if (e.libelle) evtLabels.push(e.libelle);
-    });
-    const fluxNet = salaires + rentes - charges - trainVieAnnee + (enRetraite ? 0 : epargneAnnuelle);
-    patLiquide = (patLiquide > 0 ? patLiquide * (1 + tauxRdt) : patLiquide) + fluxNet + capitalsLib + evtCash;
-    patImmo = patImmo * (1 + inflation * 0.5);
-    if (!enRetraite) { capital3a *= (1 + tauxRdt); capital3b *= (1 + tauxRdt); }
-    rows.push({
-      annee, age, enRetraite,
-      salaires: Math.round(salaires), rentes: Math.round(rentes),
-      charges: Math.round(charges), trainVie: Math.round(trainVieAnnee),
-      epargne: enRetraite ? 0 : epargneAnnuelle,
-      capitalsLib: Math.round(capitalsLib + evtCash), evtLabels,
-      patLiquide: Math.round(patLiquide), patImmo: Math.round(patImmo), patTotal: Math.round(patLiquide + patImmo),
-    });
-  }
-  return rows;
-}
-// ─── Pré-allocation par horizon (4 poches) ───
-function calcAllocationPoches(data) {
-  const tp = calc3eP(data.client, Number(data.client.objAgeDepart || 65));
-  const lpp = calcLPP(data.client, Number(data.client.objAgeDepart || 65));
-  const liq = Number(data.patComptesCourants || 0) + Number(data.patEpargne || 0);
-  const titres = Number(data.patDepotsTitres || 0);
-  const capitalLPPSorti = lpp.capitalAge65 * partCapitalLPP(data.client);
-  let capitalDisponible = liq + titres + tp.capitalTotal + capitalLPPSorti;
-  if (data.useCapitalLibre && Number(data.patCapitalLibre) > 0) capitalDisponible = Number(data.patCapitalLibre) + tp.capitalTotal + capitalLPPSorti;
-  return [
-    { id: "court", label: "Court terme", horizon: "0–3 ans", pct: 15, montant: Math.round(capitalDisponible * 0.15), color: C.bad, support: "Liquidités, comptes courants" },
-    { id: "moyen", label: "Moyen terme", horizon: "4–8 ans", pct: 25, montant: Math.round(capitalDisponible * 0.25), color: C.warn, support: "Obligations courtes, fonds défensifs" },
-    { id: "long", label: "Long terme", horizon: "9–15 ans", pct: 30, montant: Math.round(capitalDisponible * 0.30), color: C.france, support: "Mixte actions/obligations" },
-    { id: "tresLong", label: "Très long terme", horizon: "> 15 ans", pct: 30, montant: Math.round(capitalDisponible * 0.30), color: C.ok, support: "Actions, immobilier, fonds dynamiques" },
-  ];
-}
-// ─── Heatmap train de vie par âge de départ ───
-function calcHeatmapAges(data) {
-  const ages = [58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70];
-  const tauxChange = Number(data.tauxChangeEurChf || 0.95);
-  const ageFin = Number(data.client.objAgeFinConsommation || 90);
-  const rows = ages.map((age) => {
-    const personne = { ...data.client, objAgeDepart: age };
-    const avs = age < 65 ? calcAVS(personne, { scenario: "anticipe", anneesShift: 65 - age })
-      : age > 65 ? calcAVS(personne, { scenario: "ajourne", anneesShift: Math.min(5, age - 65) })
-        : calcAVS(personne);
-    const lpp = calcLPP(personne, age);
-    const tp = calc3eP(personne, age);
-    const pensionsFR = calcPensionsFR(personne).totalAnnuel * tauxChange;
-    const dureeRetraite = Math.max(1, ageFin - age);
-    const renteAnnuelle = avs.renteAnnuelle + lpp.renteAnnuelle + pensionsFR;
-    const trainDeVieRente = Math.round(renteAnnuelle / 12);
-    const capital = tp.capitalTotal + lpp.capitalAge65 * 0.5;
-    const trainDeVieCapital = Math.round((renteAnnuelle + capital / dureeRetraite) / 12);
-    return { age, trainDeVieRente, trainDeVieCapital, dureeRetraite };
-  });
-  const maxVal = Math.max(...rows.map(r => Math.max(r.trainDeVieRente, r.trainDeVieCapital)));
-  return { rows, maxVal };
-}
-// ─── Train de vie mensuel détaillé ───
-function calcTrainDeVieMensuel(data) {
-  const synth = calcSyntheseRetraite(data.client, data);
-  const revenuBrut = synth.revenuRenteAjusteMensuel;
-  const cotSociales = Math.round(revenuBrut * 0.06);
-  const impotMensuel = Math.round((Number(data.budChargeFiscale || 0) / 12) * 0.6);
-  const revenuNet = revenuBrut - cotSociales - impotMensuel;
-  const chargesFixes = Number(data.budAssuranceMaladie || 0) + Number(data.budAutresAssurances || 0);
-  const trainVieDispo = revenuNet - chargesFixes;
-  const tp = calc3eP(data.client, Number(data.client.objAgeDepart || 65));
-  const lpp = calcLPP(data.client, Number(data.client.objAgeDepart || 65));
-  const dureeRetraite = Math.max(1, Number(data.client.objAgeFinConsommation || 90) - Number(data.client.objAgeDepart || 65));
-  const capitalDisponible = tp.capitalTotal + lpp.capitalAge65 * partCapitalLPP(data.client);
-  const consoCapitalMensuel = Math.round(capitalDisponible / dureeRetraite / 12);
-  return {
-    revenuBrut, cotSociales, impotMensuel, revenuNet, chargesFixes,
-    consoCapitalMensuel,
-    trainVieAvant90: trainVieDispo + consoCapitalMensuel,
-    trainVieApres90: revenuNet - chargesFixes,
-    patImmoRestant: Number(data.immoResidencePrincipaleValeur || 0) - Number(data.immoResidencePrincipaleHypotheque || 0),
-  };
-}
-// ─── Cartographie des droits ───
-function calcCartographieDroits(data) {
-  const lignes = [];
-  const addPersonne = (p, isClient) => {
-    const ageDepart = Number(p.objAgeDepart || 65);
-    const avs = calcAVS(p);
-    const lppE = lppEffectif(p, ageDepart);
-    const tp = calc3eP(p, ageDepart);
-    const prenom = p.prenom || (isClient ? "Client" : "Conjoint(e)");
-    if (avs.renteMensuelle > 0) lignes.push({ qui: prenom, intitule: "Rente AVS", type: "Rente viagère", institut: p.avsCaisse || "Caisse de compensation", montant: "CHF " + fmt(avs.renteMensuelle) + " /mois", ageDebut: 65 });
-    if (lppE.partCapital >= 0.999) {
-      lignes.push({ qui: prenom, intitule: "Capital LPP", type: "Capital", institut: p.lppCaisse || "Caisse de pension", montant: "CHF " + fmt(lppE.capitalAge65), ageDebut: ageDepart });
-    } else if (lppE.partCapital <= 0.001) {
-      lignes.push({ qui: prenom, intitule: "Rente LPP", type: "Rente viagère", institut: p.lppCaisse || "Caisse de pension", montant: "CHF " + fmt(lppE.renteMensuelle) + " /mois", ageDebut: ageDepart });
-    } else {
-      lignes.push({ qui: prenom, intitule: "Rente LPP (part)", type: "Rente viagère", institut: p.lppCaisse || "Caisse de pension", montant: "CHF " + fmt(lppE.renteMensuelleEff) + " /mois", ageDebut: ageDepart });
-      lignes.push({ qui: prenom, intitule: "Capital LPP (part)", type: "Capital", institut: p.lppCaisse || "Caisse de pension", montant: "CHF " + fmt(lppE.capitalSorti), ageDebut: ageDepart });
-    }
-    if (Number(tp.capital3a) > 0) lignes.push({ qui: prenom, intitule: "Capital 3a", type: "Capital", institut: "Banque(s) / Assurance(s) 3a", montant: "CHF " + fmt(tp.capital3a), ageDebut: ageDepart });
-    if (Number(tp.capital3b) > 0) lignes.push({ qui: prenom, intitule: "Capital 3b", type: "Capital libre", institut: "Assurance-vie", montant: "CHF " + fmt(tp.capital3b), ageDebut: ageDepart });
-    if (p.frACarriereFrance) {
-      const pFR = calcPensionsFR(p);
-      lignes.push({ qui: prenom, intitule: "Pension CNAV (base FR)", type: "Rente viagère", institut: p.frRegimeBase || "CNAV", montant: fmtEUR(pFR.pensionCnavMensuelle) + " € /mois", ageDebut: Number(p.frAgeTauxPlein || 67) });
-      lignes.push({ qui: prenom, intitule: "AGIRC-ARRCO (complément.)", type: "Rente viagère", institut: "AGIRC-ARRCO", montant: fmtEUR(pFR.pensionAgircMensuelle) + " € /mois", ageDebut: Number(p.frAgeTauxPlein || 67) });
-      lignes.push({ qui: prenom, intitule: "Pensions FR cumulées", type: "Rente viagère", institut: "CNAV + AGIRC-ARRCO", montant: fmtEUR(pFR.totalMensuel) + " € /mois", ageDebut: Number(p.frAgeTauxPlein || 67) });
-    }
-  };
-  addPersonne(data.client, true);
-  if (data.isCouple && data.conjoint && data.conjoint.prenom) addPersonne(data.conjoint, false);
-  return lignes;
 }
 
 // ============================================================
@@ -884,7 +298,7 @@ const stateInitial = () => ({
   succDonations: "30k€ à chaque enfant", succObjectifsTransmission: "Protéger le conjoint en priorité.",
   succLoiApplicable: "France",
   tauxRendement: "3", tauxInflation: "1.5",
-  tauxChangeEurChf: "0.95", paysResidenceRetraite: "France",
+  tauxChangeEurChf: "0.92", paysResidenceRetraite: "France",
   scenarios: ["Âge cible", "Arrêt anticipé -3 ans", "Rente vs Capital"],
   primeLAMalAnnuelle: "9600", primeCMUAnnuelle: "0", cotisationCMUSubsidiaire: "0",
   tauxCSGCRDSCASA: "9.1", ageBasculeHybride: "70",
@@ -2194,7 +1608,7 @@ function SlideAVS({ data, num }) {
   const echelle = Math.min(44, anneesCot);
   const tauxCompletion = (echelle / 44 * 100).toFixed(1);
   const ramApprox = Number(data.client.revenusBrut || 0);
-  const renteMin = 1260, renteMax = 2520, seuilSup = 88200;
+  const renteMin = 1260, renteMax = 2520, seuilSup = 90720;
   let renteEch44;
   if (ramApprox >= seuilSup) renteEch44 = renteMax;
   else if (ramApprox <= 15120) renteEch44 = renteMin;
@@ -2481,7 +1895,7 @@ function SlideDoubleScenarioFR({ data, num }) {
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 26, color: C.primary, fontWeight: 700, margin: 0 }}>Vos <em style={{ color: C.france }}>pensions FR</em> — Tôt vs Taux plein</div>
         </div>
         <p style={{ fontSize: 10.5, color: C.darkGray, lineHeight: 1.5, marginBottom: 12, textAlign: "justify" }}>
-          Réforme 2023 : âge légal {double.tot.ageDepart} ans, {data.client.frTrimestresRequis} trimestres pour le taux plein. <strong>Départ au plus tôt</strong> : liquidation avec <em>décote</em> ({Math.min(20, double.tot.trimManquants)} trim. manquants → -{double.tot.decotePct}% sur le taux de base, -10% temporaire sur l'AGIRC-ARRCO). <strong>Taux plein</strong> : pension <em>complète sans décote</em>. La convention CH-FR permet la <strong>totalisation des périodes</strong>.
+          Réforme 2023 : âge légal {double.tot.ageDepart} ans, {data.client.frTrimestresRequis} trimestres pour le taux plein. <strong>Départ au plus tôt</strong> : liquidation avec <em>décote</em> ({Math.min(20, double.tot.trimManquants)} trim. manquants → -{double.tot.decotePct}% sur le taux de base). <strong>Taux plein</strong> : pension <em>complète sans décote</em>. La convention CH-FR permet la <strong>totalisation des périodes</strong>.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 14 }}>
           {[
@@ -2497,7 +1911,7 @@ function SlideDoubleScenarioFR({ data, num }) {
                   <tr><td style={{ color: C.gray, padding: "4px 0" }}>AGIRC-ARRCO</td><td style={{ textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" }}>{fmtEUR(opt.sc.pensionAgircMensuelle)} €/mois</td></tr>
                   <tr><td style={{ color: C.gray, padding: "4px 0", borderTop: `1px solid ${C.lightGray}` }}><strong>Total mensuel</strong></td><td style={{ textAlign: "right", fontWeight: 900, color: opt.color, borderTop: `1px solid ${C.lightGray}`, whiteSpace: "nowrap" }}>{fmtEUR(opt.sc.totalMensuel)} €/mois</td></tr>
                   <tr><td style={{ color: C.gray, padding: "4px 0", fontSize: 10 }}>Cumul jusqu'à 90 ans</td><td style={{ textAlign: "right", fontWeight: 700, fontSize: 10, whiteSpace: "nowrap" }}>{fmtEUR(opt.sc.cumulEur)} €</td></tr>
-                  {opt.sc.coefAgirc < 1 && (<tr><td colSpan={2} style={{ color: C.bad, padding: "4px 0", fontSize: 9 }}>⚠ Décote AGIRC -{Math.round((1 - opt.sc.coefAgirc) * 100)}% (3 ans)</td></tr>)}
+                  {opt.sc.coefAgirc < 1 && (<tr><td colSpan={2} style={{ color: C.bad, padding: "4px 0", fontSize: 9 }}>⚠ Minoration AGIRC -{Math.round((1 - opt.sc.coefAgirc) * 100)}%</td></tr>)}
                 </tbody>
               </table>
             </div>
@@ -2524,7 +1938,7 @@ function SlideDoubleScenarioFR({ data, num }) {
           <div style={{ background: C.lightGray, padding: 12, fontSize: 10, color: C.darkGray, lineHeight: 1.65 }}>
             <strong>Méthode de calcul</strong><br/>
             CNAV = SAM × taux (50% − décote 1,25 %/trim. manquant, plafond 20) × (trim. retenus / requis).<br/>
-            AGIRC-ARRCO = points × 1,4159 € × coefficient de décote.<br/>
+            AGIRC-ARRCO = points × 1,4386 € × coefficient.<br/>
             <em>Totalisation CH-FR :</em> les années cotisées en Suisse comptent pour atteindre le taux plein.
           </div>
         </div>
@@ -3805,7 +3219,7 @@ const saveLocal = (list) => {
 };
 const stripUndefined = (obj) => JSON.parse(JSON.stringify(obj));
 // ============================================================
-// TON APP D'ORIGINE (renommé RetraiteR1App — utilisé par la section Collecte)
+// APP D'ORIGINE (RetraiteR1App — utilisée par la section Collecte)
 // ============================================================
 function RetraiteR1App({ appSettings }) {
   const [user, setUser] = useState(null);
@@ -3980,7 +3394,7 @@ function RetraiteR1App({ appSettings }) {
   );
 }
 // ============================================================
-// ░░░ ONGLET « PLANIFICATION RETRAITE » — 6 SECTIONS (NOUVEAU) ░░░
+// ONGLET « PLANIFICATION RETRAITE » — 6 SECTIONS
 // ============================================================
 function SectionHead({ kicker, title, emphasis, intro }) {
   return (
@@ -4115,7 +3529,6 @@ function QcmPapier() {
     </PrintableSheet>
   );
 }
-
 // ── Section 2 : Grille tarifaire ──
 const FORFAITS = [
   { id: "Essentiel", prix: 590, pour: "Personne seule, situation standard", inclus: "Analyse des 3 piliers (+ volet France si frontalier), 1 scénario, rapport + restitution" },
@@ -4219,7 +3632,7 @@ const CHAPITRES = [
   { id: "avs", num: 2, titre: "1er pilier — AVS", duree: 8, objectif: "Calcul de la rente AVS et leviers anticipation / ajournement.", points: ["Carrière complète = 44 ans ; max 2026 ≈ 2'520, min ≈ 1'260 CHF/mois.", "13e rente AVS dès décembre 2026 (AVS21).", "Anticipation −6,8 %/an (max 2 ans) ; ajournement +5,2 % à +31,5 %.", "Splitting couples mariés + bonifications.", "Chiffre non opposable : exiger l'extrait CI."], aRetenir: "Ne jamais anticiper l'AVS sans calcul." },
   { id: "lpp", num: 3, titre: "2e pilier — LPP", duree: 10, objectif: "Capital, taux de conversion et mécanique des rachats.", points: ["Capital → rente via le taux de conversion (LPP21 à la baisse).", "Rachats (art. 79b) : déductibles, blocage 3 ans avant un retrait en capital.", "Vérifier le taux de couverture de la caisse.", "Recenser les avoirs de libre passage.", "Réversion conjoint ≈ 60 %."], aRetenir: "Séquence : rachats → arrêt ≥ 3 ans → retrait. Préavis caisse ~12 mois." },
   { id: "3p", num: 4, titre: "3e pilier — 3a / 3b", duree: 7, objectif: "Cotisations, échelonnement des retraits, clause bénéficiaire.", points: ["Plafond 3a 2026 : 7'258 (avec LPP) ; indépendant jusqu'à 36'288.", "Frontalier : déduction 3a conditionnée au quasi-résident.", "Échelonner les retraits sur plusieurs comptes / années.", "Retrait au plus tôt 5 ans avant l'âge AVS.", "Vérifier la clause bénéficiaire."], aRetenir: "Plusieurs comptes 3a clôturés sur des années différentes = impôt réduit." },
-  { id: "france", num: 5, titre: "La retraite française", duree: 9, objectif: "Lire un RIS et arbitrer départ au plus tôt vs taux plein.", points: ["CNAV = SAM × taux (50 % − décote 1,25 %/trim, plafond 20) × prorata.", "Agirc-Arrco = points × valeur ; minoration −10 % (3 ans) sans taux plein.", "Réforme 2023 : âge légal 64, taux plein auto 67.", "Totalisation CH-FR (E-205).", "RIS gratuit sur info-retraite.fr."], aRetenir: "Toujours comparer tôt vs taux plein avec le point mort." },
+  { id: "france", num: 5, titre: "La retraite française", duree: 9, objectif: "Lire un RIS et arbitrer départ au plus tôt vs taux plein.", points: ["CNAV = SAM × taux (50 % − décote 1,25 %/trim, plafond 20) × prorata.", "Agirc-Arrco = points × valeur (1,4386 € en 2026).", "Réforme 2023 : âge légal 64, taux plein auto 67.", "Totalisation CH-FR (E-205).", "RIS gratuit sur info-retraite.fr."], aRetenir: "Toujours comparer tôt vs taux plein avec le point mort." },
   { id: "rente-capital", num: 6, titre: "Rente ou capital ? L'arbitrage central", duree: 8, objectif: "Méthode de décision sur la sortie LPP.", points: ["Rente = revenu à vie, couvre la longévité, imposée chaque année.", "Capital = liquidité, transmissible, fiscalité unique réduite.", "Mixte (50/50) pour équilibrer.", "Décision irréversible : selon tolérance au risque et objectifs."], aRetenir: "Le « net total » le plus élevé n'est pas toujours le bon choix." },
   { id: "sante", num: 7, titre: "Santé à la retraite (LAMal / CMU)", duree: 8, objectif: "Le droit d'option santé, arbitrage le plus structurant.", points: ["LAMal maintenue / CMU / régime avec CSG-CRDS-CASA (jusqu'à 9,1 %).", "Décision définitive sous 3 mois — vigilance N−2.", "Conserver la LAMal l'année d'un capital LPP.", "Formulaire S1 ; E-205 via caisse / CPAM."], aRetenir: "Le bon choix santé = des dizaines de milliers d'euros (cas BEL : ~22'000 €)." },
   { id: "fiscalite", num: 8, titre: "Fiscalité transfrontalière", duree: 7, objectif: "Imposition CH vs FR du capital et de la rente + change.", points: ["Capital LPP : barème séparé réduit en CH (≈ 5 % GE) ; PFL 7,5 % côté FR sous conditions.", "Rente : imposée chaque année au barème du pays de résidence.", "Quasi-résident (≥ 90 % revenus en CH).", "Change EUR/CHF de référence : 0,92 (BNS, 2026)."], aRetenir: "La résidence fiscale au retrait change radicalement le net." },
@@ -4276,8 +3689,7 @@ function GuideFormation() {
     </div>
   );
 }
-
-// ── Section 4 : Gabarit (relié à TON rapport) ──
+// ── Section 4 : Gabarit (relié au rapport) ──
 const REPORT_PAGES = [
   { titre: "Page de garde", part: "Ouverture", tiers: "EDP" }, { titre: "Sommaire", part: "Ouverture", tiers: "EDP" }, { titre: "WallSwiss — votre partenaire", part: "Ouverture", tiers: "EDP" },
   { titre: "Profil & objectifs", part: "1 · Diagnostic & droits", tiers: "EDP" }, { titre: "Cartographie de vos droits", part: "1 · Diagnostic & droits", tiers: "EDP" }, { titre: "Vue d'ensemble — revenu projeté", part: "1 · Diagnostic & droits", tiers: "EDP" }, { titre: "Temple des revenus", part: "1 · Diagnostic & droits", tiers: "EDP" },
@@ -4290,7 +3702,6 @@ const REPORT_PAGES = [
 const TIER_CODE = { Essentiel: "E", Duo: "D", Premium: "P" };
 function tierPages(forfait, { couple, fr }) { const c = TIER_CODE[forfait] || "E"; return REPORT_PAGES.filter((p) => p.tiers.includes(c) && !(p.cond === "couple" && !couple) && !(p.cond === "fr" && !fr)); }
 function pagesParPartie(pages) { const m = new Map(); pages.forEach((p) => { if (!m.has(p.part)) m.set(p.part, []); m.get(p.part).push(p); }); return [...m.entries()]; }
-// Données VIERGES pour le plan témoin (à partir de TON stateInitial) — champs personnels en {{…}}
 function makeBlankData({ forfait, couple, fr }) {
   const data = JSON.parse(JSON.stringify(stateInitial()));
   const blankPerson = (p) => { if (!p) return p; const out = { ...p }; Object.keys(out).forEach((k) => { const v = out[k]; if (typeof v === "string" && v.trim() !== "" && isNaN(Number(v))) out[k] = "{{…}}"; else if (typeof v === "string") out[k] = ""; }); out.prenom = "{{Prénom}}"; out.nom = "{{NOM}}"; return out; };
@@ -4314,7 +3725,7 @@ function GabaritTemoin({ flow, setFlow, goto, onOpenReport }) {
   const parties = pagesParPartie(pages);
   return (
     <div>
-      <SectionHead kicker="Section 3 · Plan témoin" title="Gabarit —" emphasis="plan témoin vierge" intro="Présentez au client la structure exacte du rapport qu'il recevra, selon le forfait. Le rapport vierge complet est généré par TON générateur existant." />
+      <SectionHead kicker="Section 3 · Plan témoin" title="Gabarit —" emphasis="plan témoin vierge" intro="Présentez au client la structure exacte du rapport qu'il recevra, selon le forfait. Le rapport vierge complet est généré par le générateur existant." />
       <div className="ws-no-print" style={S.card}>
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
           <div><label style={S.label}>Forfait</label><div style={{ display: "flex", border: `1.5px solid ${C.primary}` }}>{FORFAIT_IDS.map((f) => <button key={f} onClick={() => setForfaitSync(f)} style={{ background: forfait === f ? C.primary : C.white, color: forfait === f ? C.white : C.primary, border: "none", padding: "9px 18px", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 700 }}>{f}</button>)}</div></div>
@@ -4347,7 +3758,6 @@ function GabaritTemoin({ flow, setFlow, goto, onOpenReport }) {
         <button onClick={printNow} style={S.btnS}><Icons.Printer size={15} color={C.primary} /> Imprimer couverture + sommaire</button>
         <button onClick={() => goto("collecte")} style={S.btnGold}>Le client valide → passer à la collecte <Icons.ArrowRight size={16} color={C.white} /></button>
       </div>
-      <div className="ws-no-print" style={{ marginTop: 14, background: "rgba(16,185,129,0.08)", borderLeft: `4px solid ${C.ok}`, padding: 12, fontSize: 11.5, color: C.darkGray, lineHeight: 1.55 }}><Icons.Check size={13} color={C.ok} /> <strong>Branché sur ton rapport.</strong> « Générer le rapport vierge complet » ouvre ton générateur existant (<code>buildSlides</code> / <code>PreviewR1</code>) avec des données vierges {"{{…}}"} filtrées par forfait — prêt à présenter au client.</div>
       <div className="ws-no-print" style={{ ...S.card, marginTop: 16, borderLeft: `4px solid ${C.gold}` }}>
         <div style={S.cardTitle}><div style={S.dot} /> Après validation — conforter le client (anti-annulation)</div>
         <p style={{ fontSize: 12.5, color: C.darkGray, lineHeight: 1.6, marginTop: 0 }}>Dès que le client valide, remettez-lui le <strong>mini-guide des cas clients</strong> (flyer) : il s'y reconnaît et comprend le gain typique — ce qui réduit les annulations post-R1.</p>
@@ -4356,7 +3766,6 @@ function GabaritTemoin({ flow, setFlow, goto, onOpenReport }) {
     </div>
   );
 }
-
 // ── Section 5 : Check-list + Collecte + Excel ──
 const AGE_BANDS = [
   { id: "45-55", label: "45 – 55 ans", prio: "Ouvrir / alimenter plusieurs 3a · viser les rachats LPP · poser les fondations" },
@@ -4380,7 +3789,7 @@ const FICHE = [
   { id: "s3", titre: "3 · 1er pilier — AVS", source: "source : extrait CI", champs: [{ k: "avsRente", label: "Rente AVS mensuelle estimée · échelle", type: "text", suffix: "CHF" }, { k: "avsOption", label: "Option étudiée", type: "select", select: ["", "Âge de référence", "Anticipation", "Ajournement"] }, { k: "avsAnneesShift", label: "Nb d'années anticip. / ajourn.", type: "num" }] },
   { id: "s4", titre: "4 · 2e pilier — LPP", source: "source : certificat de caisse", champs: [{ k: "lppCapital", label: "Capital (avoir de vieillesse)", type: "num", suffix: "CHF" }, { k: "lppRente", label: "Rente annuelle si rente", type: "num", suffix: "CHF" }, { k: "lppTauxConv", label: "Taux de conversion", type: "num", suffix: "%" }, { k: "lppLibrePassage", label: "Avoirs de libre passage", type: "num", suffix: "CHF" }, { k: "lppObliSurobli", label: "Part obligatoire / surobligatoire", type: "text" }] },
   { id: "s5", titre: "5 · 3e pilier", champs: [{ k: "p3a", label: "Avoirs 3a (par compte)", type: "text", suffix: "CHF" }, { k: "p3b", label: "3b / assurance-vie — valeur rachat", type: "text", suffix: "CHF" }] },
-  { id: "s6", titre: "6 · Retraite française", source: "source : RIS", fr: true, champs: [{ k: "frSAM", label: "Salaire annuel moyen (SAM)", type: "num", suffix: "€" }, { k: "frTrimestres", label: "Trimestres acquis / requis (… / 172)", type: "text" }, { k: "frAgeTauxPlein", label: "Âge du taux plein", type: "num", suffix: "ans" }, { k: "frPoints", label: "Points Agirc-Arrco", type: "num" }, { k: "frValeurPoint", label: "Valeur du point", type: "num", suffix: "€" }] },
+  { id: "s6", titre: "6 · Retraite française", source: "source : RIS", fr: true, champs: [{ k: "frSAM", label: "Salaire annuel moyen (SAM)", type: "num", suffix: "€" }, { k: "frTrimestres", label: "Trimestres acquis / requis (… / 172)", type: "text" }, { k: "frAgeTauxPlein", label: "Âge du taux plein", type: "num", suffix: "ans" }, { k: "frPoints", label: "Points Agirc-Arrco", type: "num" }, { k: "frValeurPoint", label: "Valeur du point (1,4386 en 2026)", type: "num", suffix: "€" }] },
   { id: "s7", titre: "7 · Patrimoine", champs: [{ k: "immoRP", label: "Résidence principale (valeur, hypothèque)", type: "text" }, { k: "immoLocatif", label: "Locatif (valeur, loyers, charges)", type: "text" }, { k: "comptes", label: "Comptes / titres — CHF & €", type: "text" }, { k: "patReemploi", label: "Patrimoine à réemployer", type: "num", suffix: "€" }, { k: "dettes", label: "Dettes / crédits en cours", type: "text" }] },
   { id: "s8", titre: "8 · Revenus, charges et objectifs", champs: [{ k: "revenuNet", label: "Revenu net actuel", type: "num", suffix: "CHF/mois" }, { k: "trainVie", label: "Train de vie souhaité", type: "num", suffix: "CHF/mois" }, { k: "ageDepart", label: "Âge de départ envisagé", type: "num", suffix: "ans" }, { k: "preference", label: "Préférence a priori", type: "select", select: ["", "Rente", "Capital", "Mixte", "À étudier"] }, { k: "projetResidence", label: "Projet de résidence", type: "text" }, { k: "projets", label: "Donation / achat / transmission", type: "text" }] },
   { id: "s9", titre: "9 · Santé et coordination", champs: [{ k: "santeCouverture", label: "Couverture santé visée", type: "select", select: ["", "LAMal", "CMU", "À étudier"] }, { k: "santeS1", label: "Formulaire S1 / vigilance N−2", type: "text" }] },
@@ -4455,7 +3864,6 @@ function Collecte({ flow, setFlow }) {
     </div>
   );
 }
-// Section 5 — hub : check-list/Excel + ton assistant R1 complet
 function CollecteHub({ flow, setFlow, appSettings }) {
   const [tab, setTab] = useState("checklist");
   return (
@@ -4471,7 +3879,6 @@ function CollecteHub({ flow, setFlow, appSettings }) {
     </div>
   );
 }
-
 // ── Section 6 : Ressources + Lettre de mission + Mini-guide ──
 const LINKS = [
   { bloc: "France", color: C.france, items: [{ l: "info-retraite.fr — Mon compte retraite", u: "https://www.info-retraite.fr/", note: "RIS, demande en ligne" }, { l: "Simulateur de calcul retraite", u: "https://services.info-retraite.fr/service/calcul-retraite/" }, { l: "L'Assurance retraite / CNAV", u: "https://www.lassuranceretraite.fr/" }, { l: "Agirc-Arrco", u: "https://www.agirc-arrco.fr/" }] },
@@ -4559,6 +3966,67 @@ function MiniGuideFlyer() {
     </PrintableSheet>
   );
 }
+// ============================================================
+// ░░░ MATRICE DE CALCUL — formules, paramètres 2026 & sources ░░░
+// ============================================================
+const MATRICE_ROWS = [
+  { dom: "AVS", res: "Rente AVS mensuelle (indicative)", formule: "rente = [1 260 + (2 520 − 1 260) × min(années/44 ; 1)] ; si revenu < 90 720 → × (revenu / 90 720). Si estimation ESCAL saisie, elle est utilisée directement.", params: "Min 1 260 / Max 2 520 CHF/mois · carrière 44 ans · revenu rente max 90 720 CHF", src: "Centre info AVS/AI — échelle 44", url: "https://www.ahv-iv.ch/fr/Formulaires/Listes-diverses/Echelle-de-rentes-44" },
+  { dom: "AVS", res: "Anticipation / ajournement", formule: "anticipé : × (1 − 6,8 % × années, max 2 ans) ; ajourné : × (1 + [5,2 / 10,8 / 17,1 / 24,1 / 31,5 %] pour 1→5 ans)", params: "−6,8 %/an · +5,2 %…+31,5 %", src: "Mémento AVS 3.04", url: "https://www.ahv-iv.ch/p/3.04.f" },
+  { dom: "AVS", res: "Rente AVS annuelle", formule: "rente annuelle = rente mensuelle × 12 + 13e rente (13e = 1 mensualité)", params: "13e rente dès 2026 (versée en décembre)", src: "OFAS/BSV — 13e rente", url: "https://www.bsv.admin.ch/fr/misenoeuvre-13-rente-avs" },
+  { dom: "AVS", res: "Plafond AVS couple marié", formule: "AVS ménage = min(rente A + rente B ; 3 780) — plafond = 150 % de la rente max", params: "Plafond 3 780 CHF/mois (= 1,5 × 2 520)", src: "Mémento AVS 3.01", url: "https://www.ahv-iv.ch/p/3.01.f" },
+  { dom: "LPP", res: "Capital LPP à la retraite", formule: "capital = avoir × (1+i)^n + cotisation × [((1+i)^n − 1) / i] + libre passage projeté · i = rendement, n = années jusqu'au départ", params: "Taux d'intérêt minimal LPP 1,25 % (2026)", src: "Conseil fédéral / admin.ch", url: "https://www.admin.ch/fr/newnsb/zmyDXRGytxdsLXWomxf3u" },
+  { dom: "LPP", res: "Rente LPP", formule: "rente = capital × taux de conversion", params: "Min légal 6,8 % (part obligatoire) · défaut modèle 5,0 % (caisses enveloppantes)", src: "OFAS/BSV — prévoyance prof.", url: "https://www.bsv.admin.ch/fr/prevoyance-vieillesse-prevoyance-professionnelle" },
+  { dom: "3e pilier", res: "Capital 3a / 3b", formule: "capital = avoir × (1+i)^n + cotisation × [((1+i)^n − 1) / i]", params: "Plafond 3a 2026 : 7 258 (avec caisse) / 36 288 (sans)", src: "OFAS/BSV — 3e pilier", url: "https://www.bsv.admin.ch/fr/le-troisieme-pilier" },
+  { dom: "3e pilier", res: "Impôt retrait capital 3a", formule: "impôt = capital 3a × taux (défaut 6 % ; barème cantonal séparé réel)", params: "Barème cantonal progressif (varie)", src: "—", url: "" },
+  { dom: "Retraite FR", res: "Pension CNAV (base)", formule: "CNAV = SAM × [50 % × (1 − décote)] × (trim retenus / trim requis) · décote = min(20 ; trim manquants) × 1,25 % · RIS prioritaire si saisi", params: "Taux plein 50 % · 172 trim. (gén. 1965+) · décote 1,25 %/trim.", src: "Réforme 2023 — info-retraite.fr", url: "https://www.info-retraite.fr/portail-info/sites/PortailInformationnel/home/reforme-des-retraites/reforme-des-retraites---age-le-1.html" },
+  { dom: "Retraite FR", res: "AGIRC-ARRCO (complémentaire)", formule: "AGIRC = points × 1,4386 € × coefficient · coefficient = 1 (malus −10 % supprimé). Minoration définitive éventuelle via RIS si liquidation sans taux plein.", params: "Valeur du point 1,4386 € · malus −10 % supprimé (01/04/2024)", src: "Fin du malus — service-public", url: "https://www.service-public.gouv.fr/particuliers/actualites/A15237" },
+  { dom: "Retraite FR", res: "Réforme suspendue (2026)", formule: "âge légal & trimestres gelés pour gén. 1964-1968 (effet 01/09/2026) → défauts 64 ans / 172 trim. à ajuster selon l'année de naissance", params: "~62 a 9 m · 170-171 trim. (gén. 1964-1968)", src: "Suspension 2026 — service-public", url: "https://www.service-public.gouv.fr/particuliers/actualites/A18825" },
+  { dom: "Retraite FR", res: "Conversion en CHF", formule: "pension FR (CHF) = pension FR (€) × taux de change (0,92)", params: "EUR/CHF ≈ 0,92 (2026)", src: "Change — BNS", url: "https://www.snb.ch/" },
+  { dom: "Santé", res: "CSG / CRDS / CASA sur pensions", formule: "coût = pension × 9,1 % (taux MAX) · taux réduit 3,8 % ou exonération selon le RFR", params: "9,1 % = CSG 8,3 + CRDS 0,5 + CASA 0,3 · seuils 2026 : 13 048 € (seul) / 20 016 € (couple)", src: "CSG 2026 — service-public", url: "https://www.service-public.gouv.fr/particuliers/vosdroits/F2971" },
+  { dom: "Synthèse", res: "Revenu rente ajusté", formule: "somme : rente AVS + rente LPP (part rente) + pensions FR (CHF). Capital total = 3e pilier + part LPP en capital.", params: "Selon le choix rente/capital LPP", src: "—", url: "" },
+  { dom: "Synthèse", res: "Écart vs objectif", formule: "écart = objectif (train de vie × 12) − revenu rente ajusté", params: "—", src: "—", url: "" },
+];
+function MatriceCalculs() {
+  const [q, setQ] = useState("");
+  const rows = MATRICE_ROWS.filter((r) => { const s = q.trim().toLowerCase(); return !s || (r.dom + " " + r.res + " " + r.formule + " " + r.params).toLowerCase().includes(s); });
+  const domColor = (d) => d === "AVS" ? C.swiss : d === "Retraite FR" ? C.france : d === "Santé" ? C.warn : C.primary;
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
+        <SectionHead kicker="Moteur de calcul · matriceCalculs.js" title="Matrice de" emphasis="calcul & sources" intro="Toutes les formules du module, les paramètres officiels 2026 et la source cliquable de chaque valeur. Le module récupère ses calculs sur cette matrice (source unique de vérité)." />
+        <div style={{ position: "relative", minWidth: 260 }}><span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", display: "flex" }}><Icons.Search size={15} color={C.gray} /></span><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher (AVS, AGIRC, capital…)" style={{ ...S.input, paddingLeft: 32 }} /></div>
+      </div>
+      <div style={{ ...S.card, padding: 0, overflow: "hidden" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <thead>
+            <tr style={{ background: C.primary, color: C.white }}>
+              <th style={{ padding: "10px 12px", textAlign: "left", width: 90 }}>Domaine</th>
+              <th style={{ padding: "10px 12px", textAlign: "left", width: 190 }}>Résultat calculé</th>
+              <th style={{ padding: "10px 12px", textAlign: "left" }}>Formule / logique</th>
+              <th style={{ padding: "10px 12px", textAlign: "left", width: 210 }}>Paramètres 2026</th>
+              <th style={{ padding: "10px 12px", textAlign: "left", width: 190 }}>Source (lien)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i} style={{ borderBottom: `1px solid ${C.lightGray}`, background: i % 2 ? "rgba(105,33,2,0.015)" : C.white }}>
+                <td style={{ padding: "9px 12px", verticalAlign: "top" }}><span style={{ display: "inline-block", background: domColor(r.dom), color: C.white, fontSize: 9.5, fontWeight: 800, padding: "3px 8px", textTransform: "uppercase", letterSpacing: "0.04em" }}>{r.dom}</span></td>
+                <td style={{ padding: "9px 12px", verticalAlign: "top", fontWeight: 800, color: C.darkGray }}>{r.res}</td>
+                <td style={{ padding: "9px 12px", verticalAlign: "top", color: "#1A1A1A", lineHeight: 1.5 }}>{r.formule}</td>
+                <td style={{ padding: "9px 12px", verticalAlign: "top", color: C.gray, lineHeight: 1.5 }}>{r.params}</td>
+                <td style={{ padding: "9px 12px", verticalAlign: "top" }}>{r.url ? <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ color: "#0563C1", textDecoration: "underline", fontWeight: 600 }}>{r.src} <Icons.External size={10} color="#0563C1" /></a> : <span style={{ color: C.gray }}>{r.src}</span>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div style={{ marginTop: 14, background: "rgba(16,185,129,0.08)", borderLeft: `4px solid ${C.ok}`, padding: 12, fontSize: 11.5, color: C.darkGray, lineHeight: 1.6 }}>
+        <Icons.Check size={13} color={C.ok} /> <strong>Corrections 2026 intégrées :</strong> seuil rente AVS max 90 720 · point AGIRC-ARRCO 1,4386 € · malus −10 % supprimé · plafond couple 3 780 CHF/mois · change 0,92. Toutes les valeurs sont paramétrables dans l'assistant et non opposables (confirmer avec extrait CI/ESCAL, certificat LPP, RIS).
+      </div>
+      <div style={{ marginTop: 10, fontSize: 11, color: C.gray, textAlign: "center" }}>{FIRM.pied}</div>
+    </div>
+  );
+}
 
 // ── COQUILLE : onglet + liste déroulante + état partagé ──
 const SECTIONS = [
@@ -4568,6 +4036,7 @@ const SECTIONS = [
   { key: "gabarit", label: "Gabarit — plan témoin vierge", sub: "Rapport vierge par forfait", Icon: Icons.FileText, num: 3, flow: true },
   { key: "collecte", label: "Check-list & collecte", sub: "Documents + fiche R1 + Excel + assistant", Icon: Icons.Clipboard, num: 4, flow: true },
   { key: "ressources", label: "Ressources indispensables", sub: "Liens officiels + formulaires", Icon: Icons.Link, num: null, flow: false },
+  { key: "matrice", label: "Matrice de calcul", sub: "Formules · paramètres 2026 · sources", Icon: Icons.Grid, num: null, flow: false },
 ];
 const FLOW_KEYS = SECTIONS.filter((s) => s.flow);
 export default function PlanificationRetraite({ appSettings }) {
@@ -4594,21 +4063,26 @@ export default function PlanificationRetraite({ appSettings }) {
             <div style={{ background: C.primary, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center" }}><Logo size={24} variant="white" /></div>
             <div><div style={{ color: C.gold, fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase" }}>WallSwiss · WallSmart</div><div style={{ fontSize: 19, fontWeight: 800, color: C.primary, lineHeight: 1.1 }}>Planification Retraite</div></div>
           </div>
-          <div ref={menuRef} style={{ position: "relative", minWidth: 320 }}>
-            <button onClick={() => setMenuOpen((o) => !o)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, background: C.white, border: `1.5px solid ${C.primary}`, padding: "11px 16px", cursor: "pointer", fontFamily: "inherit", color: C.primary, fontWeight: 700, fontSize: 14 }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 10 }}><current.Icon size={18} color={C.gold} />{current.label}</span>
-              <span style={{ transform: menuOpen ? "rotate(180deg)" : "none", display: "flex" }}><Icons.ChevronDown size={18} color={C.primary} /></span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <button onClick={() => goto("matrice")} style={{ display: "flex", alignItems: "center", gap: 8, background: section === "matrice" ? C.primary : C.white, color: section === "matrice" ? C.white : C.primary, border: `1.5px solid ${C.primary}`, padding: "10px 14px", cursor: "pointer", fontFamily: "inherit", fontWeight: 700, fontSize: 13 }} title="Formules, paramètres 2026 et sources">
+              <Icons.Grid size={16} color={section === "matrice" ? C.white : C.gold} /> Matrice de calcul
             </button>
-            {menuOpen && (
-              <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, left: 0, background: C.white, border: `1px solid ${C.mediumGray}`, boxShadow: "0 12px 40px rgba(0,0,0,0.16)", zIndex: 60 }}>
-                {SECTIONS.map((s) => { const active = s.key === section; return (
-                  <button key={s.key} onClick={() => goto(s.key)} style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", border: "none", borderLeft: `3px solid ${active ? C.gold : "transparent"}`, background: active ? "rgba(105,33,2,0.05)" : C.white, cursor: "pointer", fontFamily: "inherit", borderBottom: `1px solid ${C.lightGray}` }}>
-                    <span style={{ width: 30, height: 30, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: active ? C.primary : C.lightGray }}><s.Icon size={16} color={active ? C.white : C.gray} /></span>
-                    <span style={{ flex: 1 }}><span style={{ display: "block", fontSize: 13.5, fontWeight: 700, color: active ? C.primary : C.darkGray }}>{s.num ? <span style={{ color: C.gold }}>{s.num}. </span> : null}{s.label}</span><span style={{ display: "block", fontSize: 11, color: C.gray }}>{s.sub}</span></span>
-                    {s.flow && <span style={{ fontSize: 9, color: C.gold, fontWeight: 700, letterSpacing: "0.08em" }}>PARCOURS</span>}
-                  </button>); })}
-              </div>
-            )}
+            <div ref={menuRef} style={{ position: "relative", minWidth: 320 }}>
+              <button onClick={() => setMenuOpen((o) => !o)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, background: C.white, border: `1.5px solid ${C.primary}`, padding: "11px 16px", cursor: "pointer", fontFamily: "inherit", color: C.primary, fontWeight: 700, fontSize: 14 }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 10 }}><current.Icon size={18} color={C.gold} />{current.label}</span>
+                <span style={{ transform: menuOpen ? "rotate(180deg)" : "none", display: "flex" }}><Icons.ChevronDown size={18} color={C.primary} /></span>
+              </button>
+              {menuOpen && (
+                <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, left: 0, background: C.white, border: `1px solid ${C.mediumGray}`, boxShadow: "0 12px 40px rgba(0,0,0,0.16)", zIndex: 60 }}>
+                  {SECTIONS.map((s) => { const active = s.key === section; return (
+                    <button key={s.key} onClick={() => goto(s.key)} style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", border: "none", borderLeft: `3px solid ${active ? C.gold : "transparent"}`, background: active ? "rgba(105,33,2,0.05)" : C.white, cursor: "pointer", fontFamily: "inherit", borderBottom: `1px solid ${C.lightGray}` }}>
+                      <span style={{ width: 30, height: 30, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: active ? C.primary : C.lightGray }}><s.Icon size={16} color={active ? C.white : C.gray} /></span>
+                      <span style={{ flex: 1 }}><span style={{ display: "block", fontSize: 13.5, fontWeight: 700, color: active ? C.primary : C.darkGray }}>{s.num ? <span style={{ color: C.gold }}>{s.num}. </span> : null}{s.label}</span><span style={{ display: "block", fontSize: 11, color: C.gray }}>{s.sub}</span></span>
+                      {s.flow && <span style={{ fontSize: 9, color: C.gold, fontWeight: 700, letterSpacing: "0.08em" }}>PARCOURS</span>}
+                    </button>); })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div style={{ padding: "0 36px 12px", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -4630,6 +4104,7 @@ export default function PlanificationRetraite({ appSettings }) {
           {section === "gabarit" && <GabaritTemoin {...props} onOpenReport={(d) => setReportData(d)} />}
           {section === "collecte" && <CollecteHub flow={flow} setFlow={setFlow} appSettings={appSettings} />}
           {section === "ressources" && <Ressources {...props} />}
+          {section === "matrice" && <MatriceCalculs />}
         </div>
       </main>
       <footer className="ws-no-print" style={{ background: C.primaryDark, color: "rgba(255,255,255,0.75)", padding: "8px 36px", fontSize: 10, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>

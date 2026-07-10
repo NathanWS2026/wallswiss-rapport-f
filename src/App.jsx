@@ -74,15 +74,15 @@ const C = {
   line: "rgba(0,0,0,0.08)",
   line2: "rgba(0,0,0,0.13)",
   // Accent principal = Google Blue ; goldUI/goldDeep repointés (compat coquille)
-  accent: "#4285F4",
-  accentDark: "#1A73E8",
-  accentSoft: "rgba(66,133,244,0.10)",
-  goldUI: "#4285F4",
-  goldDeep: "#1A73E8",
-  goldSoft: "rgba(66,133,244,0.10)",
+  accent: "#692102",
+  accentDark: "#4D1801",
+  accentSoft: "rgba(105,33,2,0.10)",
+  goldUI: "#692102",
+  goldDeep: "#4D1801",
+  goldSoft: "rgba(105,33,2,0.10)",
   champagne: "#1D1D1F",
   // Palette Google complète (blue / red / yellow / green)
-  gBlue: "#4285F4",
+  gBlue: "#692102",
   gRed: "#EA4335",
   gYellow: "#FBBC05",
   gGreen: "#34A853",
@@ -360,6 +360,7 @@ const MAILS_TYPES = [
 // ── Injection des polices : Montserrat conservé pour les SLIDES PDF ;
 //    Inter ajouté pour la coquille (thème Aurora). ──
 (function injectFonts(){
+  if (typeof document === "undefined") return;
   const pre1 = document.createElement("link"); pre1.rel = "preconnect"; pre1.href = "https://fonts.googleapis.com"; document.head.appendChild(pre1);
   const pre2 = document.createElement("link"); pre2.rel = "preconnect"; pre2.href = "https://fonts.gstatic.com"; pre2.crossOrigin = "anonymous"; document.head.appendChild(pre2);
   const fontLink = document.createElement("link");
@@ -3597,7 +3598,7 @@ const S = {
   card: { background: C.card, padding: 24, boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 28px rgba(0,0,0,0.05)", border: `1px solid ${C.line}`, borderRadius: C.radius },
   cardTitle: { fontSize: 12.5, fontWeight: 700, textTransform: "none", letterSpacing: "-0.01em", color: C.text, marginBottom: 18, display: "flex", alignItems: "center", gap: 10, fontFamily: F.ui },
   dot: { width: 9, height: 9, borderRadius: "50%", background: C.accent, flexShrink: 0 },
-  btnP: { background: C.accent, color: "#FFFFFF", border: "none", padding: "12px 26px", cursor: "pointer", fontFamily: F.ui, fontSize: 14, fontWeight: 600, letterSpacing: "-0.01em", borderRadius: "980px", boxShadow: "0 2px 8px rgba(66,133,244,.28)" },
+  btnP: { background: C.accent, color: "#FFFFFF", border: "none", padding: "12px 26px", cursor: "pointer", fontFamily: F.ui, fontSize: 14, fontWeight: 600, letterSpacing: "-0.01em", borderRadius: "980px", boxShadow: "0 2px 8px rgba(105,33,2,.28)" },
   btnS: { background: C.card, color: C.accent, border: `1px solid ${C.line2}`, padding: "11px 24px", cursor: "pointer", fontFamily: F.ui, fontSize: 14, fontWeight: 600, borderRadius: "980px" },
 };
 
@@ -3614,7 +3615,7 @@ const PREDEFINED_AGENTS = [
   { prenom: "Cloé", nom: "BESNARD", tel: "", email: "c.besnard@wallswiss.ch", genre: "F" }
 ];
 
-export default function WallSwissApp() {
+function WallSwissAppMain() {
   const initialTexts = {
     philosophyP1: "Une approche unique et indépendante\nContrairement aux grandes institutions notre cabinet indépendant vous propose des solutions dans votre intérêt unique.",
     philosophyP2: "Notre démarche, très rigoureuse, est conduite en étroite collaboration avec vous.",
@@ -4317,7 +4318,7 @@ const [lppForm, setLppForm] = useState({
           <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.6, marginBottom: 32 }}>
             Votre compte a bien été créé, mais il nécessite l'approbation d'un administrateur avant de pouvoir accéder à l'outil de génération de rapports.
           </p>
-          <div style={{ background: "rgba(66,133,244,0.05)", padding: "16px", color: C.accentDark, fontSize: 12, fontWeight: 600, marginBottom: 32 }}>
+          <div style={{ background: "rgba(105,33,2,0.05)", padding: "16px", color: C.accentDark, fontSize: 12, fontWeight: 600, marginBottom: 32 }}>
             Connecté en tant que : {user.email}
           </div>
           <button onClick={handleLogout} style={S.btnS}>Se déconnecter</button>
@@ -4339,7 +4340,7 @@ const [lppForm, setLppForm] = useState({
               { id: "assurance-vie", title: "Assurance Vie & PER", desc: "Solutions de placement et retraite (France).", active: true },
               { id: "immobilier", title: "Immobilier", desc: "Investissements et rendements immobiliers (Bientôt disponible).", active: false },
             ].map(tpl => (
-              <div key={tpl.id} onClick={() => tpl.active && u("templateId", tpl.id)} style={{ border: `2px solid ${form.templateId === tpl.id ? C.accent : C.line2}`, padding: 20, cursor: tpl.active ? "pointer" : "not-allowed", opacity: tpl.active ? 1 : 0.5, background: form.templateId === tpl.id ? "rgba(66,133,244,0.04)" : C.card, display: "flex", flexDirection: "column", gap: 8, borderRadius: "14px" }}>
+              <div key={tpl.id} onClick={() => tpl.active && u("templateId", tpl.id)} style={{ border: `2px solid ${form.templateId === tpl.id ? C.accent : C.line2}`, padding: 20, cursor: tpl.active ? "pointer" : "not-allowed", opacity: tpl.active ? 1 : 0.5, background: form.templateId === tpl.id ? "rgba(105,33,2,0.04)" : C.card, display: "flex", flexDirection: "column", gap: 8, borderRadius: "14px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontWeight: 700, color: C.accent }}>{tpl.title}</span>
                   {form.templateId === tpl.id && <span style={{ color: C.goldUI, fontSize: 16 }}>&#10003;</span>}
@@ -4426,7 +4427,7 @@ const [lppForm, setLppForm] = useState({
             {defObj.map(obj => {
               const active = form.objectifs.includes(obj);
               return (
-                <div key={obj} onClick={()=>toggleObj(obj)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: `1.5px solid ${active ? C.accent : C.line2}`, background: active ? "rgba(66,133,244,0.04)" : "transparent", cursor: "pointer", fontSize: 12, fontWeight: 500, borderRadius: "10px" }}>
+                <div key={obj} onClick={()=>toggleObj(obj)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: `1.5px solid ${active ? C.accent : C.line2}`, background: active ? "rgba(105,33,2,0.04)" : "transparent", cursor: "pointer", fontSize: 12, fontWeight: 500, borderRadius: "10px" }}>
                   <div style={{ width: 16, height: 16, border: `2px solid ${active ? C.accent : C.line2}`, background: active ? C.accent : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "4px" }}>
                     {active && <span style={{ color: C.white, fontSize: 10, fontWeight: 700 }}>&#10003;</span>}
                   </div>
@@ -4443,7 +4444,7 @@ const [lppForm, setLppForm] = useState({
           {form.objectifs.filter(o=>!defObj.includes(o)).length > 0 && (
             <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 6 }}>
               {form.objectifs.filter(o=>!defObj.includes(o)).map((o,i) => (
-                <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 10px", background: "rgba(66,133,244,0.06)", color: C.accent, fontSize: 11, fontWeight: 600, borderRadius: "999px" }}>
+                <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 10px", background: "rgba(105,33,2,0.06)", color: C.accent, fontSize: 11, fontWeight: 600, borderRadius: "999px" }}>
                   {o} <span style={{ cursor: "pointer", opacity: 0.5 }} onClick={()=>toggleObj(o)}>x</span>
                 </span>
               ))}
@@ -4540,7 +4541,7 @@ const [lppForm, setLppForm] = useState({
                   </label>
                 </div>
                 {form.hasProjectionsMultiples && (
-                  <div style={{ background: "rgba(66,133,244,0.04)", padding: 16, marginBottom: 16, borderLeft: `3px solid ${C.accent}` }}>
+                  <div style={{ background: "rgba(105,33,2,0.04)", padding: 16, marginBottom: 16, borderLeft: `3px solid ${C.accent}` }}>
                     <div style={S.fg}><label style={S.label}>Versement initial 2 (€)</label><input style={S.input} type="number" value={form.montantInvestissement2} onChange={e=>u("montantInvestissement2",e.target.value)}/></div>
                     <div style={{...S.fg, margin: 0}}><label style={S.label}>Mensualité 2 (€)</label><input style={S.input} type="number" value={form.capaciteEpargne2} onChange={e=>u("capaciteEpargne2",e.target.value)}/></div>
                   </div>
@@ -4800,7 +4801,7 @@ const [lppForm, setLppForm] = useState({
         input:focus, select:focus, textarea:focus { border-color: ${C.accent} !important; box-shadow: 0 0 0 4px ${C.accentSoft}; }
         ::placeholder { color: #A9A9AF; }
         button:hover { opacity: 0.94; }
-        ::selection { background: rgba(66,133,244,.18); }
+        ::selection { background: rgba(105,33,2,.18); }
 
         ::-webkit-scrollbar { width: 9px; height: 9px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -4823,7 +4824,7 @@ const [lppForm, setLppForm] = useState({
       <header className="no-print" style={{ display: "flex", alignItems: "center", gap: 18, height: 60, padding: "0 24px", background: "rgba(255,255,255,0.82)", backdropFilter: "saturate(180%) blur(20px)", WebkitBackdropFilter: "saturate(180%) blur(20px)", borderBottom: `1px solid ${C.line}`, flexShrink: 0, zIndex: 200 }}>
         {/* Marque */}
         <div onClick={() => setActiveModule("hub")} style={{ display: "flex", alignItems: "center", gap: 11, cursor: "pointer", flexShrink: 0, paddingRight: 6 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 9, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(66,133,244,.30)" }}>
+          <div style={{ width: 30, height: 30, borderRadius: 9, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(105,33,2,.30)" }}>
             <img src={appSettings.defaultLogo || LOGO_URL} alt="WallSwiss" style={{ height: 16, filter: "brightness(0) invert(1)" }} />
           </div>
           <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.02em", color: C.text }}>WallSwiss</div>
@@ -4911,7 +4912,7 @@ const [lppForm, setLppForm] = useState({
               </svg>
 
               {/* hub central */}
-              <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 196, height: 196, borderRadius: "50%", background: "#fff", border: `1px solid ${C.line}`, boxShadow: "0 24px 60px rgba(0,0,0,0.10), inset 0 0 0 6px rgba(66,133,244,0.05)", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", zIndex: 12 }}>
+              <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 196, height: 196, borderRadius: "50%", background: "#fff", border: `1px solid ${C.line}`, boxShadow: "0 24px 60px rgba(0,0,0,0.10), inset 0 0 0 6px rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", zIndex: 12 }}>
                 <div>
                   <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.02em", color: C.text }}>Wall<span style={{ color: C.goldDeep }}>Swiss</span></div>
                   <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>Bonjour {appSettings.agentFirstName || ""}</div>
@@ -4928,8 +4929,8 @@ const [lppForm, setLppForm] = useState({
                 { id: "rapport",      label: "Rapport",       cnt: "4 modèles",   ic: <Icons.FileText size={26} />,     c: "#EA4335", act: () => setActiveModule("rapport") },
                 { id: "annuaire",     label: "Annuaire",      cnt: "Partenaires", ic: <Icons.BookContacts size={26} />, c: "#FBBC05", act: () => setActiveModule("annuaire") },
                 { id: "ressources",   label: "Documents",     cnt: "Ressources",  ic: <Icons.FileText size={26} />,     c: "#34A853", act: () => setActiveModule("ressources") },
-                { id: "mails",        label: "Mails Types",   cnt: `${MAILS_TYPES.length} modèles`, ic: <Icons.Inbox size={26} />, c: "#4285F4", act: () => setActiveModule("mails") },
-                { id: "marketing",    label: "Marketing",     cnt: "4 campagnes", ic: <Icons.Target size={26} />,       c: "#4285F4", act: () => setActiveModule("marketing") },
+                { id: "mails",        label: "Mails Types",   cnt: `${MAILS_TYPES.length} modèles`, ic: <Icons.Inbox size={26} />, c: "#692102", act: () => setActiveModule("mails") },
+                { id: "marketing",    label: "Marketing",     cnt: "4 campagnes", ic: <Icons.Target size={26} />,       c: "#692102", act: () => setActiveModule("marketing") },
                 { id: "rechercheLpp", label: "Recherche LPP", cnt: "2e pilier",   ic: <Icons.Search size={26} />,       c: "#FBBC05", act: () => setActiveModule("rechercheLpp") },
                 { id: "retraiteR1",   label: "Retraite",      cnt: "Simulateur",  ic: <Icons.PieChart size={26} />,     c: "#34A853", act: () => setActiveModule("retraiteR1") },
                 { id: "crm",          label: "CRM",           cnt: "Salesforce",  ic: <Icons.Users size={26} />,        c: "#EA4335", act: () => window.open("https://wallswiss.my.salesforce.com/", "_blank") },
@@ -4990,7 +4991,7 @@ const [lppForm, setLppForm] = useState({
                                             padding: "16px 24px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap", transition: "all 0.2s", border: "none", cursor: "pointer", outline: "none",
                                             borderBottom: `2px solid ${marketingCampaign === camp.id ? C.accent : "transparent"}`,
                                             color: marketingCampaign === camp.id ? C.accent : C.gray,
-                                            background: marketingCampaign === camp.id ? "rgba(66,133,244,0.05)" : "transparent"
+                                            background: marketingCampaign === camp.id ? "rgba(105,33,2,0.05)" : "transparent"
                                         }}
                                         onMouseEnter={(e) => { if(marketingCampaign !== camp.id) { e.currentTarget.style.color = C.accent; e.currentTarget.style.background = "#f5f5f4"; } }}
                                         onMouseLeave={(e) => { if(marketingCampaign !== camp.id) { e.currentTarget.style.color = C.gray; e.currentTarget.style.background = "transparent"; } }}
@@ -5003,7 +5004,7 @@ const [lppForm, setLppForm] = useState({
                     </div>
                 </nav>
 
-                <div style={{ background: C.white, borderBottom: `1px solid rgba(66,133,244,0.1)`, paddingTop: 40, paddingBottom: 32 }}>
+                <div style={{ background: C.white, borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingTop: 40, paddingBottom: 32 }}>
                     <div style={{ maxWidth: 1152, margin: "0 auto", padding: "0 24px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
                             <div style={{ width: 56, height: 56, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", color: C.white, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", flexShrink: 0 }}>
@@ -5066,7 +5067,7 @@ const [lppForm, setLppForm] = useState({
                                         </div>
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-                                        <div style={{ borderBottom: `1px solid rgba(66,133,244,0.1)`, paddingBottom: 24 }}>
+                                        <div style={{ borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingBottom: 24 }}>
                                             <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
                                             <p style={{ color: C.darkGray, lineHeight: 1.6, textAlign: "justify", margin: 0 }}>Le prospect a visionné cette annonce vidéo sur son fil d'actualité <strong>Facebook et/ou Instagram</strong>. Il a cliqué pour vérifier s'il pouvait prétendre à une économie d'impôts. Comprendre ce qu'il a en tête est la clé de votre conversion.</p>
                                         </div>
@@ -5153,7 +5154,7 @@ const [lppForm, setLppForm] = useState({
                                         </div>
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-                                        <div style={{ borderBottom: `1px solid rgba(66,133,244,0.1)`, paddingBottom: 24 }}>
+                                        <div style={{ borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingBottom: 24 }}>
                                             <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
                                             <p style={{ color: C.darkGray, lineHeight: 1.6, textAlign: "justify", margin: 0 }}>Le prospect a réagi à une publicité vidéo de la marque <strong>Pilah</strong>. Le message est clair : des milliards dorment dans les caisses de pension en Suisse et il pourrait récupérer en moyenne <strong>8'000 CHF</strong> de son 2ème pilier oublié.</p>
                                         </div>
@@ -5233,7 +5234,7 @@ const [lppForm, setLppForm] = useState({
                                         </div>
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-                                        <div style={{ borderBottom: `1px solid rgba(66,133,244,0.1)`, paddingBottom: 24 }}>
+                                        <div style={{ borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingBottom: 24 }}>
                                             <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
                                             <p style={{ color: C.darkGray, lineHeight: 1.6, textAlign: "justify", margin: 0 }}>Le prospect a réagi à une publicité vidéo très immersive ciblant les frontaliers. Le message joue sur la confidence : un frontalier explique comment il perdait de l'argent chaque mois à cause d'un mauvais choix entre la <strong>CMU et la LAMal</strong>.</p>
                                         </div>
@@ -5332,7 +5333,7 @@ const [lppForm, setLppForm] = useState({
                                         </div>
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-                                        <div style={{ borderBottom: `1px solid rgba(66,133,244,0.1)`, paddingBottom: 24 }}>
+                                        <div style={{ borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingBottom: 24 }}>
                                             <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
                                             <p style={{ color: C.darkGray, lineHeight: 1.6, textAlign: "justify", margin: 0 }}>Le prospect a réagi à l'une de nos <strong>5 créatives statiques</strong> ciblant une douleur forte des frontaliers : <strong>la perte d'argent sur le taux de change</strong> lors du rapatriement du salaire.</p>
                                         </div>
@@ -5514,7 +5515,7 @@ const [lppForm, setLppForm] = useState({
                   <button onClick={handleSendForSignature} disabled={isSendingSign} style={{ ...S.btnP, padding: "8px 16px", fontSize: 12, display: "flex", alignItems: "center", gap: 8, opacity: isSendingSign ? 0.7 : 1 }}>
                     <Icons.Mail size={14} /> {isSendingSign ? "ENVOI EN COURS..." : "SIGNATURE ÉLECTRONIQUE (YOUSIGN)"}
                   </button>
-              <button onClick={() => genererFormulaireLPP({ nom: lppForm.nom, prenom: lppForm.prenom, dateNaissance: lppForm.dateNaissance, avsNumero: lppForm.avs, adresse: lppForm.adresse + ", " + lppForm.localite + ", " + lppForm.pays, telephone: lppForm.telephone, email: lppForm.emailClient })} style={{ ...S.btnS, padding: "8px 16px", fontSize: 12 }}>REMPLIR SF-F5-FR</button>
+              <button onClick={handleDownloadLppDoc} style={{ ...S.btnS, padding: "8px 16px", fontSize: 12 }}>REMPLIR SF-F5-FR</button>
                 </div>
               </div>
             </header>
@@ -5824,7 +5825,7 @@ const [lppForm, setLppForm] = useState({
                         <button 
                           onClick={() => window.open(partenaire.url, "_blank")} 
                           style={{ marginTop: 20, width: "100%", background: "transparent", border: `1px solid ${C.mediumGray}`, color: C.accent, padding: "10px 0", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", transition: "0.2s", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, borderRadius: 999 }}
-                          onMouseEnter={(e)=>e.currentTarget.style.background="rgba(66,133,244,0.04)"}
+                          onMouseEnter={(e)=>e.currentTarget.style.background="rgba(105,33,2,0.04)"}
                           onMouseLeave={(e)=>e.currentTarget.style.background="transparent"}
                         >
                           Accéder au portail <Icons.ExternalLink size={14} />
@@ -5897,7 +5898,7 @@ const [lppForm, setLppForm] = useState({
                           onMouseLeave={(e)=> { e.currentTarget.style.borderLeftColor = "transparent"; e.currentTarget.style.background = C.white; e.currentTarget.style.boxShadow = "none"; }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-                            <div style={{ background: "rgba(66,133,244,0.04)", color: C.accent, width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "12px", flexShrink: 0 }}>
+                            <div style={{ background: "rgba(105,33,2,0.04)", color: C.accent, width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "12px", flexShrink: 0 }}>
                               <Icons.FileText size={24} />
                             </div>
                             <div style={{ textAlign: "left" }}>
@@ -5994,7 +5995,7 @@ const [lppForm, setLppForm] = useState({
                     <div key={mail.id} style={{ ...S.card, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 16, padding: "20px 24px" }}>
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                          <span style={{ background: "rgba(66,133,244,0.06)", color: C.accent, fontSize: 10, fontWeight: 700, padding: "4px 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                          <span style={{ background: "rgba(105,33,2,0.06)", color: C.accent, fontSize: 10, fontWeight: 700, padding: "4px 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                             {mail.categorie}
                           </span>
                           {mail.pieceJointe && <span title="Pièce jointe requise" style={{ color: C.goldDeep }}><Icons.FileText size={16} /></span>}
@@ -6095,7 +6096,7 @@ const [lppForm, setLppForm] = useState({
                     <button 
                       key={p} 
                       onClick={() => setSettingsTab(p)} 
-                      style={{ background: settingsTab===p ? "rgba(66,133,244,0.06)" : "transparent", color: settingsTab===p ? C.accent : C.gray, border: "none", padding: "8px 16px", cursor: "pointer", fontFamily: "'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif", fontSize: 13, fontWeight: settingsTab===p?700:500, borderRadius: "999px", transition: "0.2s" }}
+                      style={{ background: settingsTab===p ? "rgba(105,33,2,0.06)" : "transparent", color: settingsTab===p ? C.accent : C.gray, border: "none", padding: "8px 16px", cursor: "pointer", fontFamily: "'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif", fontSize: 13, fontWeight: settingsTab===p?700:500, borderRadius: "999px", transition: "0.2s" }}
                     >
                       {l}
                     </button>
@@ -6266,7 +6267,7 @@ const [lppForm, setLppForm] = useState({
                     <button 
                       key={p} 
                       onClick={()=>{setRapportPage(p);if(p==="create")setStep(0);}} 
-                      style={{ background: rapportPage===p ? "rgba(66,133,244,0.06)" : "transparent", color: rapportPage===p ? C.accent : C.gray, border: "none", padding: "8px 16px", cursor: "pointer", fontFamily: "'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif", fontSize: 13, fontWeight: rapportPage===p?700:500, borderRadius: "999px", transition: "0.2s" }}
+                      style={{ background: rapportPage===p ? "rgba(105,33,2,0.06)" : "transparent", color: rapportPage===p ? C.accent : C.gray, border: "none", padding: "8px 16px", cursor: "pointer", fontFamily: "'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif", fontSize: 13, fontWeight: rapportPage===p?700:500, borderRadius: "999px", transition: "0.2s" }}
                     >
                       {l}
                     </button>
@@ -6362,7 +6363,7 @@ const [lppForm, setLppForm] = useState({
                   
                   <div style={{ display: "flex", gap: 4, marginBottom: 32, background: "transparent" }}>
                     {stepLabels.map((l,i) => (
-                      <div key={i} onClick={()=>setStep(i)} style={{ flex: 1, textAlign: "center", padding: "12px 6px", fontSize: 11, fontWeight: step===i?700:600, color: step===i?C.white:step>i?C.accent:C.gray, background: step===i?C.accent:step>i?"rgba(66,133,244,0.06)":C.white, border: `1px solid ${step===i?C.accent:step>i?"rgba(66,133,244,0.1)":C.mediumGray}`, cursor: "pointer", letterSpacing: "0.04em", transition: "all 0.2s", borderRadius: "10px", position: "relative" }}>
+                      <div key={i} onClick={()=>setStep(i)} style={{ flex: 1, textAlign: "center", padding: "12px 6px", fontSize: 11, fontWeight: step===i?700:600, color: step===i?C.white:step>i?C.accent:C.gray, background: step===i?C.accent:step>i?"rgba(105,33,2,0.06)":C.white, border: `1px solid ${step===i?C.accent:step>i?"rgba(105,33,2,0.1)":C.mediumGray}`, cursor: "pointer", letterSpacing: "0.04em", transition: "all 0.2s", borderRadius: "10px", position: "relative" }}>
                         {l}
                       </div>
                     ))}
@@ -6392,4 +6393,34 @@ const [lppForm, setLppForm] = useState({
     {preview && <ReportPreview data={preview} onClose={()=>setPreview(null)} onUpdateData={handlePreviewUpdate} appSettings={appSettings} onEdit={(e)=>{handleEditReport(e, preview); setPreview(null);}} onDelete={(e)=>{handleDeleteReport(e, preview.id); setPreview(null);}} />}
   </div>
 );
+}
+
+// ────────────────────── ERROR BOUNDARY ──────────────────────
+// Empêche l'écran noir : si un composant plante, on affiche l'erreur réelle.
+class WSErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) { console.error("WallSwiss crash:", error, info); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 32, fontFamily: "-apple-system, BlinkMacSystemFont, Inter, sans-serif", color: "#1D1D1F", background: "#FFFFFF", minHeight: "100vh", boxSizing: "border-box" }}>
+          <h1 style={{ color: "#EA4335", fontSize: 22, margin: "0 0 8px" }}>⚠️ Une erreur est survenue au chargement</h1>
+          <p style={{ color: "#6E6E73", fontSize: 14 }}>Copie ce détail technique pour le diagnostic :</p>
+          <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", background: "#F5F5F7", padding: 16, borderRadius: 12, fontSize: 12, color: "#B00020", border: "1px solid rgba(0,0,0,.1)" }}>
+            {String(this.state.error && (this.state.error.stack || this.state.error.message || this.state.error))}
+          </pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function WallSwissApp() {
+  return (
+    <WSErrorBoundary>
+      <WallSwissAppMain />
+    </WSErrorBoundary>
+  );
 }

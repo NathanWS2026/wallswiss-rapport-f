@@ -39,10 +39,22 @@ try {
   console.error("Erreur d'initialisation Firebase:", error);
 }
 
+// ══════════════════════════════════════════════════════════════════
+//  PALETTE — Direction artistique "WallSmart" (thème clair alpin)
+//  · Les clés d'origine (primary, gold, white, black, gray, lightGray,
+//    mediumGray, darkGray, sidebar, primaryDark) sont CONSERVÉES À
+//    L'IDENTIQUE afin que les slides PDF (SlideCover, SlideTOC, …) ne
+//    subissent AUCUN changement visuel : charte oxblood #692102,
+//    Times New Roman, coins carrés.
+//  · Les nouvelles clés (bg, card, text, muted, goldUI, …) pilotent la
+//    coquille de l'outil (sidebar, en-têtes, cartes, boutons, formulaires,
+//    hub, mails, marketing, LPP, paramètres) — tokens WallSmart.
+// ══════════════════════════════════════════════════════════════════
 const C = {
+  // ── Marque / slides PDF (INCHANGÉ — protège les rapports clients) ──
   primary: "#692102",
-  primaryDark: "#4D1801", 
-  sidebar: "#692102", 
+  primaryDark: "#4D1801",
+  sidebar: "#692102",
   gold: "#A59568",
   white: "#FFFFFF",
   black: "#1A1A1A",
@@ -50,6 +62,43 @@ const C = {
   lightGray: "#F3F2EF",
   mediumGray: "#E5E3DE",
   darkGray: "#374151",
+  // ── Coquille : thème "Aurora" — canvas blanc Apple/SaaS + accents Google ──
+  bg: "#FFFFFF",
+  bgSoft: "#F5F5F7",
+  card: "#FFFFFF",
+  cardSoft: "#F5F5F7",
+  elev: "#FFFFFF",
+  text: "#1D1D1F",
+  muted: "#6E6E73",
+  dim: "#86868B",
+  line: "rgba(0,0,0,0.08)",
+  line2: "rgba(0,0,0,0.13)",
+  // Accent principal = Google Blue ; goldUI/goldDeep repointés (compat coquille)
+  accent: "#4285F4",
+  accentDark: "#1A73E8",
+  accentSoft: "rgba(66,133,244,0.10)",
+  goldUI: "#4285F4",
+  goldDeep: "#1A73E8",
+  goldSoft: "rgba(66,133,244,0.10)",
+  champagne: "#1D1D1F",
+  // Palette Google complète (blue / red / yellow / green)
+  gBlue: "#4285F4",
+  gRed: "#EA4335",
+  gYellow: "#FBBC05",
+  gGreen: "#34A853",
+  green: "#34A853",
+  greenSoft: "rgba(52,168,83,.12)",
+  red: "#EA4335",
+  redSoft: "rgba(234,67,53,.12)",
+  radius: "18px",
+};
+
+// Familles typographiques modernes (coquille uniquement ; les slides
+// conservent 'Times New Roman' / 'Montserrat' en littéral).
+const F = {
+  ui: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+  serif: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif",
+  mono: "'SF Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
 };
 
 const Icons = {
@@ -84,7 +133,7 @@ const Icons = {
 };
 
 const LOGO_URL = "/logo blanc sans texte.png";
-const APP_VERSION = "v2.1.0 (Secured)";
+const APP_VERSION = "v2.3.0 (Aurora)";
 
 const CAMPAIGNS_DATA = {
   '3p-meta': {
@@ -95,7 +144,7 @@ const CAMPAIGNS_DATA = {
       scripts: {
           intro: "« Bonjour [Prénom], c'est [Votre Prénom], je suis partenaire de Aide Suisse. Je vous contacte car nous avons bien reçu votre demande effectuée sur Facebook et/ou Instagram par rapport à la simulation pour la récupération des 4'800 CHF d'impôts sur Genève. Je vous appelle simplement pour vous communiquer les résultats de votre test d'éligibilité. Vous avez 2 minutes ? »",
           transition: "« Bonne nouvelle, votre profil montre un potentiel d'économie intéressant. Afin de mieux comprendre votre situation, j'aurais besoin de valider quelques points avec vous sur votre contexte professionnel et personnel actuel (Imposé à la source ? 3ème pilier ? Famille ?). »",
-          closing: "« C’est très clair. Pour vous donner un chiffre final et surtout voir s'il y a des leviers intéressants pour optimiser votre situation, il est nécessaire de fixer un rendez-vous téléphonique pour une évaluation complète. On bloque un créneau ensemble pour ce rendez-vous demain soir ou jeudi midi ? »"
+          closing: "« C'est très clair. Pour vous donner un chiffre final et surtout voir s'il y a des leviers intéressants pour optimiser votre situation, il est nécessaire de fixer un rendez-vous téléphonique pour une évaluation complète. On bloque un créneau ensemble pour ce rendez-vous demain soir ou jeudi midi ? »"
       }
   },
   'meta-lpp': {
@@ -106,7 +155,7 @@ const CAMPAIGNS_DATA = {
       scripts: {
           intro: "« Bonjour [Prénom], c'est [Votre Prénom] de la plateforme Pilah. Je vous appelle suite à votre demande sur Facebook concernant la recherche de vos avoirs LPP. Vous avez utilisé notre outil pour savoir si vous aviez des fonds de 2ème pilier oubliés en Suisse. Vous avez 2 minutes ? »",
           transition: "« Super. Pour vous expliquer, il y a des milliards de francs qui dorment actuellement dans les caisses de pension suisses. En moyenne, nos utilisateurs récupèrent 8'000 CHF. Pour savoir si vous êtes concerné, j'ai besoin de comprendre votre parcours. Vous avez travaillé environ combien de temps en Suisse jusqu'à présent ? »",
-          closing: "« C’est très clair. Comme expliqué dans la vidéo, notre service s'occupe de toute la paperasse pour retrouver cet argent. Pour lancer la recherche 100% sécurisée, je vous propose de prendre un rendez-vous téléphonique d'une dizaine de minutes. Qu'est-ce qui vous arrange pour ce rendez-vous, demain soir ou jeudi midi ? »"
+          closing: "« C'est très clair. Comme expliqué dans la vidéo, notre service s'occupe de toute la paperasse pour retrouver cet argent. Pour lancer la recherche 100% sécurisée, je vous propose de prendre un rendez-vous téléphonique d'une dizaine de minutes. Qu'est-ce qui vous arrange pour ce rendez-vous, demain soir ou jeudi midi ? »"
       }
   },
   'cmu-lamal-meta': {
@@ -308,10 +357,16 @@ const MAILS_TYPES = [
   }
 ];
 
-const fontLink = document.createElement("link");
-fontLink.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap";
-fontLink.rel = "stylesheet";
-document.head.appendChild(fontLink);
+// ── Injection des polices : Montserrat conservé pour les SLIDES PDF ;
+//    Inter ajouté pour la coquille (thème Aurora). ──
+(function injectFonts(){
+  const pre1 = document.createElement("link"); pre1.rel = "preconnect"; pre1.href = "https://fonts.googleapis.com"; document.head.appendChild(pre1);
+  const pre2 = document.createElement("link"); pre2.rel = "preconnect"; pre2.href = "https://fonts.gstatic.com"; pre2.crossOrigin = "anonymous"; document.head.appendChild(pre2);
+  const fontLink = document.createElement("link");
+  fontLink.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap";
+  fontLink.rel = "stylesheet";
+  document.head.appendChild(fontLink);
+})();
 
 function computeProjections(data) {
   const initial = data.montantInvestissement !== "" && data.montantInvestissement !== undefined ? Number(data.montantInvestissement) : 100000;
@@ -488,6 +543,9 @@ const getBase64Image = async (url) => {
 };
 
 // ────────────────────── SLIDE COMPONENTS ──────────────────────
+// ⚠️ Ces composants pilotent les rapports PDF envoyés aux clients :
+//    charte figée (oxblood C.primary #692102, Times New Roman, coins carrés).
+//    Ils utilisent uniquement les clés d'origine de C → rendu inchangé.
 
 const slideBase = {
   width: "100%",
@@ -3400,30 +3458,30 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
       <div className="no-print" style={{ background: C.black, padding: "10px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <span style={{ color: C.white, fontSize: 12, fontWeight: 600, letterSpacing: "0.06em" }}>APERCU — {data.prenom} {(data.nom||"").toUpperCase()}</span>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <button onClick={onEdit} style={{ background: "rgba(255,255,255,0.1)", color: C.white, border: "none", padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 600, borderRadius: "0px", transition: "0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.2)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
+          <button onClick={onEdit} style={{ background: "rgba(255,255,255,0.1)", color: C.white, border: "none", padding: "6px 12px", cursor: "pointer", fontFamily: F.ui, fontSize: 10, fontWeight: 600, borderRadius: "999px", transition: "0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.2)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
             PARAMÉTRAGE
           </button>
-          <button onClick={() => setEditMode(!editMode)} style={{ background: editMode ? C.gold : "transparent", border: `1px solid ${editMode ? C.gold : "rgba(255,255,255,0.3)"}`, color: C.white, padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 600, borderRadius: "0px", transition: "0.2s" }}>
+          <button onClick={() => setEditMode(!editMode)} style={{ background: editMode ? C.goldUI : "transparent", border: `1px solid ${editMode ? C.goldUI : "rgba(255,255,255,0.3)"}`, color: C.white, padding: "6px 12px", cursor: "pointer", fontFamily: F.ui, fontSize: 10, fontWeight: 600, borderRadius: "999px", transition: "0.2s" }}>
             {editMode ? "TERMINER TEXTES" : "TEXTES LIBRES"}
           </button>
-          <button onClick={toggleHideSlide} style={{ background: isCurrentHidden ? "rgba(239,68,68,0.2)" : "transparent", color: isCurrentHidden ? "#FCA5A5" : C.white, border: `1px solid ${isCurrentHidden ? "rgba(252,165,165,0.3)" : "rgba(255,255,255,0.3)"}`, padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 600, borderRadius: "0px", transition: "0.2s" }}>
+          <button onClick={toggleHideSlide} style={{ background: isCurrentHidden ? "rgba(239,68,68,0.2)" : "transparent", color: isCurrentHidden ? "#FCA5A5" : C.white, border: `1px solid ${isCurrentHidden ? "rgba(252,165,165,0.3)" : "rgba(255,255,255,0.3)"}`, padding: "6px 12px", cursor: "pointer", fontFamily: F.ui, fontSize: 10, fontWeight: 600, borderRadius: "999px", transition: "0.2s" }}>
             {isCurrentHidden ? "RÉAFFICHER" : "MASQUER SLIDE"}
           </button>
-          <button onClick={onDelete} style={{ background: "transparent", color: "#FCA5A5", border: "1px solid rgba(252,165,165,0.3)", padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 600, borderRadius: "0px", transition: "0.2s" }} onMouseEnter={e=>{e.currentTarget.style.background="rgba(239,68,68,0.2)";e.currentTarget.style.color="#FFF"}} onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color="#FCA5A5"}}>
+          <button onClick={onDelete} style={{ background: "transparent", color: "#FCA5A5", border: "1px solid rgba(252,165,165,0.3)", padding: "6px 12px", cursor: "pointer", fontFamily: F.ui, fontSize: 10, fontWeight: 600, borderRadius: "999px", transition: "0.2s" }} onMouseEnter={e=>{e.currentTarget.style.background="rgba(239,68,68,0.2)";e.currentTarget.style.color="#FFF"}} onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color="#FCA5A5"}}>
             SUPPRIMER
           </button>
           
           <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)", margin: "0 4px" }} />
           
-          <button onClick={handleDownloadPDF} disabled={isPdfLoading || isEmailing} style={{ background: C.white, color: C.primaryDark, border: "none", padding: "6px 12px", cursor: (isPdfLoading || isEmailing) ? "wait" : "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", opacity: (isPdfLoading || isEmailing) ? 0.7 : 1, transition: "0.2s" }}>
+          <button onClick={handleDownloadPDF} disabled={isPdfLoading || isEmailing} style={{ background: C.white, color: C.accentDark, border: "none", padding: "6px 12px", cursor: (isPdfLoading || isEmailing) ? "wait" : "pointer", fontFamily: F.ui, fontSize: 10, fontWeight: 700, borderRadius: "999px", opacity: (isPdfLoading || isEmailing) ? 0.7 : 1, transition: "0.2s" }}>
             {isPdfLoading ? "GÉNÉRATION..." : "TÉLÉCHARGER PDF"}
           </button>
-          <button onClick={openEmailModal} disabled={isPdfLoading || isEmailing} style={{ background: emailSuccess ? "#10B981" : C.gold, color: C.white, border: "none", padding: "6px 12px", cursor: (isPdfLoading || isEmailing) ? "wait" : "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 10, fontWeight: 700, borderRadius: "0px", opacity: (isPdfLoading || isEmailing) ? 0.7 : 1, transition: "0.2s" }}>
+          <button onClick={openEmailModal} disabled={isPdfLoading || isEmailing} style={{ background: emailSuccess ? "#10B981" : C.goldUI, color: C.white, border: "none", padding: "6px 12px", cursor: (isPdfLoading || isEmailing) ? "wait" : "pointer", fontFamily: F.ui, fontSize: 10, fontWeight: 700, borderRadius: "999px", opacity: (isPdfLoading || isEmailing) ? 0.7 : 1, transition: "0.2s" }}>
             {isEmailing ? "ENVOI..." : emailSuccess ? "ENVOYÉ !" : "EMAIL"}
           </button>
           
-          <span style={{ color: C.gold, fontSize: 11, marginLeft: 4 }}>{currentSlide + 1} / {slides.length}</span>
-          <button onClick={onClose} style={{ background: "transparent", color: C.gray, border: "none", padding: "6px 12px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 11, fontWeight: 600 }}>FERMER ✕</button>
+          <span style={{ color: C.goldUI, fontSize: 11, marginLeft: 4 }}>{currentSlide + 1} / {slides.length}</span>
+          <button onClick={onClose} style={{ background: "transparent", color: C.dim, border: "none", padding: "6px 12px", cursor: "pointer", fontFamily: F.ui, fontSize: 11, fontWeight: 600 }}>FERMER ✕</button>
         </div>
       </div>
       <div className="no-print" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 60px", position: "relative", minHeight: 0 }}>
@@ -3449,7 +3507,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
         {slides.map((_, i) => {
           const isHid = (data.hiddenSlides || []).includes(i);
           return (
-            <div key={i} onClick={() => setCurrentSlide(i)} style={{ width: 48, height: 28, background: i === currentSlide ? C.primary : "rgba(255,255,255,0.06)", border: i === currentSlide ? `1px solid ${C.gold}` : "1px solid rgba(255,255,255,0.04)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: i === currentSlide ? C.white : isHid ? "#EF4444" : "rgba(255,255,255,0.35)", fontWeight: 600, flexShrink: 0, textDecoration: isHid ? "line-through" : "none" }}>
+            <div key={i} onClick={() => setCurrentSlide(i)} style={{ width: 48, height: 28, background: i === currentSlide ? C.accent : "rgba(255,255,255,0.06)", border: i === currentSlide ? `1px solid ${C.goldUI}` : "1px solid rgba(255,255,255,0.04)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: i === currentSlide ? C.white : isHid ? "#EF4444" : "rgba(255,255,255,0.35)", fontWeight: 600, flexShrink: 0, textDecoration: isHid ? "line-through" : "none" }}>
               {i + 1}
             </div>
           );
@@ -3474,20 +3532,20 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
 
       {isPdfLoading && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(255,255,255,0.95)", zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 16 }}>
+          <div style={{ fontFamily: F.serif, fontSize: 32, fontWeight: 700, color: C.accent, marginBottom: 16 }}>
             Génération du rapport en cours...
           </div>
-          <div style={{ fontSize: 13, color: C.gray, fontWeight: 500, fontFamily: "'Montserrat', sans-serif" }}>
+          <div style={{ fontSize: 13, color: C.gray, fontWeight: 500, fontFamily: F.ui }}>
             Veuillez patienter pendant la capture haute définition...
           </div>
         </div>
       )}
       {isEmailing && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(255,255,255,0.95)", zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 16 }}>
+          <div style={{ fontFamily: F.serif, fontSize: 32, fontWeight: 700, color: C.accent, marginBottom: 16 }}>
             Envoi de l'email en cours...
           </div>
-          <div style={{ fontSize: 13, color: C.gray, fontWeight: 500, fontFamily: "'Montserrat', sans-serif" }}>
+          <div style={{ fontSize: 13, color: C.gray, fontWeight: 500, fontFamily: F.ui }}>
             Connexion à l'automatisation Make.com...
           </div>
         </div>
@@ -3495,23 +3553,23 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
 
       {showEmailModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: C.white, width: 500, padding: 32, borderRadius: "0px", boxShadow: "0 20px 40px rgba(0,0,0,0.2)" }}>
-            <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.primary, marginTop: 0, marginBottom: 24 }}>Envoyer le rapport par email</h3>
+          <div style={{ background: C.white, width: 500, padding: 32, borderRadius: C.radius, boxShadow: "0 20px 40px rgba(0,0,0,0.2)" }}>
+            <h3 style={{ fontFamily: F.serif, fontSize: 24, color: C.accent, marginTop: 0, marginBottom: 24 }}>Envoyer le rapport par email</h3>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.gray, marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase" }}>Email destinataire</label>
-              <input style={{ width: "100%", padding: "10px 12px", border: `1.5px solid ${C.mediumGray}`, fontSize: 13, fontFamily: "'Montserrat', sans-serif", boxSizing: "border-box", outline: "none" }} value={emailForm.to} onChange={e=>setEmailForm({...emailForm, to: e.target.value})} placeholder="client@email.com" />
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.muted, marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: F.mono }}>Email destinataire</label>
+              <input style={{ width: "100%", padding: "10px 12px", border: `1.5px solid ${C.line2}`, borderRadius: 12, fontSize: 13, fontFamily: F.ui, boxSizing: "border-box", outline: "none" }} value={emailForm.to} onChange={e=>setEmailForm({...emailForm, to: e.target.value})} placeholder="client@email.com" />
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.gray, marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase" }}>Objet</label>
-              <input style={{ width: "100%", padding: "10px 12px", border: `1.5px solid ${C.mediumGray}`, fontSize: 13, fontFamily: "'Montserrat', sans-serif", boxSizing: "border-box", outline: "none" }} value={emailForm.subject} onChange={e=>setEmailForm({...emailForm, subject: e.target.value})} />
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.muted, marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: F.mono }}>Objet</label>
+              <input style={{ width: "100%", padding: "10px 12px", border: `1.5px solid ${C.line2}`, borderRadius: 12, fontSize: 13, fontFamily: F.ui, boxSizing: "border-box", outline: "none" }} value={emailForm.subject} onChange={e=>setEmailForm({...emailForm, subject: e.target.value})} />
             </div>
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.gray, marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase" }}>Message</label>
-              <textarea style={{ width: "100%", padding: "10px 12px", border: `1.5px solid ${C.mediumGray}`, fontSize: 13, fontFamily: "'Montserrat', sans-serif", boxSizing: "border-box", outline: "none", minHeight: 140, resize: "vertical" }} value={emailForm.body} onChange={e=>setEmailForm({...emailForm, body: e.target.value})} />
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.muted, marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: F.mono }}>Message</label>
+              <textarea style={{ width: "100%", padding: "10px 12px", border: `1.5px solid ${C.line2}`, borderRadius: 12, fontSize: 13, fontFamily: F.ui, boxSizing: "border-box", outline: "none", minHeight: 140, resize: "vertical" }} value={emailForm.body} onChange={e=>setEmailForm({...emailForm, body: e.target.value})} />
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
-              <button onClick={() => setShowEmailModal(false)} style={{ background: "transparent", color: C.gray, border: `1px solid ${C.mediumGray}`, padding: "10px 20px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600 }}>Annuler</button>
-              <button onClick={handleConfirmEmail} style={{ background: C.primary, color: C.white, border: "none", padding: "10px 20px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600 }}>Confirmer l'envoi</button>
+              <button onClick={() => setShowEmailModal(false)} style={{ background: "transparent", color: C.muted, border: `1px solid ${C.line2}`, padding: "10px 20px", cursor: "pointer", fontFamily: F.ui, fontSize: 13, fontWeight: 600, borderRadius: "999px" }}>Annuler</button>
+              <button onClick={handleConfirmEmail} style={{ background: C.accent, color: C.white, border: "none", padding: "10px 20px", cursor: "pointer", fontFamily: F.ui, fontSize: 13, fontWeight: 600, borderRadius: "999px" }}>Confirmer l'envoi</button>
           </div>
         </div>
       </div>
@@ -3527,17 +3585,20 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
 }
 
 // ────────────────────── MAIN APP / LAYOUT ──────────────────────
+// Styles partagés de la coquille — direction artistique WallSmart
+// (SF Pro / Inter, boutons pilule, champs arrondis,
+//  cartes radius 20, accents or #B98A3D).
 
 const S = {
-  label: { display: "block", fontSize: 11, fontWeight: 600, color: C.gray, marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase" },
-  input: { width: "100%", padding: "10px 12px", border: `1.5px solid ${C.mediumGray}`, fontSize: 13, fontFamily: "'Montserrat', sans-serif", color: C.black, background: C.white, outline: "none", boxSizing: "border-box", borderRadius: "0px" },
-  select: { width: "100%", padding: "10px 12px", border: `1.5px solid ${C.mediumGray}`, fontSize: 13, fontFamily: "'Montserrat', sans-serif", color: C.black, background: C.white, outline: "none", cursor: "pointer", boxSizing: "border-box", borderRadius: "0px" },
+  label: { display: "block", fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 7, letterSpacing: "0", textTransform: "none", fontFamily: F.ui },
+  input: { width: "100%", padding: "11px 14px", border: `1px solid ${C.line2}`, fontSize: 14, fontFamily: F.ui, color: C.text, background: C.card, outline: "none", boxSizing: "border-box", borderRadius: "12px", transition: "border-color .2s, box-shadow .2s" },
+  select: { width: "100%", padding: "11px 14px", border: `1px solid ${C.line2}`, fontSize: 14, fontFamily: F.ui, color: C.text, background: C.card, outline: "none", cursor: "pointer", boxSizing: "border-box", borderRadius: "12px" },
   fg: { marginBottom: 16 },
-  card: { background: C.white, padding: 24, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", border: `1px solid ${C.mediumGray}`, borderRadius: "0px" },
-  cardTitle: { fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: C.primary, marginBottom: 18, display: "flex", alignItems: "center", gap: 10 },
-  dot: { width: 8, height: 2, background: C.gold, flexShrink: 0 },
-  btnP: { background: C.primary, color: C.white, border: "none", padding: "12px 28px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.04em", borderRadius: "0px" },
-  btnS: { background: C.white, color: C.primary, border: `2px solid ${C.primary}`, padding: "10px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 600, borderRadius: "0px" },
+  card: { background: C.card, padding: 24, boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 28px rgba(0,0,0,0.05)", border: `1px solid ${C.line}`, borderRadius: C.radius },
+  cardTitle: { fontSize: 12.5, fontWeight: 700, textTransform: "none", letterSpacing: "-0.01em", color: C.text, marginBottom: 18, display: "flex", alignItems: "center", gap: 10, fontFamily: F.ui },
+  dot: { width: 9, height: 9, borderRadius: "50%", background: C.accent, flexShrink: 0 },
+  btnP: { background: C.accent, color: "#FFFFFF", border: "none", padding: "12px 26px", cursor: "pointer", fontFamily: F.ui, fontSize: 14, fontWeight: 600, letterSpacing: "-0.01em", borderRadius: "980px", boxShadow: "0 2px 8px rgba(66,133,244,.28)" },
+  btnS: { background: C.card, color: C.accent, border: `1px solid ${C.line2}`, padding: "11px 24px", cursor: "pointer", fontFamily: F.ui, fontSize: 14, fontWeight: 600, borderRadius: "980px" },
 };
 
 const PREDEFINED_AGENTS = [
@@ -3925,7 +3986,7 @@ const [lppForm, setLppForm] = useState({
         )}
         {isEditingMarketing && (
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 30 }}>
-            <label style={{ background: C.primary, color: C.white, padding: "8px 16px", borderRadius: 4, cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", gap: 8, alignItems: "center", transition: "0.2s" }} onMouseEnter={e=>e.currentTarget.style.opacity=0.9} onMouseLeave={e=>e.currentTarget.style.opacity=1}>
+            <label style={{ background: C.accent, color: C.white, padding: "8px 16px", borderRadius: 4, cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", gap: 8, alignItems: "center", transition: "0.2s" }} onMouseEnter={e=>e.currentTarget.style.opacity=0.9} onMouseLeave={e=>e.currentTarget.style.opacity=1}>
               <input type="file" accept={isVideo ? "video/*" : "image/*"} style={{ display: "none" }} onChange={(e) => onMarketingMediaChange(e.target.files[0], mediaKey)} />
               <Icons.Copy size={16} /> Changer {isVideo ? "Vidéo" : "Image"}
             </label>
@@ -4237,12 +4298,12 @@ const [lppForm, setLppForm] = useState({
 
   if (authLoading) {
     return (
-      <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: C.white, flexDirection: "column", fontFamily: "'Montserrat', sans-serif", zIndex: 9999 }}>
-        <div style={{ background: C.primary, width: "72px", height: "72px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px", marginBottom: 24 }}>
+      <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: C.card, flexDirection: "column", fontFamily: F.ui, zIndex: 9999 }}>
+        <div style={{ background: C.accent, width: "72px", height: "72px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "18px", marginBottom: 24 }}>
           <img src={LOGO_URL} alt="WallSwiss" style={{ width: "40px", height: "40px", objectFit: "contain" }} />
         </div>
-        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.primary, margin: "0 0 8px 0" }}>WallSwiss</h2>
-        <div style={{ color: C.gray, fontSize: 13, fontWeight: 500, letterSpacing: "0.05em" }}>Authentification en cours...</div>
+        <h2 style={{ fontFamily: F.serif, fontSize: 24, color: C.accent, margin: "0 0 8px 0" }}>WallSwiss</h2>
+        <div style={{ color: C.muted, fontSize: 13, fontWeight: 500, letterSpacing: "0.05em" }}>Authentification en cours...</div>
       </div>
     );
   }
@@ -4250,13 +4311,13 @@ const [lppForm, setLppForm] = useState({
   // Ecran d'attente d'approbation
   if (false && userStatus === 'pending' && user.email !== ADMIN_EMAIL) { // ⚠️ BLOQUAGE DÉSACTIVÉ TEMPORAIREMENT
     return (
-      <div style={{ display: "flex", height: "100vh", width: "100vw", alignItems: "center", justifyContent: "center", background: C.lightGray, fontFamily: "'Montserrat', sans-serif" }}>
-        <div style={{ background: C.white, padding: "48px", width: "100%", maxWidth: "500px", boxShadow: "0 10px 40px rgba(0,0,0,0.1)", textAlign: "center" }}>
-          <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.primary, marginBottom: 8, marginTop: 0 }}>Compte en attente</h2>
-          <p style={{ color: C.gray, fontSize: 14, lineHeight: 1.6, marginBottom: 32 }}>
+      <div style={{ display: "flex", height: "100vh", width: "100vw", alignItems: "center", justifyContent: "center", background: C.bg, fontFamily: F.ui }}>
+        <div style={{ background: C.card, padding: "48px", width: "100%", maxWidth: "500px", boxShadow: "0 10px 40px rgba(0,0,0,0.1)", textAlign: "center", borderRadius: C.radius }}>
+          <h2 style={{ fontFamily: F.serif, fontSize: 24, color: C.accent, marginBottom: 8, marginTop: 0 }}>Compte en attente</h2>
+          <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.6, marginBottom: 32 }}>
             Votre compte a bien été créé, mais il nécessite l'approbation d'un administrateur avant de pouvoir accéder à l'outil de génération de rapports.
           </p>
-          <div style={{ background: "rgba(105,33,2,0.05)", padding: "16px", color: C.primaryDark, fontSize: 12, fontWeight: 600, marginBottom: 32 }}>
+          <div style={{ background: "rgba(66,133,244,0.05)", padding: "16px", color: C.accentDark, fontSize: 12, fontWeight: 600, marginBottom: 32 }}>
             Connecté en tant que : {user.email}
           </div>
           <button onClick={handleLogout} style={S.btnS}>Se déconnecter</button>
@@ -4278,12 +4339,12 @@ const [lppForm, setLppForm] = useState({
               { id: "assurance-vie", title: "Assurance Vie & PER", desc: "Solutions de placement et retraite (France).", active: true },
               { id: "immobilier", title: "Immobilier", desc: "Investissements et rendements immobiliers (Bientôt disponible).", active: false },
             ].map(tpl => (
-              <div key={tpl.id} onClick={() => tpl.active && u("templateId", tpl.id)} style={{ border: `2px solid ${form.templateId === tpl.id ? C.primary : C.mediumGray}`, padding: 20, cursor: tpl.active ? "pointer" : "not-allowed", opacity: tpl.active ? 1 : 0.5, background: form.templateId === tpl.id ? "rgba(105,33,2,0.04)" : C.white, display: "flex", flexDirection: "column", gap: 8, borderRadius: "0px" }}>
+              <div key={tpl.id} onClick={() => tpl.active && u("templateId", tpl.id)} style={{ border: `2px solid ${form.templateId === tpl.id ? C.accent : C.line2}`, padding: 20, cursor: tpl.active ? "pointer" : "not-allowed", opacity: tpl.active ? 1 : 0.5, background: form.templateId === tpl.id ? "rgba(66,133,244,0.04)" : C.card, display: "flex", flexDirection: "column", gap: 8, borderRadius: "14px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontWeight: 700, color: C.primary }}>{tpl.title}</span>
-                  {form.templateId === tpl.id && <span style={{ color: C.gold, fontSize: 16 }}>&#10003;</span>}
+                  <span style={{ fontWeight: 700, color: C.accent }}>{tpl.title}</span>
+                  {form.templateId === tpl.id && <span style={{ color: C.goldUI, fontSize: 16 }}>&#10003;</span>}
                 </div>
-                <span style={{ fontSize: 12, color: C.gray, lineHeight: 1.5 }}>{tpl.desc}</span>
+                <span style={{ fontSize: 12, color: C.muted, lineHeight: 1.5 }}>{tpl.desc}</span>
               </div>
             ))}
           </div>
@@ -4306,7 +4367,7 @@ const [lppForm, setLppForm] = useState({
               <div style={S.fg}><label style={S.label}>Nom</label><input style={S.input} value={form.nom} onChange={e=>u("nom",e.target.value)} placeholder="EVEQUE"/></div>
             </div>
             {form.isCouple && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, background: "rgba(165,149,104,0.05)", padding: 12, border: `1px dashed ${C.gold}`, marginBottom: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, background: "rgba(165,149,104,0.05)", padding: 12, border: `1px dashed ${C.goldUI}`, marginBottom: 16 }}>
                 <div style={{...S.fg, margin:0}}><label style={S.label}>Prénom Conjoint</label><input style={S.input} value={form.prenomConjoint || ""} onChange={e=>u("prenomConjoint",e.target.value)} placeholder="Marie"/></div>
                 <div style={{...S.fg, margin:0}}><label style={S.label}>Nom Conjoint</label><input style={S.input} value={form.nomConjoint || ""} onChange={e=>u("nomConjoint",e.target.value)} placeholder="EVEQUE"/></div>
               </div>
@@ -4326,8 +4387,8 @@ const [lppForm, setLppForm] = useState({
               <div style={S.fg}><label style={S.label}>Nationalité</label><input style={S.input} value={form.nationalite} onChange={e=>u("nationalite",e.target.value)}/></div>
             </div>
             
-            <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.primary, marginBottom: 8, textTransform: "uppercase" }}>Informations personnalisées supplémentaires</div>
+            <div style={{ height: 1, background: C.line2, margin: "16px 0" }} />
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 8, textTransform: "uppercase" }}>Informations personnalisées supplémentaires</div>
             {(form.customClientFields || []).map((f, i) => (
               <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                 <input style={{...S.input, flex: 1}} placeholder="Objet (ex: Domicile)" value={f.label} onChange={e => { const newF = [...(form.customClientFields||[])]; newF[i].label = e.target.value; u("customClientFields", newF); }} />
@@ -4360,21 +4421,21 @@ const [lppForm, setLppForm] = useState({
       case 2: return (
         <div style={S.card}>
           <div style={S.cardTitle}><div style={S.dot} /> Objectifs du client</div>
-          <p style={{ fontSize: 12, color: C.gray, marginBottom: 16, marginTop: 0 }}>Sélectionnez les objectifs correspondant à la situation de votre client.</p>
+          <p style={{ fontSize: 12, color: C.muted, marginBottom: 16, marginTop: 0 }}>Sélectionnez les objectifs correspondant à la situation de votre client.</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
             {defObj.map(obj => {
               const active = form.objectifs.includes(obj);
               return (
-                <div key={obj} onClick={()=>toggleObj(obj)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: `1.5px solid ${active ? C.primary : C.mediumGray}`, background: active ? "rgba(105,33,2,0.04)" : "transparent", cursor: "pointer", fontSize: 12, fontWeight: 500, borderRadius: "0px" }}>
-                  <div style={{ width: 16, height: 16, border: `2px solid ${active ? C.primary : C.mediumGray}`, background: active ? C.primary : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "0px" }}>
+                <div key={obj} onClick={()=>toggleObj(obj)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: `1.5px solid ${active ? C.accent : C.line2}`, background: active ? "rgba(66,133,244,0.04)" : "transparent", cursor: "pointer", fontSize: 12, fontWeight: 500, borderRadius: "10px" }}>
+                  <div style={{ width: 16, height: 16, border: `2px solid ${active ? C.accent : C.line2}`, background: active ? C.accent : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "4px" }}>
                     {active && <span style={{ color: C.white, fontSize: 10, fontWeight: 700 }}>&#10003;</span>}
                   </div>
-                  <span style={{ color: active ? C.primary : C.darkGray }}>{obj}</span>
+                  <span style={{ color: active ? C.accent : C.darkGray }}>{obj}</span>
                 </div>
               );
             })}
           </div>
-          <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
+          <div style={{ height: 1, background: C.line2, margin: "20px 0" }} />
           <div style={{ display: "flex", gap: 10 }}>
             <input style={{ ...S.input, flex: 1 }} value={form.objectifCustom} onChange={e=>u("objectifCustom",e.target.value)} placeholder="Ajouter un objectif personnalisé..." onKeyDown={e=>e.key==="Enter"&&addCustomObj()} />
             <button style={{ ...S.btnS, padding: "8px 16px", whiteSpace: "nowrap" }} onClick={addCustomObj}>+ Ajouter</button>
@@ -4382,7 +4443,7 @@ const [lppForm, setLppForm] = useState({
           {form.objectifs.filter(o=>!defObj.includes(o)).length > 0 && (
             <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 6 }}>
               {form.objectifs.filter(o=>!defObj.includes(o)).map((o,i) => (
-                <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 10px", background: "rgba(105,33,2,0.06)", color: C.primary, fontSize: 11, fontWeight: 600, borderRadius: "0px" }}>
+                <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 10px", background: "rgba(66,133,244,0.06)", color: C.accent, fontSize: 11, fontWeight: 600, borderRadius: "999px" }}>
                   {o} <span style={{ cursor: "pointer", opacity: 0.5 }} onClick={()=>toggleObj(o)}>x</span>
                 </span>
               ))}
@@ -4410,19 +4471,19 @@ const [lppForm, setLppForm] = useState({
                   </select>
                 </div>
                 <div style={S.fg}>
-                  <label style={{...S.label, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: 8, color: C.primary}}>
+                  <label style={{...S.label, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: 8, color: C.accent}}>
                     <input type="checkbox" checked={form.optiFiscale} onChange={e=>u("optiFiscale",e.target.checked)} style={{width: 16, height: 16}} /> 
                     Inclure la slide Optimisation Fiscale (3A)
                   </label>
                 </div>
                 <div style={S.fg}>
-                  <label style={{...S.label, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: 8, color: C.primary}}>
+                  <label style={{...S.label, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: 8, color: C.accent}}>
                     <input type="checkbox" checked={form.showPrevoyanceComparatif !== false} onChange={e=>u("showPrevoyanceComparatif",e.target.checked)} style={{width: 16, height: 16}} /> 
                     Inclure la slide Comparatif Banque / Assurance
                   </label>
                 </div>
                 
-                <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
+                <div style={{ height: 1, background: C.line2, margin: "16px 0" }} />
                 
                 <div style={S.fg}>
                   <label style={S.label}>Horizon de placement</label>
@@ -4447,7 +4508,7 @@ const [lppForm, setLppForm] = useState({
                   </select>
                 </div>
                 
-                <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
+                <div style={{ height: 1, background: C.line2, margin: "16px 0" }} />
                 
                 <div style={S.fg}><label style={S.label}>Taux de rendement cible net (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxClp} onChange={e=>u("tauxClp",e.target.value)} placeholder="4.5"/></div>
                 <div style={S.fg}><label style={S.label}>Droits d'entrée (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscriptionLpp} onChange={e=>u("fraisSouscriptionLpp",e.target.value)} placeholder="1"/></div>
@@ -4458,8 +4519,8 @@ const [lppForm, setLppForm] = useState({
                   </select>
                 </div>
                 
-                <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
-                <div style={{ marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12, textTransform: "uppercase" }}>Allocation d'actifs personnalisée (%)</div>
+                <div style={{ height: 1, background: C.line2, margin: "16px 0" }} />
+                <div style={{ marginBottom: 12, color: C.accent, fontWeight: 700, fontSize: 12, textTransform: "uppercase" }}>Allocation d'actifs personnalisée (%)</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 0 }}>
                   <div><label style={S.label}>Actions</label><input style={S.input} type="number" value={form.lppActions} onChange={e=>u("lppActions",e.target.value)} placeholder="Ex: 65" /></div>
                   <div><label style={S.label}>Obligations</label><input style={S.input} type="number" value={form.lppOblig} onChange={e=>u("lppOblig",e.target.value)} placeholder="Ex: 25" /></div>
@@ -4473,19 +4534,19 @@ const [lppForm, setLppForm] = useState({
                 <div style={S.fg}><label style={S.label}>Durée de projection (années)</label><input style={S.input} type="number" max="30" value={form.dureeProjectionAv} onChange={e=>u("dureeProjectionAv",e.target.value)}/></div>
                 
                 <div style={S.fg}>
-                  <label style={{...S.label, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: 8, color: C.primary}}>
+                  <label style={{...S.label, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: 8, color: C.accent}}>
                     <input type="checkbox" checked={form.hasProjectionsMultiples} onChange={e=>u("hasProjectionsMultiples",e.target.checked)} style={{width: 16, height: 16}} /> 
                     Ajouter une 2ème simulation (Scénario 2)
                   </label>
                 </div>
                 {form.hasProjectionsMultiples && (
-                  <div style={{ background: "rgba(105,33,2,0.04)", padding: 16, marginBottom: 16, borderLeft: `3px solid ${C.primary}` }}>
+                  <div style={{ background: "rgba(66,133,244,0.04)", padding: 16, marginBottom: 16, borderLeft: `3px solid ${C.accent}` }}>
                     <div style={S.fg}><label style={S.label}>Versement initial 2 (€)</label><input style={S.input} type="number" value={form.montantInvestissement2} onChange={e=>u("montantInvestissement2",e.target.value)}/></div>
                     <div style={{...S.fg, margin: 0}}><label style={S.label}>Mensualité 2 (€)</label><input style={S.input} type="number" value={form.capaciteEpargne2} onChange={e=>u("capaciteEpargne2",e.target.value)}/></div>
                   </div>
                 )}
                 
-                <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
+                <div style={{ height: 1, background: C.line2, margin: "16px 0" }} />
                 
                 <div style={S.fg}><label style={S.label}>Droits d'entrée sur versements (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscription} onChange={e=>u("fraisSouscription",e.target.value)}/></div>
                 <div style={{...S.fg, margin: 0}}><label style={S.label}>Profil de risque</label><select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>{["Prudent", "Équilibré", "Dynamique", "Offensif"].map(s=><option key={s}>{s}</option>)}</select></div>
@@ -4502,7 +4563,7 @@ const [lppForm, setLppForm] = useState({
                 <div style={S.fg}><label style={S.label}>Montant initial (CHF)</label><input style={S.input} type="number" value={form.montantInvestissement} onChange={e=>u("montantInvestissement",e.target.value)}/></div>
                 <div style={S.fg}><label style={S.label}>Droits d'entrée (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscription} onChange={e=>u("fraisSouscription",e.target.value)}/></div>
                 
-                <div style={{ height: 1, background: C.mediumGray, margin: "16px 0" }} />
+                <div style={{ height: 1, background: C.line2, margin: "16px 0" }} />
                 
                 <div style={S.fg}>
                   <label style={S.label}>Horizon de placement</label>
@@ -4522,7 +4583,7 @@ const [lppForm, setLppForm] = useState({
                 <div style={S.fg}><label style={S.label}>Mensualité investie (CHF)</label><input style={S.input} type="number" value={form.capaciteEpargne} onChange={e=>u("capaciteEpargne",e.target.value)} placeholder="500"/></div>
               </>
             ) : form.templateId === "lpp" ? (
-              <div style={{ padding: 20, background: C.lightGray, color: C.darkGray, fontSize: 13, lineHeight: 1.6, textAlign: "center" }}>
+              <div style={{ padding: 20, background: C.cardSoft, color: C.darkGray, fontSize: 13, lineHeight: 1.6, textAlign: "center", borderRadius: 12 }}>
                 La projection financière du Libre Passage s'appuie sur le <strong>Profil de risque</strong> choisi.<br/><br/>
                 La comparaison se fera automatiquement entre une rémunération classique (compte de fondation) et l'investissement sur les marchés.
               </div>
@@ -4531,9 +4592,9 @@ const [lppForm, setLppForm] = useState({
                 <div style={S.fg}><label style={S.label}>Taux cible 1 (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxPessimiste} onChange={e=>u("tauxPessimiste",e.target.value)}/></div>
                 <div style={S.fg}><label style={S.label}>Taux cible 2 (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxRealiste} onChange={e=>u("tauxRealiste",e.target.value)}/></div>
                 <div style={S.fg}><label style={S.label}>Taux cible 3 (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxOptimiste} onChange={e=>u("tauxOptimiste",e.target.value)}/></div>
-                <div style={{ background: C.lightGray, padding: 14, marginTop: 16, borderRadius: "0px" }}>
-                  <div style={{ fontSize: 11, color: C.gray, marginBottom: 4 }}>Montant net initial investi</div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: C.primary }}>{form.templateId === "assurance-vie" ? "€" : "CHF"} {fmt((form.montantInvestissement||0)-(form.montantInvestissement||0)*(form.fraisSouscription||0)/100)}.-</div>
+                <div style={{ background: C.cardSoft, padding: 14, marginTop: 16, borderRadius: "12px" }}>
+                  <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Montant net initial investi</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: C.accent }}>{form.templateId === "assurance-vie" ? "€" : "CHF"} {fmt((form.montantInvestissement||0)-(form.montantInvestissement||0)*(form.fraisSouscription||0)/100)}.-</div>
                 </div>
               </>
             )}
@@ -4573,7 +4634,7 @@ const [lppForm, setLppForm] = useState({
         <div style={{ display: "grid", gap: 20 }}>
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Personnalisation des textes</div>
-            <p style={{ fontSize: 12, color: C.gray, marginBottom: 16, marginTop: 0 }}>Modifiez les textes par défaut qui apparaîtront dans les diapositives.</p>
+            <p style={{ fontSize: 12, color: C.muted, marginBottom: 16, marginTop: 0 }}>Modifiez les textes par défaut qui apparaîtront dans les diapositives.</p>
             
             <div style={S.fg}><label style={S.label}>Page "Qui sommes-nous" - Description</label>
             <textarea style={{...S.input, minHeight: 80, resize: "vertical"}} value={form.texts.aboutDesc} onChange={e=>uText("aboutDesc", e.target.value)} /></div>
@@ -4583,8 +4644,8 @@ const [lppForm, setLppForm] = useState({
                 <div style={S.fg}><label style={S.label}>Page "Pourquoi SwissQuote" - Conclusion</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.swissquoteIntro} onChange={e=>uText("swissquoteIntro", e.target.value)} /></div>
 
-                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
-                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "SOLUTION COMPTE-TITRES"</div>
+                <div style={{ height: 1, background: C.line2, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.accent, fontWeight: 700, fontSize: 12}}>PAGE "SOLUTION COMPTE-TITRES"</div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 1 (Introduction)</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.solution1} onChange={e=>uText("solution1", e.target.value)} /></div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 2 (Avantages)</label>
@@ -4594,8 +4655,8 @@ const [lppForm, setLppForm] = useState({
                 
                 {form.assetManager === "ParFinance" && (
                   <>
-                    <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
-                    <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "ASSET MANAGER PARFINANCE"</div>
+                    <div style={{ height: 1, background: C.line2, margin: "20px 0" }} />
+                    <div style={{marginBottom: 12, color: C.accent, fontWeight: 700, fontSize: 12}}>PAGE "ASSET MANAGER PARFINANCE"</div>
                     <div style={S.fg}><label style={S.label}>Présentation (Paragraphe 1)</label>
                     <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.parFinanceP1} onChange={e=>uText("parFinanceP1", e.target.value)} /></div>
                     <div style={S.fg}><label style={S.label}>Présentation (Paragraphe 2)</label>
@@ -4607,8 +4668,8 @@ const [lppForm, setLppForm] = useState({
 
             {form.templateId === "prevoyance" && (
               <>
-                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
-                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "SOLUTION PRÉVOYANCE"</div>
+                <div style={{ height: 1, background: C.line2, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.accent, fontWeight: 700, fontSize: 12}}>PAGE "SOLUTION PRÉVOYANCE"</div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 1 (Introduction)</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.prevoyanceSol1} onChange={e=>uText("prevoyanceSol1", e.target.value)} /></div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 2 (Avantages)</label>
@@ -4616,8 +4677,8 @@ const [lppForm, setLppForm] = useState({
                 <div style={S.fg}><label style={S.label}>Paragraphe 3 (Fiscalité & Transmission)</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.prevoyanceSol3} onChange={e=>uText("prevoyanceSol3", e.target.value)} /></div>
                 
-                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
-                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "FONDS DE PLACEMENT"</div>
+                <div style={{ height: 1, background: C.line2, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.accent, fontWeight: 700, fontSize: 12}}>PAGE "FONDS DE PLACEMENT"</div>
                 <div style={S.fg}><label style={S.label}>Stratégie d'investissement personnalisée</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.strategieFonds} onChange={e=>uText("strategieFonds", e.target.value)} /></div>
               </>
@@ -4625,8 +4686,8 @@ const [lppForm, setLppForm] = useState({
 
             {form.templateId === "lpp" && (
               <>
-                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
-                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "ENJEUX LPP"</div>
+                <div style={{ height: 1, background: C.line2, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.accent, fontWeight: 700, fontSize: 12}}>PAGE "ENJEUX LPP"</div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 1 (Contexte)</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppIntroP1} onChange={e=>uText("lppIntroP1", e.target.value)} /></div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 2 (Conséquence)</label>
@@ -4634,8 +4695,8 @@ const [lppForm, setLppForm] = useState({
                 <div style={S.fg}><label style={S.label}>Paragraphe 3 (Conclusion)</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppIntroP3} onChange={e=>uText("lppIntroP3", e.target.value)} /></div>
                 
-                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
-                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "FONCTIONNEMENT LIBRE PASSAGE"</div>
+                <div style={{ height: 1, background: C.line2, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.accent, fontWeight: 700, fontSize: 12}}>PAGE "FONCTIONNEMENT LIBRE PASSAGE"</div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 1 (Définition)</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppFonctP1} onChange={e=>uText("lppFonctP1", e.target.value)} /></div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 2 (Problème)</label>
@@ -4643,8 +4704,8 @@ const [lppForm, setLppForm] = useState({
                 <div style={S.fg}><label style={S.label}>Paragraphe 3 (Solution)</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppFonctP3} onChange={e=>uText("lppFonctP3", e.target.value)} /></div>
 
-                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
-                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGES "COMPTE DE LIBRE PASSAGE"</div>
+                <div style={{ height: 1, background: C.line2, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.accent, fontWeight: 700, fontSize: 12}}>PAGES "COMPTE DE LIBRE PASSAGE"</div>
                 <div style={S.fg}><label style={S.label}>Introduction Libre Passage</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppLibreP1} onChange={e=>uText("lppLibreP1", e.target.value)} /></div>
                 <div style={S.fg}><label style={S.label}>Avantages des Fonds (LPP)</label>
@@ -4652,8 +4713,8 @@ const [lppForm, setLppForm] = useState({
                 <div style={S.fg}><label style={S.label}>Architecture Ouverte (LPP)</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppAvantagesP2} onChange={e=>uText("lppAvantagesP2", e.target.value)} /></div>
                 
-                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
-                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "ADMINISTRATEUR CLP"</div>
+                <div style={{ height: 1, background: C.line2, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.accent, fontWeight: 700, fontSize: 12}}>PAGE "ADMINISTRATEUR CLP"</div>
                 <div style={S.fg}><label style={S.label}>Présentation du partenaire</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppAdminP1} onChange={e=>uText("lppAdminP1", e.target.value)} /></div>
                 <div style={S.fg}><label style={S.label}>Sécurité et gouvernance</label>
@@ -4663,8 +4724,8 @@ const [lppForm, setLppForm] = useState({
 
             {form.templateId === "assurance-vie" && (
               <>
-                <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
-                <div style={{marginBottom: 12, color: C.primary, fontWeight: 700, fontSize: 12}}>PAGE "SOLUTIONS ASSURANCE VIE"</div>
+                <div style={{ height: 1, background: C.line2, margin: "20px 0" }} />
+                <div style={{marginBottom: 12, color: C.accent, fontWeight: 700, fontSize: 12}}>PAGE "SOLUTIONS ASSURANCE VIE"</div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 1 (Contexte)</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.avSolutionsP1} onChange={e=>uText("avSolutionsP1", e.target.value)} /></div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 2 (Avantages)</label>
@@ -4672,7 +4733,7 @@ const [lppForm, setLppForm] = useState({
               </>
             )}
 
-            <div style={{ height: 1, background: C.mediumGray, margin: "20px 0" }} />
+            <div style={{ height: 1, background: C.line2, margin: "20px 0" }} />
             <div style={S.fg}><label style={S.label}>Page "Contact" - Mot de la fin</label>
             <textarea style={{...S.input, minHeight: 80, resize: "vertical"}} value={form.texts.contactDesc} onChange={e=>uText("contactDesc", e.target.value)} /></div>
           </div>
@@ -4682,38 +4743,38 @@ const [lppForm, setLppForm] = useState({
         <div style={S.card}>
           <div style={S.cardTitle}><div style={S.dot} /> Résumé avant génération</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-            <div style={{ background: C.lightGray, padding: 18, borderRadius: "0px" }}>
-              <div style={{ fontSize: 10, color: C.gray, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Client</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: C.primary }}>{form.prenom} {form.nom}</div>
-              <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>{form.age} ans — {form.profession}</div>
-              <div style={{ fontSize: 12, color: C.gray }}>{form.statut} — {form.nationalite}</div>
+            <div style={{ background: C.cardSoft, padding: 18, borderRadius: "14px" }}>
+              <div style={{ fontSize: 10, color: C.muted, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Client</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: C.accent }}>{form.prenom} {form.nom}</div>
+              <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>{form.age} ans — {form.profession}</div>
+              <div style={{ fontSize: 12, color: C.muted }}>{form.statut} — {form.nationalite}</div>
             </div>
-            <div style={{ background: C.lightGray, padding: 18, borderRadius: "0px" }}>
-              <div style={{ fontSize: 10, color: C.gray, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Investissement</div>
+            <div style={{ background: C.cardSoft, padding: 18, borderRadius: "14px" }}>
+              <div style={{ fontSize: 10, color: C.muted, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Investissement</div>
               {form.templateId === "prevoyance" ? (
                 <>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: C.primary }}>CHF {fmt(form.capaciteEpargne)}.- / mois</div>
-                  <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>{form.compagniePrevoyance}</div>
-                  <div style={{ fontSize: 12, color: C.gray }}>Opti. Fiscale: {form.optiFiscale ? "Oui" : "Non"}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: C.accent }}>CHF {fmt(form.capaciteEpargne)}.- / mois</div>
+                  <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>{form.compagniePrevoyance}</div>
+                  <div style={{ fontSize: 12, color: C.muted }}>Opti. Fiscale: {form.optiFiscale ? "Oui" : "Non"}</div>
                 </>
               ) : form.templateId === "lpp" ? (
                 <>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: C.primary }}>Libre Passage LPP</div>
-                  <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>Capital: CHF {fmt(form.capitalLibrePassage)}.-</div>
-                  <div style={{ fontSize: 12, color: C.gray }}>Cible: {form.tauxClp}% net/an</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: C.accent }}>Libre Passage LPP</div>
+                  <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>Capital: CHF {fmt(form.capitalLibrePassage)}.-</div>
+                  <div style={{ fontSize: 12, color: C.muted }}>Cible: {form.tauxClp}% net/an</div>
                 </>
               ) : (
                 <>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: C.primary }}>CHF {fmt(form.montantInvestissement)}.-</div>
-                  <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>Droits d'entrée: {form.fraisSouscription}%</div>
-                  <div style={{ fontSize: 12, color: C.gray }}>{form.tauxPessimiste}% / {form.tauxRealiste}% / {form.tauxOptimiste}%</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: C.accent }}>CHF {fmt(form.montantInvestissement)}.-</div>
+                  <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>Droits d'entrée: {form.fraisSouscription}%</div>
+                  <div style={{ fontSize: 12, color: C.muted }}>{form.tauxPessimiste}% / {form.tauxRealiste}% / {form.tauxOptimiste}%</div>
                 </>
               )}
             </div>
-            <div style={{ background: C.lightGray, padding: 18, borderRadius: "0px" }}>
-              <div style={{ fontSize: 10, color: C.gray, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Objectifs</div>
+            <div style={{ background: C.cardSoft, padding: 18, borderRadius: "14px" }}>
+              <div style={{ fontSize: 10, color: C.muted, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Objectifs</div>
               <div style={{ fontSize: 12, color: C.darkGray }}>{form.objectifs.length} objectif{form.objectifs.length>1?"s":""}</div>
-              <div style={{ fontSize: 11, color: C.gray, marginTop: 4, lineHeight: 1.5 }}>{form.objectifs.slice(0,3).join(" / ")}{form.objectifs.length>3?" ...":""}</div>
+              <div style={{ fontSize: 11, color: C.muted, marginTop: 4, lineHeight: 1.5 }}>{form.objectifs.slice(0,3).join(" / ")}{form.objectifs.length>3?" ...":""}</div>
             </div>
           </div>
           <div style={{ display: "flex", justifyContent: "center", gap: 14, marginTop: 28 }}>
@@ -4726,25 +4787,27 @@ const [lppForm, setLppForm] = useState({
   };
 
   return (
-    <div style={{ fontFamily: "'Montserrat', sans-serif", display: "flex", height: "100%", width: "100%", overflow: "hidden", background: C.lightGray, color: C.black }}>
+    <div style={{ fontFamily: F.ui, display: "flex", flexDirection: "column", height: "100%", width: "100%", overflow: "hidden", background: C.bg, color: C.text }}>
       <style>{`
-        html, body, #root { 
-          margin: 0; 
-          padding: 0; 
-          background-color: ${C.lightGray};
+        html, body, #root {
+          margin: 0;
+          padding: 0;
+          background-color: ${C.bg};
           height: 100%;
           width: 100%;
-          overflow: hidden; 
+          overflow: hidden;
         }
-        input:focus, select:focus, textarea:focus { border-color: ${C.primary} !important; }
-        ::placeholder { color: #B0ADA6; }
-        button:hover { opacity: 0.9; }
-        
-        ::-webkit-scrollbar { width: 6px; height: 6px; } 
+        input:focus, select:focus, textarea:focus { border-color: ${C.accent} !important; box-shadow: 0 0 0 4px ${C.accentSoft}; }
+        ::placeholder { color: #A9A9AF; }
+        button:hover { opacity: 0.94; }
+        ::selection { background: rgba(66,133,244,.18); }
+
+        ::-webkit-scrollbar { width: 9px; height: 9px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
-        
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.16); border-radius: 20px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.28); }
+        .topnav-scroll::-webkit-scrollbar { height: 0; }
+
         .print-only { display: none; }
         @media print {
           body { margin: 0; padding: 0; background: white; overflow: visible; height: auto; }
@@ -4756,176 +4819,136 @@ const [lppForm, setLppForm] = useState({
         }
       `}</style>
 
-      {/* ────────────────── MENU LATÉRAL (SIDEBAR) ────────────────── */}
-      <aside className="no-print" style={{ width: "260px", background: C.sidebar, color: C.white, display: "flex", flexDirection: "column", flexShrink: 0, boxShadow: "2px 0 10px rgba(0,0,0,0.1)", zIndex: 110 }}>
-        <div style={{ padding: "32px 24px", display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
-          <div style={{ background: C.white, padding: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <img src={appSettings.defaultLogo || LOGO_URL} alt="WallSwiss" style={{ height: "20px", filter: "invert(1) sepia(1) saturate(5) hue-rotate(345deg) brightness(0.5)" }} />
+      {/* ────────────────── BARRE DE NAVIGATION SUPÉRIEURE ────────────────── */}
+      <header className="no-print" style={{ display: "flex", alignItems: "center", gap: 18, height: 60, padding: "0 24px", background: "rgba(255,255,255,0.82)", backdropFilter: "saturate(180%) blur(20px)", WebkitBackdropFilter: "saturate(180%) blur(20px)", borderBottom: `1px solid ${C.line}`, flexShrink: 0, zIndex: 200 }}>
+        {/* Marque */}
+        <div onClick={() => setActiveModule("hub")} style={{ display: "flex", alignItems: "center", gap: 11, cursor: "pointer", flexShrink: 0, paddingRight: 6 }}>
+          <div style={{ width: 30, height: 30, borderRadius: 9, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(66,133,244,.30)" }}>
+            <img src={appSettings.defaultLogo || LOGO_URL} alt="WallSwiss" style={{ height: 16, filter: "brightness(0) invert(1)" }} />
           </div>
-          <div>
-            <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, fontWeight: 700, letterSpacing: "0.08em" }}>WALLSWISS</div>
-            <div style={{ color: C.gold, fontSize: 9, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>Espace Conseiller</div>
-          </div>
+          <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.02em", color: C.text }}>WallSwiss</div>
         </div>
 
-        <nav style={{ flex: 1, padding: "24px 0", display: "flex", flexDirection: "column", gap: 8, overflowY: "auto", minHeight: 0 }}>
-          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700, letterSpacing: "0.1em", padding: "0 24px", marginBottom: 8, textTransform: "uppercase" }}>Général</div>
-          
-          <button 
-            onClick={() => setActiveModule("hub")} 
-            style={{ width: "100%", textAlign: "left", background: activeModule === "hub" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "hub" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "hub" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "hub" ? 600 : 500, transition: "0.2s", display: "flex", alignItems: "center", gap: 10 }}
-          >
-            <Icons.Home size={16} /> Hub d'accueil
-          </button>
-          
-          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700, letterSpacing: "0.1em", padding: "0 24px", margin: "16px 0 8px", textTransform: "uppercase" }}>Modules</div>
-          
-          <button 
-            onClick={() => setActiveModule("rapport")} 
-            style={{ width: "100%", textAlign: "left", background: activeModule === "rapport" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "rapport" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "rapport" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "rapport" ? 600 : 500, transition: "0.2s", display: "flex", alignItems: "center", gap: 10 }}
-          >
-            <Icons.FileText size={16} /> Rapport Financier
-          </button>
-
-          <button 
-            onClick={() => setActiveModule("annuaire")} 
-            style={{ width: "100%", textAlign: "left", background: activeModule === "annuaire" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "annuaire" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "annuaire" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "annuaire" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
-          >
-            <Icons.BookContacts size={16} /> Annuaire Partenaires
-          </button>
-
-          <button 
-            onClick={() => setActiveModule("ressources")} 
-            style={{ width: "100%", textAlign: "left", background: activeModule === "ressources" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "ressources" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "ressources" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "ressources" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
-          >
-            <Icons.FileText size={16} /> Ressources Documents
-          </button>
-
-          <button 
-            onClick={() => setActiveModule("mails")} 
-            style={{ width: "100%", textAlign: "left", background: activeModule === "mails" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "mails" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "mails" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "mails" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
-          >
-            <Icons.Inbox size={16} /> Mails Types
-          </button>
-
-          <button 
-            onClick={() => setActiveModule("marketing")} 
-            style={{ width: "100%", textAlign: "left", background: activeModule === "marketing" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "marketing" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "marketing" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "marketing" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
-          >
-            <Icons.Target size={16} /> Hub Marketing
-          </button>
-
-          <button 
-            onClick={() => setActiveModule("rechercheLpp")} 
-            style={{ width: "100%", textAlign: "left", background: activeModule === "rechercheLpp" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "rechercheLpp" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "rechercheLpp" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "rechercheLpp" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
-          >
-            <Icons.Search size={16} /> Recherche Avoirs LPP
-          </button>
-
-          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700, letterSpacing: "0.1em", padding: "0 24px", margin: "16px 0 8px", textTransform: "uppercase" }}>Liens rapides</div>
-
-          <button 
-            onClick={() => window.open("https://wallswiss.my.salesforce.com/", "_blank")} 
-            style={{ width: "100%", textAlign: "left", background: "transparent", color: "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid transparent`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 500, transition: "0.2s", display: "flex", alignItems: "center", gap: 10 }}
-          >
-            <Icons.Users size={16} /> CRM Salesforce
-          </button>
-          <button 
-
-            onClick={() => setActiveModule("retraiteR1")} 
-
-            style={{ width: "100%", textAlign: "left", background: activeModule === "retraiteR1" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "retraiteR1" ? C.white : "rgba(255,255,255,0.6)", border: "none", borderLeft: `3px solid ${activeModule === "retraiteR1" ? C.gold : "transparent"}`, padding: "12px 24px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: activeModule === "retraiteR1" ? 600 : 500, transition: "0.2s", marginTop: "8px", display: "flex", alignItems: "center", gap: 10 }}
-
-          >
-
-            <Icons.PieChart size={16} /> Planification Retraite
-
-          </button>
-
+        {/* Navigation modules */}
+        <nav className="topnav-scroll" style={{ display: "flex", alignItems: "center", gap: 2, overflowX: "auto", flex: 1, minWidth: 0, padding: "0 4px" }}>
+          {[
+            { id: "hub", label: "Accueil", Icon: Icons.Home },
+            { id: "rapport", label: "Rapports", Icon: Icons.FileText },
+            { id: "annuaire", label: "Annuaire", Icon: Icons.BookContacts },
+            { id: "ressources", label: "Documents", Icon: Icons.FileText },
+            { id: "mails", label: "Mails", Icon: Icons.Inbox },
+            { id: "marketing", label: "Marketing", Icon: Icons.Target },
+            { id: "rechercheLpp", label: "LPP", Icon: Icons.Search },
+            { id: "retraiteR1", label: "Retraite", Icon: Icons.PieChart },
+          ].map(({ id, label, Icon }) => {
+            const on = activeModule === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveModule(id)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 7, whiteSpace: "nowrap", background: on ? C.accentSoft : "transparent", color: on ? C.accent : C.muted, border: "none", padding: "8px 14px", borderRadius: 980, cursor: "pointer", fontFamily: F.ui, fontSize: 13.5, fontWeight: on ? 600 : 500, letterSpacing: "-0.01em", transition: "background .18s, color .18s" }}
+                onMouseEnter={(e) => { if (!on) { e.currentTarget.style.background = C.bgSoft; e.currentTarget.style.color = C.text; } }}
+                onMouseLeave={(e) => { if (!on) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.muted; } }}
+              >
+                <Icon size={16} color={on ? C.accent : "currentColor"} /> {label}
+              </button>
+            );
+          })}
         </nav>
 
-        <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
-          <button 
-            onClick={() => setActiveModule("settings")} 
-            style={{ width: "100%", textAlign: "left", background: activeModule === "settings" ? "rgba(255,255,255,0.1)" : "transparent", color: activeModule === "settings" ? C.white : "rgba(255,255,255,0.6)", border: "none", padding: "8px 0", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: activeModule === "settings" ? 600 : 500, transition: "0.2s", display: "flex", alignItems: "center", gap: 10 }}
+        {/* Actions à droite */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <button
+            onClick={() => window.open("https://wallswiss.my.salesforce.com/", "_blank")}
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "transparent", color: C.muted, border: "none", padding: "8px 12px", borderRadius: 980, cursor: "pointer", fontFamily: F.ui, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", transition: "background .18s, color .18s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = C.bgSoft; e.currentTarget.style.color = C.text; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.muted; }}
           >
-            <Icons.Settings size={16} /> Paramètres & Intégrations
+            <Icons.Users size={16} /> CRM
           </button>
-        </div>
 
-        <div style={{ padding: "24px", borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: 11, color: "rgba(255,255,255,0.4)", flexShrink: 0 }}>
-          <div style={{ marginBottom: 12, color: C.gold, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}><Icons.User size={14} /> {user?.email || "Mode Démo"}</div>
-          <button onClick={handleLogout} style={{ background: "transparent", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.2)", padding: "4px 8px", cursor: "pointer", fontSize: 10, width: "100%", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 16 }}>Déconnexion</button>
-          <div>{APP_VERSION}</div>
+          <button
+            onClick={() => setActiveModule("settings")}
+            title="Paramètres & Intégrations"
+            style={{ width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", background: activeModule === "settings" ? C.accentSoft : "transparent", color: activeModule === "settings" ? C.accent : C.muted, border: "none", borderRadius: 980, cursor: "pointer", transition: "background .18s, color .18s" }}
+            onMouseEnter={(e) => { if (activeModule !== "settings") { e.currentTarget.style.background = C.bgSoft; e.currentTarget.style.color = C.text; } }}
+            onMouseLeave={(e) => { if (activeModule !== "settings") { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.muted; } }}
+          >
+            <Icons.Settings size={18} />
+          </button>
+
+          <div style={{ width: 1, height: 24, background: C.line, margin: "0 2px" }} />
+
+          <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "4px 4px 4px 4px", borderRadius: 980 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: `linear-gradient(135deg, ${C.gBlue}, ${C.gGreen})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
+              {(user?.email || "WS").replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase() || "WS"}
+            </div>
+            <button onClick={handleLogout} title="Déconnexion" style={{ background: "transparent", color: C.dim, border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 6, borderRadius: 8 }} onMouseEnter={(e) => e.currentTarget.style.color = C.gRed} onMouseLeave={(e) => e.currentTarget.style.color = C.dim}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
+          </div>
         </div>
-      </aside>
+      </header>
 
       {/* ────────────────── CONTENU PRINCIPAL ────────────────── */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%", overflowY: "auto", position: "relative" }}>
         
-        {/* VUE HUB D'ACCUEIL */}
+        {/* VUE HUB — Mode Hub & Satellites */}
         {activeModule === "hub" && (
-          <div style={{ padding: "60px 80px", maxWidth: 1200, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
-            <h1 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 36, color: C.primary, marginBottom: 8, marginTop: 0 }}>Bonjour</h1>
-            <p style={{ color: C.gray, fontSize: 15, marginBottom: 48 }}>Sélectionnez un module ci-dessous pour démarrer vos tâches.</p>
+          <div style={{ position: "relative", flex: 1, minHeight: "calc(100vh - 60px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", background: "radial-gradient(1000px 600px at 50% 45%, #FFFFFF, #EEF0F3)" }}>
+            <div style={{ position: "relative", width: 640, height: 640, maxWidth: "92vw", maxHeight: "92vw" }}>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
-              <div 
-                onClick={() => setActiveModule("rapport")}
-                style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s", borderRadius: 0 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.06)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
-              >
-                <div style={{ background: "rgba(105,33,2,0.06)", color: C.primary, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                  <Icons.FileText size={28} />
+              {/* anneaux décoratifs */}
+              <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 420, height: 420, borderRadius: "50%", border: `1px dashed ${C.line2}`, opacity: 0.6 }} />
+              <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 620, height: 620, borderRadius: "50%", border: `1px dashed ${C.line2}`, opacity: 0.5 }} />
+
+              {/* rayons */}
+              <svg viewBox="0 0 640 640" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+                {["rapport", "annuaire", "ressources", "mails", "marketing", "rechercheLpp", "retraiteR1", "crm", "settings"].map((id, i, arr) => {
+                  const a = (-90 + i * (360 / arr.length)) * Math.PI / 180;
+                  return <line key={id} x1={320} y1={320} x2={320 + 250 * Math.cos(a)} y2={320 + 250 * Math.sin(a)} stroke={C.line2} strokeWidth="1.5" strokeDasharray="3 5" opacity="0.5" />;
+                })}
+              </svg>
+
+              {/* hub central */}
+              <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 196, height: 196, borderRadius: "50%", background: "#fff", border: `1px solid ${C.line}`, boxShadow: "0 24px 60px rgba(0,0,0,0.10), inset 0 0 0 6px rgba(66,133,244,0.05)", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", zIndex: 12 }}>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.02em", color: C.text }}>Wall<span style={{ color: C.goldDeep }}>Swiss</span></div>
+                  <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>Bonjour {appSettings.agentFirstName || ""}</div>
+                  <div style={{ marginTop: 10, display: "flex", gap: 14, justifyContent: "center" }}>
+                    <div style={{ fontSize: 9.5, color: C.dim, fontWeight: 600, textTransform: "uppercase" }}><b style={{ display: "block", fontSize: 16, color: C.text }}>{reports.length}</b>Rapports</div>
+                    <div style={{ fontSize: 9.5, color: C.dim, fontWeight: 600, textTransform: "uppercase" }}><b style={{ display: "block", fontSize: 16, color: C.text }}>{MAILS_TYPES.length}</b>Mails</div>
+                    <div style={{ fontSize: 9.5, color: C.dim, fontWeight: 600, textTransform: "uppercase" }}><b style={{ display: "block", fontSize: 16, color: C.text }}>4</b>Campagnes</div>
+                  </div>
                 </div>
-                <h3 style={{ fontSize: 18, color: C.primary, marginBottom: 8, marginTop: 0 }}>Rapport Financier</h3>
-                <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Générez des rapports d'analyse patrimoniale professionnels et personnalisés pour vos clients en quelques clics.</p>
-                <span style={{ color: C.gold, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ouvrir le module &rarr;</span>
               </div>
 
-              <div 
-                onClick={() => setActiveModule("annuaire")}
-                style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s", borderRadius: 0 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.06)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
-              >
-                <div style={{ background: "rgba(105,33,2,0.06)", color: C.primary, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                  <Icons.BookContacts size={28} />
-                </div>
-                <h3 style={{ fontSize: 18, color: C.primary, marginBottom: 8, marginTop: 0 }}>Annuaire Partenaires</h3>
-                <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Retrouvez rapidement les contacts de nos partenaires financiers et assureurs.</p>
-                <span style={{ color: C.gold, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ouvrir le module &rarr;</span>
-              </div>
-
-              <div 
-                onClick={() => window.open("https://wallswiss.my.salesforce.com/", "_blank")}
-                style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s", borderRadius: 0 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.06)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
-              >
-                <div style={{ background: "rgba(105,33,2,0.06)", color: C.primary, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                  <Icons.Users size={28} />
-                </div>
-                <h3 style={{ fontSize: 18, color: C.primary, marginBottom: 8, marginTop: 0 }}>CRM Salesforce</h3>
-                <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Accédez à votre espace CRM pour gérer vos prospects et clients.</p>
-                <span style={{ color: C.gold, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ouvrir Salesforce &rarr;</span>
-              </div>
-
-              <div 
-                onClick={() => setActiveModule("ressources")}
-                style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s", borderRadius: 0 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.06)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
-              >
-                <div style={{ background: "rgba(105,33,2,0.06)", color: C.primary, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                  <Icons.FileText size={28} />
-                </div>
-                <h3 style={{ fontSize: 18, color: C.primary, marginBottom: 8, marginTop: 0 }}>Ressources Documents</h3>
-                <p style={{ color: C.gray, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Téléchargez facilement les documents, PDF et mandats officiels pour vos clients.</p>
-                <span style={{ color: C.gold, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ouvrir le module &rarr;</span>
-              </div>
+              {/* satellites */}
+              {[
+                { id: "rapport",      label: "Rapport",       cnt: "4 modèles",   ic: <Icons.FileText size={26} />,     c: "#EA4335", act: () => setActiveModule("rapport") },
+                { id: "annuaire",     label: "Annuaire",      cnt: "Partenaires", ic: <Icons.BookContacts size={26} />, c: "#FBBC05", act: () => setActiveModule("annuaire") },
+                { id: "ressources",   label: "Documents",     cnt: "Ressources",  ic: <Icons.FileText size={26} />,     c: "#34A853", act: () => setActiveModule("ressources") },
+                { id: "mails",        label: "Mails Types",   cnt: `${MAILS_TYPES.length} modèles`, ic: <Icons.Inbox size={26} />, c: "#4285F4", act: () => setActiveModule("mails") },
+                { id: "marketing",    label: "Marketing",     cnt: "4 campagnes", ic: <Icons.Target size={26} />,       c: "#4285F4", act: () => setActiveModule("marketing") },
+                { id: "rechercheLpp", label: "Recherche LPP", cnt: "2e pilier",   ic: <Icons.Search size={26} />,       c: "#FBBC05", act: () => setActiveModule("rechercheLpp") },
+                { id: "retraiteR1",   label: "Retraite",      cnt: "Simulateur",  ic: <Icons.PieChart size={26} />,     c: "#34A853", act: () => setActiveModule("retraiteR1") },
+                { id: "crm",          label: "CRM",           cnt: "Salesforce",  ic: <Icons.Users size={26} />,        c: "#EA4335", act: () => window.open("https://wallswiss.my.salesforce.com/", "_blank") },
+                { id: "settings",     label: "Paramètres",    cnt: "Intégrations", ic: <Icons.Settings size={26} />,    c: "#6E6E73", act: () => setActiveModule("settings") },
+              ].map((s, i, arr) => {
+                const a = -90 + i * (360 / arr.length);
+                return (
+                  <div key={s.id} onClick={s.act}
+                    style={{ position: "absolute", top: "50%", left: "50%", width: 120, textAlign: "center", cursor: "pointer", zIndex: 14, transform: `translate(-50%,-50%) rotate(${a}deg) translate(250px) rotate(${-a}deg)` }}
+                    onMouseEnter={e => { const d = e.currentTarget.querySelector(".sat-disc"); if (d) { d.style.transform = "translateY(-4px) scale(1.07)"; d.style.boxShadow = "0 18px 40px rgba(0,0,0,0.14)"; d.style.borderColor = s.c; } }}
+                    onMouseLeave={e => { const d = e.currentTarget.querySelector(".sat-disc"); if (d) { d.style.transform = "none"; d.style.boxShadow = "0 10px 26px rgba(0,0,0,0.07)"; d.style.borderColor = C.line; } }}>
+                    <div className="sat-disc" style={{ width: 76, height: 76, margin: "0 auto", borderRadius: 23, background: "#fff", border: `1px solid ${C.line}`, boxShadow: "0 10px 26px rgba(0,0,0,0.07)", display: "flex", alignItems: "center", justifyContent: "center", color: s.c, transition: "0.25s" }}>{s.ic}</div>
+                    <div style={{ marginTop: 9, fontSize: 12.5, fontWeight: 700, color: C.text }}>{s.label}</div>
+                    <div style={{ fontSize: 10.5, color: C.muted, marginTop: 2 }}>{s.cnt}</div>
+                  </div>
+                );
+              })}
             </div>
+            <div style={{ position: "absolute", bottom: 18, fontSize: 12, color: C.dim }}>Cliquez un satellite pour ouvrir le module · ou utilisez la barre du haut</div>
           </div>
         )}
 
@@ -4936,11 +4959,11 @@ const [lppForm, setLppForm] = useState({
               <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Hub Marketing Leads</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.accent }}>Hub Marketing Leads</div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                  {uploadingImage && <span style={{ fontSize: 12, color: C.gold, fontWeight: 700 }}>Upload en cours...</span>}
-                  <button onClick={() => setIsEditingMarketing(!isEditingMarketing)} style={{ background: isEditingMarketing ? "#10B981" : C.white, color: isEditingMarketing ? C.white : C.primary, border: `1px solid ${isEditingMarketing ? "#10B981" : C.primary}`, padding: "8px 16px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: 700, borderRadius: 4, transition: "0.2s" }}>
+                  {uploadingImage && <span style={{ fontSize: 12, color: C.goldDeep, fontWeight: 700 }}>Upload en cours...</span>}
+                  <button onClick={() => setIsEditingMarketing(!isEditingMarketing)} style={{ background: isEditingMarketing ? "#10B981" : C.white, color: isEditingMarketing ? C.white : C.accent, border: `1px solid ${isEditingMarketing ? "#10B981" : C.accent}`, padding: "8px 16px", cursor: "pointer", fontFamily: "'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif", fontSize: 12, fontWeight: 700, borderRadius: 999, transition: "0.2s" }}>
                     {isEditingMarketing ? "Terminer l'édition" : "Éditer les publicités"}
                   </button>
                 </div>
@@ -4952,7 +4975,7 @@ const [lppForm, setLppForm] = useState({
                     <div style={{ maxWidth: 1152, margin: "0 auto", padding: "0 24px" }}>
                         <div style={{ display: "flex", alignItems: "center" }}>
                             <div style={{ padding: "16px 24px 16px 0", borderRight: `1px solid ${C.mediumGray}`, display: "flex", alignItems: "center", gap: 12, color: C.gray, flexShrink: 0 }}>
-                                <Icons.Layers size={20} color={C.primary} style={{ opacity: 0.6 }} />
+                                <Icons.Layers size={20} color={C.accent} style={{ opacity: 0.6 }} />
                                 <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }} className="hidden sm:inline-block">Campagnes</span>
                             </div>
                             <div style={{ display: "flex", overflowX: "auto", paddingLeft: 8 }} className="hide-scrollbar">
@@ -4965,11 +4988,11 @@ const [lppForm, setLppForm] = useState({
                                         }}
                                         style={{
                                             padding: "16px 24px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap", transition: "all 0.2s", border: "none", cursor: "pointer", outline: "none",
-                                            borderBottom: `2px solid ${marketingCampaign === camp.id ? C.primary : "transparent"}`,
-                                            color: marketingCampaign === camp.id ? C.primary : C.gray,
-                                            background: marketingCampaign === camp.id ? "rgba(105,33,2,0.05)" : "transparent"
+                                            borderBottom: `2px solid ${marketingCampaign === camp.id ? C.accent : "transparent"}`,
+                                            color: marketingCampaign === camp.id ? C.accent : C.gray,
+                                            background: marketingCampaign === camp.id ? "rgba(66,133,244,0.05)" : "transparent"
                                         }}
-                                        onMouseEnter={(e) => { if(marketingCampaign !== camp.id) { e.currentTarget.style.color = C.primary; e.currentTarget.style.background = "#f5f5f4"; } }}
+                                        onMouseEnter={(e) => { if(marketingCampaign !== camp.id) { e.currentTarget.style.color = C.accent; e.currentTarget.style.background = "#f5f5f4"; } }}
                                         onMouseLeave={(e) => { if(marketingCampaign !== camp.id) { e.currentTarget.style.color = C.gray; e.currentTarget.style.background = "transparent"; } }}
                                     >
                                         {camp.name}
@@ -4980,10 +5003,10 @@ const [lppForm, setLppForm] = useState({
                     </div>
                 </nav>
 
-                <div style={{ background: C.white, borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingTop: 40, paddingBottom: 32 }}>
+                <div style={{ background: C.white, borderBottom: `1px solid rgba(66,133,244,0.1)`, paddingTop: 40, paddingBottom: 32 }}>
                     <div style={{ maxWidth: 1152, margin: "0 auto", padding: "0 24px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-                            <div style={{ width: 56, height: 56, background: C.primary, display: "flex", alignItems: "center", justifyContent: "center", color: C.white, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", flexShrink: 0 }}>
+                            <div style={{ width: 56, height: 56, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", color: C.white, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", flexShrink: 0 }}>
                                 <Icons.Target size={28} />
                             </div>
                             <div>
@@ -4991,10 +5014,10 @@ const [lppForm, setLppForm] = useState({
                                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#EF4444", animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}></span>
                                     Usage Interne
                                 </div>
-                                <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 30, color: C.primary, margin: "0 0 4px 0" }}>
+                                <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 30, color: C.accent, margin: "0 0 4px 0" }}>
                                     Guide de Traitement <span style={{ fontWeight: 700 }}>{CAMPAIGNS_DATA[marketingCampaign].title.split(' ')[1]}</span>
                                 </h2>
-                                <p style={{ color: C.gray, fontSize: 14, fontStyle: "italic", fontFamily: "'Times New Roman', Times, serif", margin: 0 }}>{CAMPAIGNS_DATA[marketingCampaign].subtitle}</p>
+                                <p style={{ color: C.gray, fontSize: 14, fontStyle: "italic", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", margin: 0 }}>{CAMPAIGNS_DATA[marketingCampaign].subtitle}</p>
                             </div>
                         </div>
                     </div>
@@ -5012,8 +5035,8 @@ const [lppForm, setLppForm] = useState({
                                 onClick={() => setMarketingTab(tab.id)}
                                 style={{
                                     display: "flex", alignItems: "center", gap: 8, padding: "20px 32px", fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap", transition: "all 0.2s", border: "none", outline: "none", cursor: "pointer",
-                                    borderBottom: `2px solid ${marketingTab === tab.id ? C.primary : "transparent"}`,
-                                    color: marketingTab === tab.id ? C.primary : "#9ca3af",
+                                    borderBottom: `2px solid ${marketingTab === tab.id ? C.accent : "transparent"}`,
+                                    color: marketingTab === tab.id ? C.accent : "#9ca3af",
                                     background: marketingTab === tab.id ? C.white : "transparent"
                                 }}
                                 onMouseEnter={(e) => { if(marketingTab !== tab.id) { e.currentTarget.style.color = C.darkGray; e.currentTarget.style.background = "#fafaf9"; } }}
@@ -5043,29 +5066,29 @@ const [lppForm, setLppForm] = useState({
                                         </div>
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-                                        <div style={{ borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingBottom: 24 }}>
-                                            <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
+                                        <div style={{ borderBottom: `1px solid rgba(66,133,244,0.1)`, paddingBottom: 24 }}>
+                                            <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
                                             <p style={{ color: C.darkGray, lineHeight: 1.6, textAlign: "justify", margin: 0 }}>Le prospect a visionné cette annonce vidéo sur son fil d'actualité <strong>Facebook et/ou Instagram</strong>. Il a cliqué pour vérifier s'il pouvait prétendre à une économie d'impôts. Comprendre ce qu'il a en tête est la clé de votre conversion.</p>
                                         </div>
                                         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                                             <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
                                                 <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.Crosshair size={24} /></div>
                                                 <div>
-                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>Accroche Hyper-Locale</h4>
+                                                    <h4 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>Accroche Hyper-Locale</h4>
                                                     <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>Le lead est interpellé directement comme <strong>"Travailleur Genevois"</strong>. À noter que cette approche est 100% personnalisée : nous avons tourné <strong>8 versions différentes</strong> de cette vidéo pour couvrir chaque canton romand.</p>
                                                 </div>
                                             </div>
                                             <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
                                                 <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.TrendUp size={24} /></div>
                                                 <div>
-                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>La Promesse de Gain</h4>
-                                                    <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>Économiser jusqu'à <strong style={{ color: C.primary }}>4'800 CHF par an</strong> via des solutions "légales". C'est l'argument rationnel qui l'a poussé à cliquer. Il cherche activement à optimiser sa charge fiscale.</p>
+                                                    <h4 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>La Promesse de Gain</h4>
+                                                    <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>Économiser jusqu'à <strong style={{ color: C.accent }}>4'800 CHF par an</strong> via des solutions "légales". C'est l'argument rationnel qui l'a poussé à cliquer. Il cherche activement à optimiser sa charge fiscale.</p>
                                                 </div>
                                             </div>
                                             <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
                                                 <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.CheckSquare size={24} /></div>
                                                 <div>
-                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>L'Engagement par le Test</h4>
+                                                    <h4 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>L'Engagement par le Test</h4>
                                                     <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>Le prospect a pris le temps de remplir un <strong>test d'éligibilité</strong>. L'approche idéale est donc de l'aborder sous l'angle du <strong>résultat à ce test</strong>.</p>
                                                 </div>
                                             </div>
@@ -5077,7 +5100,7 @@ const [lppForm, setLppForm] = useState({
                             {marketingTab === 'mindset' && (
                                 <div style={{ maxWidth: 896, margin: "0 auto" }}>
                                     <div style={{ textAlign: "center", marginBottom: 48 }}>
-                                        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 36, color: C.primary, marginBottom: 16, marginTop: 0 }}>Dans la tête de votre prospect</h2>
+                                        <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 36, color: C.accent, marginBottom: 16, marginTop: 0 }}>Dans la tête de votre prospect</h2>
                                         <p style={{ color: C.gray, fontSize: 18, margin: 0 }}>Comprendre ses attentes pour éviter de lever ses boucliers commerciaux.</p>
                                     </div>
                                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 32 }}>
@@ -5085,7 +5108,7 @@ const [lppForm, setLppForm] = useState({
                                             <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#059669" }}></div>
                                             <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
                                                 <div style={{ width: 48, height: 48, background: "#ecfdf5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Smile size={24} /></div>
-                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il attend</h3>
+                                                <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il attend</h3>
                                             </div>
                                             <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
                                                 <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Connaître le <strong>résultat concret et chiffré</strong> de son test d'éligibilité rempli sur internet.</span></div>
@@ -5097,7 +5120,7 @@ const [lppForm, setLppForm] = useState({
                                             <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#dc2626" }}></div>
                                             <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
                                                 <div style={{ width: 48, height: 48, background: "#fef2f2", color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Frown size={24} /></div>
-                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il redoute</h3>
+                                                <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il redoute</h3>
                                             </div>
                                             <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
                                                 <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>L'entendre dire "Vous avez demandé un devis". <em>(Attention: il a fait un test pour impôts)</em>.</span></div>
@@ -5130,22 +5153,22 @@ const [lppForm, setLppForm] = useState({
                                         </div>
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-                                        <div style={{ borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingBottom: 24 }}>
-                                            <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
+                                        <div style={{ borderBottom: `1px solid rgba(66,133,244,0.1)`, paddingBottom: 24 }}>
+                                            <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
                                             <p style={{ color: C.darkGray, lineHeight: 1.6, textAlign: "justify", margin: 0 }}>Le prospect a réagi à une publicité vidéo de la marque <strong>Pilah</strong>. Le message est clair : des milliards dorment dans les caisses de pension en Suisse et il pourrait récupérer en moyenne <strong>8'000 CHF</strong> de son 2ème pilier oublié.</p>
                                         </div>
                                         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                                             <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
                                                 <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.Target size={24} /></div>
                                                 <div>
-                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>L'Accroche</h4>
+                                                    <h4 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>L'Accroche</h4>
                                                     <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>« Tu as déjà travaillé en Suisse, ou tu y es encore ? ». Cette phrase cible directement les travailleurs frontaliers ou résidents qui ont pu changer d'employeur et "perdre" la trace de leurs avoirs LPP.</p>
                                                 </div>
                                             </div>
                                             <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
                                                 <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.TrendUp size={24} /></div>
                                                 <div>
-                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>La Solution Promise</h4>
+                                                    <h4 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>La Solution Promise</h4>
                                                     <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>Le prospect a été attiré par la rentrée d'argent inattendue. La publicité le rassure : <strong>l'outil de vérification est gratuit</strong>, 100% sécurisé et <strong>Pilah s'occupe de toute la paperasse</strong>.</p>
                                                 </div>
                                             </div>
@@ -5157,7 +5180,7 @@ const [lppForm, setLppForm] = useState({
                             {marketingTab === 'mindset' && (
                                 <div style={{ maxWidth: 896, margin: "0 auto" }}>
                                     <div style={{ textAlign: "center", marginBottom: 48 }}>
-                                        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 36, color: C.primary, marginBottom: 16, marginTop: 0 }}>Dans la tête de votre prospect LPP</h2>
+                                        <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 36, color: C.accent, marginBottom: 16, marginTop: 0 }}>Dans la tête de votre prospect LPP</h2>
                                         <p style={{ color: C.gray, fontSize: 18, margin: 0 }}>Comprendre les motivations et les craintes face à la promesse de retrouver de l'argent.</p>
                                     </div>
                                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 32 }}>
@@ -5165,7 +5188,7 @@ const [lppForm, setLppForm] = useState({
                                             <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#059669" }}></div>
                                             <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
                                                 <div style={{ width: 48, height: 48, background: "#ecfdf5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Smile size={24} /></div>
-                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il attend</h3>
+                                                <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il attend</h3>
                                             </div>
                                             <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
                                                 <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Savoir <strong>si oui ou non</strong> il a de l'argent qui l'attend quelque part en Suisse.</span></div>
@@ -5177,7 +5200,7 @@ const [lppForm, setLppForm] = useState({
                                             <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#dc2626" }}></div>
                                             <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
                                                 <div style={{ width: 48, height: 48, background: "#fef2f2", color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Frown size={24} /></div>
-                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il redoute</h3>
+                                                <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il redoute</h3>
                                             </div>
                                             <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
                                                 <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Avoir affaire à une <strong>arnaque d'internet</strong> ("c'est trop beau pour être vrai").</span></div>
@@ -5210,22 +5233,22 @@ const [lppForm, setLppForm] = useState({
                                         </div>
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-                                        <div style={{ borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingBottom: 24 }}>
-                                            <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
+                                        <div style={{ borderBottom: `1px solid rgba(66,133,244,0.1)`, paddingBottom: 24 }}>
+                                            <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
                                             <p style={{ color: C.darkGray, lineHeight: 1.6, textAlign: "justify", margin: 0 }}>Le prospect a réagi à une publicité vidéo très immersive ciblant les frontaliers. Le message joue sur la confidence : un frontalier explique comment il perdait de l'argent chaque mois à cause d'un mauvais choix entre la <strong>CMU et la LAMal</strong>.</p>
                                         </div>
                                         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                                             <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
                                                 <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.Target size={24} /></div>
                                                 <div>
-                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>L'Accroche Confidentielle</h4>
+                                                    <h4 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>L'Accroche Confidentielle</h4>
                                                     <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>« Tu es salarié en Suisse ? Alors cette astuce est pour toi... » susurré face caméra. Cette approche capte l'attention et donne l'impression d'accéder à un "secret d'initié".</p>
                                                 </div>
                                             </div>
                                             <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
                                                 <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.TrendUp size={24} /></div>
                                                 <div>
-                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>La Douleur & La Solution</h4>
+                                                    <h4 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>La Douleur & La Solution</h4>
                                                     <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>Le prospect se reconnaît dans la phrase "Je me suis fait avoir". La promesse de récupérer 200 CHF par mois l'a poussé à remplir le formulaire gratuit.</p>
                                                 </div>
                                             </div>
@@ -5237,7 +5260,7 @@ const [lppForm, setLppForm] = useState({
                             {marketingTab === 'mindset' && (
                                 <div style={{ maxWidth: 896, margin: "0 auto" }}>
                                     <div style={{ textAlign: "center", marginBottom: 48 }}>
-                                        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 36, color: C.primary, marginBottom: 16, marginTop: 0 }}>Dans la tête de votre prospect Frontalier</h2>
+                                        <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 36, color: C.accent, marginBottom: 16, marginTop: 0 }}>Dans la tête de votre prospect Frontalier</h2>
                                         <p style={{ color: C.gray, fontSize: 18, margin: 0 }}>Comprendre ses motivations réelles et ses craintes concernant son assurance maladie.</p>
                                     </div>
                                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 32 }}>
@@ -5245,7 +5268,7 @@ const [lppForm, setLppForm] = useState({
                                             <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#059669" }}></div>
                                             <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
                                                 <div style={{ width: 48, height: 48, background: "#ecfdf5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Smile size={24} /></div>
-                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il attend</h3>
+                                                <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il attend</h3>
                                             </div>
                                             <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
                                                 <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Savoir <strong>combien il peut économiser</strong> exactement.</span></div>
@@ -5257,7 +5280,7 @@ const [lppForm, setLppForm] = useState({
                                             <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#dc2626" }}></div>
                                             <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
                                                 <div style={{ width: 48, height: 48, background: "#fef2f2", color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Frown size={24} /></div>
-                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il redoute</h3>
+                                                <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il redoute</h3>
                                             </div>
                                             <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
                                                 <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Qu'on essaie de lui vendre une <strong>complémentaire santé hors de prix</strong>.</span></div>
@@ -5301,7 +5324,7 @@ const [lppForm, setLppForm] = useState({
                                             ].map((defImg, idx) => {
                                                 const currentImg = appSettings.marketingMedia?.[`compte-ch-meta_img_${idx}`] || defImg;
                                                 return (
-                                                    <button key={idx} onClick={() => setCompteChIdx(idx)} style={{ width: 56, height: 56, borderRadius: 8, overflow: "hidden", border: `2px solid ${compteChIdx === idx ? C.primary : C.mediumGray}`, transition: "all 0.2s", cursor: "pointer", padding: 0 }}>
+                                                    <button key={idx} onClick={() => setCompteChIdx(idx)} style={{ width: 56, height: 56, borderRadius: 8, overflow: "hidden", border: `2px solid ${compteChIdx === idx ? C.accent : C.mediumGray}`, transition: "all 0.2s", cursor: "pointer", padding: 0 }}>
                                                         <img src={currentImg} alt={`Miniature ${idx + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                                     </button>
                                                 )
@@ -5309,22 +5332,22 @@ const [lppForm, setLppForm] = useState({
                                         </div>
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-                                        <div style={{ borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingBottom: 24 }}>
-                                            <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
+                                        <div style={{ borderBottom: `1px solid rgba(66,133,244,0.1)`, paddingBottom: 24 }}>
+                                            <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
                                             <p style={{ color: C.darkGray, lineHeight: 1.6, textAlign: "justify", margin: 0 }}>Le prospect a réagi à l'une de nos <strong>5 créatives statiques</strong> ciblant une douleur forte des frontaliers : <strong>la perte d'argent sur le taux de change</strong> lors du rapatriement du salaire.</p>
                                         </div>
                                         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                                             <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
                                                 <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.Target size={24} /></div>
                                                 <div>
-                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>L'Accroche Visuelle & Émotionnelle</h4>
+                                                    <h4 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>L'Accroche Visuelle & Émotionnelle</h4>
                                                     <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>L'utilisateur a été interpellé par une image choc illustrant le fait qu'il "donne" littéralement une partie de son salaire à sa banque chaque mois.</p>
                                                 </div>
                                             </div>
                                             <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
                                                 <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.TrendUp size={24} /></div>
                                                 <div>
-                                                    <h4 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>La Promesse de Transparence</h4>
+                                                    <h4 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>La Promesse de Transparence</h4>
                                                     <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>L'annonce offre un "vrai bon plan" : changer ses francs avec un <strong>taux préférentiel</strong> et arrêter les frais abusifs.</p>
                                                 </div>
                                             </div>
@@ -5336,7 +5359,7 @@ const [lppForm, setLppForm] = useState({
                             {marketingTab === 'mindset' && (
                                 <div style={{ maxWidth: 896, margin: "0 auto" }}>
                                     <div style={{ textAlign: "center", marginBottom: 48 }}>
-                                        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 36, color: C.primary, marginBottom: 16, marginTop: 0 }}>Dans la tête de votre prospect Frontalier</h2>
+                                        <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 36, color: C.accent, marginBottom: 16, marginTop: 0 }}>Dans la tête de votre prospect Frontalier</h2>
                                         <p style={{ color: C.gray, fontSize: 18, margin: 0 }}>Comprendre ses attentes financières et ses craintes vis-à-vis des banques.</p>
                                     </div>
                                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 32 }}>
@@ -5344,7 +5367,7 @@ const [lppForm, setLppForm] = useState({
                                             <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#059669" }}></div>
                                             <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
                                                 <div style={{ width: 48, height: 48, background: "#ecfdf5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Smile size={24} /></div>
-                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il attend</h3>
+                                                <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il attend</h3>
                                             </div>
                                             <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
                                                 <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Voir <strong>concrètement la différence</strong> de taux par rapport à sa banque actuelle.</span></div>
@@ -5356,7 +5379,7 @@ const [lppForm, setLppForm] = useState({
                                             <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#dc2626" }}></div>
                                             <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
                                                 <div style={{ width: 48, height: 48, background: "#fef2f2", color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Frown size={24} /></div>
-                                                <h3 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il redoute</h3>
+                                                <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu'il redoute</h3>
                                             </div>
                                             <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
                                                 <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Découvrir qu'il y a des <strong>"frais de tenue de compte" cachés</strong> qui annulent l'économie.</span></div>
@@ -5373,7 +5396,7 @@ const [lppForm, setLppForm] = useState({
                     {marketingTab === 'script' && (
                         <div style={{ maxWidth: 896, margin: "0 auto", animation: "fadeIn 0.6s ease-in-out forwards" }}>
                             <div style={{ background: "linear-gradient(135deg, #292524 0%, #44403c 50%, #292524 100%)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", position: "relative", overflow: "hidden" }}>
-                                <div style={{ position: "absolute", top: 0, right: 0, width: 384, height: 384, background: C.primary, borderRadius: "50%", filter: "blur(120px)", opacity: 0.3, pointerEvents: "none" }}></div>
+                                <div style={{ position: "absolute", top: 0, right: 0, width: 384, height: 384, background: C.accent, borderRadius: "50%", filter: "blur(120px)", opacity: 0.3, pointerEvents: "none" }}></div>
                                 <div style={{ position: "absolute", bottom: 0, left: 0, width: 384, height: 384, background: "#d97706", borderRadius: "50%", filter: "blur(120px)", opacity: 0.2, pointerEvents: "none" }}></div>
                                 
                                 <button 
@@ -5393,12 +5416,12 @@ const [lppForm, setLppForm] = useState({
                                     <div style={{ marginBottom: 56 }}>
                                         <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 16px", borderRadius: 9999, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: C.white, fontSize: 10, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 24, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
                                             <span style={{ position: "relative", display: "flex", height: 8, width: 8 }}>
-                                                <span style={{ animation: "ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite", position: "absolute", display: "inline-flex", height: "100%", width: "100%", borderRadius: "50%", background: C.primary, opacity: 0.75 }}></span>
+                                                <span style={{ animation: "ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite", position: "absolute", display: "inline-flex", height: "100%", width: "100%", borderRadius: "50%", background: C.accent, opacity: 0.75 }}></span>
                                                 <span style={{ position: "relative", display: "inline-flex", borderRadius: "50%", height: 8, width: 8, background: "#8c3d1e" }}></span>
                                             </span>
                                             Script Partenaire - {CAMPAIGNS_DATA[marketingCampaign].name}
                                         </div>
-                                        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 48, color: C.white, margin: "0 0 12px 0", textShadow: "0 10px 15px rgba(0,0,0,0.1)" }}>Discours de Qualification</h2>
+                                        <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 48, color: C.white, margin: "0 0 12px 0", textShadow: "0 10px 15px rgba(0,0,0,0.1)" }}>Discours de Qualification</h2>
                                         <p style={{ color: "#d6d3d1", fontWeight: 300, fontSize: 14, margin: 0 }}>Lisez ce script de manière naturelle et posée. N'hésitez pas à marquer des pauses.</p>
                                     </div>
 
@@ -5482,7 +5505,7 @@ const [lppForm, setLppForm] = useState({
               <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Générateur de Mandats & Recherche LPP</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.accent }}>Générateur de Mandats & Recherche LPP</div>
                 </div>
                 <div style={{ display: "flex", gap: 12 }}>
                   <button onClick={handleDownloadLppDoc} disabled={isGeneratingLpp} style={{ ...S.btnS, padding: "8px 16px", fontSize: 12, opacity: isGeneratingLpp ? 0.7 : 1 }}>
@@ -5553,7 +5576,7 @@ const [lppForm, setLppForm] = useState({
                   { key: "suppletive", label: "Recherche supplétive (à venir)" },
                 ].map(({ key, label }) => (
                   <label key={key} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: "8px 0", borderBottom: `1px solid ${C.lightGray}` }}>
-                    <input type="checkbox" checked={docsSelectionnes[key]} disabled={key === "suppletive"} onChange={(e) => { setDocsSelectionnes({ ...docsSelectionnes, [key]: e.target.checked }); if (e.target.checked) setPreviewActif(key); }} style={{ accentColor: C.primary, width: 16, height: 16 }} />
+                    <input type="checkbox" checked={docsSelectionnes[key]} disabled={key === "suppletive"} onChange={(e) => { setDocsSelectionnes({ ...docsSelectionnes, [key]: e.target.checked }); if (e.target.checked) setPreviewActif(key); }} style={{ accentColor: C.accent, width: 16, height: 16 }} />
                     <span style={{ fontSize: 13, color: docsSelectionnes[key] ? C.darkGray : C.gray, fontWeight: docsSelectionnes[key] ? 600 : 400 }}>{label}</span>
                   </label>
                 ))}
@@ -5565,7 +5588,7 @@ const [lppForm, setLppForm] = useState({
                    
                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 60 }}>
                       <div>
-                        {appSettings.defaultLogo ? <img src={appSettings.defaultLogo} alt="Logo" style={{ maxHeight: 60, marginBottom: 20 }} /> : <div style={{ fontSize: 24, fontWeight: "bold", color: C.primary, marginBottom: 20 }}>{lppForm.nomEntreprise || "WallSwiss"}</div>}
+                        {appSettings.defaultLogo ? <img src={appSettings.defaultLogo} alt="Logo" style={{ maxHeight: 60, marginBottom: 20 }} /> : <div style={{ fontSize: 24, fontWeight: "bold", color: C.accent, marginBottom: 20 }}>{lppForm.nomEntreprise || "WallSwiss"}</div>}
                         <div>{lppForm.nomEntreprise || "Nom entreprise"}</div>
                         <div>{lppForm.adresseEntreprise || "Rue"}</div>
                         <div>{lppForm.cpaVilleEntreprise || "CPA Ville"}</div>
@@ -5661,7 +5684,7 @@ const [lppForm, setLppForm] = useState({
               <div id="lpp-doc-printable" style={{ width: "800px", padding: "40px", background: "#fff", fontFamily: "'Times New Roman', Times, serif", fontSize: "14px", color: "#000", lineHeight: "1.6", boxSizing: "border-box" }}>
                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 40 }}>
                       <div>
-                        {appSettings.defaultLogo ? <img src={appSettings.defaultLogo} alt="Logo" style={{ maxHeight: 60, marginBottom: 20 }} /> : <div style={{ fontSize: 24, fontWeight: "bold", color: C.primary, marginBottom: 20 }}>{lppForm.nomEntreprise || "WallSwiss"}</div>}
+                        {appSettings.defaultLogo ? <img src={appSettings.defaultLogo} alt="Logo" style={{ maxHeight: 60, marginBottom: 20 }} /> : <div style={{ fontSize: 24, fontWeight: "bold", color: C.accent, marginBottom: 20 }}>{lppForm.nomEntreprise || "WallSwiss"}</div>}
                         <div>{lppForm.nomEntreprise || "Nom entreprise"}</div>
                         <div>{lppForm.adresseEntreprise || "Rue"}</div>
                         <div>{lppForm.cpaVilleEntreprise || "CPA Ville"}</div>
@@ -5754,7 +5777,7 @@ const [lppForm, setLppForm] = useState({
               <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Annuaire Partenaires</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.accent }}>Annuaire Partenaires</div>
                 </div>
               </div>
             </header>
@@ -5762,7 +5785,7 @@ const [lppForm, setLppForm] = useState({
             <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto", textAlign: "left" }}>
               <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
                 <div style={{ marginBottom: 32 }}>
-                  <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Contacts & Partenaires</h2>
+                  <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 28, fontWeight: 700, color: C.accent, margin: 0 }}>Contacts & Partenaires</h2>
                   <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Retrouvez les informations de contact de nos principaux partenaires.</p>
                 </div>
                 
@@ -5777,9 +5800,9 @@ const [lppForm, setLppForm] = useState({
                   ].map((partenaire, i) => (
                     <div key={i} style={{ ...S.card, padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
                       <div>
-                        <span style={{ background: "rgba(165,149,104,0.1)", color: C.gold, fontSize: 10, fontWeight: 700, padding: "4px 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{partenaire.type}</span>
+                        <span style={{ background: "rgba(165,149,104,0.1)", color: C.goldDeep, fontSize: 10, fontWeight: 700, padding: "4px 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{partenaire.type}</span>
                       </div>
-                      <h3 style={{ fontSize: 18, fontWeight: 800, color: C.primaryDark, margin: 0 }}>{partenaire.nom}</h3>
+                      <h3 style={{ fontSize: 18, fontWeight: 800, color: C.accentDark, margin: 0 }}>{partenaire.nom}</h3>
                       
                       <div style={{ display: "grid", gap: 12 }}>
                         {partenaire.contact && (
@@ -5794,14 +5817,14 @@ const [lppForm, setLppForm] = useState({
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                           <div style={{ color: C.gray }}><Icons.Mail size={16} /></div>
-                          <span style={{ fontSize: 13, color: C.primary, fontWeight: 500 }}>{partenaire.email}</span>
+                          <span style={{ fontSize: 13, color: C.accent, fontWeight: 500 }}>{partenaire.email}</span>
                         </div>
                       </div>
                       {partenaire.url && (
                         <button 
                           onClick={() => window.open(partenaire.url, "_blank")} 
-                          style={{ marginTop: 20, width: "100%", background: "transparent", border: `1px solid ${C.mediumGray}`, color: C.primary, padding: "10px 0", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", transition: "0.2s", display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}
-                          onMouseEnter={(e)=>e.currentTarget.style.background="rgba(105,33,2,0.04)"}
+                          style={{ marginTop: 20, width: "100%", background: "transparent", border: `1px solid ${C.mediumGray}`, color: C.accent, padding: "10px 0", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", transition: "0.2s", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, borderRadius: 999 }}
+                          onMouseEnter={(e)=>e.currentTarget.style.background="rgba(66,133,244,0.04)"}
                           onMouseLeave={(e)=>e.currentTarget.style.background="transparent"}
                         >
                           Accéder au portail <Icons.ExternalLink size={14} />
@@ -5822,7 +5845,7 @@ const [lppForm, setLppForm] = useState({
               <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Ressources Documents</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.accent }}>Ressources Documents</div>
                 </div>
               </div>
             </header>
@@ -5830,7 +5853,7 @@ const [lppForm, setLppForm] = useState({
             <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto", textAlign: "left" }}>
               <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
                 <div style={{ marginBottom: 32 }}>
-                  <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Documents & Formulaires</h2>
+                  <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 28, fontWeight: 700, color: C.accent, margin: 0 }}>Documents & Formulaires</h2>
                   <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Téléchargez directement les documents officiels dont vous avez besoin pour vos rendez-vous.</p>
                 </div>
 
@@ -5869,16 +5892,16 @@ const [lppForm, setLppForm] = useState({
                       {categorie.docs.map((doc, i) => (
                         <div 
                           key={i} 
-                          style={{ background: C.white, border: `1px solid ${C.lightGray}`, borderLeft: `4px solid transparent`, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all 0.2s", borderRadius: "0px" }} 
-                          onMouseEnter={(e)=> { e.currentTarget.style.borderLeftColor = C.gold; e.currentTarget.style.background = "rgba(165,149,104,0.02)"; e.currentTarget.style.boxShadow = "0 4px 15px rgba(0,0,0,0.03)"; }} 
+                          style={{ background: C.white, border: `1px solid ${C.lightGray}`, borderLeft: `4px solid transparent`, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all 0.2s", borderRadius: "14px" }} 
+                          onMouseEnter={(e)=> { e.currentTarget.style.borderLeftColor = C.goldUI; e.currentTarget.style.background = "rgba(165,149,104,0.02)"; e.currentTarget.style.boxShadow = "0 4px 15px rgba(0,0,0,0.03)"; }} 
                           onMouseLeave={(e)=> { e.currentTarget.style.borderLeftColor = "transparent"; e.currentTarget.style.background = C.white; e.currentTarget.style.boxShadow = "none"; }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-                            <div style={{ background: "rgba(105,33,2,0.04)", color: C.primary, width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0px", flexShrink: 0 }}>
+                            <div style={{ background: "rgba(66,133,244,0.04)", color: C.accent, width: 52, height: 52, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "12px", flexShrink: 0 }}>
                               <Icons.FileText size={24} />
                             </div>
                             <div style={{ textAlign: "left" }}>
-                              <div style={{ fontSize: 16, fontWeight: 700, color: C.primaryDark, marginBottom: 4 }}>{doc.nom}</div>
+                              <div style={{ fontSize: 16, fontWeight: 700, color: C.accentDark, marginBottom: 4 }}>{doc.nom}</div>
                               <div style={{ fontSize: 13, color: C.gray }}>{doc.desc}</div>
                             </div>
                           </div>
@@ -5892,9 +5915,9 @@ const [lppForm, setLppForm] = useState({
                               link.click();
                               document.body.removeChild(link);
                             }} 
-                            style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primaryDark, padding: "10px 24px", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 10, borderRadius: "0px" }}
-                            onMouseEnter={(e)=> { e.currentTarget.style.background = C.primary; e.currentTarget.style.color = C.white; e.currentTarget.style.borderColor = C.primary; }}
-                            onMouseLeave={(e)=> { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.primaryDark; e.currentTarget.style.borderColor = C.mediumGray; }}
+                            style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.accentDark, padding: "10px 24px", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 10, borderRadius: "999px" }}
+                            onMouseEnter={(e)=> { e.currentTarget.style.background = C.accent; e.currentTarget.style.color = C.white; e.currentTarget.style.borderColor = C.accent; }}
+                            onMouseLeave={(e)=> { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.accentDark; e.currentTarget.style.borderColor = C.mediumGray; }}
                           >
                             Télécharger / Ouvrir <span style={{ fontSize: 14 }}>&rarr;</span>
                           </button>
@@ -5915,7 +5938,7 @@ const [lppForm, setLppForm] = useState({
               <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Mails Types</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.accent }}>Mails Types</div>
                 </div>
               </div>
             </header>
@@ -5924,7 +5947,7 @@ const [lppForm, setLppForm] = useState({
               <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
                   <div>
-                    <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>Modèles de communication</h2>
+                    <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 28, fontWeight: 700, color: C.accent, margin: 0 }}>Modèles de communication</h2>
                     <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Centralisation de vos emails types pour un envoi rapide en un clic.</p>
                   </div>
                   <div style={{ width: "300px" }}>
@@ -5944,9 +5967,9 @@ const [lppForm, setLppForm] = useState({
                       key={cat}
                       onClick={() => setMailCat(cat)}
                       style={{
-                        background: mailCat === cat ? C.primary : C.white,
+                        background: mailCat === cat ? C.accent : C.white,
                         color: mailCat === cat ? C.white : C.darkGray,
-                        border: `1px solid ${mailCat === cat ? C.primary : C.mediumGray}`,
+                        border: `1px solid ${mailCat === cat ? C.accent : C.mediumGray}`,
                         padding: "8px 16px",
                         borderRadius: "20px",
                         fontSize: 12,
@@ -5971,12 +5994,12 @@ const [lppForm, setLppForm] = useState({
                     <div key={mail.id} style={{ ...S.card, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 16, padding: "20px 24px" }}>
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                          <span style={{ background: "rgba(105,33,2,0.06)", color: C.primary, fontSize: 10, fontWeight: 700, padding: "4px 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                          <span style={{ background: "rgba(66,133,244,0.06)", color: C.accent, fontSize: 10, fontWeight: 700, padding: "4px 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                             {mail.categorie}
                           </span>
-                          {mail.pieceJointe && <span title="Pièce jointe requise" style={{ color: C.gold }}><Icons.FileText size={16} /></span>}
+                          {mail.pieceJointe && <span title="Pièce jointe requise" style={{ color: C.goldDeep }}><Icons.FileText size={16} /></span>}
                         </div>
-                        <h3 style={{ fontSize: 16, fontWeight: 800, color: C.primaryDark, margin: "0 0 8px 0", lineHeight: 1.4 }}>{mail.titre}</h3>
+                        <h3 style={{ fontSize: 16, fontWeight: 800, color: C.accentDark, margin: "0 0 8px 0", lineHeight: 1.4 }}>{mail.titre}</h3>
                         <p style={{ fontSize: 12, color: C.gray, margin: 0, fontStyle: "italic", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Objet : {mail.objet}</p>
                         <p style={{ fontSize: 12, color: C.darkGray, marginTop: 12, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                           {mail.corps}
@@ -5985,14 +6008,14 @@ const [lppForm, setLppForm] = useState({
                       
                       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
                         <div style={{ display: "flex", gap: 8 }}>
-                          <button onClick={() => handleCopy(mail.objet, "Objet copié !")} style={{ flex: 1, background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primaryDark, padding: "8px 0", fontSize: 11, fontWeight: 700, cursor: "pointer", transition: "0.2s", display: "flex", justifyContent: "center", alignItems: "center", gap: 6 }} onMouseEnter={e=>{e.currentTarget.style.background=C.lightGray}} onMouseLeave={e=>{e.currentTarget.style.background=C.white}}>
+                          <button onClick={() => handleCopy(mail.objet, "Objet copié !")} style={{ flex: 1, background: C.white, border: `1px solid ${C.mediumGray}`, color: C.accentDark, padding: "8px 0", fontSize: 11, fontWeight: 700, cursor: "pointer", transition: "0.2s", display: "flex", justifyContent: "center", alignItems: "center", gap: 6, borderRadius: 999 }} onMouseEnter={e=>{e.currentTarget.style.background=C.cardSoft}} onMouseLeave={e=>{e.currentTarget.style.background=C.white}}>
                             <Icons.Copy size={14} /> OBJET
                           </button>
-                          <button onClick={() => handleCopy(mail.corps, "Corps copié !")} style={{ flex: 1, background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primaryDark, padding: "8px 0", fontSize: 11, fontWeight: 700, cursor: "pointer", transition: "0.2s", display: "flex", justifyContent: "center", alignItems: "center", gap: 6 }} onMouseEnter={e=>{e.currentTarget.style.background=C.lightGray}} onMouseLeave={e=>{e.currentTarget.style.background=C.white}}>
+                          <button onClick={() => handleCopy(mail.corps, "Corps copié !")} style={{ flex: 1, background: C.white, border: `1px solid ${C.mediumGray}`, color: C.accentDark, padding: "8px 0", fontSize: 11, fontWeight: 700, cursor: "pointer", transition: "0.2s", display: "flex", justifyContent: "center", alignItems: "center", gap: 6, borderRadius: 999 }} onMouseEnter={e=>{e.currentTarget.style.background=C.cardSoft}} onMouseLeave={e=>{e.currentTarget.style.background=C.white}}>
                             <Icons.Copy size={14} /> CORPS
                           </button>
                         </div>
-                        <button onClick={() => setSelectedMail(mail)} style={{ width: "100%", background: C.primary, color: C.white, border: "none", padding: "8px 0", fontSize: 11, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.05em", transition: "0.2s" }} onMouseEnter={e=>{e.currentTarget.style.opacity=0.9}} onMouseLeave={e=>{e.currentTarget.style.opacity=1}}>
+                        <button onClick={() => setSelectedMail(mail)} style={{ width: "100%", background: C.accent, color: C.white, border: "none", padding: "8px 0", fontSize: 11, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.05em", transition: "0.2s", borderRadius: 999 }} onMouseEnter={e=>{e.currentTarget.style.opacity=0.9}} onMouseLeave={e=>{e.currentTarget.style.opacity=1}}>
                           VOIR LES DÉTAILS
                         </button>
                       </div>
@@ -6010,35 +6033,35 @@ const [lppForm, setLppForm] = useState({
             {/* Modal Détail du Mail */}
             {selectedMail && (
               <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "left" }}>
-                <div style={{ background: C.white, width: "100%", maxWidth: 800, maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 20px 40px rgba(0,0,0,0.2)" }}>
-                  <div style={{ padding: "24px 32px", borderBottom: `1px solid ${C.mediumGray}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: C.lightGray }}>
+                <div style={{ background: C.white, width: "100%", maxWidth: 800, maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 20px 40px rgba(0,0,0,0.2)", borderRadius: 20 }}>
+                  <div style={{ padding: "24px 32px", borderBottom: `1px solid ${C.mediumGray}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: C.cardSoft }}>
                     <div>
-                      <div style={{ fontSize: 10, color: C.primary, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{selectedMail.categorie}</div>
-                      <h2 style={{ fontSize: 20, fontWeight: 800, color: C.primaryDark, margin: 0 }}>{selectedMail.titre}</h2>
+                      <div style={{ fontSize: 10, color: C.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{selectedMail.categorie}</div>
+                      <h2 style={{ fontSize: 20, fontWeight: 800, color: C.accentDark, margin: 0 }}>{selectedMail.titre}</h2>
                     </div>
                     <button onClick={() => setSelectedMail(null)} style={{ background: "transparent", border: "none", fontSize: 24, color: C.gray, cursor: "pointer" }}>&times;</button>
                   </div>
                   
                   <div style={{ padding: "32px", overflowY: "auto", flex: 1 }}>
                     {selectedMail.pieceJointe && (
-                      <div style={{ background: "rgba(165,149,104,0.1)", borderLeft: `4px solid ${C.gold}`, padding: "12px 16px", marginBottom: 24, fontSize: 13, color: C.darkGray, display: "flex", alignItems: "center", gap: 12 }}>
-                        <Icons.FileText size={20} color={C.gold} />
+                      <div style={{ background: "rgba(165,149,104,0.1)", borderLeft: `4px solid ${C.goldUI}`, padding: "12px 16px", marginBottom: 24, fontSize: 13, color: C.darkGray, display: "flex", alignItems: "center", gap: 12 }}>
+                        <Icons.FileText size={20} color={C.goldUI} />
                         <strong>Pièce(s) jointe(s) recommandée(s) :</strong> {selectedMail.pieceJointe}
                       </div>
                     )}
                     
                     <div style={{ marginBottom: 24 }}>
                       <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Objet du mail</div>
-                      <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: "12px 16px", fontSize: 14, fontWeight: 600, color: C.primaryDark, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: "12px 16px", fontSize: 14, fontWeight: 600, color: C.accentDark, display: "flex", justifyContent: "space-between", alignItems: "center", borderRadius: 12 }}>
                         {selectedMail.objet}
-                        <button onClick={() => handleCopy(selectedMail.objet, "Objet copié !")} style={{ background: "transparent", border: "none", color: C.primary, cursor: "pointer" }} title="Copier l'objet"><Icons.Copy size={18}/></button>
+                        <button onClick={() => handleCopy(selectedMail.objet, "Objet copié !")} style={{ background: "transparent", border: "none", color: C.accent, cursor: "pointer" }} title="Copier l'objet"><Icons.Copy size={18}/></button>
                       </div>
                     </div>
                     
                     <div>
                       <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Corps du message</div>
-                      <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: "20px", fontSize: 13, color: C.darkGray, whiteSpace: "pre-wrap", lineHeight: 1.6, position: "relative" }}>
-                        <button onClick={() => handleCopy(selectedMail.corps, "Corps copié !")} style={{ position: "absolute", top: 12, right: 12, background: C.lightGray, border: `1px solid ${C.mediumGray}`, padding: "6px 10px", color: C.primary, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600 }} title="Copier le corps">
+                      <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: "20px", fontSize: 13, color: C.darkGray, whiteSpace: "pre-wrap", lineHeight: 1.6, position: "relative", borderRadius: 12 }}>
+                        <button onClick={() => handleCopy(selectedMail.corps, "Corps copié !")} style={{ position: "absolute", top: 12, right: 12, background: C.cardSoft, border: `1px solid ${C.mediumGray}`, padding: "6px 10px", color: C.accent, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, borderRadius: 999 }} title="Copier le corps">
                           <Icons.Copy size={14}/> Copier
                         </button>
                         {selectedMail.corps}
@@ -6047,7 +6070,7 @@ const [lppForm, setLppForm] = useState({
                   </div>
                   
                   <div style={{ padding: "20px 32px", borderTop: `1px solid ${C.mediumGray}`, display: "flex", justifyContent: "flex-end", gap: 16 }}>
-                  <button onClick={() => handleCopy(`${selectedMail.objet}\n\n${selectedMail.corps}`, "Objet et Corps copiés !")} style={{ ...S.btnP, background: C.gold, display: "flex", alignItems: "center", gap: 8 }}>
+                  <button onClick={() => handleCopy(`${selectedMail.objet}\n\n${selectedMail.corps}`, "Objet et Corps copiés !")} style={{ ...S.btnP, display: "flex", alignItems: "center", gap: 8 }}>
                     <Icons.Copy size={16}/> Tout Copier (Objet + Corps)
                   </button>
                   <button onClick={() => setSelectedMail(null)} style={S.btnS}>Fermer</button>
@@ -6065,14 +6088,14 @@ const [lppForm, setLppForm] = useState({
               <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Configuration Globale</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Paramètres & Intégrations</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.accent }}>Paramètres & Intégrations</div>
                 </div>
                 <nav style={{ display: "flex", gap: 8 }}>
                   {[["profile","Profil Agent"],["design","Marque & Design"],["reports","Envoi Rapports"],["campaigns","Campagnes Mailing"]].map(([p,l]) => (
                     <button 
                       key={p} 
                       onClick={() => setSettingsTab(p)} 
-                      style={{ background: settingsTab===p ? "rgba(105,33,2,0.06)" : "transparent", color: settingsTab===p ? C.primary : C.gray, border: "none", padding: "8px 16px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: settingsTab===p?700:500, borderRadius: "0px", transition: "0.2s" }}
+                      style={{ background: settingsTab===p ? "rgba(66,133,244,0.06)" : "transparent", color: settingsTab===p ? C.accent : C.gray, border: "none", padding: "8px 16px", cursor: "pointer", fontFamily: "'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif", fontSize: 13, fontWeight: settingsTab===p?700:500, borderRadius: "999px", transition: "0.2s" }}
                     >
                       {l}
                     </button>
@@ -6109,42 +6132,42 @@ const [lppForm, setLppForm] = useState({
                     <div style={S.fg}>
                       <label style={S.label}>Logo de l'Agence (Remplace le logo WallSwiss)</label>
                       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                        <div style={{ width: 64, height: 64, background: C.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <div style={{ width: 64, height: 64, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <img src={appSettings.defaultLogo || LOGO_URL} style={{ maxWidth: "80%", maxHeight: "80%", objectFit: "contain" }} />
                         </div>
                         <input type="file" accept="image/*" onChange={async (e) => {
                           const url = await handleImageUpload(e.target.files[0], `agency/${user.uid}/logo_${Date.now()}`);
                           if (url) setAppSettings({...appSettings, defaultLogo: url});
-                        }} style={{ fontSize: 12, fontFamily: "'Montserrat', sans-serif" }} />
+                        }} style={{ fontSize: 12, fontFamily: "'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif" }} />
                       </div>
                     </div>
 
                     <div style={S.fg}>
                       <label style={S.label}>Image de couverture (Page Agence & Solutions)</label>
                       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                        <div style={{ width: 120, height: 64, background: C.lightGray, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                        <div style={{ width: 120, height: 64, background: C.cardSoft, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                           <img src={appSettings.defaultCover || "/geneva.jpg"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         </div>
                         <input type="file" accept="image/*" onChange={async (e) => {
                           const url = await handleImageUpload(e.target.files[0], `agency/${user.uid}/cover_${Date.now()}`);
                           if (url) setAppSettings({...appSettings, defaultCover: url});
-                        }} style={{ fontSize: 12, fontFamily: "'Montserrat', sans-serif" }} />
+                        }} style={{ fontSize: 12, fontFamily: "'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif" }} />
                       </div>
                     </div>
 
                     <div style={{ marginBottom: 16 }}>
                       <label style={S.label}>Image Philosophie (Page 3)</label>
                       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                        <div style={{ width: 120, height: 64, background: C.lightGray, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                        <div style={{ width: 120, height: 64, background: C.cardSoft, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                           <img src={appSettings.defaultPhilosophy || "/image page3.jpg"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         </div>
                         <input type="file" accept="image/*" onChange={async (e) => {
                           const url = await handleImageUpload(e.target.files[0], `agency/${user.uid}/philosophy_${Date.now()}`);
                           if (url) setAppSettings({...appSettings, defaultPhilosophy: url});
-                        }} style={{ fontSize: 12, fontFamily: "'Montserrat', sans-serif" }} />
+                        }} style={{ fontSize: 12, fontFamily: "'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif" }} />
                       </div>
                     </div>
-                    {uploadingImage && <div style={{ fontSize: 12, color: C.gold, fontWeight: 700, marginTop: 8 }}>Upload de l'image en cours vers Firebase...</div>}
+                    {uploadingImage && <div style={{ fontSize: 12, color: C.goldDeep, fontWeight: 700, marginTop: 8 }}>Upload de l'image en cours vers Firebase...</div>}
                   </div>
                 )}
 
@@ -6164,9 +6187,9 @@ const [lppForm, setLppForm] = useState({
                     </div>
 
                     <div style={S.fg}>
-                      <label style={{...S.label, color: C.primaryDark}}>URL du Webhook - Signature Yousign (Module LPP)</label>
+                      <label style={{...S.label, color: C.accentDark}}>URL du Webhook - Signature Yousign (Module LPP)</label>
                       <input 
-                        style={{...S.input, borderLeft: `3px solid ${C.gold}`}} 
+                        style={{...S.input, borderLeft: `3px solid ${C.goldUI}`}} 
                         value={appSettings.lppWebhookUrl || ""} 
                         onChange={e => setAppSettings({...appSettings, lppWebhookUrl: e.target.value})} 
                         placeholder="https://hook.eu1.make.com/..." 
@@ -6236,14 +6259,14 @@ const [lppForm, setLppForm] = useState({
               <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <div style={{ color: C.gray, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Module ouvert</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>Rapport Financier</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.accent }}>Rapport Financier</div>
                 </div>
                 <nav style={{ display: "flex", gap: 8 }}>
                   {[["dashboard","Tableau de bord"],["create","Créer un rapport"]].map(([p,l]) => (
                     <button 
                       key={p} 
                       onClick={()=>{setRapportPage(p);if(p==="create")setStep(0);}} 
-                      style={{ background: rapportPage===p ? "rgba(105,33,2,0.06)" : "transparent", color: rapportPage===p ? C.primary : C.gray, border: "none", padding: "8px 16px", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: rapportPage===p?700:500, borderRadius: "0px", transition: "0.2s" }}
+                      style={{ background: rapportPage===p ? "rgba(66,133,244,0.06)" : "transparent", color: rapportPage===p ? C.accent : C.gray, border: "none", padding: "8px 16px", cursor: "pointer", fontFamily: "'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif", fontSize: 13, fontWeight: rapportPage===p?700:500, borderRadius: "999px", transition: "0.2s" }}
                     >
                       {l}
                     </button>
@@ -6256,8 +6279,8 @@ const [lppForm, setLppForm] = useState({
               {rapportPage === "dashboard" && (
                 reports.length === 0 ? (
                   <div style={{ textAlign: "center", padding: "80px 40px" }}>
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ marginBottom: 16, opacity: 0.2 }}><rect x="3" y="3" width="18" height="18" stroke={C.primary} strokeWidth="1.5"/><line x1="7" y1="8" x2="17" y2="8" stroke={C.primary} strokeWidth="1"/><line x1="7" y1="12" x2="14" y2="12" stroke={C.primary} strokeWidth="1"/><line x1="7" y1="16" x2="11" y2="16" stroke={C.primary} strokeWidth="1"/></svg>
-                    <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 24, color: C.primary, marginBottom: 8 }}>Aucun rapport créé</div>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ marginBottom: 16, opacity: 0.2 }}><rect x="3" y="3" width="18" height="18" stroke={C.accent} strokeWidth="1.5"/><line x1="7" y1="8" x2="17" y2="8" stroke={C.accent} strokeWidth="1"/><line x1="7" y1="12" x2="14" y2="12" stroke={C.accent} strokeWidth="1"/><line x1="7" y1="16" x2="11" y2="16" stroke={C.accent} strokeWidth="1"/></svg>
+                    <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, color: C.accent, marginBottom: 8 }}>Aucun rapport créé</div>
                     <p style={{ color: C.gray, fontSize: 13, marginBottom: 24, maxWidth: 380, margin: "0 auto 24px" }}>Commencez par créer votre premier rapport financier personnalisé.</p>
                     <button style={S.btnP} onClick={()=>{setRapportPage("create");resetForm();}}>+ Créer un rapport</button>
                   </div>
@@ -6265,7 +6288,7 @@ const [lppForm, setLppForm] = useState({
                   <div style={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
                       <div>
-                        <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: 0 }}>
+                        <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 28, fontWeight: 700, color: C.accent, margin: 0 }}>
                           {user?.email === ADMIN_EMAIL ? "Tous les rapports (Cabinet)" : "Mes rapports récents"}
                         </h2>
                         <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>
@@ -6292,21 +6315,21 @@ const [lppForm, setLppForm] = useState({
                           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 20 }}>
                             {catReports.map((r,i) => (
                               <div key={i} style={{ ...S.card, cursor: "pointer", position: "relative", overflow: "hidden", padding: "24px 28px", transition: "transform 0.2s" }} onClick={()=>setPreview(r)} onMouseEnter={(e)=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={(e)=>e.currentTarget.style.transform="translateY(0)"}>
-                                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: C.gold }} />
+                                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: C.goldUI }} />
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, marginTop: 4 }}>
                                   <div style={{ fontSize: 10, color: C.gray, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Dossier Client</div>
                                   {user?.email === ADMIN_EMAIL && (
-                                    <div style={{ fontSize: 9, background: C.lightGray, color: C.primary, padding: "2px 6px", borderRadius: 4, fontWeight: 700 }}>Agent: {r.agentEmail?.split('@')[0]}</div>
+                                    <div style={{ fontSize: 9, background: C.cardSoft, color: C.accent, padding: "2px 6px", borderRadius: 4, fontWeight: 700 }}>Agent: {r.agentEmail?.split('@')[0]}</div>
                                   )}
                                 </div>
-                                <div style={{ fontSize: 18, fontWeight: 800, color: C.primary, marginBottom: 6 }}>{r.prenom} {(r.nom||"").toUpperCase()}</div>
+                                <div style={{ fontSize: 18, fontWeight: 800, color: C.accent, marginBottom: 6 }}>{r.prenom} {(r.nom||"").toUpperCase()}</div>
                                 <div style={{ fontSize: 13, color: C.darkGray, marginBottom: 16 }}>{r.profession} — {r.age} ans</div>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 16, borderTop: `1px solid ${C.lightGray}` }}>
                                   <div>
                                     <div style={{ fontSize: 10, color: C.gray, marginBottom: 2 }}>
                                       {r.templateId === "prevoyance" ? "Épargne simulée" : r.templateId === "lpp" ? "Libre Passage" : r.templateId === "assurance-vie" ? "Assurance Vie" : "Montant simulé"}
                                     </div>
-                                    <div style={{ fontSize: 13, color: C.primary, fontWeight: 600 }}>
+                                    <div style={{ fontSize: 13, color: C.accent, fontWeight: 600 }}>
                                       {r.templateId === "prevoyance" 
                                         ? `CHF ${fmt(r.capaciteEpargne || 500)}.-/mois` 
                                         : r.templateId === "lpp"
@@ -6316,10 +6339,10 @@ const [lppForm, setLppForm] = useState({
                                     </div>
                                   </div>
                                   <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end", maxWidth: "230px" }}>
-                                    <button onClick={(e) => handleEditReport(e, r)} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primary, padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%" }} onMouseEnter={e=>{e.currentTarget.style.background=C.primary;e.currentTarget.style.color=C.white;e.currentTarget.style.borderColor=C.primary}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color=C.primary;e.currentTarget.style.borderColor=C.mediumGray}}>ÉDITER</button>
-                                    <button onClick={(e) => handleDeleteReport(e, r.id)} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: "#EF4444", padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%" }} onMouseEnter={e=>{e.currentTarget.style.background="#EF4444";e.currentTarget.style.color=C.white;e.currentTarget.style.borderColor="#EF4444"}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color="#EF4444";e.currentTarget.style.borderColor=C.mediumGray}}>SUPPRIMER</button>
-                                    <button onClick={(e) => { e.stopPropagation(); setPreview({...r, _autoDownload: true}); }} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.primaryDark, padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%" }} onMouseEnter={e=>{e.currentTarget.style.background=C.primaryDark;e.currentTarget.style.color=C.white;e.currentTarget.style.borderColor=C.primaryDark}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color=C.primaryDark;e.currentTarget.style.borderColor=C.mediumGray}}>PDF</button>
-                                    <button onClick={(e) => { e.stopPropagation(); setPreview(r); }} style={{ background: C.gold, border: `1px solid ${C.gold}`, color: C.white, padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "0px", flex: "1 1 45%", display: "flex", justifyContent: "center", alignItems: "center" }} onMouseEnter={e=>{e.currentTarget.style.opacity=0.8}} onMouseLeave={e=>{e.currentTarget.style.opacity=1}}>APERÇU</button>
+                                    <button onClick={(e) => handleEditReport(e, r)} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.accent, padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "999px", flex: "1 1 45%" }} onMouseEnter={e=>{e.currentTarget.style.background=C.accent;e.currentTarget.style.color=C.white;e.currentTarget.style.borderColor=C.accent}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color=C.accent;e.currentTarget.style.borderColor=C.mediumGray}}>ÉDITER</button>
+                                    <button onClick={(e) => handleDeleteReport(e, r.id)} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: "#EF4444", padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "999px", flex: "1 1 45%" }} onMouseEnter={e=>{e.currentTarget.style.background="#EF4444";e.currentTarget.style.color=C.white;e.currentTarget.style.borderColor="#EF4444"}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color="#EF4444";e.currentTarget.style.borderColor=C.mediumGray}}>SUPPRIMER</button>
+                                    <button onClick={(e) => { e.stopPropagation(); setPreview({...r, _autoDownload: true}); }} style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.accentDark, padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "999px", flex: "1 1 45%" }} onMouseEnter={e=>{e.currentTarget.style.background=C.accentDark;e.currentTarget.style.color=C.white;e.currentTarget.style.borderColor=C.accentDark}} onMouseLeave={e=>{e.currentTarget.style.background=C.white;e.currentTarget.style.color=C.accentDark;e.currentTarget.style.borderColor=C.mediumGray}}>PDF</button>
+                                    <button onClick={(e) => { e.stopPropagation(); setPreview(r); }} style={{ background: C.goldUI, border: `1px solid ${C.goldUI}`, color: C.white, padding: "6px 10px", fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "0.2s", borderRadius: "999px", flex: "1 1 45%", display: "flex", justifyContent: "center", alignItems: "center" }} onMouseEnter={e=>{e.currentTarget.style.opacity=0.8}} onMouseLeave={e=>{e.currentTarget.style.opacity=1}}>APERÇU</button>
                                   </div>
                                 </div>
                               </div>
@@ -6334,12 +6357,12 @@ const [lppForm, setLppForm] = useState({
 
               {rapportPage === "create" && (
                 <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
-                  <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 28, fontWeight: 700, color: C.primary, margin: "0 0 4px" }}>Générateur de rapport</h2>
+                  <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 28, fontWeight: 700, color: C.accent, margin: "0 0 4px" }}>Générateur de rapport</h2>
                   <p style={{ color: C.gray, fontSize: 13, marginBottom: 32 }}>Suivez les étapes pour configurer la proposition patrimoniale de votre client.</p>
                   
                   <div style={{ display: "flex", gap: 4, marginBottom: 32, background: "transparent" }}>
                     {stepLabels.map((l,i) => (
-                      <div key={i} onClick={()=>setStep(i)} style={{ flex: 1, textAlign: "center", padding: "12px 6px", fontSize: 11, fontWeight: step===i?700:600, color: step===i?C.white:step>i?C.primary:C.gray, background: step===i?C.primary:step>i?"rgba(105,33,2,0.06)":C.white, border: `1px solid ${step===i?C.primary:step>i?"rgba(105,33,2,0.1)":C.mediumGray}`, cursor: "pointer", letterSpacing: "0.04em", transition: "all 0.2s", borderRadius: "0px", position: "relative" }}>
+                      <div key={i} onClick={()=>setStep(i)} style={{ flex: 1, textAlign: "center", padding: "12px 6px", fontSize: 11, fontWeight: step===i?700:600, color: step===i?C.white:step>i?C.accent:C.gray, background: step===i?C.accent:step>i?"rgba(66,133,244,0.06)":C.white, border: `1px solid ${step===i?C.accent:step>i?"rgba(66,133,244,0.1)":C.mediumGray}`, cursor: "pointer", letterSpacing: "0.04em", transition: "all 0.2s", borderRadius: "10px", position: "relative" }}>
                         {l}
                       </div>
                     ))}
@@ -6360,7 +6383,7 @@ const [lppForm, setLppForm] = useState({
 
     {/* Toast Notification Globale */}
     {toastMsg && (
-      <div style={{ position: "fixed", bottom: 40, right: 40, background: toastMsg.includes("Erreur") || toastMsg.includes("Veuillez") || toastMsg.includes("obligatoires") ? "#EF4444" : "#10B981", color: C.white, padding: "12px 24px", fontSize: 14, fontWeight: 600, boxShadow: "0 10px 25px rgba(0,0,0, 0.2)", zIndex: 3000, display: "flex", alignItems: "center", gap: 10, animation: "fadeIn 0.3s ease-out" }}>
+      <div style={{ position: "fixed", bottom: 40, right: 40, background: toastMsg.includes("Erreur") || toastMsg.includes("Veuillez") || toastMsg.includes("obligatoires") ? "#EF4444" : "#10B981", color: C.white, padding: "12px 24px", fontSize: 14, fontWeight: 600, boxShadow: "0 10px 25px rgba(0,0,0, 0.2)", zIndex: 3000, display: "flex", alignItems: "center", gap: 10, animation: "fadeIn 0.3s ease-out", borderRadius: 12 }}>
         <span style={{ fontSize: 18 }}>{toastMsg.includes("Erreur") || toastMsg.includes("Veuillez") || toastMsg.includes("obligatoires") ? "!" : "✓"}</span> {toastMsg}
       </div>
     )}
@@ -6370,4 +6393,3 @@ const [lppForm, setLppForm] = useState({
   </div>
 );
 }
-

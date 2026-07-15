@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged, signInWithCustomToken, signInAnonymously, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getAuth, onAuthStateChanged, signInWithCustomToken, signInAnonymously, signOut, setPersistence, browserLocalPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, addDoc, deleteDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 // Module Planification Retraite R1
@@ -27,7 +27,7 @@ const firebaseConfig = {
 try {
   const isCanvasEnv = typeof __firebase_config !== 'undefined';
   const finalConfig = isCanvasEnv ? JSON.parse(__firebase_config) : firebaseConfig;
-  
+
   if (finalConfig.apiKey !== "VOTRE_API_KEY" || isCanvasEnv) {
     app = initializeApp(finalConfig);
     auth = getAuth(app);
@@ -376,13 +376,13 @@ function computeProjections(data) {
   const rP = Number(data.tauxPessimiste || 3) / 100;
   const rR = Number(data.tauxRealiste || 6) / 100;
   const rO = Number(data.tauxOptimiste || 9) / 100;
-  
+
   let years = [0, 3, 5, 8, 10, 15];
   if (data.anneesProjection && data.anneesProjection.trim() !== "") {
     years = data.anneesProjection.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n >= 0);
     years = [...new Set(years)].sort((a,b) => a - b);
   }
-  
+
   return years.map(y => ({
     year: y,
     pessimiste: Math.round(net * Math.pow(1 + rP, y)),
@@ -395,13 +395,13 @@ function computeProjectionsPrevoyance(data) {
   const monthly = Number(data.capaciteEpargne || 500);
   const annual = monthly * 12;
   const age = Number(data.age || 40);
-  const duration = Math.max(1, 65 - age); 
-  
+  const duration = Math.max(1, 65 - age);
+
   const rP = Number(data.tauxPessimistePrev || 2) / 100;
   const rR = Number(data.tauxRealistePrev || 4) / 100;
   const rO = Number(data.tauxOptimistePrev || 6) / 100;
-  const taxMarginalRate = 0.30; 
-  
+  const taxMarginalRate = 0.30;
+
   let uniqueYears;
   if (data.anneesProjection && data.anneesProjection.trim() !== "") {
     uniqueYears = data.anneesProjection.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n >= 0);
@@ -413,17 +413,17 @@ function computeProjectionsPrevoyance(data) {
     if (years[years.length-1] !== duration) years.push(duration);
     uniqueYears = [...new Set(years)].sort((a,b) => a - b);
   }
-  
+
   return uniqueYears.map(y => {
     const invested = annual * y;
     const months = y * 12;
-    
+
     const calcCap = (rate) => {
       if (rate === 0 || months === 0) return invested;
       const rM = rate / 12;
       return monthly * ((Math.pow(1 + rM, months) - 1) / rM);
     };
-    
+
     return {
       year: y,
       age: age + y,
@@ -442,10 +442,10 @@ function computeProjectionsLPP(data) {
   const netInitial = initial - (initial * fee / 100);
   const age = Number(data.age || 40);
   const duration = Math.max(1, 65 - age);
-  const rateClassic = 0.01; 
+  const rateClassic = 0.01;
   const rateSupletive = 0.0005; // 0.05% pour la Fondation Institutionnelle Supplétive
-  const rateCLP = Number(data.tauxClp || 4) / 100; 
-  
+  const rateCLP = Number(data.tauxClp || 4) / 100;
+
   let uniqueYears;
   if (data.anneesProjection && data.anneesProjection.trim() !== "") {
     uniqueYears = data.anneesProjection.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n >= 0);
@@ -453,7 +453,7 @@ function computeProjectionsLPP(data) {
   } else {
     uniqueYears = [...new Set([0, Math.round(duration*0.2), Math.round(duration*0.4), Math.round(duration*0.6), Math.round(duration*0.8), duration])].sort((a,b) => a - b);
   }
-  
+
   return uniqueYears.map(y => ({
     year: y,
     age: age + y,
@@ -470,17 +470,17 @@ function computeProjectionsAV(data, index = 1) {
   const monthly = Number(index === 2 ? (data.capaciteEpargne2 || 1000) : (data.capaciteEpargne || 500));
   const duration = Math.min(30, Math.max(1, Number(data.dureeProjectionAv || 15))); // Permet d'aller jusqu'à 30 ans
   const fee = Number(data.fraisSouscription || 0) / 100;
-  
+
   // Prise en compte financière stricte (droits d'entrée prélevés sur chaque versement)
   const netInitial = initial - (initial * fee);
   const netMonthly = monthly - (monthly * fee);
-  
+
   const r1 = Number(data.tauxPessimiste || 3) / 100;
   const r2 = Number(data.tauxRealiste || 6) / 100;
   const r3 = Number(data.tauxOptimiste || 9) / 100;
 
   const rows = [];
-  
+
   // Limite à 10 lignes maximum pour que le tableau reste lisible sur la slide
   let yearsToShow = [];
   if (data.anneesProjection && data.anneesProjection.trim() !== "") {
@@ -501,7 +501,7 @@ function computeProjectionsAV(data, index = 1) {
   for (let y of yearsToShow) {
     const months = y * 12;
     const versements = initial + (monthly * months);
-    
+
     const calc = (rate) => {
       if (rate === 0) return versements; // Si taux nul, on simule sans intérêt
       const rM = rate / 12;
@@ -539,7 +539,7 @@ const getBase64Image = async (url) => {
     });
   } catch (error) {
     console.error("Erreur CORS lors de la récupération de l'image :", url, error);
-    return url; 
+    return url;
   }
 };
 
@@ -601,10 +601,9 @@ const EditableText = ({ value, onChange, editMode, style }) => {
   }
   return <p style={{ ...style, whiteSpace: "pre-wrap", textAlign: "justify" }}>{value}</p>;
 };
-
 // Slide 1 — Cover
 function SlideCover({ data }) {
-  const fullName = data.isCouple && data.prenomConjoint 
+  const fullName = data.isCouple && data.prenomConjoint
     ? `${data.prenom} ${(data.nom || "").toUpperCase()} & ${data.prenomConjoint} ${(data.nomConjoint || "").toUpperCase()}`
     : `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   const dateObj = data.dateRapport ? new Date(data.dateRapport) : new Date();
@@ -643,7 +642,7 @@ function SlideTOC({ data }) {
   const isParFinance = data.assetManager === "ParFinance";
   const hidden = data.hiddenSlides || [];
   const getPage = (origIdx) => { let count = 0; for(let i=0; i<=origIdx; i++) if(!hidden.includes(i)) count++; return count; };
-  
+
   let items = [
     { title: "Qui sommes-nous ? Notre philosophie", origIdx: 2 },
     { title: "Notre cabinet en chiffres", origIdx: 3 },
@@ -652,9 +651,9 @@ function SlideTOC({ data }) {
     { title: "Avantages WallSwiss BY Swissquote", origIdx: 6 },
     { title: "Solution — Compte-titres", origIdx: 8 },
   ];
-  
+
   let nextIdx = 9;
-  
+
   if (isParFinance) {
     items.push({ title: "Votre Asset Manager : ParFinance", origIdx: nextIdx++ });
     items.push({ title: "Factsheet | Aries Portfolio", origIdx: nextIdx++ });
@@ -662,7 +661,7 @@ function SlideTOC({ data }) {
   } else {
     items.push({ title: "Fonds NS (CH) Swiss Excellence DPM", origIdx: nextIdx++ });
   }
-  
+
   items.push(
     { title: "Projections financières", origIdx: nextIdx++ },
     { title: "Avantages tarifaires WS Premium", origIdx: nextIdx++ },
@@ -709,7 +708,7 @@ function SlidePhilosophy({ data, editMode, onTextChange }) {
       <div style={{ flex: 1, padding: "56px 80px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         {logoCorner()}
         <ReportTitle title="Qui sommes-nous ?" />
-        
+
         <div style={{ marginBottom: 32 }}>
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 22, color: C.primaryDark, textTransform: "uppercase", marginBottom: 6 }}>NOTRE PHILOSOPHIE.</div>
           <div style={{ fontSize: 14, color: C.gold, marginBottom: 16, fontWeight: 500 }}>Votre cabinet de planification financière à Genève.</div>
@@ -770,7 +769,7 @@ function SlideAbout({ data, editMode, onTextChange }) {
 
 // Slide 5 — Situation personnelle
 function SlideSituation({ data }) {
-  const fullName = data.isCouple && data.prenomConjoint 
+  const fullName = data.isCouple && data.prenomConjoint
     ? `${data.prenom} ${(data.nom || "").toUpperCase()} & ${data.prenomConjoint} ${(data.nomConjoint || "").toUpperCase()}`
     : `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   return (
@@ -780,7 +779,7 @@ function SlideSituation({ data }) {
       <div style={{ padding: "48px 80px 80px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Résumé de" highlight="votre situation personnelle" subtitle="ANALYSE PATRIMONIALE" />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, flex: 1, minHeight: 0, marginTop: 8 }}>
-          
+
           <div style={{ display: "flex", flexDirection: "column", gap: 24, justifyContent: "flex-start" }}>
             <div>
               <div style={{ background: C.primary, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Civilité & Statut</div>
@@ -799,7 +798,7 @@ function SlideSituation({ data }) {
                 ))}
               </div>
             </div>
-            
+
             <div>
               <div style={{ background: C.primary, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Données Financières</div>
               <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
@@ -829,7 +828,7 @@ function SlideSituation({ data }) {
                 ))}
               </div>
             </div>
-            
+
             <div style={{ marginBottom: 20 }}>
               <div style={{ background: C.gold, color: C.white, padding: "12px 20px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRadius: "0px" }}>Profil d'investisseur</div>
               <div style={{ border: `1px solid ${C.mediumGray}`, borderTop: "none", padding: "10px 20px", borderRadius: "0px", background: C.white }}>
@@ -919,7 +918,6 @@ function SlideAdvantages({ data }) {
     </div>
   );
 }
-
 // Slide 8 — Section divider
 function SlideDivider({ data, number, title, editMode, onTextChange }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
@@ -1140,7 +1138,7 @@ function SlideParFinanceFactsheet({ data }) {
       {logoCorner()}
       <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Un investissement qui a du" highlight="sens" subtitle="FACTSHEET | ARIES PORTOFOLIO (USD)" />
-        
+
         <div style={{ flex: 1, display: "flex", gap: 40, minHeight: 0, marginTop: -10 }}>
           <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
             <div style={{ fontSize: 20, fontWeight: 800, color: C.primaryDark, marginBottom: 12, borderBottom: `2px solid ${C.primaryDark}`, paddingBottom: 8 }}>
@@ -1154,10 +1152,10 @@ function SlideParFinanceFactsheet({ data }) {
                  <line x1="0" y1="40" x2="620" y2="40" stroke="#E5E7EB" strokeWidth="1" />
                  <line x1="0" y1="120" x2="620" y2="120" stroke="#E5E7EB" strokeWidth="1" />
                  <line x1="0" y1="200" x2="620" y2="200" stroke="#E5E7EB" strokeWidth="1" />
-                 
+
                  <text x="628" y="124" fontSize="11" fill="#6B7280">20.00%</text>
                  <text x="628" y="204" fontSize="11" fill="#6B7280">0.00%</text>
-                 
+
                  <line x1="100" y1="200" x2="100" y2="205" stroke="#E5E7EB" strokeWidth="1" />
                  <text x="100" y="218" fontSize="10" fill="#6B7280" textAnchor="middle">JAN '23</text>
                  <line x1="200" y1="200" x2="200" y2="205" stroke="#E5E7EB" strokeWidth="1" />
@@ -1240,7 +1238,7 @@ function SlideProjections({ data }) {
   const w = svgW - padL - padR; const h = svgH - padT - padB;
   const maxVal = rows[rows.length-1].optimiste;
   const gridMax = Math.ceil(maxVal / 20000) * 20000 || 80000;
-  
+
   const getX = (i) => padL + (i / (rows.length - 1)) * w;
   const getY = (val) => padT + h - (val / gridMax) * h;
 
@@ -1262,7 +1260,7 @@ function SlideProjections({ data }) {
             <p style={{ fontSize: 13, color: C.gray, margin: "0 0 32px", textAlign: "justify" }}>
               Nous appliquons des droits d'entrée de {frais}% du montant investi soit {fmt(montant * frais / 100)}.-
             </p>
-            
+
             <div style={{ display: "flex", gap: 20, marginBottom: 20, alignSelf: "center", fontSize: 12, fontWeight: 600 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: "#9CA3AF" }} /> Pessimiste</div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 12, height: 12, borderRadius: "50%", background: C.gold }} /> Réaliste</div>
@@ -1329,7 +1327,6 @@ function SlideProjections({ data }) {
     </div>
   );
 }
-
 // Slide 12 — Avantages tarifaires
 function SlideTarifs({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
@@ -1454,10 +1451,10 @@ function SlideContact({ data, editMode, onTextChange }) {
           <div style={{ position: "absolute", top: -12, left: 40, background: C.white, padding: "0 16px", color: C.gold, fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>
             VOTRE INTERLOCUTEUR DÉDIÉ
           </div>
-          
+
           <div style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: 32, fontWeight: 700, color: C.primary, marginBottom: 6 }}>{data.conseiller || "Votre Conseiller"}</div>
           <div style={{ color: C.gray, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 40 }}>{data.titreConseiller || "Conseiller en Gestion de Patrimoine"}</div>
-          
+
           <div style={{ display: "grid", gap: 24 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
               <div style={{ width: 44, height: 44, borderRadius: "0px", background: "rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, fontWeight: 700, fontSize: 15 }}>T</div>
@@ -1474,7 +1471,7 @@ function SlideContact({ data, editMode, onTextChange }) {
           </div>
         </div>
       </div>
-      
+
       {footer(fullName)}
     </div>
   );
@@ -1489,9 +1486,9 @@ function SlidePrevoyanceIntro({ data, editMode, onTextChange }) {
       {logoCorner()}
       <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Le système des" highlight="3 piliers suisses" subtitle="PRÉVOYANCE" />
-        
+
         <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 48, alignItems: "center" }}>
-          
+
           {/* Colonne de gauche : Explications des piliers */}
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div style={{ background: C.white, borderLeft: `4px solid ${C.darkGray}`, padding: "16px 24px", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
@@ -1501,7 +1498,7 @@ function SlidePrevoyanceIntro({ data, editMode, onTextChange }) {
               </div>
               <EditableText editMode={editMode} value={data.texts?.prevIntroP1} onChange={v => onTextChange("prevIntroP1", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, margin: 0 }} />
             </div>
-            
+
             <div style={{ background: C.white, borderLeft: `4px solid ${C.primary}`, padding: "16px 24px", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <div style={{ fontSize: 16, fontWeight: 800, color: C.primary }}>2ème Pilier (LPP)</div>
@@ -1509,7 +1506,7 @@ function SlidePrevoyanceIntro({ data, editMode, onTextChange }) {
               </div>
               <EditableText editMode={editMode} value={data.texts?.prevIntroP2} onChange={v => onTextChange("prevIntroP2", v)} style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, margin: 0 }} />
             </div>
-            
+
             <div style={{ background: C.white, borderLeft: `4px solid ${C.gold}`, padding: "16px 24px", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <div style={{ fontSize: 16, fontWeight: 800, color: C.gold }}>3ème Pilier (3A/3B)</div>
@@ -1522,7 +1519,7 @@ function SlidePrevoyanceIntro({ data, editMode, onTextChange }) {
           {/* Colonne de droite : Graphique empilé des 100% */}
           <div style={{ display: "flex", justifyContent: "center", height: "100%", padding: "10px 0" }}>
             <div style={{ position: "relative", width: 280, height: "100%", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-              
+
               {/* Ligne cible 100% */}
               <div style={{ position: "absolute", top: 0, left: -20, right: -40, borderTop: `2px dashed ${C.gray}` }}>
                  <div style={{ position: "absolute", top: -20, right: 0, fontSize: 14, fontWeight: 800, color: C.darkGray }}>100% du salaire</div>
@@ -1532,20 +1529,20 @@ function SlidePrevoyanceIntro({ data, editMode, onTextChange }) {
               <div style={{ position: "absolute", bottom: "60%", left: -20, right: -40, borderTop: `2px dashed ${C.primary}` }}>
                  <div style={{ position: "absolute", top: -20, right: 0, fontSize: 14, fontWeight: 800, color: C.primary }}>~60% du salaire</div>
               </div>
-              
+
               {/* Blocs du graphique */}
               <div style={{ height: "40%", background: C.gold, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid white", borderBottom: "none", zIndex: 2, boxShadow: "0 -4px 10px rgba(0,0,0,0.05)" }}>
                 <div style={{ color: C.white, fontWeight: 800, fontSize: 18, textAlign: "center" }}>3ème Pilier<br/><span style={{fontSize: 12, fontWeight: 600}}>Prévoyance privée</span></div>
               </div>
-              
+
               <div style={{ height: "30%", background: C.primary, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid white", borderBottom: "none", zIndex: 2, boxShadow: "0 -4px 10px rgba(0,0,0,0.05)" }}>
                 <div style={{ color: C.white, fontWeight: 800, fontSize: 18, textAlign: "center" }}>2ème Pilier<br/><span style={{fontSize: 12, fontWeight: 600}}>LPP</span></div>
               </div>
-              
+
               <div style={{ height: "30%", background: C.darkGray, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid white", zIndex: 2, boxShadow: "0 -4px 10px rgba(0,0,0,0.05)" }}>
                 <div style={{ color: C.white, fontWeight: 800, fontSize: 18, textAlign: "center" }}>1er Pilier<br/><span style={{fontSize: 12, fontWeight: 600}}>AVS/AI</span></div>
               </div>
-              
+
             </div>
           </div>
         </div>
@@ -1612,7 +1609,6 @@ function SlidePrevoyanceSolution({ data, editMode, onTextChange }) {
     </div>
   );
 }
-
 function SlidePrevoyanceCouvertures({ data, editMode, onTextChange }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   return (
@@ -1690,11 +1686,11 @@ function SlideTOCPrevoyance({ data }) {
     { title: "Résumé de votre situation personnelle", origIdx: 4 },
     { title: "Le système des 3 piliers suisses", origIdx: 5 },
     { title: "Avantages de la Prévoyance 3A/3B", origIdx: 6 },
-    { title: "Solution — Prévoyance & Assurance Vie", origIdx: 8 }, 
+    { title: "Solution — Prévoyance & Assurance Vie", origIdx: 8 },
     { title: "Couvertures de risque et garanties", origIdx: 9 },
     { title: "Stratégie : Fonds de placement", origIdx: 10 },
   ];
-  
+
   let nextIdx = 11;
   if (data.showPrevoyanceComparatif !== false) {
       items.push({ title: "Comparatif banque commerciale & Assurance", origIdx: nextIdx++ });
@@ -1704,7 +1700,7 @@ function SlideTOCPrevoyance({ data }) {
       items.push({ title: "Détail Stratégie Dynamique & Performances", origIdx: nextIdx++ });
   }
   items.push({ title: "Comprendre la Valeur de Rachat", origIdx: nextIdx++ });
-  
+
   if(data.optiFiscale) {
       items.push({ title: "Impact & Optimisation Fiscale", origIdx: nextIdx++ });
   }
@@ -1740,18 +1736,18 @@ function SlideTOCPrevoyance({ data }) {
 
 function SlidePrevoyanceComparatif({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
-  
+
   const rP_bank = 0.001; // 0.10%
   const rR_bank = 0.005; // 0.50%
   const rO_bank = 0.01;  // 1%
-  
+
   const rP_ass = Number(data.tauxPessimistePrev || 2) / 100;
   const rR_ass = Number(data.tauxRealistePrev || 4) / 100;
   const rO_ass = Number(data.tauxOptimistePrev || 6) / 100;
 
   const fixedYears = [0, 5, 10, 15]; // Simulation standard sur 15 ans
   const baseCapital = 100000;
-  
+
   const calcLumpSum = (rate, y) => baseCapital * Math.pow(1 + rate, y);
 
   const bankData = fixedYears.map(y => ({
@@ -1760,7 +1756,7 @@ function SlidePrevoyanceComparatif({ data }) {
     realiste: calcLumpSum(rR_bank, y),
     optimiste: calcLumpSum(rO_bank, y)
   }));
-  
+
   const assData = fixedYears.map(y => ({
     year: y,
     pessimiste: calcLumpSum(rP_ass, y),
@@ -1775,10 +1771,10 @@ function SlidePrevoyanceComparatif({ data }) {
     const svgW = 440; const svgH = 260;
     const padL = 60; const padR = 20; const padT = 20; const padB = 30;
     const w = svgW - padL - padR; const h = svgH - padT - padB;
-    
+
     let gridSteps = [];
     let gridMax = 100000;
-    
+
     if (isBank) {
       gridMax = 140000;
       for(let i=0; i<=140000; i+=20000) gridSteps.push(i);
@@ -1789,7 +1785,7 @@ function SlidePrevoyanceComparatif({ data }) {
       const step = gridMax / 5;
       for(let i=0; i<=gridMax; i+=step) gridSteps.push(i);
     }
-    
+
     const getX = (i) => padL + (i / (dataArr.length - 1)) * w;
     const getY = (val) => padT + h - (val / gridMax) * h;
 
@@ -1842,7 +1838,7 @@ function SlidePrevoyanceComparatif({ data }) {
         <p style={{ fontSize: 14, color: C.darkGray, marginBottom: 40, lineHeight: 1.6 }}>
           Ici, nous comparons le rendement actuel moyen des Prévoyances Individuelle en banque commerciale et en Assurance chez {data.compagniePrevoyance || "Liechtenstein"}. 3 scénarios de performances sont calculés pour chacune de ces solutions.
         </p>
-        
+
         <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "flex-start" }}>
           {renderChart("PROJECTIONS BANQUE COMMERCIALE*", bankData, ["0,10%", "0,50%", "1%"], true)}
           {renderChart("PROJECTIONS ASSURANCE*", assData, [formatPct(rP_ass), formatPct(rR_ass), formatPct(rO_ass)], false)}
@@ -1852,10 +1848,9 @@ function SlidePrevoyanceComparatif({ data }) {
     </div>
   );
 }
-
 function SlidePrevoyanceFondsDynamique({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
-  
+
   const [fundPerformanceAPI, setFundPerformanceAPI] = useState(null);
 
   useEffect(() => {
@@ -1883,7 +1878,7 @@ function SlidePrevoyanceFondsDynamique({ data }) {
         // Parsing basique du CSV
         const lines = csv.split('\n');
         const parsedData = {};
-        
+
         // On commence à i=1 pour ignorer la ligne d'en-tête du tableau Excel
         for(let i = 1; i < lines.length; i++) {
           if(!lines[i].trim()) continue;
@@ -1906,7 +1901,7 @@ function SlidePrevoyanceFondsDynamique({ data }) {
       })
       .catch(err => {
         console.error("Erreur lecture Google Sheet CSV:", err);
-        setFundPerformanceAPI(fallbackData); 
+        setFundPerformanceAPI(fallbackData);
       });
   }, []);
 
@@ -1921,9 +1916,9 @@ function SlidePrevoyanceFondsDynamique({ data }) {
   // Calcul des moyennes pondérées du portefeuille
   const parsePct = (str) => parseFloat((str || "0").replace("+", "").replace("%", "")) || 0;
   const formatPct = (val) => (val > 0 ? "+" : "") + val.toFixed(1) + "%";
-  
+
   const weightedAvg = { "3m": 0, "1y": 0, "3y": 0, "5y": 0, "10y": 0, "10y_ann": 0 };
-  
+
   if (fundPerformanceAPI) {
     funds.forEach(f => {
       const apiData = fundPerformanceAPI[f.isin] || {};
@@ -1941,7 +1936,7 @@ function SlidePrevoyanceFondsDynamique({ data }) {
         <ReportTitle title="Détail Stratégie" highlight="Dynamique" subtitle="RÉPARTITION ET PERFORMANCES HISTORIQUES" />
         <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <p style={{ fontSize: 13, color: C.darkGray, marginBottom: 24 }}>Analyse des fonds sous-jacents composant votre portefeuille dynamique. Les rendements ci-dessous sont connectables en temps réel.</p>
-          
+
           {!fundPerformanceAPI ? (
             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.gray, fontSize: 14 }}>
               Chargement des performances du marché en cours...
@@ -2044,7 +2039,7 @@ function SlidePrevoyanceFiscalite({ data, editMode, onTextChange }) {
           </div>
           <div style={{ width: 400, background: C.white, border: `2px solid ${C.gold}`, padding: 32, boxShadow: "0 15px 35px rgba(0,0,0,0.05)" }}>
             <div style={{ textAlign: "center", color: C.primary, fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 24 }}>Mécanisme de déduction</div>
-            
+
             <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `1px solid ${C.lightGray}`, paddingBottom: 12, marginBottom: 12 }}>
               <span style={{ color: C.gray, fontSize: 13 }}>Revenu imposable initial</span>
               <span style={{ color: C.darkGray, fontWeight: 600, fontSize: 13 }}>CHF {fmt(data.revenus || 120000)}.-</span>
@@ -2057,7 +2052,7 @@ function SlidePrevoyanceFiscalite({ data, editMode, onTextChange }) {
               <span style={{ color: C.primary, fontSize: 13, fontWeight: 700 }}>Nouveau revenu imposable</span>
               <span style={{ color: C.primary, fontWeight: 800, fontSize: 14 }}>CHF {fmt(Number(data.revenus || 120000) - 7258)}.-</span>
             </div>
-            
+
             <div style={{ background: "rgba(105,33,2,0.05)", padding: 16, textAlign: "center", marginTop: 24 }}>
                <div style={{ fontSize: 11, color: C.gray, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.05em", marginBottom: 8 }}>Économie d'impôt estimée par an</div>
                <div style={{ fontSize: 28, color: C.primary, fontWeight: 900 }}>~ CHF {fmt(Math.round(7258 * 0.30))}.-</div>
@@ -2081,7 +2076,7 @@ function SlideProjectionsPrevoyance({ data }) {
   const w = svgW - padL - padR; const h = svgH - padT - padB;
   const maxVal = rows[rows.length-1].optimiste;
   const gridMax = Math.ceil(maxVal / 50000) * 50000 || 150000;
-  
+
   const getX = (i) => padL + (i / (rows.length - 1)) * w;
   const getY = (val) => padT + h - (val / gridMax) * h;
 
@@ -2097,7 +2092,7 @@ function SlideProjectionsPrevoyance({ data }) {
       <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Croissance de votre" highlight="Capital Prévoyance" subtitle={`PROJECTION JUSQU'À 65 ANS (${Math.max(1, 65 - (Number(data.age)||40))} ANS)`} />
         <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 40, alignItems: "center", minHeight: 0 }}>
-          
+
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
              <p style={{ fontSize: 13, lineHeight: 1.6, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }}>
               En investissant <strong>CHF {fmt(data.capaciteEpargne || 500)}.- / mois</strong>, voici la projection de votre capital à la retraite ({data.tauxPessimistePrev}% / {data.tauxRealistePrev}% / {data.tauxOptimistePrev}%), en tenant compte de l'effet des intérêts composés.
@@ -2120,16 +2115,16 @@ function SlideProjectionsPrevoyance({ data }) {
                 {rows.map((r, i) => (
                   <text key={i} x={getX(i)} y={svgH - 5} fontSize="11" fill="#6B7280" textAnchor="middle">{r.age} ans</text>
                 ))}
-                
+
                 {/* Area under realiste */}
                 <path d={`${dRealiste} L ${getX(rows.length-1)} ${getY(0)} L ${getX(0)} ${getY(0)} Z`} fill="rgba(105,33,2,0.05)" />
-                
+
                 {/* Lines */}
                 <path d={dInvested} fill="none" stroke={C.gray} strokeWidth="2" strokeDasharray="6 4" />
                 <path d={dPessimiste} fill="none" stroke="#9CA3AF" strokeWidth="2" />
                 <path d={dRealiste} fill="none" stroke={C.primary} strokeWidth="3" />
                 <path d={dOptimiste} fill="none" stroke={C.gold} strokeWidth="2" />
-                
+
                 {/* Points Realiste */}
                 {rows.map((r, i) => (
                   <g key={i}>
@@ -2186,7 +2181,6 @@ function SlideProjectionsPrevoyance({ data }) {
     </div>
   );
 }
-
 // ────────────────────── SLIDES LPP (NOUVEAU MODÈLE) ──────────────────────
 
 function SlideTOCLPP({ data }) {
@@ -2200,7 +2194,7 @@ function SlideTOCLPP({ data }) {
     { title: "Résumé de votre situation personnelle", origIdx: 4 },
     { title: "Les enjeux du 2ème Pilier (LPP)", origIdx: 5 },
     { title: "Fonctionnement du Libre Passage", origIdx: 6 },
-    { title: "Votre Compte de Libre Passage", origIdx: 7 }, 
+    { title: "Votre Compte de Libre Passage", origIdx: 7 },
     { title: `Votre Administrateur : ${data.administrateurLpp || "Pictet"}`, origIdx: 8 },
     { title: "Avantages de l'investissement", origIdx: 9 },
     { title: "Allocation d'actifs recommandée", origIdx: 10 },
@@ -2360,15 +2354,14 @@ function SlideLPPLibrePassage({ data, editMode, onTextChange }) {
     </div>
   );
 }
-
 function SlideLPPAllocation({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   const profil = data.profilRisque || "Équilibré";
-  
+
   let actions = data.lppActions !== undefined && data.lppActions !== "" ? Number(data.lppActions) : (profil === "Prudent" ? 25 : profil === "Dynamique" ? 65 : profil === "Offensif" ? 85 : 45);
   let oblig = data.lppOblig !== undefined && data.lppOblig !== "" ? Number(data.lppOblig) : (profil === "Prudent" ? 65 : profil === "Dynamique" ? 25 : profil === "Offensif" ? 10 : 45);
   let immo = data.lppImmo !== undefined && data.lppImmo !== "" ? Number(data.lppImmo) : (profil === "Prudent" ? 10 : profil === "Dynamique" ? 10 : profil === "Offensif" ? 5 : 10);
-  
+
   const total = actions + oblig + immo || 1;
   const aPct = (actions/total)*100;
   const oPct = (oblig/total)*100;
@@ -2460,14 +2453,14 @@ function SlideLPPAvantagesCLP({ data, editMode, onTextChange }) {
       <div style={{ padding: "56px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Avantages de l'investissement" highlight="sur les marchés" subtitle="POURQUOI NE PAS LAISSER SON CAPITAL DORMIR" />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 32 }}>
-          
+
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr", gap: 64, alignItems: "center" }}>
              <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
                 <EditableText editMode={editMode} value={data.texts?.lppAvantagesP1} onChange={v => onTextChange("lppAvantagesP1", v)} style={{ fontSize: 14.5, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
                 <div style={{ width: 60, height: 3, background: C.gold }} />
                 <EditableText editMode={editMode} value={data.texts?.lppAvantagesP2} onChange={v => onTextChange("lppAvantagesP2", v)} style={{ fontSize: 14.5, lineHeight: 1.8, color: C.darkGray, textAlign: "justify", margin: 0 }} />
              </div>
-             
+
              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                <div style={{ display: "flex", gap: 20, alignItems: "flex-start", background: C.white, border: `1px solid ${C.mediumGray}`, padding: "24px", boxShadow: "0 10px 30px rgba(0,0,0,0.03)" }}>
                   <div style={{ color: C.primary, background: "rgba(105,33,2,0.06)", padding: 12, borderRadius: "50%", flexShrink: 0 }}><Icons.TrendUp size={28} /></div>
@@ -2476,7 +2469,7 @@ function SlideLPPAvantagesCLP({ data, editMode, onTextChange }) {
                     <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.6 }}>L'investissement en actions/obligations maintient le pouvoir d'achat de votre retraite à long terme.</div>
                   </div>
                </div>
-               
+
                <div style={{ display: "flex", gap: 20, alignItems: "flex-start", background: C.white, border: `1px solid ${C.mediumGray}`, padding: "24px", boxShadow: "0 10px 30px rgba(0,0,0,0.03)" }}>
                   <div style={{ color: C.gold, background: "rgba(165,149,104,0.1)", padding: 12, borderRadius: "50%", flexShrink: 0 }}><Icons.Shield size={28} /></div>
                   <div>
@@ -2514,7 +2507,7 @@ function SlideLPPProjections({ data }) {
   const w = svgW - padL - padR; const h = svgH - padT - padB;
   const maxVal = rows[rows.length-1].clp;
   const gridMax = Math.ceil(maxVal / 50000) * 50000 || 200000;
-  
+
   const getX = (i) => padL + (i / (rows.length - 1)) * w;
   const getY = (val) => padT + h - (val / gridMax) * h;
 
@@ -2532,7 +2525,7 @@ function SlideLPPProjections({ data }) {
       <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Projections :" highlight="Classique vs Libre Passage" subtitle={`SIMULATION JUSQU'À 65 ANS (${Math.max(1, 65 - (Number(data.age)||40))} ANS)`} />
         <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 40, alignItems: "center", minHeight: 0 }}>
-          
+
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
              <p style={{ fontSize: 12.5, lineHeight: 1.6, color: C.darkGray, margin: "0 0 16px", textAlign: "justify" }}>
               Comparaison de l'évolution de votre capital de <strong>CHF {fmt(initial)}.-</strong> s'il est placé sur une Fondation Institutionnelle Supplétive (~0.05% net/an), s'il reste sur un compte de fondation classique (~1% net/an) ou s'il est investi sur les marchés via un <strong>Compte de libre passage WallSwiss</strong> (profil <strong>{data.profilRisque || "Dynamique"}</strong>, ~{rateCLPDisplay}% net/an).<br/>
@@ -2558,15 +2551,15 @@ function SlideLPPProjections({ data }) {
                 {rows.map((r, i) => (
                   <text key={i} x={getX(i)} y={svgH - 5} fontSize="11" fill="#6B7280" textAnchor="middle">{r.age} ans</text>
                 ))}
-                
+
                 {/* Area under CLP */}
                 <path d={`${dCLP} L ${getX(rows.length-1)} ${getY(0)} L ${getX(0)} ${getY(0)} Z`} fill="rgba(105,33,2,0.05)" />
-                
+
                 {/* Lines */}
                 <path d={dSupletive} fill="none" stroke="#D1D5DB" strokeWidth="2" strokeDasharray="4 4" />
                 <path d={dClassic} fill="none" stroke={C.gray} strokeWidth="2" />
                 <path d={dCLP} fill="none" stroke={C.primary} strokeWidth="3" />
-                
+
                 {/* Points */}
                 {rows.map((r, i) => (
                   <g key={i}>
@@ -2610,7 +2603,7 @@ function SlideLPPProjections({ data }) {
                 ))}
               </tbody>
             </table>
-            
+
             <div style={{ marginTop: 20, background: "rgba(165,149,104,0.1)", padding: "12px 20px", border: `1px solid ${C.gold}`, color: C.primaryDark, fontSize: 12, fontWeight: 700, textAlign: "center", width: "100%", boxSizing: "border-box" }}>
               Manque à gagner évité à 65 ans :<br/>
               <span style={{ fontSize: 20, color: C.primary, marginTop: 4, display: "block" }}>CHF {fmt(rows[rows.length-1].clp - rows[rows.length-1].classic)}.-</span>
@@ -2627,7 +2620,6 @@ function SlideLPPProjections({ data }) {
     </div>
   );
 }
-
 // ────────────────────── SLIDES ASSURANCE VIE & PER ──────────────────────
 
 function SlideTOCAssuranceVie({ data }) {
@@ -2645,7 +2637,7 @@ function SlideTOCAssuranceVie({ data }) {
     { title: "Gestion de votre portefeuille", origIdx: 8 },
     { title: "Projections financières", origIdx: 9 },
   ];
-  
+
   let nextIdx = 10;
   if (data.hasProjectionsMultiples) {
     items.push({ title: "Projections financières (Scénario 2)", origIdx: nextIdx++ });
@@ -2808,7 +2800,6 @@ function SlidePERFonctionnement({ data }) {
     </div>
   );
 }
-
 function SlideAvFiscalite({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   const blueTitle = "#4A5C8C"; // Couleur bleue spécifique à cette slide d'après l'image
@@ -2838,7 +2829,7 @@ function SlideAvFiscalite({ data }) {
                 <polygon points="300,50 314,50 307,30" fill={C.primaryDark} />
                 <polygon points="550,50 564,50 557,30" fill={C.primaryDark} />
               </svg>
-              
+
               <div style={{ position: "absolute", top: 10, left: 230, fontSize: 13, color: C.black }}>Date d'ouverture 4 ans</div>
 
               <div style={{ position: "absolute", top: 60, left: 130, fontSize: 13, color: C.black }}>35% (ou IR) + 17,2%</div>
@@ -2908,7 +2899,7 @@ function SlideAvFiscalite({ data }) {
 
 function SlideAvGestion({ data }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
-  
+
   const funds = [
     { nom: "Axiom European Banks Equity RC EUR(v)", isin: "LU1876459303", poids: "20%", p1c: "63.10%", p3c: "210.01%", p3a: "45.81%", p10c: "314.20%", p10a: "15.27%" },
     { nom: "Alken Euro Opportunities A", isin: "LU0524465977", poids: "20%", p1c: "54.33%", p3c: "90.53%", p3a: "23.97%", p10c: "145.09%", p10a: "9.38%" },
@@ -2923,7 +2914,7 @@ function SlideAvGestion({ data }) {
       {logoCorner()}
       <div style={{ padding: "32px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Gestion de votre" highlight="portefeuille" subtitle="ALLOCATION ET PERFORMANCES HISTORIQUES" />
-        
+
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16, marginTop: 4 }}>
           <p style={{ fontSize: 13.5, color: C.darkGray, margin: 0, lineHeight: 1.6 }}>
             Une sélection rigoureuse de fonds pour diversifier vos avoirs et viser une croissance pérenne. Les performances passées sont présentées à titre indicatif pour illustrer la solidité de ces supports sur différentes périodes.
@@ -3004,11 +2995,11 @@ function SlideAvGestion({ data }) {
 function SlideAvProjections({ data, index = 1 }) {
   const fullName = `${data.prenom} ${(data.nom || "").toUpperCase()}`;
   const rows = computeProjectionsAV(data, index);
-  
+
   const initial = index === 2 ? (data.montantInvestissement2 || 200000) : (data.montantInvestissement || 100000);
   const monthly = index === 2 ? (data.capaciteEpargne2 || 1000) : (data.capaciteEpargne || 500);
   const subtitle = index === 2 ? "ESTIMATION DE LA VALEUR DE VOTRE CONTRAT (SCÉNARIO 2)" : "ESTIMATION DE LA VALEUR DE VOTRE CONTRAT";
-  
+
   const r1 = data.tauxPessimiste || 3;
   const r2 = data.tauxRealiste || 6;
   const r3 = data.tauxOptimiste || 9;
@@ -3019,7 +3010,7 @@ function SlideAvProjections({ data, index = 1 }) {
   const w = svgW - padL - padR; const h = svgH - padT - padB;
   const maxVal = rows.length > 0 ? Math.max(rows[rows.length-1].val3, rows[rows.length-1].versements) : 1;
   const gridMax = Math.ceil(maxVal / 20000) * 20000 || 50000;
-  
+
   const getX = (i) => padL + (i / (rows.length - 1)) * w;
   const getY = (val) => padT + h - (val / gridMax) * h;
 
@@ -3034,9 +3025,9 @@ function SlideAvProjections({ data, index = 1 }) {
       {logoCorner()}
       <div style={{ padding: "48px 80px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
         <ReportTitle title="Projections" highlight="financières" subtitle={subtitle} />
-        
+
         <div style={{ flex: 1, display: "grid", gridTemplateColumns: "360px 1fr", gap: 40, alignItems: "center" }}>
-          
+
           <div style={{ display: "flex", flexDirection: "column" }}>
             <p style={{ fontSize: 13, color: C.darkGray, lineHeight: 1.6, marginBottom: 20, textAlign: "justify" }}>
               Cette projection personnalisée simule l'évolution de votre épargne sur <strong>{data.dureeProjectionAv || 15} ans</strong>, en tenant compte d'un versement initial de <strong>{fmt(initial)} €</strong> et d'une mensualité de <strong>{fmt(monthly)} €</strong> (déduction faite des {data.fraisSouscription || 0}% de droits d'entrée).
@@ -3092,13 +3083,13 @@ function SlideAvProjections({ data, index = 1 }) {
                   <tr key={i} style={{ background: i % 2 === 0 ? C.lightGray : C.white, borderBottom: `1px solid ${C.mediumGray}` }}>
                     <td style={{ padding: "6px", fontWeight: 700, color: C.primary }}>N+{r.year}</td>
                     <td style={{ padding: "6px", color: C.darkGray }}>{fmt(r.versements)} €</td>
-                    
+
                     <td style={{ padding: "6px", color: C.darkGray }}>{fmt(r.val1)} €</td>
                     <td style={{ padding: "6px", color: r.pv1 >= 0 ? "#10B981" : "#EF4444", fontWeight: 600, borderRight: `1px solid ${C.lightGray}` }}>{r.pv1 >= 0 ? "+" : ""}{fmt(r.pv1)} €</td>
-                    
+
                     <td style={{ padding: "6px", fontWeight: 700, color: C.primary }}>{fmt(r.val2)} €</td>
                     <td style={{ padding: "6px", color: r.pv2 >= 0 ? "#10B981" : "#EF4444", fontWeight: 700, borderRight: `1px solid ${C.lightGray}` }}>{r.pv2 >= 0 ? "+" : ""}{fmt(r.pv2)} €</td>
-                    
+
                     <td style={{ padding: "6px", fontWeight: 700, color: C.gold }}>{fmt(r.val3)} €</td>
                     <td style={{ padding: "6px", color: r.pv3 >= 0 ? "#10B981" : "#EF4444", fontWeight: 600 }}>{r.pv3 >= 0 ? "+" : ""}{fmt(r.pv3)} €</td>
                   </tr>
@@ -3113,7 +3104,6 @@ function SlideAvProjections({ data, index = 1 }) {
     </div>
   );
 }
-
 // ────────────────────── PREVIEW MODAL ──────────────────────
 
 function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDelete }) {
@@ -3123,12 +3113,12 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
   const [isEmailing, setIsEmailing] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState(false);
   const [emailError, setEmailError] = useState("");
-  
+
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailForm, setEmailForm] = useState({ to: "", subject: "", body: "" });
 
   const isCurrentHidden = (data.hiddenSlides || []).includes(currentSlide);
-  
+
   const toggleHideSlide = () => {
     const hidden = data.hiddenSlides || [];
     const newHidden = isCurrentHidden ? hidden.filter(idx => idx !== currentSlide) : [...hidden, currentSlide];
@@ -3200,7 +3190,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
         div.style.border = 'none';
         div.style.background = 'transparent';
         div.style.resize = 'none';
-        div.style.textAlign = 'justify'; 
+        div.style.textAlign = 'justify';
         div.innerText = textarea.value;
         textarea.parentNode.insertBefore(div, textarea);
         textarea.style.display = 'none';
@@ -3209,9 +3199,9 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
 
       try {
         const html2pdf = await requireHtml2Pdf();
-        
+
         window.scrollTo(0, 0);
-        
+
         await html2pdf()
           .set({
             margin: 0,
@@ -3222,8 +3212,8 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
               useCORS: true,
               scrollY: 0,
               scrollX: 0,
-              x: 0, 
-              y: 0, 
+              x: 0,
+              y: 0,
               windowWidth: 1280,
               logging: false
             },
@@ -3241,7 +3231,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
         });
         setIsPdfLoading(false);
       }
-    }, 500); 
+    }, 500);
   };
 
   const openEmailModal = () => {
@@ -3266,10 +3256,10 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
       setTimeout(() => setEmailError(""), 5000);
       return;
     }
-    
+
     setShowEmailModal(false);
     setIsEmailing(true);
-    
+
     const element = document.getElementById('report-printable');
     if (!element) {
         setIsEmailing(false);
@@ -3297,7 +3287,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
       div.style.border = 'none';
       div.style.background = 'transparent';
       div.style.resize = 'none';
-      div.style.textAlign = 'justify'; 
+      div.style.textAlign = 'justify';
       div.innerText = textarea.value;
       textarea.parentNode.insertBefore(div, textarea);
       textarea.style.display = 'none';
@@ -3309,16 +3299,16 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
 
     try {
       const html2pdf = await requireHtml2Pdf();
-      
+
       // Sécurité anti-page blanche (scroll tout en haut avant capture)
       window.scrollTo(0, 0);
-      
+
       // 3. Génération du PDF en base64 en mémoire avec la méthode fiable
       const opt = {
         margin: 0,
         filename: pdfFilename,
-        image: { type: 'jpeg', quality: 0.8 }, 
-        html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, scrollX: 0, windowWidth: 1280, logging: false }, 
+        image: { type: 'jpeg', quality: 0.8 },
+        html2canvas: { scale: 1.5, useCORS: true, scrollY: 0, scrollX: 0, windowWidth: 1280, logging: false },
         pagebreak: { mode: ['css', 'legacy'] },
         jsPDF: { unit: 'in', format: [13.33334, 7.5], orientation: 'landscape' }
       };
@@ -3331,16 +3321,16 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
       const pureBase64 = rawPdfBase64.includes('base64,') ? rawPdfBase64.substring(rawPdfBase64.indexOf('base64,') + 7) : rawPdfBase64;
 
       // 4. Envoi réel des données au Webhook Make.com
-      const response = await fetch(webhookUrl, { 
-        method: 'POST', 
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: emailForm.to, 
-          subject: emailForm.subject, 
-          body: emailForm.body, 
+        body: JSON.stringify({
+          email: emailForm.to,
+          subject: emailForm.subject,
+          body: emailForm.body,
           pdfBase64: pureBase64,
           filename: pdfFilename
-        }) 
+        })
       });
 
       if (!response.ok) {
@@ -3449,7 +3439,7 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
   if (data.hasProjectionsMultiples) {
     slidesAssuranceVie.push(<SlideAvProjections data={data} index={2} />);
   }
-  
+
   slidesAssuranceVie.push(<SlideContact data={data} editMode={editMode} onTextChange={handleTextChange} />);
 
   const slides = data.templateId === "lpp" ? slidesLPP : data.templateId === "prevoyance" ? slidesPrevoyance : data.templateId === "assurance-vie" ? slidesAssuranceVie : slidesSwissquote;
@@ -3471,23 +3461,23 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
           <button onClick={onDelete} style={{ background: "transparent", color: "#FCA5A5", border: "1px solid rgba(252,165,165,0.3)", padding: "6px 12px", cursor: "pointer", fontFamily: F.ui, fontSize: 10, fontWeight: 600, borderRadius: "999px", transition: "0.2s" }} onMouseEnter={e=>{e.currentTarget.style.background="rgba(239,68,68,0.2)";e.currentTarget.style.color="#FFF"}} onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color="#FCA5A5"}}>
             SUPPRIMER
           </button>
-          
+
           <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)", margin: "0 4px" }} />
-          
+
           <button onClick={handleDownloadPDF} disabled={isPdfLoading || isEmailing} style={{ background: C.white, color: C.accentDark, border: "none", padding: "6px 12px", cursor: (isPdfLoading || isEmailing) ? "wait" : "pointer", fontFamily: F.ui, fontSize: 10, fontWeight: 700, borderRadius: "999px", opacity: (isPdfLoading || isEmailing) ? 0.7 : 1, transition: "0.2s" }}>
             {isPdfLoading ? "GÉNÉRATION..." : "TÉLÉCHARGER PDF"}
           </button>
           <button onClick={openEmailModal} disabled={isPdfLoading || isEmailing} style={{ background: emailSuccess ? "#10B981" : C.goldUI, color: C.white, border: "none", padding: "6px 12px", cursor: (isPdfLoading || isEmailing) ? "wait" : "pointer", fontFamily: F.ui, fontSize: 10, fontWeight: 700, borderRadius: "999px", opacity: (isPdfLoading || isEmailing) ? 0.7 : 1, transition: "0.2s" }}>
             {isEmailing ? "ENVOI..." : emailSuccess ? "ENVOYÉ !" : "EMAIL"}
           </button>
-          
+
           <span style={{ color: C.goldUI, fontSize: 11, marginLeft: 4 }}>{currentSlide + 1} / {slides.length}</span>
           <button onClick={onClose} style={{ background: "transparent", color: C.dim, border: "none", padding: "6px 12px", cursor: "pointer", fontFamily: F.ui, fontSize: 11, fontWeight: 600 }}>FERMER ✕</button>
         </div>
       </div>
       <div className="no-print" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 60px", position: "relative", minHeight: 0 }}>
         <button onClick={() => setCurrentSlide(s => Math.max(0, s - 1))} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: currentSlide === 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)", color: currentSlide === 0 ? "rgba(255,255,255,0.2)" : C.white, border: "none", width: 40, height: 40, cursor: currentSlide === 0 ? "default" : "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>&#8249;</button>
-        
+
         <div style={{ width: 960, height: 540, position: "relative", boxShadow: "0 8px 40px rgba(0,0,0,0.5)", overflow: "hidden", backgroundColor: C.white }}>
           <div style={{ width: 1280, height: 720, transform: "scale(0.75)", transformOrigin: "top left", position: "absolute", top: 0, left: 0, opacity: isCurrentHidden ? 0.3 : 1, filter: isCurrentHidden ? "grayscale(100%)" : "none", transition: "all 0.3s" }}>
             {slides[currentSlide]}
@@ -3584,7 +3574,6 @@ function ReportPreview({ data, onClose, onUpdateData, appSettings, onEdit, onDel
   </div>
 );
 }
-
 // ────────────────────── MAIN APP / LAYOUT ──────────────────────
 // Styles partagés de la coquille — direction artistique WallSmart
 // (SF Pro / Inter, boutons pilule, champs arrondis,
@@ -3614,6 +3603,299 @@ const PREDEFINED_AGENTS = [
   { prenom: "Badis", nom: "TOUIHRI", tel: "", email: "b.touihri@wallswiss.ch", genre: "M" },
   { prenom: "Cloé", nom: "BESNARD", tel: "", email: "c.besnard@wallswiss.ch", genre: "F" }
 ];
+
+// ══════════════════════════════════════════════════════════════════
+//  SOMMAIRE WALLSWISS — arborescence complète (7 sections, sous-onglets).
+//  · action.type "module"  → rouvre un module existant de la barre du haut.
+//  · action.type "url"     → ouvre un lien externe (nouvel onglet).
+//  · sans action / feuille → ouvre une page placeholder (DocPageView).
+// ══════════════════════════════════════════════════════════════════
+const WS_MENU = [
+  {
+    id: "1", num: "1", title: "Logiciels WallSwiss", icon: "Layers",
+    children: [
+      { id: "1.1", num: "1.1", title: "CRM – Salesforce", action: { type: "url", url: "https://wallswiss.my.salesforce.com/" } },
+      { id: "1.2", num: "1.2", title: "Générateur de rapport financier", action: { type: "module", module: "rapport" } },
+      { id: "1.3", num: "1.3", title: "Générateur de planification retraite", action: { type: "module", module: "retraiteR1" } },
+      { id: "1.4", num: "1.4", title: "Mon agenda – Calendly" },
+      { id: "1.5", num: "1.5", title: "Simulateur Quasi-Résident / TOU" },
+      { id: "1.6", num: "1.6", title: "Simulateur d'intérêts composés" },
+      { id: "1.7", num: "1.7", title: "Générateur de factures" },
+      {
+        id: "1.8", num: "1.8", title: "Signaler un incident",
+        children: [
+          { id: "1.8.1", num: "1.8.1", title: "Cyber-incident" },
+          { id: "1.8.2", num: "1.8.2", title: "Conflits d'intérêts" },
+          { id: "1.8.3", num: "1.8.3", title: "Événements sensibles" },
+          { id: "1.8.4", num: "1.8.4", title: "Problème RH" },
+        ]
+      },
+    ]
+  },
+  {
+    id: "2", num: "2", title: "Mon espace personnel", icon: "User",
+    children: [
+      { id: "2.1", num: "2.1", title: "Mes outils d'auto-analyse – Trackers" },
+      { id: "2.2", num: "2.2", title: "Mon simulateur de commissions" },
+      { id: "2.3", num: "2.3", title: "Mes demandes de congés" },
+      { id: "2.4", num: "2.4", title: "Les règles en entreprise" },
+      {
+        id: "2.5", num: "2.5", title: "Événements",
+        children: [
+          { id: "2.5.1", num: "2.5.1", title: "Sondages" },
+          { id: "2.5.2", num: "2.5.2", title: "Photos : événements WallSwiss" },
+        ]
+      },
+      { id: "2.6", num: "2.6", title: "Boîte à idées : ensemble, nous allons plus loin !" },
+      { id: "2.7", num: "2.7", title: "Challenges en cours" },
+      { id: "2.8", num: "2.8", title: "Mes débuts chez WallSwiss" },
+    ]
+  },
+  {
+    id: "3", num: "3", title: "Procédures", icon: "CheckSquare",
+    children: [
+      { id: "3.1", num: "3.1", title: "Reprise de gestion" },
+      {
+        id: "3.2", num: "3.2", title: "Investissements",
+        children: [
+          { id: "3.2.1", num: "3.2.1", title: "Compte-titres" },
+          { id: "3.2.2", num: "3.2.2", title: "Private Equity" },
+          { id: "3.2.3", num: "3.2.3", title: "Assurance vie France" },
+          { id: "3.2.4", num: "3.2.4", title: "Assurance vie Luxembourg" },
+          { id: "3.2.5", num: "3.2.5", title: "Plan d'Épargne Retraite – PER" },
+        ]
+      },
+      {
+        id: "3.3", num: "3.3", title: "Planification retraite",
+        children: [
+          { id: "3.3.1", num: "3.3.1", title: "Formule BASIC" },
+          { id: "3.3.2", num: "3.3.2", title: "Formule COUPLE" },
+          { id: "3.3.3", num: "3.3.3", title: "Formule PREMIUM" },
+        ]
+      },
+      {
+        id: "3.4", num: "3.4", title: "Prévoyance individuelle",
+        children: [
+          { id: "3.4.1", num: "3.4.1", title: "Liechtenstein Life" },
+          { id: "3.4.2", num: "3.4.2", title: "Rente Genevoise" },
+          { id: "3.4.3", num: "3.4.3", title: "Autres compagnies" },
+        ]
+      },
+      {
+        id: "3.5", num: "3.5", title: "Banques",
+        children: [
+          { id: "3.5.1", num: "3.5.1", title: "Swissquote" },
+          { id: "3.5.2", num: "3.5.2", title: "Bank Zweiplus" },
+          { id: "3.5.3", num: "3.5.3", title: "Autres banques partenaires" },
+        ]
+      },
+      {
+        id: "3.6", num: "3.6", title: "Libre passage",
+        children: [
+          { id: "3.6.1", num: "3.6.1", title: "Lémania" },
+          { id: "3.6.2", num: "3.6.2", title: "Liberty" },
+          { id: "3.6.3", num: "3.6.3", title: "Pictet" },
+          { id: "3.6.4", num: "3.6.4", title: "J. Safra Sarasin" },
+        ]
+      },
+      {
+        id: "3.7", num: "3.7", title: "Fiscalité",
+        children: [
+          {
+            id: "3.7.1", num: "3.7.1", title: "Fiscalité française",
+            children: [
+              { id: "3.7.1.1", num: "3.7.1.1", title: "Check-list + mail" },
+              { id: "3.7.1.2", num: "3.7.1.2", title: "Protocole déclaration simple" },
+              { id: "3.7.1.3", num: "3.7.1.3", title: "Protocole déclaration + LMNP" },
+            ]
+          },
+          {
+            id: "3.7.2", num: "3.7.2", title: "Fiscalité suisse",
+            children: [
+              { id: "3.7.2.1", num: "3.7.2.1", title: "Résident – TOU" },
+              { id: "3.7.2.2", num: "3.7.2.2", title: "Frontalier – QR" },
+            ]
+          },
+        ]
+      },
+    ]
+  },
+  {
+    id: "4", num: "4", title: "Base documentaire", icon: "FileText",
+    children: [
+      { id: "4.1", num: "4.1", title: "Mails types", action: { type: "module", module: "mails" } },
+      { id: "4.2", num: "4.2", title: "Documents administratifs", action: { type: "module", module: "ressources" } },
+    ]
+  },
+  {
+    id: "5", num: "5", title: "Académie WallSwiss – Base de connaissances", icon: "PieChart",
+    children: [
+      { id: "5.1", num: "5.1", title: "Cours AFA / IAF" },
+      {
+        id: "5.2", num: "5.2", title: "Formation commerciale",
+        children: [
+          { id: "5.2.1", num: "5.2.1", title: "Vidéos de formation" },
+          { id: "5.2.2", num: "5.2.2", title: "Book de formation" },
+        ]
+      },
+      { id: "5.3", num: "5.3", title: "France – PER" },
+      { id: "5.4", num: "5.4", title: "France – Assurance vie" },
+      { id: "5.5", num: "5.5", title: "Europe – Assurance vie Luxembourg" },
+      { id: "5.6", num: "5.6", title: "France – SCPI" },
+      { id: "5.7", num: "5.7", title: "Suisse – Libre passage" },
+      { id: "5.8", num: "5.8", title: "Suisse – Prévoyance individuelle" },
+      { id: "5.9", num: "5.9", title: "Suisse – Création d'entreprise" },
+      { id: "5.10", num: "5.10", title: "France – Création d'entreprise" },
+      { id: "5.11", num: "5.11", title: "Suisse – AVS (1er pilier)" },
+      { id: "5.12", num: "5.12", title: "France – Calcul de la retraite française" },
+      { id: "5.13", num: "5.13", title: "Utilisation de la calculette financière" },
+      { id: "5.14", num: "5.14", title: "Formation investissement" },
+      { id: "5.15", num: "5.15", title: "Formation KYC" },
+      { id: "5.16", num: "5.16", title: "Formation Compliance" },
+      { id: "5.17", num: "5.17", title: "Intermédiaire non lié – Guide des obligations" },
+    ]
+  },
+  { id: "6", num: "6", title: "Annuaires", icon: "BookContacts", action: { type: "module", module: "annuaire" } },
+  {
+    id: "7", num: "7", title: "Hub Marketing", icon: "Target",
+    children: [
+      { id: "7.1", num: "7.1", title: "Charte graphique + logo" },
+      { id: "7.2", num: "7.2", title: "Carnet de recommandation" },
+      { id: "7.3", num: "7.3", title: "Lettre à en-tête WallSwiss" },
+      { id: "7.4", num: "7.4", title: "Bannières réseaux sociaux" },
+      { id: "7.5", num: "7.5", title: "Organisation de mon WhatsApp Business" },
+      { id: "7.6", num: "7.6", title: "Présentation des services" },
+      { id: "7.7", num: "7.7", title: "Organisation LinkedIn Business" },
+      { id: "7.8", num: "7.8", title: "Des publications pour mes réseaux" },
+    ]
+  },
+];
+
+// Tiroir latéral repliable : arborescence complète + recherche + fil d'Ariane.
+function SommaireDrawer({ open, onClose, onNavigate, activeId }) {
+  const [expanded, setExpanded] = useState({ "1": true });
+  const [query, setQuery] = useState("");
+
+  const toggle = (id) => setExpanded(p => ({ ...p, [id]: !p[id] }));
+
+  const matches = (node) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    if ((node.title || "").toLowerCase().includes(q) || (node.num || "").includes(q)) return true;
+    if (node.children) return node.children.some(matches);
+    return false;
+  };
+
+  const renderNode = (node, depth, path) => {
+    if (!matches(node)) return null;
+    const hasChildren = node.children && node.children.length > 0;
+    const isOpen = query.trim() ? true : !!expanded[node.id];
+    const isActive = activeId === node.id;
+    const fullPath = [...path, node.title];
+    const Ico = depth === 0 && node.icon ? Icons[node.icon] : null;
+    return (
+      <div key={node.id}>
+        <div
+          onClick={() => { if (hasChildren) toggle(node.id); if (node.action || !hasChildren) onNavigate(node, fullPath); }}
+          style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: depth === 0 ? "11px 12px" : "8px 12px",
+            paddingLeft: 14 + depth * 15,
+            margin: "1px 8px", borderRadius: 10, cursor: "pointer",
+            background: isActive ? C.accentSoft : "transparent",
+            color: isActive ? C.accent : (depth === 0 ? C.text : C.muted),
+            fontWeight: depth === 0 ? 700 : (isActive ? 600 : 500),
+            fontSize: depth === 0 ? 13.5 : 12.5,
+            transition: "background .15s, color .15s"
+          }}
+          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = C.bgSoft; }}
+          onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+        >
+          {Ico ? (
+            <span style={{ color: C.accent, display: "flex", flexShrink: 0 }}><Ico size={17} /></span>
+          ) : (
+            <span style={{ fontSize: 10, fontFamily: F.mono, color: C.dim, flexShrink: 0, minWidth: 30 }}>{node.num}</span>
+          )}
+          <span style={{ flex: 1, lineHeight: 1.35 }}>{node.title}</span>
+          {hasChildren && (
+            <span style={{ color: C.dim, fontSize: 10, transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .15s", flexShrink: 0 }}>▶</span>
+          )}
+        </div>
+        {hasChildren && isOpen && (
+          <div>{node.children.map(child => renderNode(child, depth + 1, fullPath))}</div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none", transition: "opacity .25s", zIndex: 250 }} />
+      <aside style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: 340, maxWidth: "88vw", background: C.card, borderRight: `1px solid ${C.line}`, boxShadow: "0 20px 60px rgba(0,0,0,0.18)", zIndex: 260, transform: open ? "translateX(0)" : "translateX(-100%)", transition: "transform .28s cubic-bezier(.4,0,.2,1)", display: "flex", flexDirection: "column", fontFamily: F.ui }}>
+        <div style={{ padding: "18px 20px 14px", borderBottom: `1px solid ${C.line}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <div style={{ fontSize: 10, color: C.dim, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>WallSwiss</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: C.text, letterSpacing: "-0.01em" }}>Sommaire</div>
+          </div>
+          <button onClick={onClose} title="Fermer" style={{ background: "transparent", border: "none", color: C.muted, cursor: "pointer", fontSize: 18, width: 34, height: 34, borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center" }} onMouseEnter={e=>e.currentTarget.style.background=C.bgSoft} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>✕</button>
+        </div>
+        <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.line}` }}>
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Rechercher dans le sommaire…" style={{ width: "100%", padding: "9px 12px", border: `1px solid ${C.line2}`, borderRadius: 10, fontSize: 13, fontFamily: F.ui, outline: "none", boxSizing: "border-box", color: C.text, background: C.bgSoft }} />
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
+          {WS_MENU.some(matches) ? WS_MENU.map(node => renderNode(node, 0, [])) : (
+            <div style={{ padding: 24, textAlign: "center", color: C.dim, fontSize: 13 }}>Aucun résultat pour « {query} ».</div>
+          )}
+        </div>
+        <div style={{ padding: "12px 20px", borderTop: `1px solid ${C.line}`, fontSize: 11, color: C.dim, textAlign: "center" }}>{APP_VERSION}</div>
+      </aside>
+    </>
+  );
+}
+
+// Page générique (placeholder « en construction ») pour les onglets neufs du sommaire.
+function DocPageView({ page, onHome, onOpenSommaire }) {
+  if (!page) return null;
+  const path = page.path || [page.title];
+  return (
+    <div style={{ padding: "48px 40px", boxSizing: "border-box", maxWidth: 1100, margin: "0 auto", width: "100%" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12, color: C.muted, marginBottom: 20 }}>
+        <span onClick={onHome} style={{ cursor: "pointer", fontWeight: 600, color: C.accent }}>Accueil</span>
+        {path.map((p, i) => (
+          <React.Fragment key={i}>
+            <span style={{ color: C.dim }}>›</span>
+            <span style={{ fontWeight: i === path.length - 1 ? 700 : 500, color: i === path.length - 1 ? C.text : C.muted }}>{p}</span>
+          </React.Fragment>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28 }}>
+        <div style={{ width: 46, height: 46, borderRadius: 12, background: C.accentSoft, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: F.mono, fontWeight: 700, fontSize: 13, flexShrink: 0 }}>{page.num || "•"}</div>
+        <div>
+          <h1 style={{ fontFamily: F.serif, fontSize: 30, fontWeight: 700, color: C.text, margin: 0, letterSpacing: "-0.02em" }}>{page.title}</h1>
+          {path.length > 1 && <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>{path.slice(0, -1).join(" › ")}</div>}
+        </div>
+      </div>
+
+      <div style={{ ...S.card, padding: 0, overflow: "hidden" }}>
+        <div style={{ height: 4, background: C.accent }} />
+        <div style={{ padding: "48px 40px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 16 }}>
+          <div style={{ width: 64, height: 64, borderRadius: 18, background: C.bgSoft, border: `1px solid ${C.line}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.accent }}>
+            <Icons.Layers size={30} />
+          </div>
+          <div style={{ fontFamily: F.serif, fontSize: 22, fontWeight: 700, color: C.text }}>Section en construction</div>
+          <p style={{ fontSize: 14, color: C.muted, lineHeight: 1.7, maxWidth: 520, margin: 0 }}>
+            La page <strong style={{ color: C.text }}>« {page.title} »</strong> est prête à accueillir son contenu. La structure de navigation est en place ; le contenu (procédures, documents, outils ou fiches de connaissances) sera ajouté ici prochainement.
+          </p>
+          <div style={{ display: "flex", gap: 12, marginTop: 8, flexWrap: "wrap", justifyContent: "center" }}>
+            <button onClick={onOpenSommaire} style={S.btnP}>Ouvrir le sommaire</button>
+            <button onClick={onHome} style={S.btnS}>← Retour à l'accueil</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function WallSwissAppMain() {
   const initialTexts = {
@@ -3664,13 +3946,27 @@ function WallSwissAppMain() {
     avSolutionsP2: "L'assurance vie présente de nombreux avantages après 8 ans. Succession, exonération et abattements fiscaux sur les plus-values."
   };
 
-  const [activeModule, setActiveModule] = useState("hub"); 
-  const [rapportPage, setRapportPage] = useState("dashboard"); 
+  const [activeModule, setActiveModule] = useState("hub");
+  // ── AJOUT SOMMAIRE : état du tiroir latéral + page placeholder active ──
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activePage, setActivePage] = useState(null);
+  const handleSommaireNav = (node, path) => {
+    if (node.action?.type === "url") { if (typeof window !== "undefined") window.open(node.action.url, "_blank"); setSidebarOpen(false); return; }
+    if (node.action?.type === "module") { setActiveModule(node.action.module); setSidebarOpen(false); return; }
+    setActivePage({ ...node, path }); setActiveModule("page"); setSidebarOpen(false);
+  };
+  const [rapportPage, setRapportPage] = useState("dashboard");
   const [step, setStep] = useState(0);
 
   const [user, setUser] = useState(null);
   const [userStatus, setUserStatus] = useState(null); // 'pending' ou 'approved'
   const [authLoading, setAuthLoading] = useState(true);
+  // --- Écran de connexion / inscription ---
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authMode, setAuthMode] = useState("login"); // 'login' | 'signup'
+  const [authError, setAuthError] = useState("");
+  const [authBusy, setAuthBusy] = useState(false);
   const [agentsList, setAgentsList] = useState([]);
   const [adminTab, setAdminTab] = useState("reports"); // 'reports' ou 'agents'
   const [settingsTab, setSettingsTab] = useState("profile");
@@ -3707,7 +4003,6 @@ const [lppForm, setLppForm] = useState({
   });
   const [isGeneratingLpp, setIsGeneratingLpp] = useState(false);
   const [isSendingSign, setIsSendingSign] = useState(false);
-
   const handleCopy = (text, msg) => {
     navigator.clipboard.writeText(text);
     setToastMsg(msg);
@@ -3800,7 +4095,7 @@ const [lppForm, setLppForm] = useState({
     if (docsSelectionnes.suppletive) { setToastMsg("Recherche supplétive à venir"); setTimeout(()=>setToastMsg(""),3000); }
     if (pdfs.length === 0) { setToastMsg("Sélectionnez au moins un document"); setTimeout(()=>setToastMsg(""),3000); setIsGeneratingLpp(false); return; }
     const pdfBytes = pdfs.length === 1 ? pdfs[0] : await combinerPDFs(pdfs);
-      
+
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -3819,7 +4114,7 @@ const [lppForm, setLppForm] = useState({
 
   const handleSendForSignature = async () => {
     const webhookUrl = appSettings.lppWebhookUrl?.trim();
-    
+
     if (!webhookUrl || !webhookUrl.startsWith('http')) {
       setToastMsg("Veuillez configurer l'URL du Webhook Signature dans les paramètres.");
       setTimeout(() => setToastMsg(""), 4000);
@@ -3835,7 +4130,7 @@ const [lppForm, setLppForm] = useState({
 
     try {
       const pdfBytes = await generateOfficialLppPdf();
-      
+
       // Conversion de Uint8Array en Base64 de façon performante
       const pureBase64 = btoa(
         new Uint8Array(pdfBytes).reduce((data, byte) => data + String.fromCharCode(byte), '')
@@ -3890,29 +4185,66 @@ const [lppForm, setLppForm] = useState({
       setAuthLoading(false);
       return;
     }
-    const initAuth = async () => {
-      try {
-        await setPersistence(auth, browserLocalPersistence);
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch(e) {
-        console.error("Auth error", e);
-      }
-    };
-    initAuth();
+    setPersistence(auth, browserLocalPersistence).catch(() => {});
     const unsubscribe = onAuthStateChanged(auth, (u) => {
-      if (u) {
-        if (!u.email) u.email = ADMIN_EMAIL; // Force l'accès admin pour l'utilisateur anonyme
-        setUser(u);
-      } else {
-        setAuthLoading(false);
-      }
+      setUser(u || null);
+      setAuthLoading(false);
     });
     return () => unsubscribe();
   }, []);
+
+  // Connexion / inscription par e-mail + mot de passe
+  const handleAuthSubmit = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setAuthError("");
+    if (!auth || !db) { setAuthError("Firebase n'est pas connecté."); return; }
+    const email = authEmail.trim();
+    if (!email || !authPassword) { setAuthError("Veuillez renseigner l'e-mail et le mot de passe."); return; }
+    setAuthBusy(true);
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+      if (authMode === "signup") {
+        const cred = await createUserWithEmailAndPassword(auth, email, authPassword);
+        try {
+          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'agents', cred.user.uid), {
+            email: email,
+            status: 'approved',
+            createdAt: new Date().toISOString()
+          }, { merge: true });
+        } catch (e2) { console.error("Création profil agent:", e2); }
+      } else {
+        await signInWithEmailAndPassword(auth, email, authPassword);
+      }
+      setAuthPassword("");
+    } catch (err) {
+      const map = {
+        'auth/invalid-email': "Adresse e-mail invalide.",
+        'auth/user-not-found': "Aucun compte avec cet e-mail.",
+        'auth/wrong-password': "Mot de passe incorrect.",
+        'auth/invalid-credential': "E-mail ou mot de passe incorrect.",
+        'auth/email-already-in-use': "Un compte existe déjà avec cet e-mail.",
+        'auth/weak-password': "Mot de passe trop faible (6 caractères minimum).",
+        'auth/too-many-requests': "Trop de tentatives, réessayez plus tard.",
+        'auth/network-request-failed': "Problème de connexion réseau."
+      };
+      setAuthError(map[err.code] || ("Erreur : " + (err.message || err.code)));
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    setAuthError("");
+    if (!auth) { setAuthError("Firebase n'est pas connecté."); return; }
+    const email = authEmail.trim();
+    if (!email) { setAuthError("Entrez d'abord votre e-mail pour recevoir le lien."); return; }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setAuthError("E-mail de réinitialisation envoyé à " + email + ".");
+    } catch (err) {
+      setAuthError("Envoi impossible : " + (err.message || err.code));
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -3961,10 +4293,10 @@ const [lppForm, setLppForm] = useState({
 
   const [reports, setReports] = useState([]);
   const [preview, setPreview] = useState(null);
-  
+
   // --- ETAT D'ÉDITION HUB MARKETING ---
   const [isEditingMarketing, setIsEditingMarketing] = useState(false);
-  
+
   const onMarketingMediaChange = async (file, mediaKey) => {
     if (!file) return;
     const url = await handleImageUpload(file, `marketing/${user?.uid || 'global'}/${mediaKey}_${Date.now()}`);
@@ -4037,7 +4369,7 @@ const [lppForm, setLppForm] = useState({
       snapshot.forEach((doc) => {
         loadedReports.push({ id: doc.id, ...doc.data() });
       });
-      
+
       // Si l'utilisateur n'est pas admin, il ne voit que ses propres rapports
       if (user.email !== ADMIN_EMAIL) {
         setReports(loadedReports.filter(r => r.agentId === user.uid).sort((a, b) => b.id - a.id));
@@ -4088,7 +4420,6 @@ const [lppForm, setLppForm] = useState({
       unsubMailing();
     };
   }, [user]);
-
   // --- ACTIONS MAILING ---
   const handleAddMailingClient = async (e) => {
     e.preventDefault();
@@ -4192,12 +4523,12 @@ const [lppForm, setLppForm] = useState({
     dureeProjectionAv: "15",
     capitalLibrePassage: "120000", administrateurLpp: "Pictet", tauxClp: "4.5", fraisSouscriptionLpp: "1",
     lppActions: "", lppOblig: "", lppImmo: "",
-    conseiller: `${appSettings.agentFirstName || ""} ${appSettings.agentLastName || ""}`.trim() || "", 
+    conseiller: `${appSettings.agentFirstName || ""} ${appSettings.agentLastName || ""}`.trim() || "",
     titreConseiller: appSettings.agentTitle || "",
-    telephone: appSettings.agentPhone || "", 
+    telephone: appSettings.agentPhone || "",
     email: appSettings.agentEmail || "",
-    customLogo: appSettings.defaultLogo || "", 
-    customCoverImage: appSettings.defaultCover || "", 
+    customLogo: appSettings.defaultLogo || "",
+    customCoverImage: appSettings.defaultCover || "",
     customPhilosophyImage: appSettings.defaultPhilosophy || "",
     texts: initialTexts
   });
@@ -4206,17 +4537,17 @@ const [lppForm, setLppForm] = useState({
   const uText = (k, v) => setForm(p => ({ ...p, texts: { ...p.texts, [k]: v } }));
   const toggleObj = (o) => setForm(p => ({ ...p, objectifs: p.objectifs.includes(o) ? p.objectifs.filter(x => x !== o) : [...p.objectifs, o] }));
   const addCustomObj = () => { if (form.objectifCustom.trim()) { setForm(p => ({ ...p, objectifs: [...p.objectifs, p.objectifCustom.trim()], objectifCustom: "" })); } };
-  
+
   const handleSave = async () => {
     const newId = form.id || Date.now();
-    const newReport = { 
-      ...form, 
+    const newReport = {
+      ...form,
       id: newId,
       agentId: user ? user.uid : "demo",
       agentEmail: user ? user.email : "demo@wallswiss.ch",
       dateCreation: form.dateCreation || new Date().toISOString()
     };
-    
+
     if (user && db) {
       try {
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reports', newId.toString()), newReport);
@@ -4227,16 +4558,16 @@ const [lppForm, setLppForm] = useState({
       alert("Attention : Le rapport est créé temporairement mais ne sera pas sauvegardé sur Firebase car vos clés de connexion sont manquantes dans le code.");
       setReports(p => [...p, newReport]);
     }
-    
-    setPreview(newReport); 
-    setRapportPage("dashboard"); 
-    setStep(0); 
+
+    setPreview(newReport);
+    setRapportPage("dashboard");
+    setStep(0);
   };
 
   const updateSettings = async (newSettings) => {
     setAppSettings(newSettings);
     localStorage.setItem('wallswiss_settings', JSON.stringify(newSettings));
-    
+
     if (!db || !user) {
       setToastMsg("Paramètres sauvegardés localement (Firebase non connecté).");
       setTimeout(() => setToastMsg(""), 3000);
@@ -4296,7 +4627,6 @@ const [lppForm, setLppForm] = useState({
 
   const defObj = ["Sécuriser son épargne", "Obtenir une réduction d'impôt (via l'optimisation fiscale Suisse)", "Améliorer la fiscalité des placements", "Mettre en place des sécurités (fonds d'urgence)", "Maintenir un standing de vie", "Préparer la retraite", "Optimiser la transmission de patrimoine", "Financer un projet immobilier"];
   const stepLabels = ["Modèles", "Client", "Objectifs", "Investissement", "Conseiller", "Personnalisation", "Aperçu"];
-
   if (authLoading) {
     return (
       <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: C.card, flexDirection: "column", fontFamily: F.ui, zIndex: 9999 }}>
@@ -4305,6 +4635,56 @@ const [lppForm, setLppForm] = useState({
         </div>
         <h2 style={{ fontFamily: F.serif, fontSize: 24, color: C.accent, margin: "0 0 8px 0" }}>WallSwiss</h2>
         <div style={{ color: C.muted, fontSize: 13, fontWeight: 500, letterSpacing: "0.05em" }}>Authentification en cours...</div>
+      </div>
+    );
+  }
+
+  // Écran de connexion / inscription (aucun utilisateur connecté)
+  if (!user) {
+    const isReset = authError && authError.indexOf("envoyé") !== -1;
+    return (
+      <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: C.bg, fontFamily: F.ui, padding: 20, boxSizing: "border-box" }}>
+        <div style={{ width: "100%", maxWidth: 400, background: C.card, borderRadius: C.radius, border: `1px solid ${C.line}`, boxShadow: "0 20px 50px rgba(0,0,0,0.12)", padding: 36, boxSizing: "border-box" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 26 }}>
+            <div style={{ width: 56, height: 56, borderRadius: 16, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+              <img src={appSettings.defaultLogo || LOGO_URL} alt="WallSwiss" style={{ width: 30, height: 30, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
+            </div>
+            <h1 style={{ fontFamily: F.serif, fontSize: 24, color: C.text, margin: 0, letterSpacing: "-0.02em" }}>WallSwiss</h1>
+            <p style={{ color: C.muted, fontSize: 13, marginTop: 6, marginBottom: 0 }}>{authMode === "signup" ? "Créez votre compte conseiller" : "Connexion à votre espace"}</p>
+          </div>
+
+          <form onSubmit={handleAuthSubmit}>
+            <div style={{ marginBottom: 14 }}>
+              <label style={S.label}>Adresse e-mail</label>
+              <input style={S.input} type="email" autoComplete="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="vous@wallswiss.ch" />
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <label style={S.label}>Mot de passe</label>
+              <input style={S.input} type="password" autoComplete={authMode === "signup" ? "new-password" : "current-password"} value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="••••••••" />
+            </div>
+
+            {authMode === "login" && (
+              <div style={{ textAlign: "right", marginBottom: 12 }}>
+                <span onClick={handlePasswordReset} style={{ fontSize: 12, color: C.accent, cursor: "pointer", fontWeight: 600 }}>Mot de passe oublié ?</span>
+              </div>
+            )}
+
+            {authError && (
+              <div style={{ background: isReset ? C.greenSoft : C.redSoft, color: isReset ? C.green : C.red, fontSize: 12.5, padding: "10px 12px", borderRadius: 10, marginBottom: 14, lineHeight: 1.5 }}>{authError}</div>
+            )}
+
+            <button type="submit" disabled={authBusy} style={{ ...S.btnP, width: "100%", padding: "13px 0", opacity: authBusy ? 0.7 : 1, cursor: authBusy ? "wait" : "pointer" }}>
+              {authBusy ? "Veuillez patienter…" : authMode === "signup" ? "Créer mon compte" : "Se connecter"}
+            </button>
+          </form>
+
+          <div style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: C.muted }}>
+            {authMode === "signup" ? "Déjà un compte ? " : "Pas encore de compte ? "}
+            <span onClick={() => { setAuthMode(authMode === "signup" ? "login" : "signup"); setAuthError(""); }} style={{ color: C.accent, cursor: "pointer", fontWeight: 700 }}>
+              {authMode === "signup" ? "Se connecter" : "Créer un compte"}
+            </span>
+          </div>
+        </div>
       </div>
     );
   }
@@ -4387,7 +4767,7 @@ const [lppForm, setLppForm] = useState({
               <div style={S.fg}><label style={S.label}>Date du rapport</label><input style={S.input} type="date" value={form.dateRapport || ""} onChange={e=>u("dateRapport",e.target.value)}/></div>
               <div style={S.fg}><label style={S.label}>Nationalité</label><input style={S.input} value={form.nationalite} onChange={e=>u("nationalite",e.target.value)}/></div>
             </div>
-            
+
             <div style={{ height: 1, background: C.line2, margin: "16px 0" }} />
             <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 8, textTransform: "uppercase" }}>Informations personnalisées supplémentaires</div>
             {(form.customClientFields || []).map((f, i) => (
@@ -4456,7 +4836,7 @@ const [lppForm, setLppForm] = useState({
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Paramètres d'investissement</div>
-            
+
             <div style={S.fg}>
               <label style={S.label}>Années présentées (projections)</label>
               <input style={S.input} value={form.anneesProjection || ""} onChange={e=>u("anneesProjection",e.target.value)} placeholder="Laisser vide pour auto (ex: 3, 5, 10, 15)"/>
@@ -4473,24 +4853,24 @@ const [lppForm, setLppForm] = useState({
                 </div>
                 <div style={S.fg}>
                   <label style={{...S.label, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: 8, color: C.accent}}>
-                    <input type="checkbox" checked={form.optiFiscale} onChange={e=>u("optiFiscale",e.target.checked)} style={{width: 16, height: 16}} /> 
+                    <input type="checkbox" checked={form.optiFiscale} onChange={e=>u("optiFiscale",e.target.checked)} style={{width: 16, height: 16}} />
                     Inclure la slide Optimisation Fiscale (3A)
                   </label>
                 </div>
                 <div style={S.fg}>
                   <label style={{...S.label, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: 8, color: C.accent}}>
-                    <input type="checkbox" checked={form.showPrevoyanceComparatif !== false} onChange={e=>u("showPrevoyanceComparatif",e.target.checked)} style={{width: 16, height: 16}} /> 
+                    <input type="checkbox" checked={form.showPrevoyanceComparatif !== false} onChange={e=>u("showPrevoyanceComparatif",e.target.checked)} style={{width: 16, height: 16}} />
                     Inclure la slide Comparatif Banque / Assurance
                   </label>
                 </div>
-                
+
                 <div style={{ height: 1, background: C.line2, margin: "16px 0" }} />
-                
+
                 <div style={S.fg}>
                   <label style={S.label}>Horizon de placement</label>
                   <input style={S.input} value={form.horizonPlacement} onChange={e=>u("horizonPlacement",e.target.value)} placeholder="Ex: Moyen terme, 5 ans..." />
                 </div>
-                
+
                 <div style={{...S.fg, margin: 0}}>
                   <label style={S.label}>Profil de risque du portefeuille</label>
                   <select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>
@@ -4508,9 +4888,9 @@ const [lppForm, setLppForm] = useState({
                     <option>Lemania</option>
                   </select>
                 </div>
-                
+
                 <div style={{ height: 1, background: C.line2, margin: "16px 0" }} />
-                
+
                 <div style={S.fg}><label style={S.label}>Taux de rendement cible net (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxClp} onChange={e=>u("tauxClp",e.target.value)} placeholder="4.5"/></div>
                 <div style={S.fg}><label style={S.label}>Droits d'entrée (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscriptionLpp} onChange={e=>u("fraisSouscriptionLpp",e.target.value)} placeholder="1"/></div>
                 <div style={S.fg}>
@@ -4519,7 +4899,7 @@ const [lppForm, setLppForm] = useState({
                     {["Prudent", "Équilibré", "Dynamique", "Offensif"].map(s=><option key={s}>{s}</option>)}
                   </select>
                 </div>
-                
+
                 <div style={{ height: 1, background: C.line2, margin: "16px 0" }} />
                 <div style={{ marginBottom: 12, color: C.accent, fontWeight: 700, fontSize: 12, textTransform: "uppercase" }}>Allocation d'actifs personnalisée (%)</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 0 }}>
@@ -4533,10 +4913,10 @@ const [lppForm, setLppForm] = useState({
                 <div style={S.fg}><label style={S.label}>Versement initial (€)</label><input style={S.input} type="number" value={form.montantInvestissement} onChange={e=>u("montantInvestissement",e.target.value)}/></div>
                 <div style={S.fg}><label style={S.label}>Mensualité (€)</label><input style={S.input} type="number" value={form.capaciteEpargne} onChange={e=>u("capaciteEpargne",e.target.value)}/></div>
                 <div style={S.fg}><label style={S.label}>Durée de projection (années)</label><input style={S.input} type="number" max="30" value={form.dureeProjectionAv} onChange={e=>u("dureeProjectionAv",e.target.value)}/></div>
-                
+
                 <div style={S.fg}>
                   <label style={{...S.label, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: 8, color: C.accent}}>
-                    <input type="checkbox" checked={form.hasProjectionsMultiples} onChange={e=>u("hasProjectionsMultiples",e.target.checked)} style={{width: 16, height: 16}} /> 
+                    <input type="checkbox" checked={form.hasProjectionsMultiples} onChange={e=>u("hasProjectionsMultiples",e.target.checked)} style={{width: 16, height: 16}} />
                     Ajouter une 2ème simulation (Scénario 2)
                   </label>
                 </div>
@@ -4546,9 +4926,9 @@ const [lppForm, setLppForm] = useState({
                     <div style={{...S.fg, margin: 0}}><label style={S.label}>Mensualité 2 (€)</label><input style={S.input} type="number" value={form.capaciteEpargne2} onChange={e=>u("capaciteEpargne2",e.target.value)}/></div>
                   </div>
                 )}
-                
+
                 <div style={{ height: 1, background: C.line2, margin: "16px 0" }} />
-                
+
                 <div style={S.fg}><label style={S.label}>Droits d'entrée sur versements (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscription} onChange={e=>u("fraisSouscription",e.target.value)}/></div>
                 <div style={{...S.fg, margin: 0}}><label style={S.label}>Profil de risque</label><select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>{["Prudent", "Équilibré", "Dynamique", "Offensif"].map(s=><option key={s}>{s}</option>)}</select></div>
               </>
@@ -4563,9 +4943,9 @@ const [lppForm, setLppForm] = useState({
                 </div>
                 <div style={S.fg}><label style={S.label}>Montant initial (CHF)</label><input style={S.input} type="number" value={form.montantInvestissement} onChange={e=>u("montantInvestissement",e.target.value)}/></div>
                 <div style={S.fg}><label style={S.label}>Droits d'entrée (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscription} onChange={e=>u("fraisSouscription",e.target.value)}/></div>
-                
+
                 <div style={{ height: 1, background: C.line2, margin: "16px 0" }} />
-                
+
                 <div style={S.fg}>
                   <label style={S.label}>Horizon de placement</label>
                   <input style={S.input} value={form.horizonPlacement} onChange={e=>u("horizonPlacement",e.target.value)} placeholder="Ex: Moyen terme, 5 ans..." />
@@ -4636,10 +5016,10 @@ const [lppForm, setLppForm] = useState({
           <div style={S.card}>
             <div style={S.cardTitle}><div style={S.dot} /> Personnalisation des textes</div>
             <p style={{ fontSize: 12, color: C.muted, marginBottom: 16, marginTop: 0 }}>Modifiez les textes par défaut qui apparaîtront dans les diapositives.</p>
-            
+
             <div style={S.fg}><label style={S.label}>Page "Qui sommes-nous" - Description</label>
             <textarea style={{...S.input, minHeight: 80, resize: "vertical"}} value={form.texts.aboutDesc} onChange={e=>uText("aboutDesc", e.target.value)} /></div>
-            
+
             {form.templateId === "swissquote" && (
               <>
                 <div style={S.fg}><label style={S.label}>Page "Pourquoi SwissQuote" - Conclusion</label>
@@ -4653,7 +5033,7 @@ const [lppForm, setLppForm] = useState({
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.solution2} onChange={e=>uText("solution2", e.target.value)} /></div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 3 (Fiscalité)</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.solution3} onChange={e=>uText("solution3", e.target.value)} /></div>
-                
+
                 {form.assetManager === "ParFinance" && (
                   <>
                     <div style={{ height: 1, background: C.line2, margin: "20px 0" }} />
@@ -4677,7 +5057,7 @@ const [lppForm, setLppForm] = useState({
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.prevoyanceSol2} onChange={e=>uText("prevoyanceSol2", e.target.value)} /></div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 3 (Fiscalité & Transmission)</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.prevoyanceSol3} onChange={e=>uText("prevoyanceSol3", e.target.value)} /></div>
-                
+
                 <div style={{ height: 1, background: C.line2, margin: "20px 0" }} />
                 <div style={{marginBottom: 12, color: C.accent, fontWeight: 700, fontSize: 12}}>PAGE "FONDS DE PLACEMENT"</div>
                 <div style={S.fg}><label style={S.label}>Stratégie d'investissement personnalisée</label>
@@ -4695,7 +5075,7 @@ const [lppForm, setLppForm] = useState({
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppIntroP2} onChange={e=>uText("lppIntroP2", e.target.value)} /></div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 3 (Conclusion)</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppIntroP3} onChange={e=>uText("lppIntroP3", e.target.value)} /></div>
-                
+
                 <div style={{ height: 1, background: C.line2, margin: "20px 0" }} />
                 <div style={{marginBottom: 12, color: C.accent, fontWeight: 700, fontSize: 12}}>PAGE "FONCTIONNEMENT LIBRE PASSAGE"</div>
                 <div style={S.fg}><label style={S.label}>Paragraphe 1 (Définition)</label>
@@ -4713,7 +5093,7 @@ const [lppForm, setLppForm] = useState({
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppAvantagesP1} onChange={e=>uText("lppAvantagesP1", e.target.value)} /></div>
                 <div style={S.fg}><label style={S.label}>Architecture Ouverte (LPP)</label>
                 <textarea style={{...S.input, minHeight: 60, resize: "vertical"}} value={form.texts.lppAvantagesP2} onChange={e=>uText("lppAvantagesP2", e.target.value)} /></div>
-                
+
                 <div style={{ height: 1, background: C.line2, margin: "20px 0" }} />
                 <div style={{marginBottom: 12, color: C.accent, fontWeight: 700, fontSize: 12}}>PAGE "ADMINISTRATEUR CLP"</div>
                 <div style={S.fg}><label style={S.label}>Présentation du partenaire</label>
@@ -4786,7 +5166,6 @@ const [lppForm, setLppForm] = useState({
       );
     }
   };
-
   return (
     <div style={{ fontFamily: F.ui, display: "flex", flexDirection: "column", height: "100%", width: "100%", overflow: "hidden", background: C.bg, color: C.text }}>
       <style>{`
@@ -4822,6 +5201,14 @@ const [lppForm, setLppForm] = useState({
 
       {/* ────────────────── BARRE DE NAVIGATION SUPÉRIEURE ────────────────── */}
       <header className="no-print" style={{ display: "flex", alignItems: "center", gap: 18, height: 60, padding: "0 24px", background: "rgba(255,255,255,0.82)", backdropFilter: "saturate(180%) blur(20px)", WebkitBackdropFilter: "saturate(180%) blur(20px)", borderBottom: `1px solid ${C.line}`, flexShrink: 0, zIndex: 200 }}>
+        {/* Bouton Sommaire (ouvre le tiroir latéral) */}
+        <button onClick={() => setSidebarOpen(true)} title="Ouvrir le sommaire WallSwiss" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: activeModule === "page" ? C.accentSoft : "transparent", color: activeModule === "page" ? C.accent : C.muted, border: "none", padding: "8px 12px", borderRadius: 980, cursor: "pointer", fontFamily: F.ui, fontSize: 13.5, fontWeight: 600, flexShrink: 0, transition: "background .18s, color .18s" }} onMouseEnter={(e) => { e.currentTarget.style.background = C.bgSoft; e.currentTarget.style.color = C.text; }} onMouseLeave={(e) => { if (activeModule !== "page") { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.muted; } }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          Sommaire
+        </button>
+
+        <div style={{ width: 1, height: 24, background: C.line, flexShrink: 0 }} />
+
         {/* Marque */}
         <div onClick={() => setActiveModule("hub")} style={{ display: "flex", alignItems: "center", gap: 11, cursor: "pointer", flexShrink: 0, paddingRight: 6 }}>
           <div style={{ width: 30, height: 30, borderRadius: 9, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(105,33,2,.30)" }}>
@@ -4893,7 +5280,12 @@ const [lppForm, setLppForm] = useState({
 
       {/* ────────────────── CONTENU PRINCIPAL ────────────────── */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%", overflowY: "auto", position: "relative" }}>
-        
+
+        {/* VUE PAGE SOMMAIRE (placeholder « en construction ») */}
+        {activeModule === "page" && (
+          <DocPageView page={activePage} onHome={() => setActiveModule("hub")} onOpenSommaire={() => setSidebarOpen(true)} />
+        )}
+
         {/* VUE HUB — Mode Hub & Satellites */}
         {activeModule === "hub" && (
           <div style={{ position: "relative", flex: 1, minHeight: "calc(100vh - 60px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", background: "radial-gradient(1000px 600px at 50% 45%, #FFFFFF, #EEF0F3)" }}>
@@ -4913,14 +5305,8 @@ const [lppForm, setLppForm] = useState({
 
               {/* hub central */}
               <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 196, height: 196, borderRadius: "50%", background: "#fff", border: `1px solid ${C.line}`, boxShadow: "0 24px 60px rgba(0,0,0,0.10), inset 0 0 0 6px rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", zIndex: 12 }}>
-                <div>
-                  <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.02em", color: C.text }}>Wall<span style={{ color: C.goldDeep }}>Swiss</span></div>
-                  <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>Bonjour {appSettings.agentFirstName || ""}</div>
-                  <div style={{ marginTop: 10, display: "flex", gap: 14, justifyContent: "center" }}>
-                    <div style={{ fontSize: 9.5, color: C.dim, fontWeight: 600, textTransform: "uppercase" }}><b style={{ display: "block", fontSize: 16, color: C.text }}>{reports.length}</b>Rapports</div>
-                    <div style={{ fontSize: 9.5, color: C.dim, fontWeight: 600, textTransform: "uppercase" }}><b style={{ display: "block", fontSize: 16, color: C.text }}>{MAILS_TYPES.length}</b>Mails</div>
-                    <div style={{ fontSize: 9.5, color: C.dim, fontWeight: 600, textTransform: "uppercase" }}><b style={{ display: "block", fontSize: 16, color: C.text }}>4</b>Campagnes</div>
-                  </div>
+                <div style={{ width: 96, height: 96, borderRadius: "50%", background: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <img src={appSettings.defaultLogo || LOGO_URL} alt="WallSwiss" style={{ width: 52, height: 52, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
                 </div>
               </div>
 
@@ -4952,7 +5338,6 @@ const [lppForm, setLppForm] = useState({
             <div style={{ position: "absolute", bottom: 18, fontSize: 12, color: C.dim }}>Cliquez un satellite pour ouvrir le module · ou utilisez la barre du haut</div>
           </div>
         )}
-
         {/* VUE MODULE MARKETING */}
         {activeModule === "marketing" && (
           <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#fafaf9" }}>
@@ -4981,7 +5366,7 @@ const [lppForm, setLppForm] = useState({
                             </div>
                             <div style={{ display: "flex", overflowX: "auto", paddingLeft: 8 }} className="hide-scrollbar">
                                 {Object.values(CAMPAIGNS_DATA).map(camp => (
-                                    <button 
+                                    <button
                                         key={camp.id}
                                         onClick={() => {
                                             setMarketingCampaign(camp.id);
@@ -5031,7 +5416,7 @@ const [lppForm, setLppForm] = useState({
                             { id: 'mindset', icon: Icons.Users, label: '2. Psychologie' },
                             { id: 'script', icon: Icons.PhoneCall, label: '3. Script Appel' }
                         ].map(tab => (
-                            <button 
+                            <button
                                 key={tab.id}
                                 onClick={() => setMarketingTab(tab.id)}
                                 style={{
@@ -5134,7 +5519,6 @@ const [lppForm, setLppForm] = useState({
                             )}
                         </div>
                     )}
-
                     {marketingCampaign === 'meta-lpp' && (
                         <div style={{ animation: "fadeIn 0.6s ease-in-out forwards" }}>
                             {marketingTab === 'context' && (
@@ -5294,7 +5678,6 @@ const [lppForm, setLppForm] = useState({
                             )}
                         </div>
                     )}
-
                     {marketingCampaign === 'compte-ch-meta' && (
                         <div style={{ animation: "fadeIn 0.6s ease-in-out forwards" }}>
                             {marketingTab === 'context' && (
@@ -5302,16 +5685,16 @@ const [lppForm, setLppForm] = useState({
                                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
                                         <div style={{ position: "relative", width: "100%", maxWidth: 320, border: `1px solid ${C.mediumGray}`, borderRadius: 12, background: C.white, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", padding: 8, overflow: "hidden" }}>
                                             <div style={{ background: "#fafaf9", borderRadius: 8, overflow: "hidden", position: "relative", width: "100%", aspectRatio: "4/5", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                                <EditableMedia 
-                                                    mediaKey={`compte-ch-meta_img_${compteChIdx}`} 
+                                                <EditableMedia
+                                                    mediaKey={`compte-ch-meta_img_${compteChIdx}`}
                                                     defaultUrl={[
                                                         "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_argent_brule.png",
                                                         "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_diagnostic.png",
                                                         "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_tableau_fache.png",
                                                         "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_peage_douane.png",
                                                         "https://wallswiss.ch/wp-content/uploads/2026/03/frontalier_cadeau_banque.png"
-                                                    ][compteChIdx]} 
-                                                    isVideo={false} 
+                                                    ][compteChIdx]}
+                                                    isVideo={false}
                                                 />
                                             </div>
                                         </div>
@@ -5399,9 +5782,9 @@ const [lppForm, setLppForm] = useState({
                             <div style={{ background: "linear-gradient(135deg, #292524 0%, #44403c 50%, #292524 100%)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", position: "relative", overflow: "hidden" }}>
                                 <div style={{ position: "absolute", top: 0, right: 0, width: 384, height: 384, background: C.accent, borderRadius: "50%", filter: "blur(120px)", opacity: 0.3, pointerEvents: "none" }}></div>
                                 <div style={{ position: "absolute", bottom: 0, left: 0, width: 384, height: 384, background: "#d97706", borderRadius: "50%", filter: "blur(120px)", opacity: 0.2, pointerEvents: "none" }}></div>
-                                
-                                <button 
-                                    onClick={handleCopyScript} 
+
+                                <button
+                                    onClick={handleCopyScript}
                                     style={{
                                         position: "absolute", top: 24, right: 24, zIndex: 20, display: "flex", alignItems: "center", gap: 8, padding: "12px 24px", borderRadius: 9999, border: `1px solid ${marketingCopied ? "rgba(16,185,129,0.5)" : "rgba(255,255,255,0.2)"}`, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", transition: "all 0.2s", cursor: "pointer",
                                         background: marketingCopied ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.1)",
@@ -5480,24 +5863,15 @@ const [lppForm, setLppForm] = useState({
             </main>
           </div>
         )}
-        
- {/* VUE MODULE PLANIFICATION RETRAITE */}
-
- {activeModule === "retraiteR1" && (
-
-<RetraiteR1Module
-
-  user={user}
-
-  db={db}
-
-  appId={appId}
-
-  appSettings={appSettings}
-
-/>
-
-)}
+        {/* VUE MODULE PLANIFICATION RETRAITE */}
+        {activeModule === "retraiteR1" && (
+          <RetraiteR1Module
+            user={user}
+            db={db}
+            appId={appId}
+            appSettings={appSettings}
+          />
+        )}
 
         {/* VUE MODULE RECHERCHE LPP */}
         {activeModule === "rechercheLpp" && (
@@ -5519,9 +5893,9 @@ const [lppForm, setLppForm] = useState({
                 </div>
               </div>
             </header>
-    
+
             <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto", display: "flex", gap: 40, alignItems: "flex-start" }}>
-              
+
               {/* Formulaire */}
               <div style={{ flex: "0 0 450px", display: "flex", flexDirection: "column", gap: 20 }}>
                 <div style={S.card}>
@@ -5551,7 +5925,7 @@ const [lppForm, setLppForm] = useState({
                     <input style={S.input} value={lppForm.telephone} onChange={e=>setLppForm({...lppForm, telephone: e.target.value})} placeholder="+41 79 000 00 00"/>
                   </div>
                 </div>
-    
+
                 <div style={S.card}>
                   <div style={S.cardTitle}><div style={S.dot} /> Informations Société / Mandataire</div>
                   <div style={{ marginBottom: 12 }}>
@@ -5568,7 +5942,7 @@ const [lppForm, setLppForm] = useState({
                   </div>
                 </div>
               </div>
-    
+
                             <div style={S.card}>
                 <div style={S.cardTitle}><div style={S.dot} /> Documents à générer</div>
                 {[
@@ -5586,7 +5960,7 @@ const [lppForm, setLppForm] = useState({
               {/* Prévisualisation Document */}
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 20 }}>
                 <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 40, boxShadow: "0 10px 40px rgba(0,0,0,0.05)", borderRadius: "0px", fontFamily: "'Times New Roman', Times, serif", fontSize: 14, color: C.black, lineHeight: 1.6 }}>
-                   
+
                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 60 }}>
                       <div>
                         {appSettings.defaultLogo ? <img src={appSettings.defaultLogo} alt="Logo" style={{ maxHeight: 60, marginBottom: 20 }} /> : <div style={{ fontSize: 24, fontWeight: "bold", color: C.accent, marginBottom: 20 }}>{lppForm.nomEntreprise || "WallSwiss"}</div>}
@@ -5605,12 +5979,12 @@ const [lppForm, setLppForm] = useState({
                         </div>
                       </div>
                    </div>
-    
+
                    <h3 style={{ fontSize: 18, fontWeight: "bold", textDecoration: "underline", marginBottom: 24 }}>Demande de recherche d'avoirs</h3>
-                   
+
                    <p>Madame, Monsieur,</p>
                    <p>Par la présente, nous vous transmettons par mandat, une demande de recherche d’avoirs de 2ème pilier pour la personne ci-dessous :</p>
-                   
+
                    <div style={{ margin: "24px 0", paddingLeft: 24 }}>
                      <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Nom :</strong> <span>{lppForm.nom || "..."}</span></div>
                      <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Prénom :</strong> <span>{lppForm.prenom || "..."}</span></div>
@@ -5621,12 +5995,12 @@ const [lppForm, setLppForm] = useState({
                      <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Pays :</strong> <span>{lppForm.pays || "..."}</span></div>
                      <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", marginBottom: 4 }}><strong>Téléphone :</strong> <span>{lppForm.telephone || "..."}</span></div>
                    </div>
-    
+
                    <p>Vous trouverez également ci-joint la procuration ainsi qu'une copie de la carte d'identité.</p>
                    <p>Comme cité dans la procuration, nous vous prions de communiquer les résultats de la recherche par courrier ou encore mieux, par courriel.</p>
                    <p>Vous trouverez tous les détails dans notre en-tête.</p>
                    <p>Dans l'attente d'une réponse, nous vous remercions, Madame, Monsieur, pour la suite que vous donnerez à ce dossier.</p>
-                   
+
                    <div style={{ marginTop: 40, display: "flex", justifyContent: "space-between" }}>
                      <div style={{ border: "1px dashed #ccc", padding: "20px 40px", color: "#ccc", textAlign: "center" }}>
                        Signature du mandataire<br/>({lppForm.nomEntreprise || "Entreprise"})
@@ -5655,20 +6029,20 @@ const [lppForm, setLppForm] = useState({
                           </div>
                         </div>
                      </div>
-    
+
                      <h3 style={{ fontSize: 18, fontWeight: "bold", textDecoration: "underline", marginBottom: 24 }}>Procuration</h3>
-                     
+
                      <p>Madame, Monsieur,</p>
                      <p>Je soussigné(e), <strong>{lppForm.nom || "NOM"} {lppForm.prenom || "Prénom"}</strong>, né(e) le <strong>{lppForm.dateNaissance || "xx.xx.xxxx"}</strong> et demeurant à <strong>{lppForm.adresse || "Rue"}, {lppForm.localite || "CPA Ville"}</strong>, autorise la société <strong>{lppForm.nomEntreprise || "Nom société"}</strong>, domiciliée à <strong>{lppForm.adresseEntreprise || "Adresse société"}, {lppForm.cpaVilleEntreprise || "CPA"}</strong>, à se présenter auprès de vos services afin d'effectuer des demandes d'avoirs de 2ème pilier.</p>
-                     
+
                      <p>J’autorise la société <strong>{lppForm.nomEntreprise || "Nom société"}</strong> à vous faire cette demande par courrier électronique et assume les éventuels risques qui en découlent. Je vous autorise à communiquer directement les résultats de la recherche à la société <strong>{lppForm.nomEntreprise || "Nom société"}</strong> par courrier ou courriel.</p>
-                     
+
                      <p>Cette procuration n’est valide que pour la présente demande et les résultats qui en découlent. Elle devient ensuite caduque.</p>
-                     
+
                      <p>Pour tout litige en rapport avec la présente procuration, le for juridique est Genève et seul le droit suisse est applicable.</p>
-                     
+
                      <p>Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.</p>
-    
+
                      <div style={{ marginTop: 40, display: "flex", justifyContent: "space-between" }}>
                        <div>Date, Lieu : _____________________</div>
                        <div style={{ border: "1px dashed #ccc", padding: "30px 60px", color: "#ccc", textAlign: "center" }}>
@@ -5679,7 +6053,7 @@ const [lppForm, setLppForm] = useState({
                 </div>
               </div>
             </main>
-    
+
             {/* Élément caché pour la génération PDF propre */}
             <div style={{ position: "fixed", top: 0, left: 0, zIndex: -1000, opacity: 0.001, pointerEvents: "none" }}>
               <div id="lpp-doc-printable" style={{ width: "800px", padding: "40px", background: "#fff", fontFamily: "'Times New Roman', Times, serif", fontSize: "14px", color: "#000", lineHeight: "1.6", boxSizing: "border-box" }}>
@@ -5718,7 +6092,7 @@ const [lppForm, setLppForm] = useState({
                    <p>Comme cité dans la procuration, nous vous prions de communiquer les résultats de la recherche par courrier ou encore mieux, par courriel.</p>
                    <p>Vous trouverez tous les détails dans notre en-tête.</p>
                    <p>Dans l'attente d'une réponse, nous vous remercions, Madame, Monsieur, pour la suite que vous donnerez à ce dossier.</p>
-                   
+
                    <div style={{ marginTop: 60, display: "flex", justifyContent: "space-between" }}>
                      <div style={{ padding: "0 20px", textAlign: "center" }}>
                        Signature du mandataire :<br/><br/><br/>
@@ -5731,7 +6105,7 @@ const [lppForm, setLppForm] = useState({
                    </div>
 
                    <div className="html2pdf__page-break"></div>
-                   
+
                    <div style={{ marginTop: 20, paddingTop: 20 }}>
                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 40 }}>
                         <div>
@@ -5770,7 +6144,6 @@ const [lppForm, setLppForm] = useState({
             </div>
           </div>
         )}
-
         {/* VUE MODULE ANNUAIRE */}
         {activeModule === "annuaire" && (
           <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -5789,7 +6162,7 @@ const [lppForm, setLppForm] = useState({
                   <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 28, fontWeight: 700, color: C.accent, margin: 0 }}>Contacts & Partenaires</h2>
                   <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Retrouvez les informations de contact de nos principaux partenaires.</p>
                 </div>
-                
+
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
                   {[
                     { nom: "Swissquote", type: "Banque / Dépôt", contact: "Desk B2B", tel: "+41 44 825 89 90", email: "b2b-desk@swissquote.ch", url: "https://trade.swissquote.ch/my.policy" },
@@ -5804,7 +6177,7 @@ const [lppForm, setLppForm] = useState({
                         <span style={{ background: "rgba(165,149,104,0.1)", color: C.goldDeep, fontSize: 10, fontWeight: 700, padding: "4px 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{partenaire.type}</span>
                       </div>
                       <h3 style={{ fontSize: 18, fontWeight: 800, color: C.accentDark, margin: 0 }}>{partenaire.nom}</h3>
-                      
+
                       <div style={{ display: "grid", gap: 12 }}>
                         {partenaire.contact && (
                           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -5822,8 +6195,8 @@ const [lppForm, setLppForm] = useState({
                         </div>
                       </div>
                       {partenaire.url && (
-                        <button 
-                          onClick={() => window.open(partenaire.url, "_blank")} 
+                        <button
+                          onClick={() => window.open(partenaire.url, "_blank")}
                           style={{ marginTop: 20, width: "100%", background: "transparent", border: `1px solid ${C.mediumGray}`, color: C.accent, padding: "10px 0", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", transition: "0.2s", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, borderRadius: 999 }}
                           onMouseEnter={(e)=>e.currentTarget.style.background="rgba(105,33,2,0.04)"}
                           onMouseLeave={(e)=>e.currentTarget.style.background="transparent"}
@@ -5891,10 +6264,10 @@ const [lppForm, setLppForm] = useState({
                     </h3>
                     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                       {categorie.docs.map((doc, i) => (
-                        <div 
-                          key={i} 
-                          style={{ background: C.white, border: `1px solid ${C.lightGray}`, borderLeft: `4px solid transparent`, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all 0.2s", borderRadius: "14px" }} 
-                          onMouseEnter={(e)=> { e.currentTarget.style.borderLeftColor = C.goldUI; e.currentTarget.style.background = "rgba(165,149,104,0.02)"; e.currentTarget.style.boxShadow = "0 4px 15px rgba(0,0,0,0.03)"; }} 
+                        <div
+                          key={i}
+                          style={{ background: C.white, border: `1px solid ${C.lightGray}`, borderLeft: `4px solid transparent`, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all 0.2s", borderRadius: "14px" }}
+                          onMouseEnter={(e)=> { e.currentTarget.style.borderLeftColor = C.goldUI; e.currentTarget.style.background = "rgba(165,149,104,0.02)"; e.currentTarget.style.boxShadow = "0 4px 15px rgba(0,0,0,0.03)"; }}
                           onMouseLeave={(e)=> { e.currentTarget.style.borderLeftColor = "transparent"; e.currentTarget.style.background = C.white; e.currentTarget.style.boxShadow = "none"; }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
@@ -5906,7 +6279,7 @@ const [lppForm, setLppForm] = useState({
                               <div style={{ fontSize: 13, color: C.gray }}>{doc.desc}</div>
                             </div>
                           </div>
-                          <button 
+                          <button
                             onClick={(e) => {
                               e.preventDefault();
                               const link = document.createElement('a');
@@ -5915,7 +6288,7 @@ const [lppForm, setLppForm] = useState({
                               document.body.appendChild(link);
                               link.click();
                               document.body.removeChild(link);
-                            }} 
+                            }}
                             style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.accentDark, padding: "10px 24px", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 10, borderRadius: "999px" }}
                             onMouseEnter={(e)=> { e.currentTarget.style.background = C.accent; e.currentTarget.style.color = C.white; e.currentTarget.style.borderColor = C.accent; }}
                             onMouseLeave={(e)=> { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.accentDark; e.currentTarget.style.borderColor = C.mediumGray; }}
@@ -5931,7 +6304,6 @@ const [lppForm, setLppForm] = useState({
             </main>
           </div>
         )}
-
         {/* VUE MODULE MAILS TYPES */}
         {activeModule === "mails" && (
           <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -5952,9 +6324,9 @@ const [lppForm, setLppForm] = useState({
                     <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Centralisation de vos emails types pour un envoi rapide en un clic.</p>
                   </div>
                   <div style={{ width: "300px" }}>
-                    <input 
-                      style={{ ...S.input, borderRadius: "20px", padding: "10px 20px" }} 
-                      placeholder="Rechercher un mail..." 
+                    <input
+                      style={{ ...S.input, borderRadius: "20px", padding: "10px 20px" }}
+                      placeholder="Rechercher un mail..."
                       value={mailSearch}
                       onChange={(e) => setMailSearch(e.target.value)}
                     />
@@ -5964,7 +6336,7 @@ const [lppForm, setLppForm] = useState({
                 {/* Filtres par catégorie */}
                 <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 16, marginBottom: 16 }}>
                   {["Toutes", "Rendez-vous", "CMU / Fiscalité", "Prévoyance", "LPP", "Suivi", "Investissements", "Événements", "Divers"].map(cat => (
-                    <button 
+                    <button
                       key={cat}
                       onClick={() => setMailCat(cat)}
                       style={{
@@ -6006,7 +6378,7 @@ const [lppForm, setLppForm] = useState({
                           {mail.corps}
                         </p>
                       </div>
-                      
+
                       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
                         <div style={{ display: "flex", gap: 8 }}>
                           <button onClick={() => handleCopy(mail.objet, "Objet copié !")} style={{ flex: 1, background: C.white, border: `1px solid ${C.mediumGray}`, color: C.accentDark, padding: "8px 0", fontSize: 11, fontWeight: 700, cursor: "pointer", transition: "0.2s", display: "flex", justifyContent: "center", alignItems: "center", gap: 6, borderRadius: 999 }} onMouseEnter={e=>{e.currentTarget.style.background=C.cardSoft}} onMouseLeave={e=>{e.currentTarget.style.background=C.white}}>
@@ -6042,7 +6414,7 @@ const [lppForm, setLppForm] = useState({
                     </div>
                     <button onClick={() => setSelectedMail(null)} style={{ background: "transparent", border: "none", fontSize: 24, color: C.gray, cursor: "pointer" }}>&times;</button>
                   </div>
-                  
+
                   <div style={{ padding: "32px", overflowY: "auto", flex: 1 }}>
                     {selectedMail.pieceJointe && (
                       <div style={{ background: "rgba(165,149,104,0.1)", borderLeft: `4px solid ${C.goldUI}`, padding: "12px 16px", marginBottom: 24, fontSize: 13, color: C.darkGray, display: "flex", alignItems: "center", gap: 12 }}>
@@ -6050,7 +6422,7 @@ const [lppForm, setLppForm] = useState({
                         <strong>Pièce(s) jointe(s) recommandée(s) :</strong> {selectedMail.pieceJointe}
                       </div>
                     )}
-                    
+
                     <div style={{ marginBottom: 24 }}>
                       <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Objet du mail</div>
                       <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: "12px 16px", fontSize: 14, fontWeight: 600, color: C.accentDark, display: "flex", justifyContent: "space-between", alignItems: "center", borderRadius: 12 }}>
@@ -6058,7 +6430,7 @@ const [lppForm, setLppForm] = useState({
                         <button onClick={() => handleCopy(selectedMail.objet, "Objet copié !")} style={{ background: "transparent", border: "none", color: C.accent, cursor: "pointer" }} title="Copier l'objet"><Icons.Copy size={18}/></button>
                       </div>
                     </div>
-                    
+
                     <div>
                       <div style={{ fontSize: 11, color: C.gray, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Corps du message</div>
                       <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: "20px", fontSize: 13, color: C.darkGray, whiteSpace: "pre-wrap", lineHeight: 1.6, position: "relative", borderRadius: 12 }}>
@@ -6069,7 +6441,7 @@ const [lppForm, setLppForm] = useState({
                       </div>
                     </div>
                   </div>
-                  
+
                   <div style={{ padding: "20px 32px", borderTop: `1px solid ${C.mediumGray}`, display: "flex", justifyContent: "flex-end", gap: 16 }}>
                   <button onClick={() => handleCopy(`${selectedMail.objet}\n\n${selectedMail.corps}`, "Objet et Corps copiés !")} style={{ ...S.btnP, display: "flex", alignItems: "center", gap: 8 }}>
                     <Icons.Copy size={16}/> Tout Copier (Objet + Corps)
@@ -6081,7 +6453,6 @@ const [lppForm, setLppForm] = useState({
           )}
         </div>
       )}
-
       {/* VUE PARAMÈTRES & INTÉGRATIONS */}
       {activeModule === "settings" && (
           <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -6093,9 +6464,9 @@ const [lppForm, setLppForm] = useState({
                 </div>
                 <nav style={{ display: "flex", gap: 8 }}>
                   {[["profile","Profil Agent"],["design","Marque & Design"],["reports","Envoi Rapports"],["campaigns","Campagnes Mailing"]].map(([p,l]) => (
-                    <button 
-                      key={p} 
-                      onClick={() => setSettingsTab(p)} 
+                    <button
+                      key={p}
+                      onClick={() => setSettingsTab(p)}
                       style={{ background: settingsTab===p ? "rgba(105,33,2,0.06)" : "transparent", color: settingsTab===p ? C.accent : C.gray, border: "none", padding: "8px 16px", cursor: "pointer", fontFamily: "'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif", fontSize: 13, fontWeight: settingsTab===p?700:500, borderRadius: "999px", transition: "0.2s" }}
                     >
                       {l}
@@ -6107,7 +6478,7 @@ const [lppForm, setLppForm] = useState({
 
             <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto" }}>
               <div style={{ width: "100%", maxWidth: 800, margin: "0 auto" }}>
-                
+
                 {settingsTab === "profile" && (
                   <div style={S.card}>
                     <div style={S.cardTitle}><div style={S.dot} /> Configuration de l'Agent</div>
@@ -6179,21 +6550,21 @@ const [lppForm, setLppForm] = useState({
 
                     <div style={S.fg}>
                       <label style={S.label}>URL du Webhook - Rapports financiers (Email)</label>
-                      <input 
-                        style={S.input} 
-                        value={appSettings.reportWebhookUrl || ""} 
-                        onChange={e => setAppSettings({...appSettings, reportWebhookUrl: e.target.value})} 
-                        placeholder="https://hook.eu1.make.com/..." 
+                      <input
+                        style={S.input}
+                        value={appSettings.reportWebhookUrl || ""}
+                        onChange={e => setAppSettings({...appSettings, reportWebhookUrl: e.target.value})}
+                        placeholder="https://hook.eu1.make.com/..."
                       />
                     </div>
 
                     <div style={S.fg}>
                       <label style={{...S.label, color: C.accentDark}}>URL du Webhook - Signature Yousign (Module LPP)</label>
-                      <input 
-                        style={{...S.input, borderLeft: `3px solid ${C.goldUI}`}} 
-                        value={appSettings.lppWebhookUrl || ""} 
-                        onChange={e => setAppSettings({...appSettings, lppWebhookUrl: e.target.value})} 
-                        placeholder="https://hook.eu1.make.com/..." 
+                      <input
+                        style={{...S.input, borderLeft: `3px solid ${C.goldUI}`}}
+                        value={appSettings.lppWebhookUrl || ""}
+                        onChange={e => setAppSettings({...appSettings, lppWebhookUrl: e.target.value})}
+                        placeholder="https://hook.eu1.make.com/..."
                       />
                       <div style={{ fontSize: 11, color: C.gray, marginTop: 4 }}>Ce webhook recevra : nom, prenom, email, telephone, et le pdfBase64.</div>
                     </div>
@@ -6202,19 +6573,19 @@ const [lppForm, setLppForm] = useState({
 
                     <div style={S.fg}>
                       <label style={S.label}>Sujet de l'e-mail par défaut (Rapports)</label>
-                      <input 
-                        style={S.input} 
-                        value={appSettings.emailSubject || ""} 
-                        onChange={e => setAppSettings({...appSettings, emailSubject: e.target.value})} 
+                      <input
+                        style={S.input}
+                        value={appSettings.emailSubject || ""}
+                        onChange={e => setAppSettings({...appSettings, emailSubject: e.target.value})}
                       />
                     </div>
 
                     <div style={S.fg}>
                       <label style={S.label}>Corps de l'e-mail par défaut (Rapports)</label>
-                      <textarea 
-                        style={{...S.input, minHeight: 120, resize: "vertical"}} 
-                        value={appSettings.emailBody || ""} 
-                        onChange={e => setAppSettings({...appSettings, emailBody: e.target.value})} 
+                      <textarea
+                        style={{...S.input, minHeight: 120, resize: "vertical"}}
+                        value={appSettings.emailBody || ""}
+                        onChange={e => setAppSettings({...appSettings, emailBody: e.target.value})}
                       />
                     </div>
                   </div>
@@ -6227,11 +6598,11 @@ const [lppForm, setLppForm] = useState({
 
                     <div style={S.fg}>
                       <label style={S.label}>URL du Webhook (Campagnes en masse)</label>
-                      <input 
-                        style={S.input} 
-                        value={appSettings.campaignWebhookUrl || ""} 
-                        onChange={e => setAppSettings({...appSettings, campaignWebhookUrl: e.target.value})} 
-                        placeholder="https://hook.eu1.make.com/..." 
+                      <input
+                        style={S.input}
+                        value={appSettings.campaignWebhookUrl || ""}
+                        onChange={e => setAppSettings({...appSettings, campaignWebhookUrl: e.target.value})}
+                        placeholder="https://hook.eu1.make.com/..."
                       />
                       <div style={{ fontSize: 11, color: C.gray, marginTop: 4 }}>Ce webhook recevra un tableau d'identifiants ou d'emails pour déclencher votre scénario d'envoi en masse.</div>
                     </div>
@@ -6239,8 +6610,8 @@ const [lppForm, setLppForm] = useState({
                 )}
 
                 <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
-                  <button 
-                    onClick={() => updateSettings(appSettings)} 
+                  <button
+                    onClick={() => updateSettings(appSettings)}
                     style={S.btnP}
                   >
                     Enregistrer les paramètres
@@ -6250,11 +6621,10 @@ const [lppForm, setLppForm] = useState({
             </main>
           </div>
         )}
-
         {/* VUE MODULE RAPPORT FINANCIER */}
         {activeModule === "rapport" && (
           <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-            
+
             {/* Header interne du module Rapport */}
             <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
               <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -6264,9 +6634,9 @@ const [lppForm, setLppForm] = useState({
                 </div>
                 <nav style={{ display: "flex", gap: 8 }}>
                   {[["dashboard","Tableau de bord"],["create","Créer un rapport"]].map(([p,l]) => (
-                    <button 
-                      key={p} 
-                      onClick={()=>{setRapportPage(p);if(p==="create")setStep(0);}} 
+                    <button
+                      key={p}
+                      onClick={()=>{setRapportPage(p);if(p==="create")setStep(0);}}
                       style={{ background: rapportPage===p ? "rgba(105,33,2,0.06)" : "transparent", color: rapportPage===p ? C.accent : C.gray, border: "none", padding: "8px 16px", cursor: "pointer", fontFamily: "'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif", fontSize: 13, fontWeight: rapportPage===p?700:500, borderRadius: "999px", transition: "0.2s" }}
                     >
                       {l}
@@ -6293,23 +6663,23 @@ const [lppForm, setLppForm] = useState({
                           {user?.email === ADMIN_EMAIL ? "Tous les rapports (Cabinet)" : "Mes rapports récents"}
                         </h2>
                         <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>
-                          {user?.email === ADMIN_EMAIL 
-                            ? `Vue globale : ${reports.length} rapport(s) sur l'ensemble des agents.` 
+                          {user?.email === ADMIN_EMAIL
+                            ? `Vue globale : ${reports.length} rapport(s) sur l'ensemble des agents.`
                             : `Vous avez ${reports.length} rapport${reports.length>1?"s":""} enregistré${reports.length>1?"s":""}.`}
                         </p>
                       </div>
                       <button style={S.btnP} onClick={()=>{setRapportPage("create");resetForm();}}>+ Nouveau rapport</button>
                     </div>
-                    
+
                     {[
-                      { id: "swissquote", title: "Compte-titres" }, 
-                      { id: "prevoyance", title: "Prévoyance (3A/3B)" }, 
+                      { id: "swissquote", title: "Compte-titres" },
+                      { id: "prevoyance", title: "Prévoyance (3A/3B)" },
                       { id: "lpp", title: "2ème Pilier LPP" },
                       { id: "assurance-vie", title: "Assurance Vie & PER" }
                     ].map(cat => {
                       const catReports = reports.filter(r => r.templateId === cat.id);
                       if (catReports.length === 0) return null;
-                      
+
                       return (
                         <div key={cat.id} style={{ marginBottom: 40 }}>
                           <h3 style={{ fontSize: 14, color: C.gray, textTransform: "uppercase", letterSpacing: "0.1em", borderBottom: `2px solid ${C.mediumGray}`, paddingBottom: 8, marginBottom: 20 }}>{cat.title}</h3>
@@ -6331,8 +6701,8 @@ const [lppForm, setLppForm] = useState({
                                       {r.templateId === "prevoyance" ? "Épargne simulée" : r.templateId === "lpp" ? "Libre Passage" : r.templateId === "assurance-vie" ? "Assurance Vie" : "Montant simulé"}
                                     </div>
                                     <div style={{ fontSize: 13, color: C.accent, fontWeight: 600 }}>
-                                      {r.templateId === "prevoyance" 
-                                        ? `CHF ${fmt(r.capaciteEpargne || 500)}.-/mois` 
+                                      {r.templateId === "prevoyance"
+                                        ? `CHF ${fmt(r.capaciteEpargne || 500)}.-/mois`
                                         : r.templateId === "lpp"
                                         ? `CHF ${fmt(r.capitalLibrePassage || 120000)}.-`
                                         : `CHF ${fmt(r.montantInvestissement||100000)}.-`
@@ -6360,7 +6730,7 @@ const [lppForm, setLppForm] = useState({
                 <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
                   <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 28, fontWeight: 700, color: C.accent, margin: "0 0 4px" }}>Générateur de rapport</h2>
                   <p style={{ color: C.gray, fontSize: 13, marginBottom: 32 }}>Suivez les étapes pour configurer la proposition patrimoniale de votre client.</p>
-                  
+
                   <div style={{ display: "flex", gap: 4, marginBottom: 32, background: "transparent" }}>
                     {stepLabels.map((l,i) => (
                       <div key={i} onClick={()=>setStep(i)} style={{ flex: 1, textAlign: "center", padding: "12px 6px", fontSize: 11, fontWeight: step===i?700:600, color: step===i?C.white:step>i?C.accent:C.gray, background: step===i?C.accent:step>i?"rgba(105,33,2,0.06)":C.white, border: `1px solid ${step===i?C.accent:step>i?"rgba(105,33,2,0.1)":C.mediumGray}`, cursor: "pointer", letterSpacing: "0.04em", transition: "all 0.2s", borderRadius: "10px", position: "relative" }}>
@@ -6368,9 +6738,9 @@ const [lppForm, setLppForm] = useState({
                       </div>
                     ))}
                   </div>
-                  
+
                   {renderStep()}
-                  
+
                   <div style={{ display: "flex", justifyContent: "space-between", marginTop: 32 }}>
                   <button style={{ ...S.btnS, opacity: step===0?0:1, pointerEvents: step===0?"none":"auto" }} onClick={()=>setStep(s=>s-1)}>&larr; Précédent</button>
                   {step < 6 && <button style={S.btnP} onClick={()=>setStep(s=>s+1)}>Étape Suivante &rarr;</button>}
@@ -6380,7 +6750,10 @@ const [lppForm, setLppForm] = useState({
           </main>
         </div>
       )}
-    </div>
+      </div>
+
+    {/* ── AJOUT SOMMAIRE : tiroir latéral (overlay fixe, hors flux) ── */}
+    <SommaireDrawer open={sidebarOpen} onClose={() => setSidebarOpen(false)} onNavigate={handleSommaireNav} activeId={activePage?.id} />
 
     {/* Toast Notification Globale */}
     {toastMsg && (

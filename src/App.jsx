@@ -3771,90 +3771,132 @@ const WS_MENU = [
   },
 ];
 
-// Tiroir latéral repliable : arborescence complète + recherche + fil d'Ariane.
-function SommaireDrawer({ open, onClose, onNavigate, activeId }) {
-  const [expanded, setExpanded] = useState({ "1": true });
-  const [query, setQuery] = useState("");
+// Navigation "Sommaire" INTÉGRÉE AU HUB : onglets (7 sections) + sous-onglets
+// (sous-sections) + cartes cliquables. Aucun menu latéral.
+function HubSommaire({ onNavigate }) {
+  const [sectionId, setSectionId] = useState(WS_MENU[0].id);
+  const [subId, setSubId] = useState(null);
+  const [drillId, setDrillId] = useState(null);
 
-  const toggle = (id) => setExpanded(p => ({ ...p, [id]: !p[id] }));
+  const section = WS_MENU.find(s => s.id === sectionId) || WS_MENU[0];
+  const sectionChildren = section.children || [];
+  const subTabs = sectionChildren.filter(c => c.children && c.children.length);         // sous-onglets = enfants "parents"
+  const leafChildren = sectionChildren.filter(c => !(c.children && c.children.length));  // feuilles directes de la section
 
-  const matches = (node) => {
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-    if ((node.title || "").toLowerCase().includes(q) || (node.num || "").includes(q)) return true;
-    if (node.children) return node.children.some(matches);
-    return false;
+  const sub = subId ? sectionChildren.find(c => c.id === subId) : null;
+  const drill = (sub && drillId) ? (sub.children || []).find(c => c.id === drillId) : null;
+
+  // Cartes affichées + fil d'Ariane
+  let cards, crumb;
+  if (drill) { cards = drill.children || []; crumb = [section.title, sub.title, drill.title]; }
+  else if (sub) { cards = sub.children || []; crumb = [section.title, sub.title]; }
+  else { cards = leafChildren; crumb = [section.title]; }
+
+  const selectSection = (s) => {
+    // Section-feuille (ex. Annuaires) → ouverture directe
+    if (s.action && !(s.children && s.children.length)) { onNavigate(s, [s.title]); return; }
+    setSectionId(s.id); setSubId(null); setDrillId(null);
   };
 
-  const renderNode = (node, depth, path) => {
-    if (!matches(node)) return null;
-    const hasChildren = node.children && node.children.length > 0;
-    const isOpen = query.trim() ? true : !!expanded[node.id];
-    const isActive = activeId === node.id;
-    const fullPath = [...path, node.title];
-    const Ico = depth === 0 && node.icon ? Icons[node.icon] : null;
-    return (
-      <div key={node.id}>
-        <div
-          onClick={() => { if (hasChildren) toggle(node.id); if (node.action || !hasChildren) onNavigate(node, fullPath); }}
-          style={{
-            display: "flex", alignItems: "center", gap: 10,
-            padding: depth === 0 ? "11px 12px" : "8px 12px",
-            paddingLeft: 14 + depth * 15,
-            margin: "1px 8px", borderRadius: 10, cursor: "pointer",
-            background: isActive ? C.accentSoft : "transparent",
-            color: isActive ? C.accent : (depth === 0 ? C.text : C.muted),
-            fontWeight: depth === 0 ? 700 : (isActive ? 600 : 500),
-            fontSize: depth === 0 ? 13.5 : 12.5,
-            transition: "background .15s, color .15s"
-          }}
-          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = C.bgSoft; }}
-          onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
-        >
-          {Ico ? (
-            <span style={{ color: C.accent, display: "flex", flexShrink: 0 }}><Ico size={17} /></span>
-          ) : (
-            <span style={{ fontSize: 10, fontFamily: F.mono, color: C.dim, flexShrink: 0, minWidth: 30 }}>{node.num}</span>
-          )}
-          <span style={{ flex: 1, lineHeight: 1.35 }}>{node.title}</span>
-          {hasChildren && (
-            <span style={{ color: C.dim, fontSize: 10, transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .15s", flexShrink: 0 }}>▶</span>
-          )}
-        </div>
-        {hasChildren && isOpen && (
-          <div>{node.children.map(child => renderNode(child, depth + 1, fullPath))}</div>
-        )}
-      </div>
-    );
+  const clickCard = (node) => {
+    if (node.children && node.children.length) { setDrillId(node.id); return; } // parent → on descend d'un niveau
+    onNavigate(node, [...crumb, node.title]);
   };
 
   return (
-    <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none", transition: "opacity .25s", zIndex: 250 }} />
-      <aside style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: 340, maxWidth: "88vw", background: C.card, borderRight: `1px solid ${C.line}`, boxShadow: "0 20px 60px rgba(0,0,0,0.18)", zIndex: 260, transform: open ? "translateX(0)" : "translateX(-100%)", transition: "transform .28s cubic-bezier(.4,0,.2,1)", display: "flex", flexDirection: "column", fontFamily: F.ui }}>
-        <div style={{ padding: "18px 20px 14px", borderBottom: `1px solid ${C.line}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div>
-            <div style={{ fontSize: 10, color: C.dim, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>WallSwiss</div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: C.text, letterSpacing: "-0.01em" }}>Sommaire</div>
+    <div style={{ flex: 1, minHeight: "calc(100vh - 60px)", boxSizing: "border-box", padding: "40px 40px 60px", overflowY: "auto", background: "radial-gradient(1100px 700px at 50% -10%, #FFFFFF, #F1F2F5)" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+
+        {/* Titre */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 18px rgba(105,33,2,.28)" }}>
+            <img src={LOGO_URL} alt="WallSwiss" style={{ height: 22, filter: "brightness(0) invert(1)" }} />
           </div>
-          <button onClick={onClose} title="Fermer" style={{ background: "transparent", border: "none", color: C.muted, cursor: "pointer", fontSize: 18, width: 34, height: 34, borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center" }} onMouseEnter={e=>e.currentTarget.style.background=C.bgSoft} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>✕</button>
+          <div>
+            <div style={{ fontSize: 10, color: C.dim, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase" }}>Espace de travail</div>
+            <h1 style={{ fontFamily: F.serif, fontSize: 26, fontWeight: 700, color: C.text, margin: 0, letterSpacing: "-0.02em" }}>Sommaire WallSwiss</h1>
+          </div>
         </div>
-        <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.line}` }}>
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Rechercher dans le sommaire…" style={{ width: "100%", padding: "9px 12px", border: `1px solid ${C.line2}`, borderRadius: 10, fontSize: 13, fontFamily: F.ui, outline: "none", boxSizing: "border-box", color: C.text, background: C.bgSoft }} />
+
+        {/* ONGLETS = sections */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: subTabs.length ? 16 : 24 }}>
+          {WS_MENU.map(s => {
+            const isLeafSection = s.action && !(s.children && s.children.length);
+            const on = s.id === sectionId && !isLeafSection;
+            const Ico = s.icon ? Icons[s.icon] : null;
+            return (
+              <button key={s.id} onClick={() => selectSection(s)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 980, border: `1px solid ${on ? C.accent : C.line2}`, background: on ? C.accent : C.card, color: on ? "#fff" : C.text, cursor: "pointer", fontFamily: F.ui, fontSize: 13.5, fontWeight: 600, transition: "all .18s", boxShadow: on ? "0 4px 12px rgba(105,33,2,.22)" : "none" }}
+                onMouseEnter={e => { if (!on) e.currentTarget.style.background = C.bgSoft; }}
+                onMouseLeave={e => { if (!on) e.currentTarget.style.background = C.card; }}>
+                {Ico && <Ico size={16} color={on ? "#fff" : C.accent} />}
+                {s.title}
+              </button>
+            );
+          })}
         </div>
-        <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
-          {WS_MENU.some(matches) ? WS_MENU.map(node => renderNode(node, 0, [])) : (
-            <div style={{ padding: 24, textAlign: "center", color: C.dim, fontSize: 13 }}>Aucun résultat pour « {query} ».</div>
+
+        {/* SOUS-ONGLETS = sous-sections (parents) de la section active */}
+        {subTabs.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 24, paddingBottom: 16, borderBottom: `1px solid ${C.line}` }}>
+            <button onClick={() => { setSubId(null); setDrillId(null); }}
+              style={{ padding: "7px 14px", borderRadius: 980, border: "none", background: !sub ? C.accentSoft : "transparent", color: !sub ? C.accent : C.muted, cursor: "pointer", fontFamily: F.ui, fontSize: 12.5, fontWeight: !sub ? 700 : 500 }}>
+              Principal
+            </button>
+            {subTabs.map(st => {
+              const on = sub && sub.id === st.id;
+              return (
+                <button key={st.id} onClick={() => { setSubId(st.id); setDrillId(null); }}
+                  style={{ padding: "7px 14px", borderRadius: 980, border: "none", background: on ? C.accentSoft : "transparent", color: on ? C.accent : C.muted, cursor: "pointer", fontFamily: F.ui, fontSize: 12.5, fontWeight: on ? 700 : 500 }}>
+                  {st.title}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Fil d'Ariane (niveaux profonds) */}
+        {(sub || drill) && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: C.muted, marginBottom: 16 }}>
+            <span onClick={() => { setSubId(null); setDrillId(null); }} style={{ cursor: "pointer", color: C.accent, fontWeight: 600 }}>{section.title}</span>
+            {sub && <><span style={{ color: C.dim }}>›</span><span onClick={() => setDrillId(null)} style={{ cursor: drill ? "pointer" : "default", color: drill ? C.accent : C.text, fontWeight: drill ? 600 : 700 }}>{sub.title}</span></>}
+            {drill && <><span style={{ color: C.dim }}>›</span><span style={{ color: C.text, fontWeight: 700 }}>{drill.title}</span></>}
+          </div>
+        )}
+
+        {/* CARTES */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
+          {cards.map(node => {
+            const isParent = node.children && node.children.length;
+            const isModule = node.action?.type === "module";
+            const isUrl = node.action?.type === "url";
+            return (
+              <div key={node.id} onClick={() => clickCard(node)}
+                style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 16, padding: "18px 20px", cursor: "pointer", boxShadow: "0 1px 2px rgba(0,0,0,.04), 0 10px 26px rgba(0,0,0,.05)", transition: "transform .18s, box-shadow .18s, border-color .18s", display: "flex", alignItems: "center", gap: 14 }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 14px 34px rgba(0,0,0,.10)"; e.currentTarget.style.borderColor = C.accentSoft; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 1px 2px rgba(0,0,0,.04), 0 10px 26px rgba(0,0,0,.05)"; e.currentTarget.style.borderColor = C.line; }}>
+                <div style={{ width: 40, height: 40, borderRadius: 11, background: C.accentSoft, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: F.mono, fontWeight: 700, fontSize: 12 }}>{node.num}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.text, lineHeight: 1.3 }}>{node.title}</div>
+                  <div style={{ fontSize: 11, color: C.dim, marginTop: 3 }}>
+                    {isParent ? `${node.children.length} sous-rubriques` : isModule ? "Ouvrir le module" : isUrl ? "Lien externe" : "Ouvrir"}
+                  </div>
+                </div>
+                <span style={{ color: C.dim, fontSize: 15, flexShrink: 0 }}>{isParent ? "›" : isUrl ? "↗" : "→"}</span>
+              </div>
+            );
+          })}
+          {cards.length === 0 && (
+            <div style={{ gridColumn: "1 / -1", padding: 40, textAlign: "center", color: C.dim, fontSize: 13 }}>Aucun élément dans cette rubrique.</div>
           )}
         </div>
-        <div style={{ padding: "12px 20px", borderTop: `1px solid ${C.line}`, fontSize: 11, color: C.dim, textAlign: "center" }}>{APP_VERSION}</div>
-      </aside>
-    </>
+      </div>
+    </div>
   );
 }
 
 // Page générique (placeholder « en construction ») pour les onglets neufs du sommaire.
-function DocPageView({ page, onHome, onOpenSommaire }) {
+function DocPageView({ page, onHome }) {
   if (!page) return null;
   const path = page.path || [page.title];
   return (
@@ -3888,8 +3930,7 @@ function DocPageView({ page, onHome, onOpenSommaire }) {
             La page <strong style={{ color: C.text }}>« {page.title} »</strong> est prête à accueillir son contenu. La structure de navigation est en place ; le contenu (procédures, documents, outils ou fiches de connaissances) sera ajouté ici prochainement.
           </p>
           <div style={{ display: "flex", gap: 12, marginTop: 8, flexWrap: "wrap", justifyContent: "center" }}>
-            <button onClick={onOpenSommaire} style={S.btnP}>Ouvrir le sommaire</button>
-            <button onClick={onHome} style={S.btnS}>← Retour à l'accueil</button>
+            <button onClick={onHome} style={S.btnP}>← Retour au sommaire</button>
           </div>
         </div>
       </div>
@@ -3947,13 +3988,12 @@ function WallSwissAppMain() {
   };
 
   const [activeModule, setActiveModule] = useState("hub");
-  // ── AJOUT SOMMAIRE : état du tiroir latéral + page placeholder active ──
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // ── SOMMAIRE : navigation via le hub (onglets/sous-onglets) → page placeholder ──
   const [activePage, setActivePage] = useState(null);
   const handleSommaireNav = (node, path) => {
-    if (node.action?.type === "url") { if (typeof window !== "undefined") window.open(node.action.url, "_blank"); setSidebarOpen(false); return; }
-    if (node.action?.type === "module") { setActiveModule(node.action.module); setSidebarOpen(false); return; }
-    setActivePage({ ...node, path }); setActiveModule("page"); setSidebarOpen(false);
+    if (node.action?.type === "url") { if (typeof window !== "undefined") window.open(node.action.url, "_blank"); return; }
+    if (node.action?.type === "module") { setActiveModule(node.action.module); return; }
+    setActivePage({ ...node, path }); setActiveModule("page");
   };
   const [rapportPage, setRapportPage] = useState("dashboard");
   const [step, setStep] = useState(0);
@@ -5201,14 +5241,6 @@ const [lppForm, setLppForm] = useState({
 
       {/* ────────────────── BARRE DE NAVIGATION SUPÉRIEURE ────────────────── */}
       <header className="no-print" style={{ display: "flex", alignItems: "center", gap: 18, height: 60, padding: "0 24px", background: "rgba(255,255,255,0.82)", backdropFilter: "saturate(180%) blur(20px)", WebkitBackdropFilter: "saturate(180%) blur(20px)", borderBottom: `1px solid ${C.line}`, flexShrink: 0, zIndex: 200 }}>
-        {/* Bouton Sommaire (ouvre le tiroir latéral) */}
-        <button onClick={() => setSidebarOpen(true)} title="Ouvrir le sommaire WallSwiss" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: activeModule === "page" ? C.accentSoft : "transparent", color: activeModule === "page" ? C.accent : C.muted, border: "none", padding: "8px 12px", borderRadius: 980, cursor: "pointer", fontFamily: F.ui, fontSize: 13.5, fontWeight: 600, flexShrink: 0, transition: "background .18s, color .18s" }} onMouseEnter={(e) => { e.currentTarget.style.background = C.bgSoft; e.currentTarget.style.color = C.text; }} onMouseLeave={(e) => { if (activeModule !== "page") { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.muted; } }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-          Sommaire
-        </button>
-
-        <div style={{ width: 1, height: 24, background: C.line, flexShrink: 0 }} />
-
         {/* Marque */}
         <div onClick={() => setActiveModule("hub")} style={{ display: "flex", alignItems: "center", gap: 11, cursor: "pointer", flexShrink: 0, paddingRight: 6 }}>
           <div style={{ width: 30, height: 30, borderRadius: 9, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(105,33,2,.30)" }}>
@@ -5283,60 +5315,12 @@ const [lppForm, setLppForm] = useState({
 
         {/* VUE PAGE SOMMAIRE (placeholder « en construction ») */}
         {activeModule === "page" && (
-          <DocPageView page={activePage} onHome={() => setActiveModule("hub")} onOpenSommaire={() => setSidebarOpen(true)} />
+          <DocPageView page={activePage} onHome={() => setActiveModule("hub")} />
         )}
 
-        {/* VUE HUB — Mode Hub & Satellites */}
+        {/* VUE HUB — Sommaire à onglets / sous-onglets */}
         {activeModule === "hub" && (
-          <div style={{ position: "relative", flex: 1, minHeight: "calc(100vh - 60px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", background: "radial-gradient(1000px 600px at 50% 45%, #FFFFFF, #EEF0F3)" }}>
-            <div style={{ position: "relative", width: 640, height: 640, maxWidth: "92vw", maxHeight: "92vw" }}>
-
-              {/* anneaux décoratifs */}
-              <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 420, height: 420, borderRadius: "50%", border: `1px dashed ${C.line2}`, opacity: 0.6 }} />
-              <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 620, height: 620, borderRadius: "50%", border: `1px dashed ${C.line2}`, opacity: 0.5 }} />
-
-              {/* rayons */}
-              <svg viewBox="0 0 640 640" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
-                {["rapport", "annuaire", "ressources", "mails", "marketing", "rechercheLpp", "retraiteR1", "crm", "settings"].map((id, i, arr) => {
-                  const a = (-90 + i * (360 / arr.length)) * Math.PI / 180;
-                  return <line key={id} x1={320} y1={320} x2={320 + 250 * Math.cos(a)} y2={320 + 250 * Math.sin(a)} stroke={C.line2} strokeWidth="1.5" strokeDasharray="3 5" opacity="0.5" />;
-                })}
-              </svg>
-
-              {/* hub central */}
-              <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 196, height: 196, borderRadius: "50%", background: "#fff", border: `1px solid ${C.line}`, boxShadow: "0 24px 60px rgba(0,0,0,0.10), inset 0 0 0 6px rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", zIndex: 12 }}>
-                <div style={{ width: 96, height: 96, borderRadius: "50%", background: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <img src={appSettings.defaultLogo || LOGO_URL} alt="WallSwiss" style={{ width: 52, height: 52, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
-                </div>
-              </div>
-
-              {/* satellites */}
-              {[
-                { id: "rapport",      label: "Rapport",       cnt: "4 modèles",   ic: <Icons.FileText size={26} />,     c: "#EA4335", act: () => setActiveModule("rapport") },
-                { id: "annuaire",     label: "Annuaire",      cnt: "Partenaires", ic: <Icons.BookContacts size={26} />, c: "#FBBC05", act: () => setActiveModule("annuaire") },
-                { id: "ressources",   label: "Documents",     cnt: "Ressources",  ic: <Icons.FileText size={26} />,     c: "#34A853", act: () => setActiveModule("ressources") },
-                { id: "mails",        label: "Mails Types",   cnt: `${MAILS_TYPES.length} modèles`, ic: <Icons.Inbox size={26} />, c: "#692102", act: () => setActiveModule("mails") },
-                { id: "marketing",    label: "Marketing",     cnt: "4 campagnes", ic: <Icons.Target size={26} />,       c: "#692102", act: () => setActiveModule("marketing") },
-                { id: "rechercheLpp", label: "Recherche LPP", cnt: "2e pilier",   ic: <Icons.Search size={26} />,       c: "#FBBC05", act: () => setActiveModule("rechercheLpp") },
-                { id: "retraiteR1",   label: "Retraite",      cnt: "Simulateur",  ic: <Icons.PieChart size={26} />,     c: "#34A853", act: () => setActiveModule("retraiteR1") },
-                { id: "crm",          label: "CRM",           cnt: "Salesforce",  ic: <Icons.Users size={26} />,        c: "#EA4335", act: () => window.open("https://wallswiss.my.salesforce.com/", "_blank") },
-                { id: "settings",     label: "Paramètres",    cnt: "Intégrations", ic: <Icons.Settings size={26} />,    c: "#6E6E73", act: () => setActiveModule("settings") },
-              ].map((s, i, arr) => {
-                const a = -90 + i * (360 / arr.length);
-                return (
-                  <div key={s.id} onClick={s.act}
-                    style={{ position: "absolute", top: "50%", left: "50%", width: 120, textAlign: "center", cursor: "pointer", zIndex: 14, transform: `translate(-50%,-50%) rotate(${a}deg) translate(250px) rotate(${-a}deg)` }}
-                    onMouseEnter={e => { const d = e.currentTarget.querySelector(".sat-disc"); if (d) { d.style.transform = "translateY(-4px) scale(1.07)"; d.style.boxShadow = "0 18px 40px rgba(0,0,0,0.14)"; d.style.borderColor = s.c; } }}
-                    onMouseLeave={e => { const d = e.currentTarget.querySelector(".sat-disc"); if (d) { d.style.transform = "none"; d.style.boxShadow = "0 10px 26px rgba(0,0,0,0.07)"; d.style.borderColor = C.line; } }}>
-                    <div className="sat-disc" style={{ width: 76, height: 76, margin: "0 auto", borderRadius: 23, background: "#fff", border: `1px solid ${C.line}`, boxShadow: "0 10px 26px rgba(0,0,0,0.07)", display: "flex", alignItems: "center", justifyContent: "center", color: s.c, transition: "0.25s" }}>{s.ic}</div>
-                    <div style={{ marginTop: 9, fontSize: 12.5, fontWeight: 700, color: C.text }}>{s.label}</div>
-                    <div style={{ fontSize: 10.5, color: C.muted, marginTop: 2 }}>{s.cnt}</div>
-                  </div>
-                );
-              })}
-            </div>
-            <div style={{ position: "absolute", bottom: 18, fontSize: 12, color: C.dim }}>Cliquez un satellite pour ouvrir le module · ou utilisez la barre du haut</div>
-          </div>
+          <HubSommaire onNavigate={handleSommaireNav} />
         )}
         {/* VUE MODULE MARKETING */}
         {activeModule === "marketing" && (
@@ -6751,9 +6735,6 @@ const [lppForm, setLppForm] = useState({
         </div>
       )}
       </div>
-
-    {/* ── AJOUT SOMMAIRE : tiroir latéral (overlay fixe, hors flux) ── */}
-    <SommaireDrawer open={sidebarOpen} onClose={() => setSidebarOpen(false)} onNavigate={handleSommaireNav} activeId={activePage?.id} />
 
     {/* Toast Notification Globale */}
     {toastMsg && (

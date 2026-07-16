@@ -4988,6 +4988,10 @@ const [lppForm, setLppForm] = useState({
                 <div style={S.fg}><label style={S.label}>Taux de rendement cible net (%)</label><input style={S.input} type="number" step="0.5" value={form.tauxClp} onChange={e=>u("tauxClp",e.target.value)} placeholder="4.5"/></div>
                 <div style={S.fg}><label style={S.label}>Droits d'entrée (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscriptionLpp} onChange={e=>u("fraisSouscriptionLpp",e.target.value)} placeholder="1"/></div>
                 <div style={S.fg}>
+                  <label style={S.label}>Horizon de placement</label>
+                  <input style={S.input} value={form.horizonPlacement} onChange={e=>u("horizonPlacement",e.target.value)} placeholder="Ex: Moyen terme, 5 ans..." />
+                </div>
+                <div style={S.fg}>
                   <label style={S.label}>Profil de risque (Libre Passage)</label>
                   <select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>
                     {["Prudent", "Équilibré", "Dynamique", "Offensif"].map(s=><option key={s}>{s}</option>)}
@@ -5024,6 +5028,10 @@ const [lppForm, setLppForm] = useState({
                 <div style={{ height: 1, background: C.line2, margin: "16px 0" }} />
 
                 <div style={S.fg}><label style={S.label}>Droits d'entrée sur versements (%)</label><input style={S.input} type="number" step="0.5" value={form.fraisSouscription} onChange={e=>u("fraisSouscription",e.target.value)}/></div>
+                <div style={S.fg}>
+                  <label style={S.label}>Horizon de placement</label>
+                  <input style={S.input} value={form.horizonPlacement} onChange={e=>u("horizonPlacement",e.target.value)} placeholder="Ex: Moyen terme, 5 ans..." />
+                </div>
                 <div style={{...S.fg, margin: 0}}><label style={S.label}>Profil de risque</label><select style={S.select} value={form.profilRisque} onChange={e=>u("profilRisque",e.target.value)}>{["Prudent", "Équilibré", "Dynamique", "Offensif"].map(s=><option key={s}>{s}</option>)}</select></div>
               </>
             ) : (
@@ -5470,7 +5478,6 @@ const [lppForm, setLppForm] = useState({
                             </button>
                         ))}
                     </div>
-
                     {marketingCampaign === '3p-meta' && (
                         <div style={{ animation: "fadeIn 0.6s ease-in-out forwards" }}>
                             {marketingTab === 'context' && (
@@ -5636,7 +5643,6 @@ const [lppForm, setLppForm] = useState({
                             )}
                         </div>
                     )}
-
                     {marketingCampaign === 'cmu-lamal-meta' && (
                         <div style={{ animation: "fadeIn 0.6s ease-in-out forwards" }}>
                             {marketingTab === 'context' && (
@@ -5814,7 +5820,6 @@ const [lppForm, setLppForm] = useState({
                             )}
                         </div>
                     )}
-
                     {marketingTab === 'script' && (
                         <div style={{ maxWidth: 896, margin: "0 auto", animation: "fadeIn 0.6s ease-in-out forwards" }}>
                             <div style={{ background: "linear-gradient(135deg, #292524 0%, #44403c 50%, #292524 100%)", borderRadius: 24, border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", position: "relative", overflow: "hidden" }}>

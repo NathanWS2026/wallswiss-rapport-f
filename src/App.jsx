@@ -7,7 +7,450 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import RetraiteR1Module from "./RetraiteR1Module";
 import { genererSFF5Bytes, combinerPDFs, telechargerPDF, bytesToBlobUrl } from "./FormulaireLPP";
-import { LiveDataBars, HubSommaire } from "./WallSwissNav";
+/* ═══════════════════════════════════════════════════════════════════════════
+   NAVIGATION ORBITALE + BANDEAUX LIVE — fusionné ici (ex-fichier WallSwissNav).
+   Portée isolée : les C/F/Icons/WS_MENU internes n'affectent PAS ceux de l'app.
+   ▸ Bourse temps réel : renseignez twelveDataKey dans MARKET_CONFIG (plus bas dans ce bloc).
+   ▸ Actus : NEWS_CONFIG.rssFeed / gnewsKey (plus bas dans ce bloc).
+   ═══════════════════════════════════════════════════════════════════════════ */
+const { LiveDataBars, HubSommaire } = (() => {
+/* ── Tokens (copie de la charte coquille « Aurora ») ── */
+const C = {
+  white: "#FFFFFF", black: "#1A1A1A", gray: "#6B7280",
+  bg: "#FFFFFF", bgSoft: "#F5F5F7", card: "#FFFFFF", cardSoft: "#F5F5F7",
+  text: "#1D1D1F", muted: "#6E6E73", dim: "#86868B",
+  line: "rgba(0,0,0,0.08)", line2: "rgba(0,0,0,0.13)",
+  accent: "#692102", accentDark: "#4D1801", accentSoft: "rgba(105,33,2,0.10)",
+  gold: "#A59568",
+  green: "#0F9D58", red: "#D93025",
+  gBlue: "#692102", gGreen: "#34A853", gRed: "#EA4335",
+};
+const F = {
+  ui: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+  serif: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif",
+  mono: "'SF Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+};
+
+/* ── Icônes nécessaires aux 7 sections ── */
+const Icons = {
+  Layers: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>,
+  User: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>,
+  CheckSquare: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>,
+  FileText: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>,
+  PieChart: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>,
+  BookContacts: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path><path d="M8 7h6"></path><path d="M8 11h8"></path></svg>,
+  Target: ({ size = 20, color = "currentColor" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+};
+
+/* ── Arborescence du sommaire (avec Marketing & Recherche LPP accessibles) ── */
+const WS_MENU = [
+  { id: "1", num: "1", title: "Logiciels WallSwiss", icon: "Layers", children: [
+    { id: "1.1", num: "1.1", title: "CRM – Salesforce", action: { type: "url", url: "https://wallswiss.my.salesforce.com/" } },
+    { id: "1.2", num: "1.2", title: "Générateur de rapport financier", action: { type: "module", module: "rapport" } },
+    { id: "1.3", num: "1.3", title: "Générateur de planification retraite", action: { type: "module", module: "retraiteR1" } },
+    { id: "1.4", num: "1.4", title: "Mon agenda – Calendly" },
+    { id: "1.5", num: "1.5", title: "Simulateur Quasi-Résident / TOU" },
+    { id: "1.6", num: "1.6", title: "Simulateur d'intérêts composés" },
+    { id: "1.7", num: "1.7", title: "Générateur de factures" },
+    { id: "1.9", num: "1.9", title: "Recherche & Mandats LPP", action: { type: "module", module: "rechercheLpp" } },
+    { id: "1.8", num: "1.8", title: "Signaler un incident", children: [
+      { id: "1.8.1", num: "1.8.1", title: "Cyber-incident" },
+      { id: "1.8.2", num: "1.8.2", title: "Conflits d'intérêts" },
+      { id: "1.8.3", num: "1.8.3", title: "Événements sensibles" },
+      { id: "1.8.4", num: "1.8.4", title: "Problème RH" },
+    ]},
+  ]},
+  { id: "2", num: "2", title: "Mon espace personnel", icon: "User", children: [
+    { id: "2.1", num: "2.1", title: "Mes outils d'auto-analyse – Trackers" },
+    { id: "2.2", num: "2.2", title: "Mon simulateur de commissions" },
+    { id: "2.3", num: "2.3", title: "Mes demandes de congés" },
+    { id: "2.4", num: "2.4", title: "Les règles en entreprise" },
+    { id: "2.5", num: "2.5", title: "Événements", children: [
+      { id: "2.5.1", num: "2.5.1", title: "Sondages" },
+      { id: "2.5.2", num: "2.5.2", title: "Photos : événements WallSwiss" },
+    ]},
+    { id: "2.6", num: "2.6", title: "Boîte à idées : ensemble, nous allons plus loin !" },
+    { id: "2.7", num: "2.7", title: "Challenges en cours" },
+    { id: "2.8", num: "2.8", title: "Mes débuts chez WallSwiss" },
+  ]},
+  { id: "3", num: "3", title: "Procédures", icon: "CheckSquare", children: [
+    { id: "3.1", num: "3.1", title: "Reprise de gestion" },
+    { id: "3.2", num: "3.2", title: "Investissements", children: [
+      { id: "3.2.1", num: "3.2.1", title: "Compte-titres" },
+      { id: "3.2.2", num: "3.2.2", title: "Private Equity" },
+      { id: "3.2.3", num: "3.2.3", title: "Assurance vie France" },
+      { id: "3.2.4", num: "3.2.4", title: "Assurance vie Luxembourg" },
+      { id: "3.2.5", num: "3.2.5", title: "Plan d'Épargne Retraite – PER" },
+    ]},
+    { id: "3.3", num: "3.3", title: "Planification retraite", children: [
+      { id: "3.3.1", num: "3.3.1", title: "Formule BASIC" },
+      { id: "3.3.2", num: "3.3.2", title: "Formule COUPLE" },
+      { id: "3.3.3", num: "3.3.3", title: "Formule PREMIUM" },
+    ]},
+    { id: "3.4", num: "3.4", title: "Prévoyance individuelle", children: [
+      { id: "3.4.1", num: "3.4.1", title: "Liechtenstein Life" },
+      { id: "3.4.2", num: "3.4.2", title: "Rente Genevoise" },
+      { id: "3.4.3", num: "3.4.3", title: "Autres compagnies" },
+    ]},
+    { id: "3.5", num: "3.5", title: "Banques", children: [
+      { id: "3.5.1", num: "3.5.1", title: "Swissquote" },
+      { id: "3.5.2", num: "3.5.2", title: "Bank Zweiplus" },
+      { id: "3.5.3", num: "3.5.3", title: "Autres banques partenaires" },
+    ]},
+    { id: "3.6", num: "3.6", title: "Libre passage", children: [
+      { id: "3.6.1", num: "3.6.1", title: "Lémania" },
+      { id: "3.6.2", num: "3.6.2", title: "Liberty" },
+      { id: "3.6.3", num: "3.6.3", title: "Pictet" },
+      { id: "3.6.4", num: "3.6.4", title: "J. Safra Sarasin" },
+    ]},
+    { id: "3.7", num: "3.7", title: "Fiscalité", children: [
+      { id: "3.7.1", num: "3.7.1", title: "Fiscalité française", children: [
+        { id: "3.7.1.1", num: "3.7.1.1", title: "Check-list + mail" },
+        { id: "3.7.1.2", num: "3.7.1.2", title: "Protocole déclaration simple" },
+        { id: "3.7.1.3", num: "3.7.1.3", title: "Protocole déclaration + LMNP" },
+      ]},
+      { id: "3.7.2", num: "3.7.2", title: "Fiscalité suisse", children: [
+        { id: "3.7.2.1", num: "3.7.2.1", title: "Résident – TOU" },
+        { id: "3.7.2.2", num: "3.7.2.2", title: "Frontalier – QR" },
+      ]},
+    ]},
+  ]},
+  { id: "4", num: "4", title: "Base documentaire", icon: "FileText", children: [
+    { id: "4.1", num: "4.1", title: "Mails types", action: { type: "module", module: "mails" } },
+    { id: "4.2", num: "4.2", title: "Documents administratifs", action: { type: "module", module: "ressources" } },
+  ]},
+  { id: "5", num: "5", title: "Académie WallSwiss – Base de connaissances", icon: "PieChart", children: [
+    { id: "5.1", num: "5.1", title: "Cours AFA / IAF" },
+    { id: "5.2", num: "5.2", title: "Formation commerciale", children: [
+      { id: "5.2.1", num: "5.2.1", title: "Vidéos de formation" },
+      { id: "5.2.2", num: "5.2.2", title: "Book de formation" },
+    ]},
+    { id: "5.3", num: "5.3", title: "France – PER" },
+    { id: "5.4", num: "5.4", title: "France – Assurance vie" },
+    { id: "5.5", num: "5.5", title: "Europe – Assurance vie Luxembourg" },
+    { id: "5.6", num: "5.6", title: "France – SCPI" },
+    { id: "5.7", num: "5.7", title: "Suisse – Libre passage" },
+    { id: "5.8", num: "5.8", title: "Suisse – Prévoyance individuelle" },
+    { id: "5.9", num: "5.9", title: "Suisse – Création d'entreprise" },
+    { id: "5.10", num: "5.10", title: "France – Création d'entreprise" },
+    { id: "5.11", num: "5.11", title: "Suisse – AVS (1er pilier)" },
+    { id: "5.12", num: "5.12", title: "France – Calcul de la retraite française" },
+    { id: "5.13", num: "5.13", title: "Utilisation de la calculette financière" },
+    { id: "5.14", num: "5.14", title: "Formation investissement" },
+    { id: "5.15", num: "5.15", title: "Formation KYC" },
+    { id: "5.16", num: "5.16", title: "Formation Compliance" },
+    { id: "5.17", num: "5.17", title: "Intermédiaire non lié – Guide des obligations" },
+  ]},
+  { id: "6", num: "6", title: "Annuaires", icon: "BookContacts", action: { type: "module", module: "annuaire" } },
+  { id: "7", num: "7", title: "Hub Marketing", icon: "Target", children: [
+    { id: "7.0", num: "7.0", title: "Hub Campagnes & Scripts (Leads)", action: { type: "module", module: "marketing" } },
+    { id: "7.1", num: "7.1", title: "Charte graphique + logo" },
+    { id: "7.2", num: "7.2", title: "Carnet de recommandation" },
+    { id: "7.3", num: "7.3", title: "Lettre à en-tête WallSwiss" },
+    { id: "7.4", num: "7.4", title: "Bannières réseaux sociaux" },
+    { id: "7.5", num: "7.5", title: "Organisation de mon WhatsApp Business" },
+    { id: "7.6", num: "7.6", title: "Présentation des services" },
+    { id: "7.7", num: "7.7", title: "Organisation LinkedIn Business" },
+    { id: "7.8", num: "7.8", title: "Des publications pour mes réseaux" },
+  ]},
+];
+
+/* ════════════════ DONNÉES LIVE — CONFIG ════════════════ */
+// Clé Twelve Data (gratuite, twelvedata.com) → indices + or EN DIRECT.
+// Sans clé : EUR/CHF, USD/CHF (Frankfurter) et Bitcoin (CoinGecko) sont live ;
+// SMI / S&P 500 / Nasdaq / Euro Stoxx 50 / Or = démo « ≈ » (léger mouvement).
+const MARKET_CONFIG = { twelveDataKey: "" };
+// Clé GNews (gratuite, gnews.io) → actus Suisse business en direct.
+// Sans clé : flux RSS suisse via rss2json (remplaçable).
+const NEWS_CONFIG = { gnewsKey: "", rssFeed: "https://www.allnews.ch/rss.xml" };
+
+const WS_INSTRUMENTS = [
+  { key: "SMI",    label: "SMI",           type: "index",  td: "SMI",      base: 12050 },
+  { key: "SPX",    label: "S&P 500",       type: "index",  td: "SPX",      base: 5820  },
+  { key: "IXIC",   label: "Nasdaq",        type: "index",  td: "IXIC",     base: 19150 },
+  { key: "SX5E",   label: "Euro Stoxx 50", type: "index",  td: "STOXX50E", base: 5010  },
+  { key: "EURCHF", label: "EUR/CHF",       type: "fx",     from: "EUR",    base: 0.935, dp: 4 },
+  { key: "USDCHF", label: "USD/CHF",       type: "fx",     from: "USD",    base: 0.885, dp: 4 },
+  { key: "XAU",    label: "Or (XAU/USD)",  type: "metal",  td: "XAU/USD",  base: 2410  },
+  { key: "BTC",    label: "Bitcoin",       type: "crypto", cg: "bitcoin",  base: 65000 },
+];
+const WS_NEWS_FALLBACK = [
+  { src: "BNS",         title: "La BNS maintient son taux directeur et surveille le franc fort" },
+  { src: "Bourse",      title: "Le SMI ouvre en légère hausse, tiré par le luxe et la pharma" },
+  { src: "Éco",         title: "Horlogerie suisse : les exportations repartent vers l'Asie" },
+  { src: "Frontaliers", title: "Genève : nouveau record d'emplois frontaliers au 2e trimestre" },
+  { src: "Immobilier",  title: "Taux hypothécaires : stabilisation attendue d'ici la fin d'année" },
+  { src: "Marché",      title: "L'or reste recherché comme valeur refuge face à l'incertitude" },
+];
+const wsFmtNum = (v, dp) => Number(v).toLocaleString("fr-CH", { minimumFractionDigits: dp ?? (v < 100 ? 2 : 0), maximumFractionDigits: dp ?? (v < 100 ? 2 : 0) });
+
+async function wsFetchMarket() {
+  const out = {};
+  WS_INSTRUMENTS.forEach((i) => (out[i.key] = { value: i.base, change: 0, demo: true }));
+  if (MARKET_CONFIG.twelveDataKey) {
+    try {
+      const syms = WS_INSTRUMENTS.filter((i) => i.td).map((i) => i.td).join(",");
+      const r = await fetch(`https://api.twelvedata.com/quote?symbol=${encodeURIComponent(syms)}&apikey=${MARKET_CONFIG.twelveDataKey}`);
+      const j = await r.json();
+      WS_INSTRUMENTS.filter((i) => i.td).forEach((i) => {
+        const q = j[i.td] || (WS_INSTRUMENTS.filter((x) => x.td).length === 1 ? j : null);
+        if (q && q.close) out[i.key] = { value: parseFloat(q.close), change: parseFloat(q.percent_change) || 0, demo: false };
+      });
+    } catch (e) {}
+  }
+  await Promise.all(WS_INSTRUMENTS.filter((i) => i.type === "fx").map(async (i) => {
+    try {
+      const f = (d) => d.toISOString().slice(0, 10);
+      const end = new Date(), start = new Date(Date.now() - 6 * 864e5);
+      const r = await fetch(`https://api.frankfurter.app/${f(start)}..${f(end)}?from=${i.from}&to=CHF`);
+      const j = await r.json();
+      const dates = Object.keys(j.rates || {}).sort();
+      if (dates.length) {
+        const last = j.rates[dates[dates.length - 1]].CHF;
+        const prev = dates.length > 1 ? j.rates[dates[dates.length - 2]].CHF : last;
+        out[i.key] = { value: last, change: prev ? ((last - prev) / prev) * 100 : 0, demo: false };
+      }
+    } catch (e) {}
+  }));
+  try {
+    const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true");
+    const j = await r.json();
+    if (j.bitcoin) out.BTC = { value: j.bitcoin.usd, change: j.bitcoin.usd_24h_change || 0, demo: false };
+  } catch (e) {}
+  WS_INSTRUMENTS.forEach((i) => {
+    if (out[i.key].demo) {
+      const v = out[i.key].value * (1 + (Math.random() - 0.5) * 0.0018);
+      out[i.key] = { value: v, change: ((v - i.base) / i.base) * 100, demo: true };
+    }
+  });
+  return out;
+}
+async function wsFetchNews() {
+  try {
+    if (NEWS_CONFIG.gnewsKey) {
+      const r = await fetch(`https://gnews.io/api/v4/top-headlines?category=business&country=ch&lang=fr&max=12&apikey=${NEWS_CONFIG.gnewsKey}`);
+      const j = await r.json();
+      const items = (j.articles || []).map((a) => ({ src: (a.source && a.source.name) || "News", title: a.title, url: a.url, ts: a.publishedAt }));
+      if (items.length) return items;
+    } else {
+      const r = await fetch("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(NEWS_CONFIG.rssFeed));
+      const j = await r.json();
+      const items = (j.items || []).map((a) => ({ src: (j.feed && j.feed.title) || "Éco", title: a.title, url: a.link, ts: a.pubDate }));
+      if (items.length) return items;
+    }
+  } catch (e) {}
+  return WS_NEWS_FALLBACK;
+}
+
+function useWsTickerStyles() {
+  useEffect(() => {
+    if (typeof document === "undefined" || document.getElementById("ws-ticker-style")) return;
+    const s = document.createElement("style");
+    s.id = "ws-ticker-style";
+    s.textContent = `
+      @keyframes wsScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+      .ws-tk-vp { position:relative; flex:1; overflow:hidden;
+        -webkit-mask-image:linear-gradient(90deg,transparent,#000 32px,#000 calc(100% - 32px),transparent);
+                mask-image:linear-gradient(90deg,transparent,#000 32px,#000 calc(100% - 32px),transparent); }
+      .ws-tk-track { display:inline-flex; align-items:center; height:100%; white-space:nowrap; will-change:transform; }
+      .ws-tk-track.market { animation: wsScroll 46s linear infinite; }
+      .ws-tk-track.news   { animation: wsScroll 60s linear infinite; }
+      .ws-tk-vp:hover .ws-tk-track { animation-play-state: paused; }
+    `;
+    document.head.appendChild(s);
+  }, []);
+}
+
+function MarketTicker() {
+  useWsTickerStyles();
+  const [quotes, setQuotes] = useState(() => { const o = {}; WS_INSTRUMENTS.forEach((i) => (o[i.key] = { value: i.base, change: 0, demo: true })); return o; });
+  useEffect(() => {
+    let alive = true;
+    const run = () => wsFetchMarket().then((d) => alive && setQuotes(d));
+    run(); const id = setInterval(run, 60000);
+    return () => { alive = false; clearInterval(id); };
+  }, []);
+  const strip = WS_INSTRUMENTS.map((i) => {
+    const s = quotes[i.key] || { value: i.base, change: 0, demo: true };
+    const up = s.change > 0.001, dn = s.change < -0.001;
+    const col = up ? C.green : dn ? C.red : C.dim;
+    const car = up ? "▲" : dn ? "▼" : "▬";
+    const val = i.type === "crypto" ? "$" + wsFmtNum(s.value, 0) : wsFmtNum(s.value, i.dp);
+    return (
+      <span key={i.key} style={{ display: "inline-flex", alignItems: "baseline", gap: 8, padding: "0 20px", fontSize: 13, borderRight: `1px solid ${C.line}` }}>
+        <span style={{ fontWeight: 700, color: C.text }}>{i.label}</span>
+        <span style={{ fontVariantNumeric: "tabular-nums", color: C.muted, fontWeight: 600 }}>{val}</span>
+        <span style={{ fontVariantNumeric: "tabular-nums", fontWeight: 700, color: col, display: "inline-flex", alignItems: "center", gap: 3 }}>{car} {s.change >= 0 ? "+" : ""}{s.change.toFixed(2)}%</span>
+        {s.demo && <span title="Donnée de démonstration — ajoutez une clé Twelve Data pour le direct" style={{ color: C.gold, fontWeight: 700, fontSize: 11, cursor: "help" }}>≈</span>}
+      </span>
+    );
+  });
+  return (
+    <div style={{ display: "flex", alignItems: "stretch", height: 36, overflow: "hidden", borderBottom: `1px solid ${C.line}`, background: C.card }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, flexShrink: 0, padding: "0 16px", fontSize: 11, fontWeight: 800, letterSpacing: "0.09em", textTransform: "uppercase", color: "#fff", background: C.accent }}>
+        <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#7CFFB2" }} /> Marchés
+      </div>
+      <div className="ws-tk-vp"><div className="ws-tk-track market">{strip}{strip}</div></div>
+    </div>
+  );
+}
+
+function NewsTicker() {
+  useWsTickerStyles();
+  const [items, setItems] = useState(WS_NEWS_FALLBACK);
+  useEffect(() => {
+    let alive = true;
+    const run = () => wsFetchNews().then((d) => alive && setItems(d.slice(0, 14)));
+    run(); const id = setInterval(run, 600000);
+    return () => { alive = false; clearInterval(id); };
+  }, []);
+  const timeAgo = (ts) => {
+    if (!ts) return ""; const d = new Date(ts); if (isNaN(d)) return "";
+    const m = Math.round((Date.now() - d) / 60000);
+    if (m < 1) return "à l'instant"; if (m < 60) return m + " min";
+    const h = Math.round(m / 60); if (h < 24) return h + " h"; return Math.round(h / 24) + " j";
+  };
+  const strip = items.map((a, k) => {
+    const t = timeAgo(a.ts);
+    const inner = (
+      <>
+        <span style={{ width: 5, height: 5, borderRadius: "50%", background: C.gold, flexShrink: 0 }} />
+        <span style={{ color: C.accent, fontWeight: 700, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.04em" }}>{a.src}</span>
+        <span style={{ color: C.text, fontWeight: 500 }}>{a.title}</span>
+        {t && <span style={{ color: C.dim, fontSize: 11 }}>· {t}</span>}
+      </>
+    );
+    const st = { display: "inline-flex", alignItems: "center", gap: 10, padding: "0 22px", fontSize: 12.5, color: C.text, textDecoration: "none" };
+    return a.url ? <a key={k} href={a.url} target="_blank" rel="noopener noreferrer" style={st}>{inner}</a> : <span key={k} style={st}>{inner}</span>;
+  });
+  return (
+    <div style={{ display: "flex", alignItems: "stretch", height: 34, overflow: "hidden", borderBottom: `1px solid ${C.line}`, background: C.bgSoft }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, flexShrink: 0, padding: "0 16px", fontSize: 11, fontWeight: 800, letterSpacing: "0.09em", textTransform: "uppercase", color: "#fff", background: C.accentDark }}>
+        <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#7CFFB2" }} /> Éco Suisse
+      </div>
+      <div className="ws-tk-vp"><div className="ws-tk-track news">{strip}{strip}</div></div>
+    </div>
+  );
+}
+
+/* Enveloppe à poser juste sous le <header> */
+function LiveDataBars() {
+  return (
+    <div className="no-print" style={{ flexShrink: 0, zIndex: 150 }}>
+      <MarketTicker />
+      <NewsTicker />
+    </div>
+  );
+}
+
+/* ════════════════ HUB ORBITAL (7 sections → sous-menus en cartes) ════════════════ */
+function HubSommaire({ onNavigate, onOpenModule, logoUrl }) {
+  const [stack, setStack] = useState([]);
+  const goHome = () => setStack([]);
+  const crumbTo = (idx) => setStack((s) => s.slice(0, idx + 1));
+  const drill = (node) => setStack((s) => [...s, node]);
+  const openLeaf = (node, path) => onNavigate(node, path);
+  const onSat = (section) => { if (section.action) onNavigate(section, [section.title]); else drill(section); };
+
+  if (stack.length === 0) {
+    const R = 250;
+    return (
+      <div style={{ flex: 1, minHeight: "calc(100vh - 60px)", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden", background: "radial-gradient(1100px 700px at 50% -6%, #FFFFFF, #EEF0F3)" }}>
+        <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+          <div style={{ position: "relative", width: 660, height: 660, maxWidth: "92vw", maxHeight: "min(92vw, calc(100vh - 260px))" }}>
+            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 430, height: 430, borderRadius: "50%", border: `1px dashed ${C.line2}`, opacity: 0.6 }} />
+            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 640, height: 640, borderRadius: "50%", border: `1px dashed ${C.line2}`, opacity: 0.5 }} />
+            <svg viewBox="0 0 660 660" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+              {WS_MENU.map((s, i) => { const a = (-90 + i * (360 / WS_MENU.length)) * Math.PI / 180; return <line key={s.id} x1={330} y1={330} x2={330 + R * Math.cos(a)} y2={330 + R * Math.sin(a)} stroke={C.line2} strokeWidth="1.4" strokeDasharray="3 5" opacity="0.5" />; })}
+            </svg>
+            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 200, height: 200, borderRadius: "50%", background: "#fff", border: `1px solid ${C.line}`, boxShadow: "0 24px 60px rgba(0,0,0,0.10), inset 0 0 0 6px rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 12 }}>
+              <div style={{ width: 96, height: 96, borderRadius: "50%", background: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <img src={logoUrl} alt="WallSwiss" style={{ width: 52, height: 52, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
+              </div>
+              <div style={{ position: "absolute", bottom: 26, fontSize: 10.5, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: C.accent }}>Sommaire</div>
+            </div>
+            {WS_MENU.map((s, i) => {
+              const deg = -90 + i * (360 / WS_MENU.length);
+              const kids = s.children ? s.children.length : 0;
+              const Ico = s.icon ? Icons[s.icon] : null;
+              return (
+                <div key={s.id} onClick={() => onSat(s)}
+                  style={{ position: "absolute", top: "50%", left: "50%", width: 132, textAlign: "center", cursor: "pointer", zIndex: 14, transform: `translate(-50%,-50%) rotate(${deg}deg) translate(${R}px) rotate(${-deg}deg)` }}
+                  onMouseEnter={(e) => { const d = e.currentTarget.querySelector(".ws-disc"); if (d) { d.style.transform = "translateY(-5px) scale(1.07)"; d.style.background = C.accent; d.style.color = "#fff"; d.style.boxShadow = "0 18px 40px rgba(0,0,0,0.15)"; d.style.borderColor = C.accent; } }}
+                  onMouseLeave={(e) => { const d = e.currentTarget.querySelector(".ws-disc"); if (d) { d.style.transform = "none"; d.style.background = "#fff"; d.style.color = C.accent; d.style.boxShadow = "0 10px 26px rgba(0,0,0,0.08)"; d.style.borderColor = C.line; } }}>
+                  <div className="ws-disc" style={{ width: 78, height: 78, margin: "0 auto", borderRadius: 24, background: "#fff", border: `1px solid ${C.line}`, boxShadow: "0 10px 26px rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", color: C.accent, transition: "0.25s", position: "relative" }}>
+                    {Ico && <Ico size={30} color="currentColor" />}
+                    {kids > 0 && <span style={{ position: "absolute", top: -8, right: -8, minWidth: 22, height: 22, padding: "0 5px", borderRadius: 11, background: C.accent, color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 10px rgba(105,33,2,0.3)" }}>{kids}</span>}
+                  </div>
+                  <div style={{ marginTop: 10, fontSize: 12.5, fontWeight: 700, color: C.text, lineHeight: 1.25 }}>{s.title}</div>
+                  <div style={{ fontSize: 10.5, color: C.dim, marginTop: 2 }}>{kids ? `${kids} sous-menus` : "Ouvrir"}</div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ position: "absolute", bottom: 16, left: 0, right: 0, textAlign: "center", fontSize: 12, color: C.dim }}>Cliquez une section pour révéler ses sous-menus sur la couche suivante</div>
+        </div>
+      </div>
+    );
+  }
+
+  const cur = stack[stack.length - 1];
+  const cards = cur.children || [];
+  const path = stack.map((n) => n.title);
+  const CurIco = cur.icon ? Icons[cur.icon] : null;
+
+  return (
+    <div style={{ flex: 1, minHeight: "calc(100vh - 60px)", overflowY: "auto", padding: "26px 40px 60px", boxSizing: "border-box", background: "radial-gradient(1100px 700px at 50% -6%, #FFFFFF, #EEF0F3)" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12.5, color: C.muted, marginBottom: 14 }}>
+          <span onClick={goHome} style={{ cursor: "pointer", color: C.accent, fontWeight: 600 }}>Accueil</span>
+          {stack.map((n, idx) => (
+            <React.Fragment key={n.id}>
+              <span style={{ color: C.dim }}>›</span>
+              {idx === stack.length - 1 ? <span style={{ color: C.text, fontWeight: 700 }}>{n.title}</span> : <span onClick={() => crumbTo(idx)} style={{ cursor: "pointer", color: C.accent, fontWeight: 600 }}>{n.title}</span>}
+            </React.Fragment>
+          ))}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
+          <button onClick={() => (stack.length > 1 ? crumbTo(stack.length - 2) : goHome())}
+            style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 16px", borderRadius: 980, border: `1px solid ${C.line2}`, background: "#fff", color: C.accent, font: `700 12.5px ${F.ui}`, cursor: "pointer" }}>
+            ‹ {stack.length > 1 ? "Retour" : "Retour à l’orbite"}
+          </button>
+          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 12, color: C.text }}>
+            {stack.length === 1 && CurIco && <span style={{ width: 40, height: 40, borderRadius: 12, background: C.accentSoft, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}><CurIco size={22} color="currentColor" /></span>}
+            {cur.title}
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(268px, 1fr))", gap: 16 }}>
+          {cards.map((node) => {
+            const isParent = node.children && node.children.length;
+            const isModule = node.action && node.action.type === "module";
+            const isUrl = node.action && node.action.type === "url";
+            const sub = isParent ? `${node.children.length} sous-rubriques` : isModule ? "Ouvrir le module" : isUrl ? "Lien externe" : "Ouvrir";
+            const arw = isParent ? "›" : isUrl ? "↗" : "→";
+            return (
+              <div key={node.id} onClick={() => (isParent ? drill(node) : openLeaf(node, [...path, node.title]))}
+                style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 16, padding: "18px 20px", cursor: "pointer", boxShadow: "0 1px 2px rgba(0,0,0,.04), 0 10px 26px rgba(0,0,0,.05)", transition: "transform .18s, box-shadow .18s, border-color .18s", display: "flex", alignItems: "center", gap: 14 }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 14px 34px rgba(0,0,0,.10)"; e.currentTarget.style.borderColor = C.accentSoft; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 1px 2px rgba(0,0,0,.04), 0 10px 26px rgba(0,0,0,.05)"; e.currentTarget.style.borderColor = C.line; }}>
+                <div style={{ width: 40, height: 40, borderRadius: 11, background: C.accentSoft, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: F.mono, fontWeight: 700, fontSize: 12 }}>{node.num}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.text, lineHeight: 1.3 }}>{node.title}</div>
+                  <div style={{ fontSize: 11, color: C.dim, marginTop: 3 }}>{sub}</div>
+                </div>
+                <span style={{ color: C.dim, fontSize: 15, flexShrink: 0 }}>{arw}</span>
+              </div>
+            );
+          })}
+          {cards.length === 0 && <div style={{ gridColumn: "1 / -1", padding: 40, textAlign: "center", color: C.dim, fontSize: 13 }}>Aucun élément dans cette rubrique.</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+  return { LiveDataBars, HubSommaire };
+})();
 
 // ────────────────────── FIREBASE SETUP ──────────────────────
 let app, auth, db, storage, appId = "wallswiss-app";

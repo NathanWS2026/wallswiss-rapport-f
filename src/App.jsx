@@ -7,6 +7,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import RetraiteR1Module from "./RetraiteR1Module";
 import { genererSFF5Bytes, combinerPDFs, telechargerPDF, bytesToBlobUrl } from "./FormulaireLPP";
+import { LiveDataBars, HubSommaire } from "./WallSwissNav";
 
 // ────────────────────── FIREBASE SETUP ──────────────────────
 let app, auth, db, storage, appId = "wallswiss-app";
@@ -3771,184 +3772,6 @@ const WS_MENU = [
   },
 ];
 
-// Navigation "Sommaire" DANS LE HUB : onglet "Accueil" (menu satellite d'origine)
-// + un onglet par section, avec sous-onglets (sous-sections) et cartes cliquables.
-function HubSommaire({ onNavigate, onOpenModule, logoUrl }) {
-  const [view, setView] = useState("accueil");   // "accueil" | id de section
-  const [subId, setSubId] = useState(null);
-  const [drillId, setDrillId] = useState(null);
-
-  const section = view !== "accueil" ? (WS_MENU.find(s => s.id === view) || null) : null;
-  const sectionChildren = section ? (section.children || []) : [];
-  const subTabs = sectionChildren.filter(c => c.children && c.children.length);         // sous-onglets = enfants "parents"
-  const leafChildren = sectionChildren.filter(c => !(c.children && c.children.length));  // feuilles directes de la section
-
-  const sub = subId ? sectionChildren.find(c => c.id === subId) : null;
-  const drill = (sub && drillId) ? (sub.children || []).find(c => c.id === drillId) : null;
-
-  let cards = [], crumb = [];
-  if (section) {
-    if (drill) { cards = drill.children || []; crumb = [section.title, sub.title, drill.title]; }
-    else if (sub) { cards = sub.children || []; crumb = [section.title, sub.title]; }
-    else { cards = leafChildren; crumb = [section.title]; }
-  }
-
-  const selectTab = (id) => {
-    if (id === "accueil") { setView("accueil"); setSubId(null); setDrillId(null); return; }
-    const s = WS_MENU.find(x => x.id === id);
-    // Section-feuille (ex. Annuaires) → ouverture directe du module
-    if (s.action && !(s.children && s.children.length)) { onNavigate(s, [s.title]); return; }
-    setView(id); setSubId(null); setDrillId(null);
-  };
-
-  const clickCard = (node) => {
-    if (node.children && node.children.length) { setDrillId(node.id); return; } // parent → on descend d'un niveau
-    onNavigate(node, [...crumb, node.title]);
-  };
-
-  // Satellites de l'accueil (identiques à l'origine)
-  const SATS = [
-    { id: "rapport",      label: "Rapport",       cnt: "4 modèles",   ic: <Icons.FileText size={26} />,     c: "#EA4335", act: () => onOpenModule("rapport") },
-    { id: "annuaire",     label: "Annuaire",      cnt: "Partenaires", ic: <Icons.BookContacts size={26} />, c: "#FBBC05", act: () => onOpenModule("annuaire") },
-    { id: "ressources",   label: "Documents",     cnt: "Ressources",  ic: <Icons.FileText size={26} />,     c: "#34A853", act: () => onOpenModule("ressources") },
-    { id: "mails",        label: "Mails Types",   cnt: `${MAILS_TYPES.length} modèles`, ic: <Icons.Inbox size={26} />, c: "#692102", act: () => onOpenModule("mails") },
-    { id: "marketing",    label: "Marketing",     cnt: "4 campagnes", ic: <Icons.Target size={26} />,       c: "#692102", act: () => onOpenModule("marketing") },
-    { id: "rechercheLpp", label: "Recherche LPP", cnt: "2e pilier",   ic: <Icons.Search size={26} />,       c: "#FBBC05", act: () => onOpenModule("rechercheLpp") },
-    { id: "retraiteR1",   label: "Retraite",      cnt: "Simulateur",  ic: <Icons.PieChart size={26} />,     c: "#34A853", act: () => onOpenModule("retraiteR1") },
-    { id: "crm",          label: "CRM",           cnt: "Salesforce",  ic: <Icons.Users size={26} />,        c: "#EA4335", act: () => { if (typeof window !== "undefined") window.open("https://wallswiss.my.salesforce.com/", "_blank"); } },
-    { id: "settings",     label: "Paramètres",    cnt: "Intégrations", ic: <Icons.Settings size={26} />,    c: "#6E6E73", act: () => onOpenModule("settings") },
-  ];
-
-  const TABS = [{ id: "accueil", title: "Accueil", icon: "Home" }, ...WS_MENU];
-
-  return (
-    <div style={{ flex: 1, minHeight: "calc(100vh - 60px)", display: "flex", flexDirection: "column", background: "radial-gradient(1100px 700px at 50% -5%, #FFFFFF, #EEF0F3)", boxSizing: "border-box" }}>
-
-      {/* ONGLETS : Accueil + 7 sections */}
-      <div className="topnav-scroll" style={{ display: "flex", gap: 8, overflowX: "auto", padding: "20px 32px 14px", flexShrink: 0 }}>
-        {TABS.map(t => {
-          const isLeafSection = t.action && !(t.children && t.children.length);
-          const on = (t.id === "accueil" && view === "accueil") || (t.id === view && !isLeafSection);
-          const Ico = t.icon ? Icons[t.icon] : null;
-          return (
-            <button key={t.id} onClick={() => selectTab(t.id)}
-              style={{ display: "inline-flex", alignItems: "center", gap: 8, whiteSpace: "nowrap", padding: "10px 16px", borderRadius: 980, border: `1px solid ${on ? C.accent : C.line2}`, background: on ? C.accent : C.card, color: on ? "#fff" : C.text, cursor: "pointer", fontFamily: F.ui, fontSize: 13.5, fontWeight: 600, transition: "all .18s", boxShadow: on ? "0 4px 12px rgba(105,33,2,.22)" : "none", flexShrink: 0 }}
-              onMouseEnter={e => { if (!on) e.currentTarget.style.background = C.bgSoft; }}
-              onMouseLeave={e => { if (!on) e.currentTarget.style.background = C.card; }}>
-              {Ico && <Ico size={16} color={on ? "#fff" : C.accent} />}
-              {t.title}
-            </button>
-          );
-        })}
-      </div>
-
-      {view === "accueil" ? (
-        /* ── ACCUEIL : menu satellite (identique à l'origine) ── */
-        <div style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-          <div style={{ position: "relative", width: 640, height: 640, maxWidth: "92vw", maxHeight: "min(92vw, calc(100vh - 200px))" }}>
-
-            {/* anneaux décoratifs */}
-            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 420, height: 420, borderRadius: "50%", border: `1px dashed ${C.line2}`, opacity: 0.6 }} />
-            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 620, height: 620, borderRadius: "50%", border: `1px dashed ${C.line2}`, opacity: 0.5 }} />
-
-            {/* rayons */}
-            <svg viewBox="0 0 640 640" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
-              {["rapport", "annuaire", "ressources", "mails", "marketing", "rechercheLpp", "retraiteR1", "crm", "settings"].map((id, i, arr) => {
-                const a = (-90 + i * (360 / arr.length)) * Math.PI / 180;
-                return <line key={id} x1={320} y1={320} x2={320 + 250 * Math.cos(a)} y2={320 + 250 * Math.sin(a)} stroke={C.line2} strokeWidth="1.5" strokeDasharray="3 5" opacity="0.5" />;
-              })}
-            </svg>
-
-            {/* hub central */}
-            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 196, height: 196, borderRadius: "50%", background: "#fff", border: `1px solid ${C.line}`, boxShadow: "0 24px 60px rgba(0,0,0,0.10), inset 0 0 0 6px rgba(105,33,2,0.05)", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", zIndex: 12 }}>
-              <div style={{ width: 96, height: 96, borderRadius: "50%", background: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <img src={logoUrl} alt="WallSwiss" style={{ width: 52, height: 52, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
-              </div>
-            </div>
-
-            {/* satellites */}
-            {SATS.map((s, i, arr) => {
-              const a = -90 + i * (360 / arr.length);
-              return (
-                <div key={s.id} onClick={s.act}
-                  style={{ position: "absolute", top: "50%", left: "50%", width: 120, textAlign: "center", cursor: "pointer", zIndex: 14, transform: `translate(-50%,-50%) rotate(${a}deg) translate(250px) rotate(${-a}deg)` }}
-                  onMouseEnter={e => { const d = e.currentTarget.querySelector(".sat-disc"); if (d) { d.style.transform = "translateY(-4px) scale(1.07)"; d.style.boxShadow = "0 18px 40px rgba(0,0,0,0.14)"; d.style.borderColor = s.c; } }}
-                  onMouseLeave={e => { const d = e.currentTarget.querySelector(".sat-disc"); if (d) { d.style.transform = "none"; d.style.boxShadow = "0 10px 26px rgba(0,0,0,0.07)"; d.style.borderColor = C.line; } }}>
-                  <div className="sat-disc" style={{ width: 76, height: 76, margin: "0 auto", borderRadius: 23, background: "#fff", border: `1px solid ${C.line}`, boxShadow: "0 10px 26px rgba(0,0,0,0.07)", display: "flex", alignItems: "center", justifyContent: "center", color: s.c, transition: "0.25s" }}>{s.ic}</div>
-                  <div style={{ marginTop: 9, fontSize: 12.5, fontWeight: 700, color: C.text }}>{s.label}</div>
-                  <div style={{ fontSize: 10.5, color: C.muted, marginTop: 2 }}>{s.cnt}</div>
-                </div>
-              );
-            })}
-          </div>
-          <div style={{ position: "absolute", bottom: 18, fontSize: 12, color: C.dim }}>Cliquez un satellite, ou utilisez les onglets ci-dessus pour parcourir tout le sommaire</div>
-        </div>
-      ) : (
-        /* ── SECTION : sous-onglets + cartes ── */
-        <div style={{ flex: 1, overflowY: "auto", padding: "6px 40px 60px", boxSizing: "border-box" }}>
-          <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-
-            {/* SOUS-ONGLETS = sous-sections (parents) de la section active */}
-            {subTabs.length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 24, paddingBottom: 16, borderBottom: `1px solid ${C.line}` }}>
-                <button onClick={() => { setSubId(null); setDrillId(null); }}
-                  style={{ padding: "7px 14px", borderRadius: 980, border: "none", background: !sub ? C.accentSoft : "transparent", color: !sub ? C.accent : C.muted, cursor: "pointer", fontFamily: F.ui, fontSize: 12.5, fontWeight: !sub ? 700 : 500 }}>
-                  Principal
-                </button>
-                {subTabs.map(st => {
-                  const on = sub && sub.id === st.id;
-                  return (
-                    <button key={st.id} onClick={() => { setSubId(st.id); setDrillId(null); }}
-                      style={{ padding: "7px 14px", borderRadius: 980, border: "none", background: on ? C.accentSoft : "transparent", color: on ? C.accent : C.muted, cursor: "pointer", fontFamily: F.ui, fontSize: 12.5, fontWeight: on ? 700 : 500 }}>
-                      {st.title}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Fil d'Ariane (niveaux profonds) */}
-            {(sub || drill) && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: C.muted, marginBottom: 16 }}>
-                <span onClick={() => { setSubId(null); setDrillId(null); }} style={{ cursor: "pointer", color: C.accent, fontWeight: 600 }}>{section.title}</span>
-                {sub && <><span style={{ color: C.dim }}>›</span><span onClick={() => setDrillId(null)} style={{ cursor: drill ? "pointer" : "default", color: drill ? C.accent : C.text, fontWeight: drill ? 600 : 700 }}>{sub.title}</span></>}
-                {drill && <><span style={{ color: C.dim }}>›</span><span style={{ color: C.text, fontWeight: 700 }}>{drill.title}</span></>}
-              </div>
-            )}
-
-            {/* CARTES */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
-              {cards.map(node => {
-                const isParent = node.children && node.children.length;
-                const isModule = node.action?.type === "module";
-                const isUrl = node.action?.type === "url";
-                return (
-                  <div key={node.id} onClick={() => clickCard(node)}
-                    style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 16, padding: "18px 20px", cursor: "pointer", boxShadow: "0 1px 2px rgba(0,0,0,.04), 0 10px 26px rgba(0,0,0,.05)", transition: "transform .18s, box-shadow .18s, border-color .18s", display: "flex", alignItems: "center", gap: 14 }}
-                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 14px 34px rgba(0,0,0,.10)"; e.currentTarget.style.borderColor = C.accentSoft; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 1px 2px rgba(0,0,0,.04), 0 10px 26px rgba(0,0,0,.05)"; e.currentTarget.style.borderColor = C.line; }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 11, background: C.accentSoft, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: F.mono, fontWeight: 700, fontSize: 12 }}>{node.num}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: C.text, lineHeight: 1.3 }}>{node.title}</div>
-                      <div style={{ fontSize: 11, color: C.dim, marginTop: 3 }}>
-                        {isParent ? `${node.children.length} sous-rubriques` : isModule ? "Ouvrir le module" : isUrl ? "Lien externe" : "Ouvrir"}
-                      </div>
-                    </div>
-                    <span style={{ color: C.dim, fontSize: 15, flexShrink: 0 }}>{isParent ? "›" : isUrl ? "↗" : "→"}</span>
-                  </div>
-                );
-              })}
-              {cards.length === 0 && (
-                <div style={{ gridColumn: "1 / -1", padding: 40, textAlign: "center", color: C.dim, fontSize: 13 }}>Aucun élément dans cette rubrique.</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // Page générique (placeholder « en construction ») pour les onglets neufs du sommaire.
 function DocPageView({ page, onHome }) {
   if (!page) return null;
@@ -5302,75 +5125,51 @@ const [lppForm, setLppForm] = useState({
       `}</style>
 
       {/* ────────────────── BARRE DE NAVIGATION SUPÉRIEURE ────────────────── */}
-      <header className="no-print" style={{ display: "flex", alignItems: "center", gap: 18, height: 60, padding: "0 24px", background: "rgba(255,255,255,0.82)", backdropFilter: "saturate(180%) blur(20px)", WebkitBackdropFilter: "saturate(180%) blur(20px)", borderBottom: `1px solid ${C.line}`, flexShrink: 0, zIndex: 200 }}>
-        {/* Marque */}
-        <div onClick={() => setActiveModule("hub")} style={{ display: "flex", alignItems: "center", gap: 11, cursor: "pointer", flexShrink: 0, paddingRight: 6 }}>
+      <header className="no-print" style={{ display: "flex", alignItems: "center", gap: 16, height: 60, padding: "0 24px", background: "rgba(255,255,255,0.82)", backdropFilter: "saturate(180%) blur(20px)", WebkitBackdropFilter: "saturate(180%) blur(20px)", borderBottom: `1px solid ${C.line}`, flexShrink: 0, zIndex: 200 }}>
+        <div onClick={() => setActiveModule("hub")} style={{ display: "flex", alignItems: "center", gap: 11, cursor: "pointer", flexShrink: 0 }}>
           <div style={{ width: 30, height: 30, borderRadius: 9, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(105,33,2,.30)" }}>
             <img src={appSettings.defaultLogo || LOGO_URL} alt="WallSwiss" style={{ height: 16, filter: "brightness(0) invert(1)" }} />
           </div>
           <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.02em", color: C.text }}>WallSwiss</div>
         </div>
 
-        {/* Navigation modules */}
-        <nav className="topnav-scroll" style={{ display: "flex", alignItems: "center", gap: 2, overflowX: "auto", flex: 1, minWidth: 0, padding: "0 4px" }}>
-          {[
-            { id: "hub", label: "Accueil", Icon: Icons.Home },
-            { id: "rapport", label: "Rapports", Icon: Icons.FileText },
-            { id: "annuaire", label: "Annuaire", Icon: Icons.BookContacts },
-            { id: "ressources", label: "Documents", Icon: Icons.FileText },
-            { id: "mails", label: "Mails", Icon: Icons.Inbox },
-            { id: "marketing", label: "Marketing", Icon: Icons.Target },
-            { id: "rechercheLpp", label: "LPP", Icon: Icons.Search },
-            { id: "retraiteR1", label: "Retraite", Icon: Icons.PieChart },
-          ].map(({ id, label, Icon }) => {
-            const on = activeModule === id;
-            return (
-              <button
-                key={id}
-                onClick={() => setActiveModule(id)}
-                style={{ display: "inline-flex", alignItems: "center", gap: 7, whiteSpace: "nowrap", background: on ? C.accentSoft : "transparent", color: on ? C.accent : C.muted, border: "none", padding: "8px 14px", borderRadius: 980, cursor: "pointer", fontFamily: F.ui, fontSize: 13.5, fontWeight: on ? 600 : 500, letterSpacing: "-0.01em", transition: "background .18s, color .18s" }}
-                onMouseEnter={(e) => { if (!on) { e.currentTarget.style.background = C.bgSoft; e.currentTarget.style.color = C.text; } }}
-                onMouseLeave={(e) => { if (!on) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.muted; } }}
-              >
-                <Icon size={16} color={on ? C.accent : "currentColor"} /> {label}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Actions à droite */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          <button
-            onClick={() => window.open("https://wallswiss.my.salesforce.com/", "_blank")}
-            style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "transparent", color: C.muted, border: "none", padding: "8px 12px", borderRadius: 980, cursor: "pointer", fontFamily: F.ui, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", transition: "background .18s, color .18s" }}
+        {activeModule !== "hub" && (
+          <button onClick={() => setActiveModule("hub")}
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 13px", borderRadius: 980, border: `1px solid ${C.line2}`, background: C.card, color: C.muted, font: `600 13px ${F.ui}`, cursor: "pointer" }}
             onMouseEnter={(e) => { e.currentTarget.style.background = C.bgSoft; e.currentTarget.style.color = C.text; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.muted; }}
-          >
+            onMouseLeave={(e) => { e.currentTarget.style.background = C.card; e.currentTarget.style.color = C.muted; }}>
+            ‹ Accueil
+          </button>
+        )}
+
+        <div style={{ flex: 1 }} />
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <button onClick={() => window.open("https://wallswiss.my.salesforce.com/", "_blank")}
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "transparent", color: C.muted, border: "none", padding: "8px 12px", borderRadius: 980, cursor: "pointer", fontFamily: F.ui, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = C.bgSoft; e.currentTarget.style.color = C.text; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.muted; }}>
             <Icons.Users size={16} /> CRM
           </button>
-
-          <button
-            onClick={() => setActiveModule("settings")}
-            title="Paramètres & Intégrations"
-            style={{ width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", background: activeModule === "settings" ? C.accentSoft : "transparent", color: activeModule === "settings" ? C.accent : C.muted, border: "none", borderRadius: 980, cursor: "pointer", transition: "background .18s, color .18s" }}
+          <button onClick={() => setActiveModule("settings")} title="Paramètres & Intégrations"
+            style={{ width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", background: activeModule === "settings" ? C.accentSoft : "transparent", color: activeModule === "settings" ? C.accent : C.muted, border: "none", borderRadius: 980, cursor: "pointer" }}
             onMouseEnter={(e) => { if (activeModule !== "settings") { e.currentTarget.style.background = C.bgSoft; e.currentTarget.style.color = C.text; } }}
-            onMouseLeave={(e) => { if (activeModule !== "settings") { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.muted; } }}
-          >
+            onMouseLeave={(e) => { if (activeModule !== "settings") { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.muted; } }}>
             <Icons.Settings size={18} />
           </button>
-
           <div style={{ width: 1, height: 24, background: C.line, margin: "0 2px" }} />
-
-          <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "4px 4px 4px 4px", borderRadius: 980 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: `linear-gradient(135deg, ${C.gBlue}, ${C.gGreen})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
-              {(user?.email || "WS").replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase() || "WS"}
-            </div>
-            <button onClick={handleLogout} title="Déconnexion" style={{ background: "transparent", color: C.dim, border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 6, borderRadius: 8 }} onMouseEnter={(e) => e.currentTarget.style.color = C.gRed} onMouseLeave={(e) => e.currentTarget.style.color = C.dim}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            </button>
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: `linear-gradient(135deg, ${C.gBlue}, ${C.gGreen})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
+            {(user?.email || "WS").replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase() || "WS"}
           </div>
+          <button onClick={handleLogout} title="Déconnexion" style={{ background: "transparent", color: C.dim, border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 6, borderRadius: 8 }}
+            onMouseEnter={(e) => e.currentTarget.style.color = C.gRed} onMouseLeave={(e) => e.currentTarget.style.color = C.dim}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
         </div>
       </header>
+
+      {/* ▼▼▼ AJOUT : les deux bandeaux live, juste sous le header ▼▼▼ */}
+      <LiveDataBars />
 
       {/* ────────────────── CONTENU PRINCIPAL ────────────────── */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%", overflowY: "auto", position: "relative" }}>

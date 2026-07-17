@@ -63,7 +63,7 @@ const WS_MENU = [
   { id: "2", num: "2", title: "Mon espace personnel", icon: "User", children: [
     { id: "2.1", num: "2.1", title: "Mes outils d'auto-analyse – Trackers" },
     { id: "2.2", num: "2.2", title: "Mon simulateur de commissions" },
-    { id: "2.3", num: "2.3", title: "Mes demandes de congés" },
+    { id: "2.3", num: "2.3", title: "Mes demandes (congés, frais, matériel…)", action: { type: "module", module: "tickets" } },
     { id: "2.4", num: "2.4", title: "Les règles en entreprise" },
     { id: "2.5", num: "2.5", title: "Événements", children: [
       { id: "2.5.1", num: "2.5.1", title: "Sondages" },
@@ -344,8 +344,56 @@ function LiveDataBars() {
 }
 
 /* ════════════════ HUB ORBITAL (7 sections → sous-menus en cartes) ════════════════ */
+/* ── Emoji contextuel pour les cartes du sommaire (déduit du titre) ── */
+const WS_EMOJI_MAP = [
+  [/cong[eé]|vacance/i, "🌴"],
+  [/fiscal|imp[oô]t|d[eé]claration|taxe/i, "🧾"],
+  [/rapport|reporting/i, "📊"],
+  [/libre[ -]?passage|\blpp\b|2e?\s*pilier|mandat/i, "🏛️"],
+  [/pr[eé]voyance|3e?\s*pilier|\bpilier\b/i, "🛡️"],
+  [/retraite/i, "🧓"],
+  [/assurance/i, "📜"],
+  [/banque|swissquote|zweiplus|compte[- ]?titre|\btitres?\b|sarasin|pictet|lombard/i, "🏦"],
+  [/investiss|private equity|\bscpi\b|bourse|march[eé]/i, "📈"],
+  [/crm|salesforce|annuaire|contact/i, "📇"],
+  [/\bmails?\b|e-?mail|courriel/i, "✉️"],
+  [/document|administratif|base documentaire/i, "📁"],
+  [/formation|cours|acad[eé]mie|connaissance|\bkyc\b|compliance|\biaf\b|\bafa\b/i, "🎓"],
+  [/marketing|campagne|\blead|publicit|publication/i, "📣"],
+  [/linkedin/i, "💼"],
+  [/whatsapp/i, "💬"],
+  [/r[eé]seaux|banni[eè]re|social/i, "🌐"],
+  [/logo|charte|graphique/i, "🎨"],
+  [/incident|cyber|signaler|conflit|sensible/i, "⚠️"],
+  [/\brh\b|absence|maladie/i, "🧑‍💼"],
+  [/agenda|calendly|calendrier/i, "📅"],
+  [/facture/i, "💳"],
+  [/simulateur|calcul|int[eé]r[êe]ts|commission|quasi|\btou\b|\bqr\b/i, "🧮"],
+  [/id[eé]e/i, "💡"],
+  [/challenge|d[eé]fi|concours/i, "🏆"],
+  [/[eé]v[eé]nement|sondage|photo/i, "🎉"],
+  [/r[eè]gles|proc[eé]dure/i, "📋"],
+  [/outils?|tracker|analyse/i, "🛠️"],
+  [/reprise|gestion/i, "🔄"],
+  [/d[eé]but|onboarding/i, "👋"],
+  [/entreprise|cr[eé]ation/i, "🏢"],
+  [/lettre|en-t[êe]te|recommandation/i, "📝"],
+  [/service|pr[eé]sentation/i, "🗂️"],
+];
+function wsEmojiFor(node) {
+  const t = String(node.title || "") + " " + String(node.num || "");
+  for (const pair of WS_EMOJI_MAP) { if (pair[0].test(t)) return pair[1]; }
+  if (node.action && node.action.type === "module") return "🚀";
+  if (node.action && node.action.type === "url") return "🔗";
+  if (node.children && node.children.length) return "📂";
+  return "📄";
+}
+
 function HubSommaire({ onNavigate, onOpenModule, logoUrl }) {
   const [stack, setStack] = useState([]);
+  const [tab, setTab] = useState("__all__");
+  const _curId = stack.length ? stack[stack.length - 1].id : "root";
+  useEffect(() => { setTab("__all__"); }, [_curId]);
   const goHome = () => setStack([]);
   const crumbTo = (idx) => setStack((s) => s.slice(0, idx + 1));
   const drill = (node) => setStack((s) => [...s, node]);
@@ -395,50 +443,87 @@ function HubSommaire({ onNavigate, onOpenModule, logoUrl }) {
   }
 
   const cur = stack[stack.length - 1];
-  const cards = cur.children || [];
+  const allCards = cur.children || [];
+  const subParents = allCards.filter((c) => c.children && c.children.length);
+  const showTabs = subParents.length >= 2;
+  const tabNode = showTabs && tab !== "__all__" ? subParents.find((s) => s.id === tab) : null;
+  const cards = tabNode ? tabNode.children : allCards;
   const path = stack.map((n) => n.title);
-  const CurIco = cur.icon ? Icons[cur.icon] : null;
+  const cardPath = tabNode ? [...path, tabNode.title] : path;
+  const headEmoji = wsEmojiFor(cur);
+  const tabList = [{ id: "__all__", title: "Tout", emoji: "✨" }].concat(subParents.map((s) => ({ id: s.id, title: s.title, emoji: wsEmojiFor(s) })));
 
   return (
     <div style={{ flex: 1, minHeight: "calc(100vh - 60px)", overflowY: "auto", padding: "26px 40px 60px", boxSizing: "border-box", background: "radial-gradient(1100px 700px at 50% -6%, #FFFFFF, #EEF0F3)" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12.5, color: C.muted, marginBottom: 14 }}>
-          <span onClick={goHome} style={{ cursor: "pointer", color: C.accent, fontWeight: 600 }}>Accueil</span>
+        {/* Fil d'Ariane */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12.5, color: C.muted, marginBottom: 16 }}>
+          <span onClick={goHome} style={{ cursor: "pointer", color: C.accent, fontWeight: 700 }}>✦ Accueil</span>
           {stack.map((n, idx) => (
             <React.Fragment key={n.id}>
               <span style={{ color: C.dim }}>›</span>
-              {idx === stack.length - 1 ? <span style={{ color: C.text, fontWeight: 700 }}>{n.title}</span> : <span onClick={() => crumbTo(idx)} style={{ cursor: "pointer", color: C.accent, fontWeight: 600 }}>{n.title}</span>}
+              {idx === stack.length - 1 && !tabNode ? <span style={{ color: C.text, fontWeight: 700 }}>{n.title}</span> : <span onClick={() => { crumbTo(idx); setTab("__all__"); }} style={{ cursor: "pointer", color: C.accent, fontWeight: 600 }}>{n.title}</span>}
             </React.Fragment>
           ))}
+          {tabNode && (<><span style={{ color: C.dim }}>›</span><span style={{ color: C.text, fontWeight: 700 }}>{tabNode.title}</span></>)}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
+
+        {/* En-tête de section */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 22 }}>
           <button onClick={() => (stack.length > 1 ? crumbTo(stack.length - 2) : goHome())}
-            style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 16px", borderRadius: 980, border: `1px solid ${C.line2}`, background: "#fff", color: C.accent, font: `700 12.5px ${F.ui}`, cursor: "pointer" }}>
-            ‹ {stack.length > 1 ? "Retour" : "Retour à l’orbite"}
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 15px", borderRadius: 980, border: `1px solid ${C.line2}`, background: "#fff", color: C.accent, font: `700 12.5px ${F.ui}`, cursor: "pointer", flexShrink: 0, transition: "background .15s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = C.accentSoft; }} onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}>
+            ‹ {stack.length > 1 ? "Retour" : "Orbite"}
           </button>
-          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 12, color: C.text }}>
-            {stack.length === 1 && CurIco && <span style={{ width: 40, height: 40, borderRadius: 12, background: C.accentSoft, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}><CurIco size={22} color="currentColor" /></span>}
-            {cur.title}
+          <div style={{ width: 58, height: 58, borderRadius: 18, background: `linear-gradient(135deg, ${C.accent}, ${C.accentDark})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, boxShadow: "0 12px 28px rgba(105,33,2,.28)", flexShrink: 0 }}>{headEmoji}</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: C.text, lineHeight: 1.15 }}>{cur.title}</div>
+            <div style={{ fontSize: 13, color: C.muted, marginTop: 3 }}>{allCards.length} élément{allCards.length > 1 ? "s" : ""}{subParents.length ? ` · ${subParents.length} sous-catégorie${subParents.length > 1 ? "s" : ""}` : ""}</div>
           </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(268px, 1fr))", gap: 16 }}>
+
+        {/* Onglets par sous-catégorie (uniquement si pertinent) */}
+        {showTabs && (
+          <div style={{ display: "flex", gap: 9, flexWrap: "wrap", marginBottom: 20 }}>
+            {tabList.map((tb) => {
+              const on = tab === tb.id;
+              return (
+                <button key={tb.id} onClick={() => setTab(tb.id)}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 15px", borderRadius: 980, cursor: "pointer", font: `700 13px ${F.ui}`, border: `1px solid ${on ? C.accent : C.line2}`, background: on ? C.accent : "#fff", color: on ? "#fff" : C.muted, boxShadow: on ? "0 6px 16px rgba(105,33,2,.22)" : "none", transition: "all .16s" }}
+                  onMouseEnter={(e) => { if (!on) { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; } }}
+                  onMouseLeave={(e) => { if (!on) { e.currentTarget.style.borderColor = C.line2; e.currentTarget.style.color = C.muted; } }}>
+                  <span style={{ fontSize: 15 }}>{tb.emoji}</span> {tb.title}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Grille de cartes */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
           {cards.map((node) => {
             const isParent = node.children && node.children.length;
             const isModule = node.action && node.action.type === "module";
             const isUrl = node.action && node.action.type === "url";
-            const sub = isParent ? `${node.children.length} sous-rubriques` : isModule ? "Ouvrir le module" : isUrl ? "Lien externe" : "Ouvrir";
+            const emoji = wsEmojiFor(node);
+            const sub = isParent ? `${node.children.length} sous-rubriques` : isModule ? "Ouvrir le module" : isUrl ? "Lien externe" : "Ouvrir la fiche";
             const arw = isParent ? "›" : isUrl ? "↗" : "→";
+            const tint = isModule ? C.accent : C.text;
             return (
-              <div key={node.id} onClick={() => (isParent ? drill(node) : openLeaf(node, [...path, node.title]))}
-                style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 16, padding: "18px 20px", cursor: "pointer", boxShadow: "0 1px 2px rgba(0,0,0,.04), 0 10px 26px rgba(0,0,0,.05)", transition: "transform .18s, box-shadow .18s, border-color .18s", display: "flex", alignItems: "center", gap: 14 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 14px 34px rgba(0,0,0,.10)"; e.currentTarget.style.borderColor = C.accentSoft; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 1px 2px rgba(0,0,0,.04), 0 10px 26px rgba(0,0,0,.05)"; e.currentTarget.style.borderColor = C.line; }}>
-                <div style={{ width: 40, height: 40, borderRadius: 11, background: C.accentSoft, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: F.mono, fontWeight: 700, fontSize: 12 }}>{node.num}</div>
+              <div key={node.id} onClick={() => (isParent ? drill(node) : openLeaf(node, [...cardPath, node.title]))}
+                style={{ position: "relative", background: C.card, border: `1px solid ${C.line}`, borderRadius: 18, padding: "17px 18px", cursor: "pointer", boxShadow: "0 1px 2px rgba(0,0,0,.04), 0 10px 26px rgba(0,0,0,.05)", transition: "transform .18s, box-shadow .18s, border-color .18s", display: "flex", alignItems: "center", gap: 15, overflow: "hidden" }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 18px 40px rgba(0,0,0,.12)"; e.currentTarget.style.borderColor = C.accent; const ar = e.currentTarget.querySelector(".ws-arw"); if (ar) ar.style.transform = "translateX(4px)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 1px 2px rgba(0,0,0,.04), 0 10px 26px rgba(0,0,0,.05)"; e.currentTarget.style.borderColor = C.line; const ar = e.currentTarget.querySelector(".ws-arw"); if (ar) ar.style.transform = "none"; }}>
+                <div style={{ width: 50, height: 50, borderRadius: 14, background: isModule ? `linear-gradient(135deg, ${C.accent}, ${C.accentDark})` : C.accentSoft, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 24 }}>{emoji}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: C.text, lineHeight: 1.3 }}>{node.title}</div>
-                  <div style={{ fontSize: 11, color: C.dim, marginTop: 3 }}>{sub}</div>
+                  <div style={{ fontSize: 14.5, fontWeight: 700, color: tint, lineHeight: 1.25, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis" }}>{node.title}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                    <span style={{ fontFamily: F.mono, fontWeight: 700, fontSize: 10, color: C.accent, background: C.accentSoft, padding: "1px 6px", borderRadius: 6 }}>{node.num}</span>
+                    <span style={{ fontSize: 11.5, color: C.dim }}>{sub}</span>
+                    {isModule && <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: "#fff", background: C.accent, padding: "2px 6px", borderRadius: 980 }}>App</span>}
+                  </div>
                 </div>
-                <span style={{ color: C.dim, fontSize: 15, flexShrink: 0 }}>{arw}</span>
+                <span className="ws-arw" style={{ color: isModule ? C.accent : C.dim, fontSize: 17, flexShrink: 0, transition: "transform .18s" }}>{arw}</span>
               </div>
             );
           })}
@@ -4081,7 +4166,7 @@ const WS_MENU = [
     children: [
       { id: "2.1", num: "2.1", title: "Mes outils d'auto-analyse – Trackers" },
       { id: "2.2", num: "2.2", title: "Mon simulateur de commissions" },
-      { id: "2.3", num: "2.3", title: "Mes demandes de congés" },
+      { id: "2.3", num: "2.3", title: "Mes demandes (congés, frais, matériel…)", action: { type: "module", module: "tickets" } },
       { id: "2.4", num: "2.4", title: "Les règles en entreprise" },
       {
         id: "2.5", num: "2.5", title: "Événements",
@@ -4257,6 +4342,464 @@ function DocPageView({ page, onHome }) {
     </div>
   );
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODULE TICKETS / DEMANDES  (congés, note de frais, matériel/IT, absence…)
+   ───────────────────────────────────────────────────────────────────────────
+   • Toute demande est enregistrée dans Firestore  →  l'onglet « Demandes reçues »
+     (admin) la reçoit EN DIRECT (onSnapshot), même sans email.
+   • En plus, une notification email part vers TICKETS_CONFIG.recipientEmail :
+       – si les 3 identifiants EmailJS sont remplis  → envoi 100% automatique ;
+       – sinon  → repli : ouverture d'un email pré-rempli (mailto).
+   ▸ POUR ACTIVER L'EMAIL AUTOMATIQUE : créez un compte gratuit sur emailjs.com,
+     un « service » + un « template », puis collez les 3 identifiants ci-dessous.
+     Le template doit contenir les variables {{subject}}, {{message}}, {{to_email}}.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const TICKETS_CONFIG = {
+  recipientEmail: "p.pereira@wallswiss.ch",                      // destinataire des notifications
+  inboxAdmins: ["admin@wallswiss.ch", "p.pereira@wallswiss.ch"], // qui voit « Demandes reçues »
+  emailjs: { serviceId: "", templateId: "", publicKey: "" },     // vide → repli mailto automatique
+};
+
+const TICKET_TYPES = [
+  { id: "conges", label: "Congés", desc: "Demande de congés / vacances", fields: [
+    { key: "dateStart", label: "Du", type: "date", required: true },
+    { key: "dateEnd", label: "Au", type: "date", required: true },
+    { key: "demiJournee", label: "Demi-journée", type: "select", options: ["Non", "Matin", "Après-midi"] },
+  ]},
+  { id: "note_frais", label: "Note de frais", desc: "Remboursement de frais professionnels", fields: [
+    { key: "montant", label: "Montant (CHF)", type: "number", required: true },
+    { key: "categorie", label: "Catégorie", type: "select", options: ["Transport", "Repas", "Hébergement", "Matériel", "Autre"] },
+    { key: "dateFrais", label: "Date des frais", type: "date" },
+  ]},
+  { id: "materiel", label: "Matériel / IT", desc: "Demande de matériel ou support informatique", fields: [
+    { key: "item", label: "Matériel / besoin", type: "text", required: true },
+    { key: "pourLe", label: "Souhaité pour le", type: "date" },
+  ]},
+  { id: "absence", label: "Absence maladie", desc: "Déclaration d'absence pour maladie", fields: [
+    { key: "dateStart", label: "Depuis le", type: "date", required: true },
+    { key: "dateEnd", label: "Jusqu'au (estimé)", type: "date" },
+    { key: "certificat", label: "Certificat médical", type: "select", options: ["À suivre", "Joint par email", "Non requis"] },
+  ]},
+  { id: "autre", label: "Autre demande", desc: "Toute autre demande", fields: [] },
+];
+
+const TICKET_STATUS = {
+  nouveau:  { label: "Nouveau",  color: "#2563EB", bg: "rgba(37,99,235,.10)" },
+  en_cours: { label: "En cours", color: "#B45309", bg: "rgba(180,83,9,.10)" },
+  traite:   { label: "Traité",   color: "#047857", bg: "rgba(4,120,87,.10)" },
+  refuse:   { label: "Refusé",   color: "#B91C1C", bg: "rgba(185,28,28,.10)" },
+};
+const TICKET_PRIORITY = { basse: "Basse", normale: "Normale", haute: "Haute" };
+
+function isTicketAdmin(u) {
+  const list = (TICKETS_CONFIG.inboxAdmins || []).map((e) => String(e).toLowerCase());
+  return !!u && list.includes(String(u.email || "").toLowerCase());
+}
+
+function wsTicketFmtDate(ms) {
+  if (!ms) return "—";
+  try { return new Date(ms).toLocaleString("fr-CH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }); }
+  catch { return "—"; }
+}
+function wsTicketFmtDay(v) {
+  if (!v) return "";
+  try { return new Date(v).toLocaleDateString("fr-CH", { day: "2-digit", month: "2-digit", year: "numeric" }); }
+  catch { return String(v); }
+}
+
+/* ── EmailJS chargé dynamiquement (aucune dépendance npm à installer) ── */
+let _wsEmailjsPromise = null;
+function wsLoadEmailJs() {
+  if (typeof window !== "undefined" && window.emailjs) return Promise.resolve(window.emailjs);
+  if (_wsEmailjsPromise) return _wsEmailjsPromise;
+  _wsEmailjsPromise = new Promise((resolve, reject) => {
+    try {
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js";
+      s.async = true;
+      s.onload = () => resolve(window.emailjs);
+      s.onerror = () => reject(new Error("EmailJS: chargement impossible"));
+      document.head.appendChild(s);
+    } catch (e) { reject(e); }
+  });
+  return _wsEmailjsPromise;
+}
+
+function wsBuildTicketBody(t) {
+  const type = TICKET_TYPES.find((x) => x.id === t.type);
+  const lines = [];
+  lines.push("Nouvelle demande — " + (t.typeLabel || t.type));
+  lines.push("");
+  lines.push("Objet : " + (t.title || ""));
+  lines.push("Demandeur : " + (t.authorName || "") + " <" + (t.authorEmail || "") + ">");
+  lines.push("Priorité : " + (TICKET_PRIORITY[t.priority] || t.priority));
+  if (type && type.fields.length) {
+    lines.push("");
+    type.fields.forEach((f) => {
+      const val = (t.fields || {})[f.key];
+      if (val) lines.push(f.label + " : " + (f.type === "date" ? wsTicketFmtDay(val) : val));
+    });
+  }
+  if (t.message) { lines.push(""); lines.push("Message :"); lines.push(t.message); }
+  lines.push("");
+  lines.push("— Envoyé depuis l'application WallSwiss");
+  return lines.join("\n");
+}
+
+async function wsSendTicketEmail(t) {
+  const subject = "[" + (t.typeLabel || "Demande") + "] " + (t.title || "") + " — " + (t.authorName || t.authorEmail || "");
+  const body = wsBuildTicketBody(t);
+  const cfg = TICKETS_CONFIG.emailjs || {};
+  if (cfg.serviceId && cfg.templateId && cfg.publicKey) {
+    try {
+      const ej = await wsLoadEmailJs();
+      await ej.send(cfg.serviceId, cfg.templateId, {
+        to_email: TICKETS_CONFIG.recipientEmail,
+        subject: subject,
+        message: body,
+        from_name: t.authorName || t.authorEmail || "WallSwiss",
+        reply_to: t.authorEmail || "",
+      }, { publicKey: cfg.publicKey });
+      return { ok: true, method: "email" };
+    } catch (e) { console.warn("[Tickets] EmailJS échec → repli mailto :", e); }
+  }
+  const href = "mailto:" + encodeURIComponent(TICKETS_CONFIG.recipientEmail) +
+    "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+  if (typeof window !== "undefined") window.open(href, "_blank");
+  return { ok: true, method: "mailto" };
+}
+
+/* ── Petites icônes inline (aucune dépendance) ── */
+const TkI = {
+  inbox: (s = 18, c = "currentColor") => (<svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>),
+  plus: (s = 18, c = "currentColor") => (<svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>),
+  send: (s = 16, c = "currentColor") => (<svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>),
+  check: (s = 15, c = "currentColor") => (<svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>),
+  x: (s = 15, c = "currentColor") => (<svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>),
+  clock: (s = 15, c = "currentColor") => (<svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>),
+  chevron: (s = 16, c = "currentColor") => (<svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>),
+  back: (s = 16, c = "currentColor") => (<svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>),
+};
+
+function TicketStatusBadge({ status }) {
+  const m = TICKET_STATUS[status] || TICKET_STATUS.nouveau;
+  return (<span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 980, background: m.bg, color: m.color, font: `600 11.5px ${F.ui}`, whiteSpace: "nowrap" }}>{m.label}</span>);
+}
+
+/* ═══════════ MODULE « MES DEMANDES » (créer + suivre) ═══════════ */
+function TicketsModule({ db, appId, user, onOpenAdmin }) {
+  const [type, setType] = useState("conges");
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [priority, setPriority] = useState("normale");
+  const [fields, setFields] = useState({});
+  const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [myTickets, setMyTickets] = useState([]);
+
+  useEffect(() => {
+    if (!db || !user) return;
+    const ref = collection(db, "artifacts", appId, "public", "data", "tickets");
+    const unsub = onSnapshot(ref, (snap) => {
+      const all = [];
+      snap.forEach((d) => all.push({ _id: d.id, ...d.data() }));
+      setMyTickets(all.filter((t) => t.authorUid === user.uid).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)));
+    }, (err) => console.warn("[Tickets] mes demandes:", err));
+    return () => unsub();
+  }, [db, appId, user]);
+
+  const curType = TICKET_TYPES.find((t) => t.id === type) || TICKET_TYPES[0];
+  const setField = (k, v) => setFields((prev) => ({ ...prev, [k]: v }));
+
+  const submit = async () => {
+    if (!title.trim()) { setToast({ ok: false, msg: "Ajoutez un objet à votre demande." }); return; }
+    for (const f of curType.fields) {
+      if (f.required && !fields[f.key]) { setToast({ ok: false, msg: `Champ requis : ${f.label}.` }); return; }
+    }
+    if (!db || !user) { setToast({ ok: false, msg: "Connexion requise." }); return; }
+    setBusy(true);
+    const now = Date.now();
+    const ticket = {
+      type, typeLabel: curType.label,
+      title: title.trim(), message: message.trim(), priority,
+      fields: { ...fields }, status: "nouveau",
+      createdAt: now, createdAtISO: new Date(now).toISOString(),
+      authorUid: user.uid || null, authorEmail: user.email || "", authorName: String(user.email || "").split("@")[0],
+      adminNote: "",
+    };
+    try {
+      await addDoc(collection(db, "artifacts", appId, "public", "data", "tickets"), ticket);
+      const res = await wsSendTicketEmail(ticket);
+      setToast({ ok: true, msg: res.method === "email"
+        ? "Demande envoyée ✓ — email + espace admin"
+        : "Demande enregistrée ✓ — un email pré-rempli s'est ouvert, cliquez « Envoyer »." });
+      setTitle(""); setMessage(""); setFields({}); setPriority("normale");
+    } catch (e) {
+      console.error("[Tickets] envoi:", e);
+      setToast({ ok: false, msg: "Erreur lors de l'enregistrement. Réessayez." });
+    } finally {
+      setBusy(false);
+      setTimeout(() => setToast(null), 5000);
+    }
+  };
+
+  const inputStyle = { width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 12, border: `1px solid ${C.line2}`, background: C.card, color: C.text, font: `500 14px ${F.ui}`, outline: "none" };
+  const labelStyle = { display: "block", font: `600 12px ${F.ui}`, color: C.muted, marginBottom: 6 };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.bgSoft, overflow: "hidden" }}>
+      <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.line}`, position: "sticky", top: 0, zIndex: 60, flexShrink: 0 }}>
+        <div style={{ padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: C.accentSoft, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>{TkI.inbox(20, C.accent)}</div>
+            <div>
+              <div style={{ color: C.dim, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Espace personnel</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.text }}>Mes demandes</div>
+            </div>
+          </div>
+          {isTicketAdmin(user) && (
+            <button onClick={onOpenAdmin} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 15px", borderRadius: 980, border: `1px solid ${C.accent}`, background: C.accent, color: "#fff", font: `600 13px ${F.ui}`, cursor: "pointer" }}>
+              {TkI.inbox(15, "#fff")} Demandes reçues {TkI.chevron(15, "#fff")}
+            </button>
+          )}
+        </div>
+      </header>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px 60px" }}>
+        <div style={{ maxWidth: 920, margin: "0 auto", display: "grid", gap: 24, gridTemplateColumns: "1fr" }}>
+
+          {/* Formulaire */}
+          <section style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 20, padding: 24, boxShadow: "0 1px 3px rgba(0,0,0,.04)" }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 4 }}>Nouvelle demande</div>
+            <div style={{ fontSize: 13, color: C.muted, marginBottom: 18 }}>Elle arrive en direct dans l'espace admin et déclenche un email à l'équipe.</div>
+
+            {/* Choix du type */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
+              {TICKET_TYPES.map((t) => {
+                const on = t.id === type;
+                return (
+                  <button key={t.id} onClick={() => { setType(t.id); setFields({}); }} style={{ padding: "8px 14px", borderRadius: 980, cursor: "pointer", font: `600 13px ${F.ui}`, border: `1px solid ${on ? C.accent : C.line2}`, background: on ? C.accentSoft : C.card, color: on ? C.accent : C.muted, transition: "all .15s" }}>
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ fontSize: 12.5, color: C.dim, marginBottom: 18, marginTop: -8 }}>{curType.desc}</div>
+
+            {/* Objet */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Objet de la demande *</label>
+              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={type === "conges" ? "Ex. Congés d'été" : type === "note_frais" ? "Ex. Déplacement client Genève" : "Résumé court"} style={inputStyle} />
+            </div>
+
+            {/* Champs spécifiques au type */}
+            {curType.fields.length > 0 && (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14, marginBottom: 16 }}>
+                {curType.fields.map((f) => (
+                  <div key={f.key}>
+                    <label style={labelStyle}>{f.label}{f.required ? " *" : ""}</label>
+                    {f.type === "select" ? (
+                      <select value={fields[f.key] || ""} onChange={(e) => setField(f.key, e.target.value)} style={inputStyle}>
+                        <option value="">—</option>
+                        {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    ) : (
+                      <input type={f.type} value={fields[f.key] || ""} onChange={(e) => setField(f.key, e.target.value)} style={inputStyle} />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Priorité */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Priorité</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                {Object.keys(TICKET_PRIORITY).map((p) => {
+                  const on = p === priority;
+                  return (
+                    <button key={p} onClick={() => setPriority(p)} style={{ flex: 1, padding: "9px 0", borderRadius: 12, cursor: "pointer", font: `600 13px ${F.ui}`, border: `1px solid ${on ? C.accent : C.line2}`, background: on ? C.accentSoft : C.card, color: on ? C.accent : C.muted }}>
+                      {TICKET_PRIORITY[p]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Message */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={labelStyle}>Message / précisions</label>
+              <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4} placeholder="Détaillez votre demande…" style={{ ...inputStyle, resize: "vertical", minHeight: 90 }} />
+            </div>
+
+            <button onClick={submit} disabled={busy} style={{ display: "inline-flex", alignItems: "center", gap: 9, padding: "12px 22px", borderRadius: 14, border: "none", background: busy ? C.dim : C.accent, color: "#fff", font: `700 14px ${F.ui}`, cursor: busy ? "default" : "pointer", boxShadow: "0 2px 10px rgba(105,33,2,.25)" }}>
+              {TkI.send(16, "#fff")} {busy ? "Envoi…" : "Envoyer la demande"}
+            </button>
+
+            {toast && (
+              <div style={{ marginTop: 14, padding: "11px 14px", borderRadius: 12, font: `600 13px ${F.ui}`, background: toast.ok ? "rgba(4,120,87,.08)" : "rgba(185,28,28,.08)", color: toast.ok ? "#047857" : "#B91C1C", border: `1px solid ${toast.ok ? "rgba(4,120,87,.2)" : "rgba(185,28,28,.2)"}` }}>
+                {toast.msg}
+              </div>
+            )}
+          </section>
+
+          {/* Mes demandes */}
+          <section>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+              Mes demandes <span style={{ font: `600 12px ${F.ui}`, color: C.dim }}>({myTickets.length})</span>
+            </div>
+            {myTickets.length === 0 ? (
+              <div style={{ padding: 32, textAlign: "center", color: C.dim, font: `500 13px ${F.ui}`, background: C.card, border: `1px dashed ${C.line2}`, borderRadius: 16 }}>
+                Aucune demande pour l'instant. Créez-en une ci-dessus.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {myTickets.map((t) => (
+                  <div key={t._id} style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", gap: 14 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                        <span style={{ font: `700 14px ${F.ui}`, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
+                        <span style={{ font: `600 11px ${F.ui}`, color: C.accent, background: C.accentSoft, padding: "2px 8px", borderRadius: 980, flexShrink: 0 }}>{t.typeLabel}</span>
+                      </div>
+                      <div style={{ font: `500 12px ${F.ui}`, color: C.dim }}>{wsTicketFmtDate(t.createdAt)}</div>
+                    </div>
+                    <TicketStatusBadge status={t.status} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════ MODULE « DEMANDES REÇUES » (admin) ═══════════ */
+function TicketsAdminInbox({ db, appId, user, onBack }) {
+  const [tickets, setTickets] = useState([]);
+  const [filter, setFilter] = useState("tous");
+  const [openId, setOpenId] = useState(null);
+  const [noteDraft, setNoteDraft] = useState({});
+
+  useEffect(() => {
+    if (!db) return;
+    const ref = collection(db, "artifacts", appId, "public", "data", "tickets");
+    const unsub = onSnapshot(ref, (snap) => {
+      const all = [];
+      snap.forEach((d) => all.push({ _id: d.id, ...d.data() }));
+      setTickets(all.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)));
+    }, (err) => console.warn("[Tickets] inbox:", err));
+    return () => unsub();
+  }, [db, appId]);
+
+  const setStatus = async (t, status) => {
+    try { await updateDoc(doc(db, "artifacts", appId, "public", "data", "tickets", t._id), { status }); }
+    catch (e) { console.error("[Tickets] statut:", e); }
+  };
+  const saveNote = async (t) => {
+    try { await updateDoc(doc(db, "artifacts", appId, "public", "data", "tickets", t._id), { adminNote: noteDraft[t._id] ?? (t.adminNote || "") }); }
+    catch (e) { console.error("[Tickets] note:", e); }
+  };
+
+  const counts = tickets.reduce((a, t) => { a[t.status] = (a[t.status] || 0) + 1; return a; }, {});
+  const shown = filter === "tous" ? tickets : tickets.filter((t) => t.status === filter);
+
+  if (!isTicketAdmin(user)) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 14, background: C.bgSoft }}>
+        <div style={{ color: C.accent }}>{TkI.inbox(40, C.accent)}</div>
+        <div style={{ font: `700 16px ${F.ui}`, color: C.text }}>Accès réservé</div>
+        <div style={{ font: `500 13px ${F.ui}`, color: C.muted, maxWidth: 340, textAlign: "center" }}>Cet espace est réservé aux administrateurs des demandes.</div>
+        <button onClick={onBack} style={{ marginTop: 6, padding: "9px 16px", borderRadius: 980, border: `1px solid ${C.line2}`, background: C.card, color: C.text, font: `600 13px ${F.ui}`, cursor: "pointer" }}>← Retour</button>
+      </div>
+    );
+  }
+
+  const filterChips = [["tous", `Toutes (${tickets.length})`], ["nouveau", `Nouveau (${counts.nouveau || 0})`], ["en_cours", `En cours (${counts.en_cours || 0})`], ["traite", `Traité (${counts.traite || 0})`], ["refuse", `Refusé (${counts.refuse || 0})`]];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.bgSoft, overflow: "hidden" }}>
+      <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.line}`, position: "sticky", top: 0, zIndex: 60, flexShrink: 0 }}>
+        <div style={{ padding: "16px 32px", display: "flex", alignItems: "center", gap: 14 }}>
+          <button onClick={onBack} title="Retour" style={{ width: 38, height: 38, borderRadius: 980, border: `1px solid ${C.line2}`, background: C.card, color: C.muted, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>{TkI.back(16, C.muted)}</button>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: C.accentSoft, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>{TkI.inbox(20, C.accent)}</div>
+          <div>
+            <div style={{ color: C.dim, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Administration</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: C.text }}>Demandes reçues</div>
+          </div>
+        </div>
+        <div style={{ padding: "0 32px 14px", display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {filterChips.map(([k, lbl]) => {
+            const on = filter === k;
+            return (<button key={k} onClick={() => setFilter(k)} style={{ padding: "7px 13px", borderRadius: 980, cursor: "pointer", font: `600 12.5px ${F.ui}`, border: `1px solid ${on ? C.accent : C.line2}`, background: on ? C.accentSoft : C.card, color: on ? C.accent : C.muted }}>{lbl}</button>);
+          })}
+        </div>
+      </header>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "20px 32px 60px" }}>
+        <div style={{ maxWidth: 980, margin: "0 auto", display: "flex", flexDirection: "column", gap: 12 }}>
+          {shown.length === 0 ? (
+            <div style={{ padding: 40, textAlign: "center", color: C.dim, font: `500 14px ${F.ui}`, background: C.card, border: `1px dashed ${C.line2}`, borderRadius: 16 }}>Aucune demande dans cette catégorie.</div>
+          ) : shown.map((t) => {
+            const open = openId === t._id;
+            const type = TICKET_TYPES.find((x) => x.id === t.type);
+            return (
+              <div key={t._id} style={{ background: C.card, border: `1px solid ${open ? C.accent : C.line}`, borderRadius: 16, overflow: "hidden", transition: "border-color .15s" }}>
+                <div onClick={() => setOpenId(open ? null : t._id)} style={{ padding: "15px 18px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}>
+                  <div style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .15s", color: C.dim, flexShrink: 0 }}>{TkI.chevron(16, C.dim)}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
+                      <span style={{ font: `700 14.5px ${F.ui}`, color: C.text }}>{t.title}</span>
+                      <span style={{ font: `600 11px ${F.ui}`, color: C.accent, background: C.accentSoft, padding: "2px 8px", borderRadius: 980 }}>{t.typeLabel}</span>
+                      {t.priority === "haute" && <span style={{ font: `600 11px ${F.ui}`, color: "#B91C1C", background: "rgba(185,28,28,.10)", padding: "2px 8px", borderRadius: 980 }}>Priorité haute</span>}
+                    </div>
+                    <div style={{ font: `500 12px ${F.ui}`, color: C.dim }}>{t.authorName} · {t.authorEmail} · {wsTicketFmtDate(t.createdAt)}</div>
+                  </div>
+                  <TicketStatusBadge status={t.status} />
+                </div>
+
+                {open && (
+                  <div style={{ padding: "4px 18px 18px 48px", borderTop: `1px solid ${C.line}` }}>
+                    {type && type.fields.length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 20px", margin: "14px 0" }}>
+                        {type.fields.map((f) => {
+                          const val = (t.fields || {})[f.key];
+                          if (!val) return null;
+                          return (<div key={f.key} style={{ font: `500 13px ${F.ui}`, color: C.text }}><span style={{ color: C.dim }}>{f.label} : </span><b>{f.type === "date" ? wsTicketFmtDay(val) : val}</b></div>);
+                        })}
+                      </div>
+                    )}
+                    {t.message && <div style={{ font: `500 13.5px ${F.ui}`, color: C.text, background: C.bgSoft, borderRadius: 12, padding: "12px 14px", margin: "12px 0", whiteSpace: "pre-wrap" }}>{t.message}</div>}
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", margin: "14px 0 10px" }}>
+                      <span style={{ font: `600 12px ${F.ui}`, color: C.muted, marginRight: 4 }}>Statut :</span>
+                      {[["en_cours", "En cours", "#B45309"], ["traite", "Traité", "#047857"], ["refuse", "Refusé", "#B91C1C"], ["nouveau", "Nouveau", "#2563EB"]].map(([k, lbl, col]) => (
+                        <button key={k} onClick={() => setStatus(t, k)} style={{ padding: "6px 12px", borderRadius: 980, cursor: "pointer", font: `600 12px ${F.ui}`, border: `1px solid ${t.status === k ? col : C.line2}`, background: t.status === k ? col : C.card, color: t.status === k ? "#fff" : C.muted }}>{lbl}</button>
+                      ))}
+                    </div>
+
+                    <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginTop: 10 }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: "block", font: `600 11.5px ${F.ui}`, color: C.muted, marginBottom: 5 }}>Note interne (visible admin)</label>
+                        <input value={noteDraft[t._id] ?? (t.adminNote || "")} onChange={(e) => setNoteDraft((p) => ({ ...p, [t._id]: e.target.value }))} placeholder="Ajouter une note…" style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", borderRadius: 10, border: `1px solid ${C.line2}`, background: C.card, color: C.text, font: `500 13px ${F.ui}`, outline: "none" }} />
+                      </div>
+                      <button onClick={() => saveNote(t)} style={{ padding: "9px 15px", borderRadius: 10, border: `1px solid ${C.line2}`, background: C.bgSoft, color: C.text, font: `600 12.5px ${F.ui}`, cursor: "pointer", flexShrink: 0 }}>Enregistrer</button>
+                      <a href={`mailto:${t.authorEmail}?subject=${encodeURIComponent("Votre demande : " + t.title)}`} style={{ padding: "9px 15px", borderRadius: 10, border: `1px solid ${C.line2}`, background: C.card, color: C.accent, font: `600 12.5px ${F.ui}`, cursor: "pointer", textDecoration: "none", flexShrink: 0 }}>Répondre</a>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function WallSwissAppMain() {
   const initialTexts = {
@@ -5588,6 +6131,14 @@ const [lppForm, setLppForm] = useState({
         <div style={{ flex: 1 }} />
 
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          {isTicketAdmin(user) && (
+            <button onClick={() => setActiveModule("ticketsAdmin")} title="Demandes reçues"
+              style={{ display: "inline-flex", alignItems: "center", gap: 7, background: activeModule === "ticketsAdmin" ? C.accentSoft : "transparent", color: activeModule === "ticketsAdmin" ? C.accent : C.muted, border: "none", padding: "8px 12px", borderRadius: 980, cursor: "pointer", fontFamily: F.ui, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap" }}
+              onMouseEnter={(e) => { if (activeModule !== "ticketsAdmin") { e.currentTarget.style.background = C.bgSoft; e.currentTarget.style.color = C.text; } }}
+              onMouseLeave={(e) => { if (activeModule !== "ticketsAdmin") { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.muted; } }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg> Demandes
+            </button>
+          )}
           <button onClick={() => window.open("https://wallswiss.my.salesforce.com/", "_blank")}
             style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "transparent", color: C.muted, border: "none", padding: "8px 12px", borderRadius: 980, cursor: "pointer", fontFamily: F.ui, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap" }}
             onMouseEnter={(e) => { e.currentTarget.style.background = C.bgSoft; e.currentTarget.style.color = C.text; }}
@@ -5625,6 +6176,14 @@ const [lppForm, setLppForm] = useState({
         {/* VUE HUB — Accueil satellite + onglets / sous-onglets */}
         {activeModule === "hub" && (
           <HubSommaire onNavigate={handleSommaireNav} onOpenModule={(m) => setActiveModule(m)} logoUrl={appSettings.defaultLogo || LOGO_URL} />
+        )}
+        {/* VUE MODULE — MES DEMANDES / TICKETS */}
+        {activeModule === "tickets" && (
+          <TicketsModule db={db} appId={appId} user={user} onOpenAdmin={() => setActiveModule("ticketsAdmin")} />
+        )}
+        {/* VUE MODULE — DEMANDES REÇUES (admin) */}
+        {activeModule === "ticketsAdmin" && (
+          <TicketsAdminInbox db={db} appId={appId} user={user} onBack={() => setActiveModule("tickets")} />
         )}
         {/* VUE MODULE MARKETING */}
         {activeModule === "marketing" && (

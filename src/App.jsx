@@ -122,8 +122,11 @@ const WS_MENU = [
   { id: "5", num: "5", title: "Académie WallSwiss – Base de connaissances", icon: "PieChart", children: [
     { id: "5.1", num: "5.1", title: "Cours AFA / IAF" },
     { id: "5.2", num: "5.2", title: "Formation commerciale", children: [
-      { id: "5.2.1", num: "5.2.1", title: "Vidéos de formation" },
-      { id: "5.2.2", num: "5.2.2", title: "Book de formation" },
+      { id: "5.2.1", num: "5.2.1", title: "Bibliothèque de formation (ebooks & PDF)", action: { type: "module", module: "academie" } },
+      { id: "5.2.2", num: "5.2.2", title: "Mon E-book WallSwiss", action: { type: "module", module: "academie", doc: "mon-ebook" } },
+      { id: "5.2.3", num: "5.2.3", title: "Entretien commercial & plan de conseil", action: { type: "module", module: "academie", doc: "fondamentaux" } },
+      { id: "5.2.4", num: "5.2.4", title: "Objections (cold call & 42 objections)", action: { type: "module", module: "academie", doc: "42-objections" } },
+      { id: "5.2.5", num: "5.2.5", title: "Vidéos de formation" },
     ]},
     { id: "5.3", num: "5.3", title: "France – PER" },
     { id: "5.4", num: "5.4", title: "France – Assurance vie" },
@@ -135,7 +138,7 @@ const WS_MENU = [
     { id: "5.10", num: "5.10", title: "France – Création d'entreprise" },
     { id: "5.11", num: "5.11", title: "Suisse – AVS (1er pilier)" },
     { id: "5.12", num: "5.12", title: "France – Calcul de la retraite française" },
-    { id: "5.13", num: "5.13", title: "Utilisation de la calculette financière" },
+    { id: "5.13", num: "5.13", title: "Utilisation de la calculette financière", action: { type: "module", module: "academie", doc: "notice-calc" } },
     { id: "5.14", num: "5.14", title: "Formation investissement" },
     { id: "5.15", num: "5.15", title: "Formation KYC" },
     { id: "5.16", num: "5.16", title: "Formation Compliance" },
@@ -4276,7 +4279,7 @@ const WS_MENU = [
       { id: "5.10", num: "5.10", title: "France – Création d'entreprise" },
       { id: "5.11", num: "5.11", title: "Suisse – AVS (1er pilier)" },
       { id: "5.12", num: "5.12", title: "France – Calcul de la retraite française" },
-      { id: "5.13", num: "5.13", title: "Utilisation de la calculette financière" },
+      { id: "5.13", num: "5.13", title: "Utilisation de la calculette financière", action: { type: "module", module: "academie", doc: "notice-calc" } },
       { id: "5.14", num: "5.14", title: "Formation investissement" },
       { id: "5.15", num: "5.15", title: "Formation KYC" },
       { id: "5.16", num: "5.16", title: "Formation Compliance" },
@@ -4524,6 +4527,228 @@ function TicketStatusBadge({ status }) {
 }
 
 /* ═══════════ MODULE « MES DEMANDES » (créer + suivre) ═══════════ */
+/* ══════════════════ ACADÉMIE WALLSWISS — Bibliothèque & liseuse ══════════════════ */
+/* Les ebooks/PDF de la page Notion « Académie WallSwiss » sont lus ici, dans une     */
+/* liseuse intégrée (PDF via pdf.js, Word via mammoth). Déposez les fichiers dans     */
+/* le dossier  public/academy/  de StackBlitz (cf. ACADEMY_CONFIG.base).              */
+const ACADEMY_CONFIG = {
+  base: "/academy/", // dossier public où sont déposés les fichiers (PDF & DOCX)
+};
+
+const ACADEMY_CATS = [
+  { id: "ebook",        label: "E-book & guides",     emoji: "📘" },
+  { id: "entretien",    label: "Entretien & conseil", emoji: "🎯" },
+  { id: "prospection",  label: "Prospection & call",  emoji: "📞" },
+  { id: "objections",   label: "Objections",          emoji: "🛡️" },
+  { id: "calculs",      label: "Calculs & outils",    emoji: "🧮" },
+  { id: "productivite", label: "Productivité",         emoji: "🚀" },
+  { id: "onboarding",   label: "Onboarding",          emoji: "👋" },
+];
+
+/* Chaque fiche pointe vers un fichier de  public/academy/ .
+   type: "pdf" → liseuse pdf.js  ·  "docx" → rendu mammoth. */
+const ACADEMY_LIBRARY = [
+  { id: "mon-ebook",           cat: "ebook",        type: "pdf",  title: "Mon E-book WallSwiss",                    desc: "Le livre de référence de l'Académie.",           file: "mon-ebook.pdf" },
+  { id: "presentation",        cat: "onboarding",   type: "docx", title: "Présentation WallSwiss",                  desc: "Découverte de l'entreprise et de ses services.", file: "01-presentation-wallswiss.docx" },
+  { id: "fondamentaux",        cat: "entretien",    type: "docx", title: "Fondamentaux de l'entretien commercial",  desc: "Structurer un entretien qui convertit.",         file: "02-fondamentaux-entretien.docx" },
+  { id: "plan-conseil",        cat: "entretien",    type: "docx", title: "Plan de conseil",                         desc: "La trame d'un conseil patrimonial complet.",     file: "03-plan-de-conseil.docx" },
+  { id: "argumentaire-call",   cat: "prospection",  type: "docx", title: "Argumentaire Call débutant",              desc: "Le script d'appel pour bien démarrer.",          file: "04-argumentaire-call-debutant.docx" },
+  { id: "productivite-doc",    cat: "productivite", type: "pdf",  title: "Améliorer sa productivité",               desc: "Atelier Pierrick — solutions concrètes.",        file: "05-ameliorer-productivite.pdf" },
+  { id: "factsheet",           cat: "ebook",        type: "docx", title: "Comprendre un factsheet de fonds",        desc: "Lire et décrypter une fiche de fonds.",          file: "06-guide-factsheet-fonds.docx" },
+  { id: "cinq-outils",         cat: "prospection",  type: "docx", title: "Les 5 outils pour un max de rendez-vous", desc: "Générer plus de RDV qualifiés.",                 file: "07-5-outils-rendez-vous.docx" },
+  { id: "objections-coldcall", cat: "objections",   type: "pdf",  title: "Objections fréquentes en cold call",      desc: "Répondre au téléphone à froid.",                 file: "08-objections-coldcall.pdf" },
+  { id: "42-objections",       cat: "objections",   type: "pdf",  title: "Les 42 objections les plus fréquentes",   desc: "Le référentiel complet des réponses.",           file: "09-42-objections.pdf" },
+  { id: "objections-listing",  cat: "objections",   type: "docx", title: "Objections Cold call — listing",          desc: "Version document des réponses.",                 file: "11-objections-cold-call.docx" },
+  { id: "notice-calc",         cat: "calculs",      type: "docx", title: "Notice — Calculatrice financière",        desc: "Prendre en main la calculette.",                 file: "12-notice-calculatrice-financiere.docx" },
+  { id: "recueil-formules",    cat: "calculs",      type: "pdf",  title: "Recueil de formules de calculs",          desc: "Toutes les formules financières.",               file: "13-recueil-formules-calculs.pdf" },
+  { id: "bases-calcul",        cat: "calculs",      type: "pdf",  title: "Exercices — Bases de calcul",             desc: "S'entraîner sur les fondamentaux.",              file: "14-bases-calcul-questions.pdf" },
+  { id: "calculs-financiers",  cat: "calculs",      type: "pdf",  title: "Exercices — Calculs financiers",          desc: "Cas pratiques financiers.",                      file: "15-calculs-financiers-questions.pdf" },
+];
+
+function academyRequire(src, globalKey) {
+  if (typeof window !== "undefined" && window[globalKey]) return Promise.resolve(window[globalKey]);
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src; s.async = true;
+    s.onload = () => resolve(window[globalKey]);
+    s.onerror = () => reject(new Error("Impossible de charger " + src));
+    document.head.appendChild(s);
+  });
+}
+async function academyLoadPdfJs() {
+  const lib = await academyRequire("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js", "pdfjsLib");
+  try { lib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; } catch (e) {}
+  return lib;
+}
+function academyLoadMammoth() {
+  return academyRequire("https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js", "mammoth");
+}
+
+const acadRdBtn = { width: 32, height: 32, borderRadius: 9, border: "1px solid rgba(0,0,0,0.13)", background: "#fff", color: "#1D1D1F", font: "700 15px sans-serif", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" };
+
+function AcademyReader({ doc, onClose }) {
+  const [status, setStatus] = useState("loading"); // loading | pdf | docx | error
+  const [errMsg, setErrMsg] = useState("");
+  const [docHtml, setDocHtml] = useState("");
+  const [numPages, setNumPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [scale, setScale] = useState(1.25);
+  const pdfRef = React.useRef(null);
+  const canvasRef = React.useRef(null);
+  const url = doc.data ? doc.data : (ACADEMY_CONFIG.base + doc.file);
+
+  useEffect(() => {
+    let cancelled = false;
+    setStatus("loading"); setErrMsg(""); setDocHtml(""); setPage(1); pdfRef.current = null;
+    (async () => {
+      try {
+        if (doc.type === "pdf") {
+          const lib = await academyLoadPdfJs();
+          const pdfDoc = await lib.getDocument(url).promise;
+          if (cancelled) return;
+          pdfRef.current = pdfDoc; setNumPages(pdfDoc.numPages); setStatus("pdf");
+        } else if (doc.type === "docx") {
+          const mm = await academyLoadMammoth();
+          const resp = await fetch(url);
+          if (!resp.ok) throw new Error("Fichier introuvable (HTTP " + resp.status + ")");
+          const buf = await resp.arrayBuffer();
+          const out = await mm.convertToHtml({ arrayBuffer: buf });
+          if (cancelled) return;
+          setDocHtml(out.value || "<p>(Document vide)</p>"); setStatus("docx");
+        } else {
+          throw new Error("Type de document non pris en charge");
+        }
+      } catch (e) {
+        if (!cancelled) { setErrMsg(String((e && e.message) || e)); setStatus("error"); }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [doc.id]);
+
+  useEffect(() => {
+    if (status !== "pdf" || !pdfRef.current || !canvasRef.current) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const p = await pdfRef.current.getPage(page);
+        if (cancelled) return;
+        const viewport = p.getViewport({ scale });
+        const canvas = canvasRef.current; if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        canvas.width = viewport.width; canvas.height = viewport.height;
+        await p.render({ canvasContext: ctx, viewport }).promise;
+      } catch (e) {}
+    })();
+    return () => { cancelled = true; };
+  }, [status, page, scale]);
+
+  const cat = ACADEMY_CATS.find((c) => c.id === doc.cat);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 60px)", background: C.bgSoft }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", background: C.card, borderBottom: `1px solid ${C.line}`, flexShrink: 0 }}>
+        <button onClick={onClose} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 14px", borderRadius: 980, border: `1px solid ${C.line2}`, background: "#fff", color: C.accent, font: `700 13px ${F.ui}`, cursor: "pointer" }}>‹ Bibliothèque</button>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{cat ? cat.emoji + " " : ""}{doc.title}</div>
+        </div>
+        {status === "pdf" && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button onClick={() => setScale((s) => Math.max(0.6, +(s - 0.2).toFixed(2)))} style={acadRdBtn}>−</button>
+            <span style={{ fontSize: 12, color: C.muted, width: 44, textAlign: "center" }}>{Math.round(scale * 100)}%</span>
+            <button onClick={() => setScale((s) => Math.min(2.4, +(s + 0.2).toFixed(2)))} style={acadRdBtn}>+</button>
+            <div style={{ width: 1, height: 22, background: C.line2, margin: "0 4px" }} />
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} style={{ ...acadRdBtn, opacity: page <= 1 ? 0.4 : 1 }}>‹</button>
+            <span style={{ fontSize: 12.5, color: C.text, fontWeight: 600, minWidth: 74, textAlign: "center" }}>{page} / {numPages || "…"}</span>
+            <button onClick={() => setPage((p) => Math.min(numPages, p + 1))} disabled={page >= numPages} style={{ ...acadRdBtn, opacity: page >= numPages ? 0.4 : 1 }}>›</button>
+          </div>
+        )}
+        <a href={url} download={doc.file} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 980, border: "none", background: C.accent, color: "#fff", font: `700 12.5px ${F.ui}`, textDecoration: "none", cursor: "pointer" }}>Télécharger</a>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", justifyContent: "center" }}>
+        {status === "loading" && <div style={{ color: C.muted, font: `600 14px ${F.ui}`, marginTop: 40 }}>Chargement du document…</div>}
+        {status === "error" && (
+          <div style={{ maxWidth: 520, marginTop: 30, background: C.card, border: `1px solid ${C.line}`, borderRadius: 16, padding: "22px 24px", textAlign: "center", height: "fit-content" }}>
+            <div style={{ fontSize: 34, marginBottom: 10 }}>📄</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: C.text, marginBottom: 8 }}>Document indisponible</div>
+            <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5 }}>Le fichier <b>{doc.file}</b> n'a pas été trouvé. Déposez-le dans le dossier <b>public{ACADEMY_CONFIG.base}</b> de StackBlitz.</div>
+            <div style={{ fontSize: 11, color: C.dim, marginTop: 10 }}>{errMsg}</div>
+          </div>
+        )}
+        {status === "pdf" && (
+          <div style={{ boxShadow: "0 12px 40px rgba(0,0,0,.14)", borderRadius: 8, overflow: "hidden", alignSelf: "flex-start", background: "#fff" }}>
+            <canvas ref={canvasRef} style={{ display: "block", maxWidth: "100%" }} />
+          </div>
+        )}
+        {status === "docx" && (
+          <div style={{ maxWidth: 820, width: "100%", background: "#fff", border: `1px solid ${C.line}`, borderRadius: 12, padding: "46px 54px", alignSelf: "flex-start", boxShadow: "0 12px 40px rgba(0,0,0,.10)" }}>
+            <div style={{ font: `15px/1.65 ${F.ui}`, color: C.text }} dangerouslySetInnerHTML={{ __html: docHtml }} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AcademieModule({ initialDoc }) {
+  const [openId, setOpenId] = useState(initialDoc || null);
+  const [q, setQ] = useState("");
+  useEffect(() => { setOpenId(initialDoc || null); }, [initialDoc]);
+
+  const openDoc = openId ? ACADEMY_LIBRARY.find((d) => d.id === openId) : null;
+  if (openDoc) return <AcademyReader doc={openDoc} onClose={() => setOpenId(null)} />;
+
+  const ql = q.trim().toLowerCase();
+  const match = (d) => !ql || (d.title + " " + d.desc).toLowerCase().includes(ql);
+  const cats = ACADEMY_CATS.map((c) => ({ ...c, items: ACADEMY_LIBRARY.filter((d) => d.cat === c.id && match(d)) })).filter((c) => c.items.length);
+  const total = ACADEMY_LIBRARY.filter(match).length;
+
+  return (
+    <div style={{ flex: 1, minHeight: "calc(100vh - 60px)", overflowY: "auto", padding: "26px 40px 60px", boxSizing: "border-box", background: "radial-gradient(1100px 700px at 50% -6%, #FFFFFF, #EEF0F3)" }}>
+      <div style={{ maxWidth: 1160, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 8 }}>
+          <div style={{ width: 58, height: 58, borderRadius: 18, background: `linear-gradient(135deg, ${C.accent}, ${C.accentDark})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, boxShadow: "0 12px 28px rgba(105,33,2,.28)", flexShrink: 0 }}>🎓</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: C.text }}>Académie WallSwiss</div>
+            <div style={{ fontSize: 13, color: C.muted, marginTop: 3 }}>Bibliothèque de formation — {ACADEMY_LIBRARY.length} ressources · liseuse intégrée</div>
+          </div>
+        </div>
+        <div style={{ margin: "18px 0 26px", position: "relative", maxWidth: 420 }}>
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher un document…" style={{ width: "100%", padding: "11px 15px", borderRadius: 12, border: `1px solid ${C.line2}`, font: `14px ${F.ui}`, color: C.text, outline: "none", boxSizing: "border-box", background: "#fff" }} />
+        </div>
+
+        {cats.map((c) => (
+          <div key={c.id} style={{ marginBottom: 30 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 13 }}>
+              <span style={{ fontSize: 19 }}>{c.emoji}</span>
+              <span style={{ fontSize: 15.5, fontWeight: 800, color: C.text }}>{c.label}</span>
+              <span style={{ fontSize: 11.5, color: C.accent, background: C.accentSoft, padding: "2px 8px", borderRadius: 980, fontWeight: 700 }}>{c.items.length}</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 15 }}>
+              {c.items.map((d) => (
+                <div key={d.id} onClick={() => setOpenId(d.id)}
+                  style={{ display: "flex", alignItems: "center", gap: 15, background: C.card, border: `1px solid ${C.line}`, borderRadius: 16, padding: "16px 17px", cursor: "pointer", boxShadow: "0 1px 2px rgba(0,0,0,.04), 0 10px 26px rgba(0,0,0,.05)", transition: "transform .18s, box-shadow .18s, border-color .18s" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 18px 40px rgba(0,0,0,.12)"; e.currentTarget.style.borderColor = C.accent; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 1px 2px rgba(0,0,0,.04), 0 10px 26px rgba(0,0,0,.05)"; e.currentTarget.style.borderColor = C.line; }}>
+                  <div style={{ width: 48, height: 56, borderRadius: 9, background: d.type === "pdf" ? "rgba(234,67,53,.10)" : "rgba(37,99,235,.10)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0, gap: 2 }}>
+                    <span style={{ fontSize: 20 }}>{d.type === "pdf" ? "📕" : "📄"}</span>
+                    <span style={{ fontSize: 7.5, fontWeight: 800, letterSpacing: ".04em", color: d.type === "pdf" ? "#EA4335" : "#2563EB" }}>{d.type.toUpperCase()}</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: C.text, lineHeight: 1.25, marginBottom: 3 }}>{d.title}</div>
+                    <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.4 }}>{d.desc}</div>
+                  </div>
+                  <span style={{ color: C.dim, fontSize: 17, flexShrink: 0 }}>→</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+        {total === 0 && <div style={{ padding: 40, textAlign: "center", color: C.dim, fontSize: 13 }}>Aucun document ne correspond à « {q} ».</div>}
+      </div>
+    </div>
+  );
+}
+
 function TicketsModule({ db, appId, user, onOpenAdmin, initialType }) {
   const [type, setType] = useState(initialType || "conges");
   const [title, setTitle] = useState("");
@@ -4944,11 +5169,12 @@ function WallSwissAppMain() {
   };
 
   const [activeModule, setActiveModule] = useState("hub");
+  const [moduleArg, setModuleArg] = useState(null); // args de navigation (ex. doc Académie à ouvrir)
   // ── SOMMAIRE : navigation via le hub (onglets/sous-onglets) → page placeholder ──
   const [activePage, setActivePage] = useState(null);
   const handleSommaireNav = (node, path) => {
     if (node.action?.type === "url") { if (typeof window !== "undefined") window.open(node.action.url, "_blank"); return; }
-    if (node.action?.type === "module") { setActiveModule(node.action.module); return; }
+    if (node.action?.type === "module") { setModuleArg({ doc: node.action.doc || null, _n: Date.now() }); setActiveModule(node.action.module); return; }
     setActivePage({ ...node, path }); setActiveModule("page");
   };
   const [rapportPage, setRapportPage] = useState("dashboard");
@@ -6287,6 +6513,10 @@ const [lppForm, setLppForm] = useState({
         {/* VUE MODULE — DEMANDES REÇUES (admin) */}
         {activeModule === "ticketsAdmin" && (
           <TicketsAdminInbox db={db} appId={appId} user={user} onBack={() => setActiveModule("tickets")} />
+        )}
+
+        {activeModule === "academie" && (
+          <AcademieModule key={"acad-" + (moduleArg?._n || 0)} initialDoc={moduleArg?.doc || null} />
         )}
         {/* VUE MODULE MARKETING */}
         {activeModule === "marketing" && (

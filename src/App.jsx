@@ -4356,7 +4356,7 @@ function DocPageView({ page, onHome }) {
    ═══════════════════════════════════════════════════════════════════════════ */
 const TICKETS_CONFIG = {
   recipientEmail: "p.pereira@wallswiss.ch",                      // destinataire des notifications
-  inboxAdmins: ["admin@wallswiss.ch", "p.pereira@wallswiss.ch"], // qui voit « Demandes reçues »
+  inboxAdmins: ["n.klinger@wallswiss.ch", "admin@wallswiss.ch", "p.pereira@wallswiss.ch"], // qui voit « Demandes reçues »
   emailjs: { serviceId: "", templateId: "", publicKey: "" },     // vide → repli mailto automatique
   // ▸ Google Sheet : collez l'URL du script déployé (voir le fichier .gs fourni).
   //   Dès qu'elle est renseignée, chaque demande ajoute une ligne au Google Sheet.
@@ -4391,8 +4391,8 @@ const TICKET_TYPES = [
 
 const TICKET_STATUS = {
   nouveau:  { label: "Nouveau",  color: "#2563EB", bg: "rgba(37,99,235,.10)" },
-  en_cours: { label: "En cours", color: "#B45309", bg: "rgba(180,83,9,.10)" },
-  traite:   { label: "Traité",   color: "#047857", bg: "rgba(4,120,87,.10)" },
+  en_cours: { label: "En traitement", color: "#B45309", bg: "rgba(180,83,9,.10)" },
+  traite:   { label: "Validé",        color: "#047857", bg: "rgba(4,120,87,.10)" },
   refuse:   { label: "Refusé",   color: "#B91C1C", bg: "rgba(185,28,28,.10)" },
 };
 const TICKET_PRIORITY = { basse: "Basse", normale: "Normale", haute: "Haute" };
@@ -4533,6 +4533,7 @@ function TicketsModule({ db, appId, user, onOpenAdmin, initialType }) {
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState(null);
   const [myTickets, setMyTickets] = useState([]);
+  const [openMine, setOpenMine] = useState(null);
 
   useEffect(() => {
     if (!db || !user) return;
@@ -4706,18 +4707,43 @@ function TicketsModule({ db, appId, user, onOpenAdmin, initialType }) {
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {myTickets.map((t) => (
-                  <div key={t._id} style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", gap: 14 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                        <span style={{ font: `700 14px ${F.ui}`, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
-                        <span style={{ font: `600 11px ${F.ui}`, color: C.accent, background: C.accentSoft, padding: "2px 8px", borderRadius: 980, flexShrink: 0 }}>{t.typeLabel}</span>
+                {myTickets.map((t) => {
+                  const open = openMine === t._id;
+                  const tp = TICKET_TYPES.find((x) => x.id === t.type);
+                  return (
+                  <div key={t._id} style={{ background: C.card, border: `1px solid ${open ? C.accent : C.line}`, borderRadius: 14, overflow: "hidden", transition: "border-color .15s" }}>
+                    <div onClick={() => setOpenMine(open ? null : t._id)} style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
+                          <span style={{ font: `700 14px ${F.ui}`, color: C.text }}>{t.title}</span>
+                          <span style={{ font: `600 11px ${F.ui}`, color: C.accent, background: C.accentSoft, padding: "2px 8px", borderRadius: 980, flexShrink: 0 }}>{t.typeLabel}</span>
+                          {t.reponse && <span style={{ font: `700 10px ${F.ui}`, color: "#047857", background: "rgba(4,120,87,.10)", padding: "2px 7px", borderRadius: 980, flexShrink: 0 }}>Réponse ✓</span>}
+                        </div>
+                        <div style={{ font: `500 12px ${F.ui}`, color: C.dim }}>{wsTicketFmtDate(t.createdAt)}</div>
                       </div>
-                      <div style={{ font: `500 12px ${F.ui}`, color: C.dim }}>{wsTicketFmtDate(t.createdAt)}</div>
+                      <TicketStatusBadge status={t.status} />
                     </div>
-                    <TicketStatusBadge status={t.status} />
+                    {open && (
+                      <div style={{ padding: "2px 16px 16px 16px", borderTop: `1px solid ${C.line}` }}>
+                        {tp && tp.fields.length > 0 && (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 18px", margin: "12px 0" }}>
+                            {tp.fields.map((f) => { const v = (t.fields || {})[f.key]; if (!v) return null; return (<div key={f.key} style={{ font: `500 12.5px ${F.ui}`, color: C.text }}><span style={{ color: C.dim }}>{f.label} : </span><b>{f.type === "date" ? wsTicketFmtDay(v) : v}</b></div>); })}
+                          </div>
+                        )}
+                        {t.message && <div style={{ font: `500 13px ${F.ui}`, color: C.text, background: C.bgSoft, borderRadius: 10, padding: "10px 12px", margin: "10px 0", whiteSpace: "pre-wrap" }}>{t.message}</div>}
+                        {t.reponse ? (
+                          <div style={{ borderLeft: "3px solid #047857", background: "rgba(4,120,87,.06)", borderRadius: "0 10px 10px 0", padding: "10px 12px", margin: "10px 0" }}>
+                            <div style={{ font: `700 10.5px ${F.ui}`, color: "#047857", marginBottom: 4, textTransform: "uppercase", letterSpacing: ".05em" }}>Réponse de l'administration</div>
+                            <div style={{ font: `500 13px ${F.ui}`, color: C.text, whiteSpace: "pre-wrap" }}>{t.reponse}</div>
+                          </div>
+                        ) : (
+                          <div style={{ font: `500 12.5px ${F.ui}`, color: C.dim, margin: "10px 0" }}>Pas encore de réponse. Statut actuel : <b style={{ color: (TICKET_STATUS[t.status] || {}).color }}>{(TICKET_STATUS[t.status] || TICKET_STATUS.nouveau).label}</b>.</div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
@@ -4734,6 +4760,7 @@ function TicketsAdminInbox({ db, appId, user, onBack }) {
   const [filter, setFilter] = useState("tous");
   const [openId, setOpenId] = useState(null);
   const [noteDraft, setNoteDraft] = useState({});
+  const [replyDraft, setReplyDraft] = useState({});
 
   useEffect(() => {
     if (!db) return;
@@ -4753,6 +4780,10 @@ function TicketsAdminInbox({ db, appId, user, onBack }) {
   const saveNote = async (t) => {
     try { await updateDoc(doc(db, "artifacts", appId, "public", "data", "tickets", t._id), { adminNote: noteDraft[t._id] ?? (t.adminNote || "") }); }
     catch (e) { console.error("[Tickets] note:", e); }
+  };
+  const saveReply = async (t) => {
+    try { await updateDoc(doc(db, "artifacts", appId, "public", "data", "tickets", t._id), { reponse: (replyDraft[t._id] ?? (t.reponse || "")), reponseAt: Date.now() }); }
+    catch (e) { console.error("[Tickets] réponse:", e); }
   };
 
   const counts = tickets.reduce((a, t) => { a[t.status] = (a[t.status] || 0) + 1; return a; }, {});
@@ -4827,18 +4858,29 @@ function TicketsAdminInbox({ db, appId, user, onBack }) {
 
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", margin: "14px 0 10px" }}>
                       <span style={{ font: `600 12px ${F.ui}`, color: C.muted, marginRight: 4 }}>Statut :</span>
-                      {[["en_cours", "En cours", "#B45309"], ["traite", "Traité", "#047857"], ["refuse", "Refusé", "#B91C1C"], ["nouveau", "Nouveau", "#2563EB"]].map(([k, lbl, col]) => (
+                      {[["en_cours", "En traitement", "#B45309"], ["traite", "Validé", "#047857"], ["refuse", "Refusé", "#B91C1C"], ["nouveau", "Nouveau", "#2563EB"]].map(([k, lbl, col]) => (
                         <button key={k} onClick={() => setStatus(t, k)} style={{ padding: "6px 12px", borderRadius: 980, cursor: "pointer", font: `600 12px ${F.ui}`, border: `1px solid ${t.status === k ? col : C.line2}`, background: t.status === k ? col : C.card, color: t.status === k ? "#fff" : C.muted }}>{lbl}</button>
                       ))}
                     </div>
 
-                    <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginTop: 10 }}>
+                    {/* Réponse à l'employé (visible par le demandeur dans « Mes demandes ») */}
+                    <div style={{ marginTop: 14 }}>
+                      <label style={{ display: "block", font: `600 11.5px ${F.ui}`, color: C.muted, marginBottom: 5 }}>Réponse à l'employé (visible dans « Mes demandes »)</label>
+                      <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                        <textarea value={replyDraft[t._id] ?? (t.reponse || "")} onChange={(e) => setReplyDraft((p) => ({ ...p, [t._id]: e.target.value }))} rows={2} placeholder="Votre réponse au demandeur…" style={{ flex: 1, boxSizing: "border-box", padding: "9px 12px", borderRadius: 10, border: `1px solid ${C.line2}`, background: C.card, color: C.text, font: `500 13px ${F.ui}`, outline: "none", resize: "vertical", minHeight: 42 }} />
+                        <button onClick={() => saveReply(t)} style={{ padding: "10px 16px", borderRadius: 10, border: "none", background: C.accent, color: "#fff", font: `700 12.5px ${F.ui}`, cursor: "pointer", flexShrink: 0 }}>Envoyer la réponse</button>
+                      </div>
+                      {t.reponse && <div style={{ font: `600 11.5px ${F.ui}`, color: "#047857", marginTop: 6 }}>✓ Réponse transmise{t.reponseAt ? " · " + wsTicketFmtDate(t.reponseAt) : ""}</div>}
+                    </div>
+
+                    {/* Note interne + email direct */}
+                    <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginTop: 12 }}>
                       <div style={{ flex: 1 }}>
-                        <label style={{ display: "block", font: `600 11.5px ${F.ui}`, color: C.muted, marginBottom: 5 }}>Note interne (visible admin)</label>
-                        <input value={noteDraft[t._id] ?? (t.adminNote || "")} onChange={(e) => setNoteDraft((p) => ({ ...p, [t._id]: e.target.value }))} placeholder="Ajouter une note…" style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", borderRadius: 10, border: `1px solid ${C.line2}`, background: C.card, color: C.text, font: `500 13px ${F.ui}`, outline: "none" }} />
+                        <label style={{ display: "block", font: `600 11.5px ${F.ui}`, color: C.muted, marginBottom: 5 }}>Note interne (admin uniquement)</label>
+                        <input value={noteDraft[t._id] ?? (t.adminNote || "")} onChange={(e) => setNoteDraft((p) => ({ ...p, [t._id]: e.target.value }))} placeholder="Note privée…" style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", borderRadius: 10, border: `1px solid ${C.line2}`, background: C.card, color: C.text, font: `500 13px ${F.ui}`, outline: "none" }} />
                       </div>
                       <button onClick={() => saveNote(t)} style={{ padding: "9px 15px", borderRadius: 10, border: `1px solid ${C.line2}`, background: C.bgSoft, color: C.text, font: `600 12.5px ${F.ui}`, cursor: "pointer", flexShrink: 0 }}>Enregistrer</button>
-                      <a href={`mailto:${t.authorEmail}?subject=${encodeURIComponent("Votre demande : " + t.title)}`} style={{ padding: "9px 15px", borderRadius: 10, border: `1px solid ${C.line2}`, background: C.card, color: C.accent, font: `600 12.5px ${F.ui}`, cursor: "pointer", textDecoration: "none", flexShrink: 0 }}>Répondre</a>
+                      <a href={`mailto:${t.authorEmail}?subject=${encodeURIComponent("Votre demande : " + t.title)}`} style={{ padding: "9px 15px", borderRadius: 10, border: `1px solid ${C.line2}`, background: C.card, color: C.accent, font: `600 12.5px ${F.ui}`, cursor: "pointer", textDecoration: "none", flexShrink: 0 }}>Email</a>
                     </div>
                   </div>
                 )}

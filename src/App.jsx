@@ -4583,15 +4583,9 @@ function TicketsModule({ db, appId, user, onOpenAdmin, initialType }) {
     const sheetOk = !!(TICKETS_CONFIG.sheet && TICKETS_CONFIG.sheet.webhookUrl);
     // 3) Bilan : on considère la demande envoyée si au moins un canal a fonctionné.
     if (firestoreOk || sheetOk || method === "email" || method === "mailto") {
-      let okMsg;
-      if (firestoreOk) {
-        okMsg = method === "email" ? "Demande envoyée ✓ — email + espace admin" + (sheetOk ? " + Sheet" : "")
-          : "Demande envoyée ✓ — espace admin" + (sheetOk ? " + Google Sheet" : "");
-      } else if (sheetOk) {
-        okMsg = "Demande envoyée au Google Sheet ✓  (espace admin non enregistré : règles Firestore à ouvrir)";
-      } else {
-        okMsg = "Demande enregistrée ✓ — un email pré-rempli s'est ouvert.";
-      }
+      const okMsg = method === "mailto"
+        ? "Votre demande est prête ✓  Cliquez « Envoyer » dans l'email qui vient de s'ouvrir."
+        : "Votre demande a bien été reçue ✓  Elle va être traitée rapidement.";
       setToast({ ok: true, msg: okMsg });
       setTitle(""); setMessage(""); setFields({}); setPriority("normale");
     } else {
@@ -6188,6 +6182,12 @@ const [lppForm, setLppForm] = useState({
         <div style={{ flex: 1 }} />
 
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <button onClick={() => setActiveModule("tickets")} title="Mes demandes / suggestions"
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, background: (activeModule === "tickets" || activeModule === "idees") ? C.accentSoft : "transparent", color: (activeModule === "tickets" || activeModule === "idees") ? C.accent : C.muted, border: "none", padding: "8px 12px", borderRadius: 980, cursor: "pointer", fontFamily: F.ui, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap" }}
+            onMouseEnter={(e) => { if (activeModule !== "tickets" && activeModule !== "idees") { e.currentTarget.style.background = C.bgSoft; e.currentTarget.style.color = C.text; } }}
+            onMouseLeave={(e) => { if (activeModule !== "tickets" && activeModule !== "idees") { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.muted; } }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Mes demandes
+          </button>
           {isTicketAdmin(user) && (
             <button onClick={() => setActiveModule("ticketsAdmin")} title="Demandes reçues"
               style={{ display: "inline-flex", alignItems: "center", gap: 7, background: activeModule === "ticketsAdmin" ? C.accentSoft : "transparent", color: activeModule === "ticketsAdmin" ? C.accent : C.muted, border: "none", padding: "8px 12px", borderRadius: 980, cursor: "pointer", fontFamily: F.ui, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap" }}

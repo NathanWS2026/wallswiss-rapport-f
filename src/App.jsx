@@ -518,7 +518,6 @@ function HubSommaire({ onNavigate, onOpenModule, logoUrl }) {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14.5, fontWeight: 700, color: tint, lineHeight: 1.25, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis" }}>{node.title}</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
-                    <span style={{ fontFamily: F.mono, fontWeight: 700, fontSize: 10, color: C.accent, background: C.accentSoft, padding: "1px 6px", borderRadius: 6 }}>{node.num}</span>
                     <span style={{ fontSize: 11.5, color: C.dim }}>{sub}</span>
                     {isModule && <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: "#fff", background: C.accent, padding: "2px 6px", borderRadius: 980 }}>App</span>}
                   </div>
@@ -4359,6 +4358,9 @@ const TICKETS_CONFIG = {
   recipientEmail: "p.pereira@wallswiss.ch",                      // destinataire des notifications
   inboxAdmins: ["admin@wallswiss.ch", "p.pereira@wallswiss.ch"], // qui voit « Demandes reçues »
   emailjs: { serviceId: "", templateId: "", publicKey: "" },     // vide → repli mailto automatique
+  // ▸ Google Sheet : collez l'URL du script déployé (voir le fichier .gs fourni).
+  //   Dès qu'elle est renseignée, chaque demande ajoute une ligne au Google Sheet.
+  sheet: { webhookUrl: "https://script.google.com/macros/s/AKfycbwXLiMnCE2_PBetMql-3-_Y2ig9eAoew4jzx6ibDk4wh-ir7GognRKGv5hcOjJKuWpK/exec", secret: "wallswiss-tickets-2026" },
 };
 
 const TICKET_TYPES = [
@@ -4464,10 +4466,39 @@ async function wsSendTicketEmail(t) {
       return { ok: true, method: "email" };
     } catch (e) { console.warn("[Tickets] EmailJS échec → repli mailto :", e); }
   }
+  // Si un Google Sheet est branché, il sert de canal de réception → pas de pop-up mailto.
+  if (TICKETS_CONFIG.sheet && TICKETS_CONFIG.sheet.webhookUrl) return { ok: true, method: "sheet" };
   const href = "mailto:" + encodeURIComponent(TICKETS_CONFIG.recipientEmail) +
     "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
   if (typeof window !== "undefined") window.open(href, "_blank");
   return { ok: true, method: "mailto" };
+}
+
+/* ── Envoi du ticket vers le Google Sheet (webhook Apps Script, non bloquant) ── */
+function wsSendToSheet(t) {
+  const cfg = TICKETS_CONFIG.sheet || {};
+  if (!cfg.webhookUrl) return;
+  try {
+    const type = TICKET_TYPES.find((x) => x.id === t.type);
+    let details = "";
+    if (type) {
+      details = type.fields.map((f) => { const v = (t.fields || {})[f.key]; return v ? f.label + ": " + (f.type === "date" ? wsTicketFmtDay(v) : v) : null; }).filter(Boolean).join(" · ");
+    }
+    const payload = {
+      secret: cfg.secret || "",
+      id: t._id || "",
+      date: t.createdAtISO || "",
+      type: t.typeLabel || t.type || "",
+      objet: t.title || "",
+      demandeur: t.authorName || "",
+      email: t.authorEmail || "",
+      priorite: TICKET_PRIORITY[t.priority] || t.priority || "",
+      statut: "Nouveau",
+      details: details,
+      message: t.message || "",
+    };
+    fetch(cfg.webhookUrl, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) }).catch(function () {});
+  } catch (e) { console.warn("[Tickets] Sheet webhook:", e); }
 }
 
 /* ── Petites icônes inline (aucune dépendance) ── */
@@ -4529,11 +4560,13 @@ function TicketsModule({ db, appId, user, onOpenAdmin }) {
       adminNote: "",
     };
     try {
-      await addDoc(collection(db, "artifacts", appId, "public", "data", "tickets"), ticket);
+      const ref = await addDoc(collection(db, "artifacts", appId, "public", "data", "tickets"), ticket);
+      wsSendToSheet({ ...ticket, _id: ref && ref.id ? ref.id : "" });
       const res = await wsSendTicketEmail(ticket);
-      setToast({ ok: true, msg: res.method === "email"
-        ? "Demande envoyée ✓ — email + espace admin"
-        : "Demande enregistrée ✓ — un email pré-rempli s'est ouvert, cliquez « Envoyer »." });
+      const okMsg = res.method === "email" ? "Demande envoyée ✓ — email + espace admin"
+        : res.method === "sheet" ? "Demande envoyée ✓ — Google Sheet + espace admin"
+        : "Demande enregistrée ✓ — un email pré-rempli s'est ouvert, cliquez « Envoyer ».";
+      setToast({ ok: true, msg: okMsg });
       setTitle(""); setMessage(""); setFields({}); setPriority("normale");
     } catch (e) {
       console.error("[Tickets] envoi:", e);

@@ -69,7 +69,7 @@ const WS_MENU = [
       { id: "2.5.1", num: "2.5.1", title: "Sondages" },
       { id: "2.5.2", num: "2.5.2", title: "Photos : événements WallSwiss" },
     ]},
-    { id: "2.6", num: "2.6", title: "Boîte à idées : ensemble, nous allons plus loin !" },
+    { id: "2.6", num: "2.6", title: "Boîte à idées : ensemble, nous allons plus loin !", action: { type: "module", module: "idees" } },
     { id: "2.7", num: "2.7", title: "Challenges en cours" },
     { id: "2.8", num: "2.8", title: "Mes débuts chez WallSwiss" },
   ]},
@@ -4174,7 +4174,7 @@ const WS_MENU = [
           { id: "2.5.2", num: "2.5.2", title: "Photos : événements WallSwiss" },
         ]
       },
-      { id: "2.6", num: "2.6", title: "Boîte à idées : ensemble, nous allons plus loin !" },
+      { id: "2.6", num: "2.6", title: "Boîte à idées : ensemble, nous allons plus loin !", action: { type: "module", module: "idees" } },
       { id: "2.7", num: "2.7", title: "Challenges en cours" },
       { id: "2.8", num: "2.8", title: "Mes débuts chez WallSwiss" },
     ]
@@ -4383,6 +4383,9 @@ const TICKET_TYPES = [
     { key: "dateEnd", label: "Jusqu'au (estimé)", type: "date" },
     { key: "certificat", label: "Certificat médical", type: "select", options: ["À suivre", "Joint par email", "Non requis"] },
   ]},
+  { id: "idee", label: "Idée / Suggestion", desc: "Proposez une idée pour améliorer WallSwiss (boîte à idées)", fields: [
+    { key: "domaine", label: "Domaine", type: "select", options: ["Organisation", "Outils / IT", "Commercial", "Bien-être", "Formation", "Autre"] },
+  ]},
   { id: "autre", label: "Autre demande", desc: "Toute autre demande", fields: [] },
 ];
 
@@ -4519,8 +4522,8 @@ function TicketStatusBadge({ status }) {
 }
 
 /* ═══════════ MODULE « MES DEMANDES » (créer + suivre) ═══════════ */
-function TicketsModule({ db, appId, user, onOpenAdmin }) {
-  const [type, setType] = useState("conges");
+function TicketsModule({ db, appId, user, onOpenAdmin, initialType }) {
+  const [type, setType] = useState(initialType || "conges");
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [priority, setPriority] = useState("normale");
@@ -4587,8 +4590,8 @@ function TicketsModule({ db, appId, user, onOpenAdmin }) {
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 40, height: 40, borderRadius: 12, background: C.accentSoft, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>{TkI.inbox(20, C.accent)}</div>
             <div>
-              <div style={{ color: C.dim, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Espace personnel</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: C.text }}>Mes demandes</div>
+              <div style={{ color: C.dim, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>{type === "idee" ? "Boîte à idées" : "Espace personnel"}</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.text }}>{type === "idee" ? "Proposer une idée" : "Mes demandes"}</div>
             </div>
           </div>
           {isTicketAdmin(user) && (
@@ -6213,6 +6216,10 @@ const [lppForm, setLppForm] = useState({
         {/* VUE MODULE — MES DEMANDES / TICKETS */}
         {activeModule === "tickets" && (
           <TicketsModule db={db} appId={appId} user={user} onOpenAdmin={() => setActiveModule("ticketsAdmin")} />
+        )}
+        {/* VUE MODULE — BOÎTE À IDÉES (type « Idée » pré-sélectionné) */}
+        {activeModule === "idees" && (
+          <TicketsModule db={db} appId={appId} user={user} onOpenAdmin={() => setActiveModule("ticketsAdmin")} initialType="idee" />
         )}
         {/* VUE MODULE — DEMANDES REÇUES (admin) */}
         {activeModule === "ticketsAdmin" && (

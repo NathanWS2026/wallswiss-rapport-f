@@ -4548,21 +4548,21 @@ const ACADEMY_CATS = [
 /* Chaque fiche pointe vers un fichier de  public/academy/ .
    type: "pdf" → liseuse pdf.js  ·  "docx" → rendu mammoth. */
 const ACADEMY_LIBRARY = [
-  { id: "mon-ebook",           cat: "ebook",        type: "pdf",  title: "Mon E-book WallSwiss",                    desc: "Le livre de référence de l'Académie.",           file: "mon-ebook.pdf" },
-  { id: "presentation",        cat: "onboarding",   type: "docx", title: "Présentation WallSwiss",                  desc: "Découverte de l'entreprise et de ses services.", file: "01-presentation-wallswiss.docx" },
-  { id: "fondamentaux",        cat: "entretien",    type: "docx", title: "Fondamentaux de l'entretien commercial",  desc: "Structurer un entretien qui convertit.",         file: "02-fondamentaux-entretien.docx" },
-  { id: "plan-conseil",        cat: "entretien",    type: "docx", title: "Plan de conseil",                         desc: "La trame d'un conseil patrimonial complet.",     file: "03-plan-de-conseil.docx" },
-  { id: "argumentaire-call",   cat: "prospection",  type: "docx", title: "Argumentaire Call débutant",              desc: "Le script d'appel pour bien démarrer.",          file: "04-argumentaire-call-debutant.docx" },
-  { id: "productivite-doc",    cat: "productivite", type: "pdf",  title: "Améliorer sa productivité",               desc: "Atelier Pierrick — solutions concrètes.",        file: "05-ameliorer-productivite.pdf" },
-  { id: "factsheet",           cat: "ebook",        type: "docx", title: "Comprendre un factsheet de fonds",        desc: "Lire et décrypter une fiche de fonds.",          file: "06-guide-factsheet-fonds.docx" },
-  { id: "cinq-outils",         cat: "prospection",  type: "docx", title: "Les 5 outils pour un max de rendez-vous", desc: "Générer plus de RDV qualifiés.",                 file: "07-5-outils-rendez-vous.docx" },
-  { id: "objections-coldcall", cat: "objections",   type: "pdf",  title: "Objections fréquentes en cold call",      desc: "Répondre au téléphone à froid.",                 file: "08-objections-coldcall.pdf" },
-  { id: "42-objections",       cat: "objections",   type: "pdf",  title: "Les 42 objections les plus fréquentes",   desc: "Le référentiel complet des réponses.",           file: "09-42-objections.pdf" },
-  { id: "objections-listing",  cat: "objections",   type: "docx", title: "Objections Cold call — listing",          desc: "Version document des réponses.",                 file: "11-objections-cold-call.docx" },
-  { id: "notice-calc",         cat: "calculs",      type: "docx", title: "Notice — Calculatrice financière",        desc: "Prendre en main la calculette.",                 file: "12-notice-calculatrice-financiere.docx" },
-  { id: "recueil-formules",    cat: "calculs",      type: "pdf",  title: "Recueil de formules de calculs",          desc: "Toutes les formules financières.",               file: "13-recueil-formules-calculs.pdf" },
-  { id: "bases-calcul",        cat: "calculs",      type: "pdf",  title: "Exercices — Bases de calcul",             desc: "S'entraîner sur les fondamentaux.",              file: "14-bases-calcul-questions.pdf" },
-  { id: "calculs-financiers",  cat: "calculs",      type: "pdf",  title: "Exercices — Calculs financiers",          desc: "Cas pratiques financiers.",                      file: "15-calculs-financiers-questions.pdf" },
+  { id: "mon-ebook",           cat: "ebook",        type: "pdf",  title: "Mon E-book WallSwiss",                    desc: "Le livre de référence de l'Académie.",           file: "00_MON E-BOOK.pdf" },
+  { id: "presentation",        cat: "onboarding",   type: "docx", title: "Présentation WallSwiss",                  desc: "Découverte de l'entreprise et de ses services.", file: "01_1.ACADEMY - Présentation WallSwiss.docx" },
+  { id: "fondamentaux",        cat: "entretien",    type: "docx", title: "Fondamentaux de l'entretien commercial",  desc: "Structurer un entretien qui convertit.",         file: "02_2.ACADEMY - Les fondamentaux de l'entretien commercial.docx" },
+  { id: "plan-conseil",        cat: "entretien",    type: "docx", title: "Plan de conseil",                         desc: "La trame d'un conseil patrimonial complet.",     file: "03_3.ACADEMY - Plan de conseil.docx" },
+  { id: "argumentaire-call",   cat: "prospection",  type: "docx", title: "Argumentaire Call débutant",              desc: "Le script d'appel pour bien démarrer.",          file: "04_4.ACADEMY - Argumentaire Call débutant.docx" },
+  { id: "productivite-doc",    cat: "productivite", type: "pdf",  title: "Améliorer sa productivité",               desc: "Atelier Pierrick — solutions concrètes.",        file: "05_5.ACADEMY - SOLUTIONS POUR AMELIORER SA PRODUCTIVITE Cf atelier Pierrick.pdf" },
+  { id: "factsheet",           cat: "ebook",        type: "docx", title: "Comprendre un factsheet de fonds",        desc: "Lire et décrypter une fiche de fonds.",          file: "06_6.ACADEMY -Le guide pour mieux comprendre un factsheet de fonds.docx" },
+  { id: "cinq-outils",         cat: "prospection",  type: "docx", title: "Les 5 outils pour un max de rendez-vous", desc: "Générer plus de RDV qualifiés.",                 file: "07_7.ACADEMY - Les 5 outils obligatoires pour avoir un maximum de rendez-vous .docx" },
+  { id: "objections-coldcall", cat: "objections",   type: "pdf",  title: "Objections fréquentes en cold call",      desc: "Répondre au téléphone à froid.",                 file: "09_8.ACADEMY - Listing des objections les plus fréquentes en COLDCALL.pdf" },
+  { id: "42-objections",       cat: "objections",   type: "pdf",  title: "Les 42 objections les plus fréquentes",   desc: "Le référentiel complet des réponses.",           file: "10_9.ACADEMY - Listing des 42 objections les plus fréquentes .pdf" },
+  { id: "objections-listing",  cat: "objections",   type: "docx", title: "Objections Cold call — listing",          desc: "Version document des réponses.",                 file: "12_11.ACADEMY - Listing des objections fréquentes Cold call.docx" },
+  { id: "notice-calc",         cat: "calculs",      type: "docx", title: "Notice — Calculatrice financière",        desc: "Prendre en main la calculette.",                 file: "13_12.OUTIL - Notice CALCULATRICE FINANCIERE.docx" },
+  { id: "recueil-formules",    cat: "calculs",      type: "pdf",  title: "Recueil de formules de calculs",          desc: "Toutes les formules financières.",               file: "14_13.EXERCICES - Recueil formules calculs.pdf" },
+  { id: "bases-calcul",        cat: "calculs",      type: "pdf",  title: "Exercices — Bases de calcul",             desc: "S'entraîner sur les fondamentaux.",              file: "15_14.EXERCICES- Bases-calcul-questions.pdf" },
+  { id: "calculs-financiers",  cat: "calculs",      type: "pdf",  title: "Exercices — Calculs financiers",          desc: "Cas pratiques financiers.",                      file: "16_15.EXERCICES-calculs-financiers-questions.pdf" },
 ];
 
 function academyRequire(src, globalKey) {
@@ -4595,7 +4595,7 @@ function AcademyReader({ doc, onClose }) {
   const [scale, setScale] = useState(1.25);
   const pdfRef = React.useRef(null);
   const canvasRef = React.useRef(null);
-  const url = doc.data ? doc.data : (ACADEMY_CONFIG.base + doc.file);
+  const url = doc.data ? doc.data : (ACADEMY_CONFIG.base + encodeURIComponent(doc.file));
 
   useEffect(() => {
     let cancelled = false;

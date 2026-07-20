@@ -4384,7 +4384,7 @@ const TICKET_TYPES = [
     { key: "certificat", label: "Certificat médical", type: "select", options: ["À suivre", "Joint par email", "Non requis"] },
   ]},
   { id: "idee", label: "Idée / Suggestion", desc: "Proposez une idée pour améliorer WallSwiss (boîte à idées)", fields: [
-    { key: "domaine", label: "Domaine", type: "select", options: ["Organisation", "Outils / IT", "Commercial", "Bien-être", "Formation", "Autre"] },
+    { key: "categorie", label: "Catégorie — sur quoi porte l'idée", type: "select", required: true, options: ["Application / logiciel", "Rapports & documents", "Process & organisation", "Commercial & vente", "Marketing & communication", "Formation", "Outils & IT", "Bien-être", "Autre"] },
   ]},
   { id: "autre", label: "Autre demande", desc: "Toute autre demande", fields: [] },
 ];
@@ -4485,14 +4485,16 @@ function wsSendToSheet(t) {
     const type = TICKET_TYPES.find((x) => x.id === t.type);
     let details = "";
     if (type) {
-      details = type.fields.map((f) => { const v = (t.fields || {})[f.key]; return v ? f.label + ": " + (f.type === "date" ? wsTicketFmtDay(v) : v) : null; }).filter(Boolean).join(" · ");
+      details = type.fields.filter((f) => f.key !== "categorie").map((f) => { const v = (t.fields || {})[f.key]; return v ? f.label + ": " + (f.type === "date" ? wsTicketFmtDay(v) : v) : null; }).filter(Boolean).join(" · ");
     }
+    const categorie = (t.fields || {}).categorie || "";
     const payload = {
       secret: cfg.secret || "",
       id: t._id || "",
       date: t.createdAtISO || "",
       type: t.typeLabel || t.type || "",
       objet: t.title || "",
+      categorie: categorie,
       demandeur: t.authorName || "",
       email: t.authorEmail || "",
       priorite: TICKET_PRIORITY[t.priority] || t.priority || "",
@@ -4562,22 +4564,41 @@ function TicketsModule({ db, appId, user, onOpenAdmin, initialType }) {
       authorUid: user.uid || null, authorEmail: user.email || "", authorName: String(user.email || "").split("@")[0],
       adminNote: "",
     };
+    // 1) Firestore (source de vérité pour l'onglet admin) — NON bloquant s'il échoue (ex. règles de sécurité).
+    let firestoreOk = false, refId = "";
     try {
       const ref = await addDoc(collection(db, "artifacts", appId, "public", "data", "tickets"), ticket);
-      wsSendToSheet({ ...ticket, _id: ref && ref.id ? ref.id : "" });
+      refId = ref && ref.id ? ref.id : "";
+      firestoreOk = true;
+    } catch (e) {
+      console.error("[Tickets] Firestore bloqué (règles de sécurité ?) :", e);
+    }
+    // 2) Google Sheet + notification — partent QUOI QU'IL ARRIVE, même si Firestore a échoué.
+    let method = "";
+    try {
+      wsSendToSheet({ ...ticket, _id: refId });
       const res = await wsSendTicketEmail(ticket);
-      const okMsg = res.method === "email" ? "Demande envoyée ✓ — email + espace admin"
-        : res.method === "sheet" ? "Demande envoyée ✓ — Google Sheet + espace admin"
-        : "Demande enregistrée ✓ — un email pré-rempli s'est ouvert, cliquez « Envoyer ».";
+      method = res && res.method ? res.method : "";
+    } catch (e) { console.error("[Tickets] notification :", e); }
+    const sheetOk = !!(TICKETS_CONFIG.sheet && TICKETS_CONFIG.sheet.webhookUrl);
+    // 3) Bilan : on considère la demande envoyée si au moins un canal a fonctionné.
+    if (firestoreOk || sheetOk || method === "email" || method === "mailto") {
+      let okMsg;
+      if (firestoreOk) {
+        okMsg = method === "email" ? "Demande envoyée ✓ — email + espace admin" + (sheetOk ? " + Sheet" : "")
+          : "Demande envoyée ✓ — espace admin" + (sheetOk ? " + Google Sheet" : "");
+      } else if (sheetOk) {
+        okMsg = "Demande envoyée au Google Sheet ✓  (espace admin non enregistré : règles Firestore à ouvrir)";
+      } else {
+        okMsg = "Demande enregistrée ✓ — un email pré-rempli s'est ouvert.";
+      }
       setToast({ ok: true, msg: okMsg });
       setTitle(""); setMessage(""); setFields({}); setPriority("normale");
-    } catch (e) {
-      console.error("[Tickets] envoi:", e);
-      setToast({ ok: false, msg: "Erreur lors de l'enregistrement. Réessayez." });
-    } finally {
-      setBusy(false);
-      setTimeout(() => setToast(null), 5000);
+    } else {
+      setToast({ ok: false, msg: "Envoi impossible. Vérifiez votre connexion et les règles Firestore." });
     }
+    setBusy(false);
+    setTimeout(() => setToast(null), 6000);
   };
 
   const inputStyle = { width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 12, border: `1px solid ${C.line2}`, background: C.card, color: C.text, font: `500 14px ${F.ui}`, outline: "none" };
@@ -4626,7 +4647,7 @@ function TicketsModule({ db, appId, user, onOpenAdmin, initialType }) {
             {/* Objet */}
             <div style={{ marginBottom: 16 }}>
               <label style={labelStyle}>Objet de la demande *</label>
-              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={type === "conges" ? "Ex. Congés d'été" : type === "note_frais" ? "Ex. Déplacement client Genève" : "Résumé court"} style={inputStyle} />
+              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={type === "conges" ? "Ex. Congés d'été" : type === "note_frais" ? "Ex. Déplacement client Genève" : type === "idee" ? "Ex. Ajouter un export PDF des rapports" : "Résumé court"} style={inputStyle} />
             </div>
 
             {/* Champs spécifiques au type */}

@@ -4761,23 +4761,28 @@ async function academyLoadPdfJs() {
 function academyLoadMammoth() {
   return academyRequire("https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js", "mammoth");
 }
+function academyLoadDocxPreview() {
+  return academyRequire("https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js", "JSZip")
+    .then(() => academyRequire("https://cdn.jsdelivr.net/npm/docx-preview@0.3.5/dist/docx-preview.min.js", "docx"));
+}
 
 const acadRdBtn = { width: 32, height: 32, borderRadius: 9, border: "1px solid rgba(0,0,0,0.13)", background: "#fff", color: "#1D1D1F", font: "700 15px sans-serif", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" };
 
 function AcademyReader({ doc, onClose }) {
-  const [status, setStatus] = useState("loading"); // loading | pdf | docx | error
+  const [status, setStatus] = useState("loading"); // loading | pdf | docx | image | error
   const [errMsg, setErrMsg] = useState("");
-  const [docHtml, setDocHtml] = useState("");
+  const [docBuf, setDocBuf] = useState(null);
   const [numPages, setNumPages] = useState(0);
   const [page, setPage] = useState(1);
   const [scale, setScale] = useState(1.25);
   const pdfRef = React.useRef(null);
   const canvasRef = React.useRef(null);
+  const docRef = React.useRef(null);
   const url = doc.data ? doc.data : (doc.src ? doc.src : (ACADEMY_CONFIG.base + encodeURIComponent(doc.file)));
 
   useEffect(() => {
     let cancelled = false;
-    setStatus("loading"); setErrMsg(""); setDocHtml(""); setPage(1); pdfRef.current = null;
+    setStatus("loading"); setErrMsg(""); setDocBuf(null); setPage(1); pdfRef.current = null;
     (async () => {
       try {
         if (doc.type === "image") {
@@ -4788,13 +4793,13 @@ function AcademyReader({ doc, onClose }) {
           if (cancelled) return;
           pdfRef.current = pdfDoc; setNumPages(pdfDoc.numPages); setStatus("pdf");
         } else if (doc.type === "docx") {
-          const mm = await academyLoadMammoth();
           const resp = await fetch(url);
           if (!resp.ok) throw new Error("Fichier introuvable (HTTP " + resp.status + ")");
           const buf = await resp.arrayBuffer();
-          const out = await mm.convertToHtml({ arrayBuffer: buf });
+          const sig = new Uint8Array(buf.slice(0, 4));
+          if (!(sig[0] === 0x50 && sig[1] === 0x4B)) throw new Error("Le serveur n'a pas renvoyé le .docx (probablement une page HTML). Vérifiez que le fichier est bien dans public/ puis redémarrez le serveur (Ctrl+C, npm run dev).");
           if (cancelled) return;
-          setDocHtml(out.value || "<p>(Document vide)</p>"); setStatus("docx");
+          setDocBuf(buf); setStatus("docx");
         } else {
           throw new Error("Type de document non pris en charge");
         }
@@ -4821,6 +4826,30 @@ function AcademyReader({ doc, onClose }) {
     })();
     return () => { cancelled = true; };
   }, [status, page, scale]);
+
+  useEffect(() => {
+    if (status !== "docx" || !docBuf || !docRef.current) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        docRef.current.innerHTML = "<div style='padding:40px;color:#6E6E73;font:600 14px sans-serif'>Rendu du document…</div>";
+        const lib = await academyLoadDocxPreview();
+        if (cancelled || !docRef.current) return;
+        docRef.current.innerHTML = "";
+        await lib.renderAsync(docBuf, docRef.current, null, { className: "wsdocx", inWrapper: true, breakPages: true, ignoreLastRenderedPageBreak: true, useBase64URL: true });
+      } catch (e) {
+        // Repli mammoth (rendu simplifié) si docx-preview échoue sur un .docx valide.
+        try {
+          const mm = await academyLoadMammoth();
+          const out = await mm.convertToHtml({ arrayBuffer: docBuf });
+          if (!cancelled && docRef.current) docRef.current.innerHTML = "<div style='max-width:820px;width:100%;margin:0 auto;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:46px 54px;font:15px/1.65 -apple-system,Inter,Segoe UI,sans-serif;color:#1D1D1F'>" + (out.value || "<p>(Document vide)</p>") + "</div>";
+        } catch (e2) {
+          if (!cancelled && docRef.current) docRef.current.innerHTML = "<div style='padding:24px;color:#B91C1C;font:600 14px sans-serif'>Aperçu indisponible — utilisez « Télécharger » pour ouvrir le document.</div>";
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [status, docBuf]);
 
   const cat = ACADEMY_CATS.find((c) => c.id === doc.cat);
   return (
@@ -4860,9 +4889,7 @@ function AcademyReader({ doc, onClose }) {
           </div>
         )}
         {status === "docx" && (
-          <div style={{ maxWidth: 820, width: "100%", background: "#fff", border: `1px solid ${C.line}`, borderRadius: 12, padding: "46px 54px", alignSelf: "flex-start", boxShadow: "0 12px 40px rgba(0,0,0,.10)" }}>
-            <div style={{ font: `15px/1.65 ${F.ui}`, color: C.text }} dangerouslySetInnerHTML={{ __html: docHtml }} />
-          </div>
+          <div ref={docRef} style={{ width: "100%", display: "flex", justifyContent: "center" }} />
         )}
         {status === "image" && (
           <div style={{ alignSelf: "flex-start", background: "#fff", border: `1px solid ${C.line}`, borderRadius: 12, padding: 12, boxShadow: "0 12px 40px rgba(0,0,0,.10)" }}>

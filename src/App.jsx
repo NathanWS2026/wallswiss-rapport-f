@@ -885,6 +885,184 @@ const MAILS_TYPES = [
     categorie: "Investissements",
     objet: "Suivi chiffré – Évolution du compte-titres – WallSwiss",
     corps: `Madame XXXX,\n\nJe me permets de revenir vers vous afin de faire suite à notre dernier échange de juillet et de vous transmettre un suivi chiffré concernant l'évolution du compte-titres sur la période récente. L'idée est de vous montrer l'impact qu'aurait eu votre investissement si nous avions pu avancer dès le début du mois de juillet sur le projet d'accès à la gestion de fortune. Il s'agit simplement de vous illustrer, de façon factuelle, les retombées possibles si vous aviez investi votre capital de 250 000 CHF au 1er juillet 2025.\n\nJ'ai donc réalisé une simulation entre le 1er juillet 2025 et le 1er octobre 2025 : le point d'entrée était de 124,540 et le point de sortie de 135,820, soit une progression de 11,28 points, correspondant à +11,28 % sur trois mois.\n\nEn appliquant cette performance à votre projet d'investissement initial :\nPour votre placement envisagé de 250 000 CHF, après déduction des 3 % de frais d'entrée (7 500 CHF), soit un capital investi de 242 500 CHF, la valorisation au 1er octobre aurait atteint 269 854 CHF, soit une plus-value potentielle de 19 854 CHF en trois mois.\n\nVeuillez trouver ci-joint la fact sheet de la stratégie Dynamique : 51136809 | 135.96 / 137.33 USD\n\nCes résultats illustrent concrètement la dynamique positive du support que nous avions évoqué cet été. Je pense sincèrement qu'il serait dommage de passer à côté d'une opportunité aussi porteuse dans le contexte actuel.\n\nJe reste bien entendu à votre disposition pour en discuter, adapter la stratégie si besoin et répondre à toutes vos questions.\n\nBien cordialement,`
+  },
+  {
+    id: "m25",
+    titre: "Demande de relevé de compte (Lemania)",
+    categorie: "LPP",
+    objet: "Demande de relevé de compte – Fondation Lemania",
+    corps: `Madame, Monsieur,
+
+J'espère que vous allez bien.
+
+Ma cliente, Madame [Nom Prénom], titulaire du compte n° [numéro de compte], aurait besoin de son relevé de compte.
+
+Pourriez-vous, s'il vous plaît, nous le transmettre afin que nous puissions le lui faire suivre par la suite ?
+
+Je vous remercie par avance pour votre retour et vous souhaite une excellente journée.
+
+Cordialement,`
+  },
+  {
+    id: "m26",
+    titre: "Confirmation envoi de l'instruction",
+    categorie: "LPP",
+    objet: "Confirmation d'envoi de votre instruction de transfert – WallSwiss",
+    corps: `Chère Madame / Cher Monsieur,
+
+J'espère que vous allez bien.
+
+Je vous confirme la bonne réception de vos documents signés afin d'établir le transfert de vos avoirs de second pilier auprès de votre compte de libre passage.
+
+Nous procédons ce jour à l'envoi de vos pièces aux organismes concernés.
+
+Je ne manquerai pas de revenir vers vous dès que vos fonds auront été regroupés.
+
+Je reste bien entendu joignable en cas de besoin.
+
+Excellente journée à vous.`
+  },
+  {
+    id: "m27",
+    titre: "Lancement recherche 2e pilier",
+    categorie: "LPP",
+    objet: "Lancement de votre recherche de 2ème pilier – WallSwiss",
+    corps: `Bonjour Monsieur / Madame,
+
+Je vous confirme la bonne réception des documents transmis dans le cadre de la recherche de vos avoirs de deuxième pilier auprès de la Centrale du 2e pilier à Berne.
+
+La demande va être envoyée dès aujourd'hui. Nous reviendrons vers vous dès réception du retour de la Centrale. Veuillez noter que le délai de réponse peut varier entre 6 à 9 semaines.
+
+Je vous souhaite une excellente journée.
+
+Bien cordialement,`
+  },
+  {
+    id: "m28",
+    titre: "Post-RDV — Documents recherche LPP",
+    categorie: "LPP",
+    objet: "Documents à retourner pour votre recherche LPP – WallSwiss",
+    pieceJointe: "Formulaire Berne + institution supplétive + mandat de gestion + pièce d'identité",
+    corps: `Chère Madame / Cher Monsieur,
+
+Je vous remercie pour votre confiance et la qualité de nos échanges de ce jour.
+
+Comme convenu, vous trouverez ci-joint les documents à me retourner signés et complétés pour effectuer la recherche de vos fonds LPP :
+- Formulaire de recherche auprès de la centrale de Berne
+- Formulaire de recherche auprès de l'institution supplétive
+- Mandat de gestion (cochez la case « recherche à la centrale de Berne »)
+- Pièce d'identité recto/verso
+
+Comme évoqué, notre cabinet œuvre dans l'optimisation patrimoniale globale et la planification retraite. Dans votre situation, il vous serait utile d'analyser toutes les solutions qui s'offrent à vous en tant qu'indépendant(e) pour améliorer vos revenus à la retraite et prévoir les années à venir sereinement. Je peux vous réserver une séance quand vous le souhaitez pour en discuter ensemble.
+
+Je reste à votre entière disposition d'ici là si vous avez des questions complémentaires, et je reviens vers vous dès que nous avons un retour de la recherche LPP.
+
+Cordiales salutations,`
+  },
+  {
+    id: "m29",
+    titre: "Reprogrammation de rendez-vous",
+    categorie: "Rendez-vous",
+    objet: "WallSwiss – Reprogrammation de votre rendez-vous",
+    corps: `Cher Monsieur / Chère Madame,
+
+Bonjour, j'espère que vous allez bien.
+
+J'ai bien pris note de votre demande d'annulation de rendez-vous. Afin de reprogrammer celui-ci, comme évoqué lors de notre échange téléphonique, je vous invite à utiliser le lien de planification ci-joint :
+[Lien de planification]
+
+Je reste bien entendu à votre entière disposition si vous avez la moindre question ou si vous rencontrez des difficultés pour réserver un créneau.
+
+Je vous souhaite une excellente journée.
+
+Bien cordialement,`
+  },
+  {
+    id: "m30",
+    titre: "Relance — Devis en cours",
+    categorie: "Relances",
+    objet: "Suivi de votre situation – WallSwiss",
+    corps: `Bonjour Monsieur / Madame,
+
+J'espère que vous allez bien.
+
+Je me permets de revenir vers vous car cela fait quelques mois que nous n'avons pas eu l'occasion d'échanger, et je souhaitais savoir si votre situation avait évolué depuis notre dernier contact.
+
+Les projets, les objectifs ou encore la situation personnelle et professionnelle peuvent évoluer rapidement. Il est parfois utile de faire un point global sur votre situation.
+
+Si vous le souhaitez, je serais ravi d'échanger quelques minutes avec vous afin de faire le point et, si nécessaire, organiser un rendez-vous ensemble.
+
+N'hésitez pas à me communiquer vos disponibilités et je me ferai un plaisir de vous recontacter.
+
+Dans l'attente de votre retour, je vous souhaite une excellente journée.
+
+Bien cordialement,`
+  },
+  {
+    id: "m31",
+    titre: "Relance — Documents non reçus",
+    categorie: "Relances",
+    objet: "Relance – Documents à compléter et signer – WallSwiss",
+    corps: `Bonjour Monsieur / Madame,
+
+J'espère que vous allez bien.
+
+Je me permets de revenir vers vous concernant notre rendez-vous du [DATE] ; à cette occasion, je vous ai fait parvenir plusieurs documents :
+- Le mandat de gestion,
+- Le formulaire de recherche de vos avoirs de 2e pilier,
+- Et l'instruction de transfert permettant de regrouper vos fonds sur votre compte de libre passage ouvert auprès de la Fondation Lemania.
+
+À ce jour, nous n'avons pas encore reçu les documents complétés et signés. Pourriez-vous me confirmer si vous les avez bien reçus ? Si besoin, je peux vous les renvoyer ou vous accompagner pour les remplir.
+
+Je vous souhaite une excellente journée et reste à votre disposition.
+
+Bien cordialement,`
+  },
+  {
+    id: "m32",
+    titre: "Retour de Berne",
+    categorie: "LPP",
+    objet: "Retour de la Centrale du 2e pilier (Berne) – WallSwiss",
+    pieceJointe: "Résultat de la recherche 2e pilier (Centrale de Berne)",
+    corps: `Bonjour Madame / Monsieur,
+
+J'espère que vous allez bien.
+
+Je vous contacte ce jour car nous avons bien reçu le retour de la recherche de vos avoirs de deuxième pilier auprès de la Centrale du 2e pilier à Berne.
+
+Vous trouverez ce document en pièce jointe de ce mail.
+
+Auriez-vous des disponibilités à me communiquer afin que je puisse vous programmer un rendez-vous pour faire le point sur les résultats obtenus et les éventuelles démarches à entreprendre ?
+
+Je vous remercie par avance pour votre retour et vous souhaite une excellente journée.
+
+Cordialement,`
+  },
+  {
+    id: "m33",
+    titre: "Suivi client + 6 mois",
+    categorie: "Suivi",
+    objet: "Suivi de votre situation à 6 mois – WallSwiss",
+    corps: `Bonjour Monsieur / Madame,
+
+J'espère que ce mail vous trouvera en pleine forme.
+
+Comme vous le savez, chez WallSwiss nous accordons une importance particulière au suivi de nos clients, bien au-delà de la simple mise en place de solutions. Votre situation personnelle et vos objectifs peuvent évoluer et il est essentiel pour nous d'assurer que vos produits mis en place restent en adéquation avec vos besoins.
+
+Si vous avez récemment eu des changements professionnels ou personnels, si vous avez des questions, ou tout simplement si vous souhaitez suivre vos contrats, nous vous proposons de reprendre rendez-vous avec votre conseiller, M. Haensler, pour faire un point complet sur votre situation.
+
+Ce rendez-vous permettra notamment de :
+- Revoir ensemble vos contrats actuels,
+- Identifier si des ajustements sont nécessaires,
+- Répondre à toutes vos interrogations,
+- Vous assurer que votre stratégie patrimoniale reste optimisée.
+
+N'hésitez pas à nous faire part de vos disponibilités ou à réserver directement un créneau via notre lien habituel :
+[Lien de planification]
+
+Nous restons naturellement à votre entière disposition si besoin.
+
+Bien cordialement.`
   }
 ];
 
@@ -4595,14 +4773,16 @@ function AcademyReader({ doc, onClose }) {
   const [scale, setScale] = useState(1.25);
   const pdfRef = React.useRef(null);
   const canvasRef = React.useRef(null);
-  const url = doc.data ? doc.data : (ACADEMY_CONFIG.base + encodeURIComponent(doc.file));
+  const url = doc.data ? doc.data : (doc.src ? doc.src : (ACADEMY_CONFIG.base + encodeURIComponent(doc.file)));
 
   useEffect(() => {
     let cancelled = false;
     setStatus("loading"); setErrMsg(""); setDocHtml(""); setPage(1); pdfRef.current = null;
     (async () => {
       try {
-        if (doc.type === "pdf") {
+        if (doc.type === "image") {
+          setStatus("image");
+        } else if (doc.type === "pdf") {
           const lib = await academyLoadPdfJs();
           const pdfDoc = await lib.getDocument(url).promise;
           if (cancelled) return;
@@ -4623,7 +4803,7 @@ function AcademyReader({ doc, onClose }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [doc.id]);
+  }, [doc.id, doc.src]);
 
   useEffect(() => {
     if (status !== "pdf" || !pdfRef.current || !canvasRef.current) return;
@@ -4646,7 +4826,7 @@ function AcademyReader({ doc, onClose }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 60px)", background: C.bgSoft }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", background: C.card, borderBottom: `1px solid ${C.line}`, flexShrink: 0 }}>
-        <button onClick={onClose} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 14px", borderRadius: 980, border: `1px solid ${C.line2}`, background: "#fff", color: C.accent, font: `700 13px ${F.ui}`, cursor: "pointer" }}>‹ Bibliothèque</button>
+        <button onClick={onClose} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 14px", borderRadius: 980, border: `1px solid ${C.line2}`, background: "#fff", color: C.accent, font: `700 13px ${F.ui}`, cursor: "pointer" }}>‹ {doc.backLabel || "Retour"}</button>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{cat ? cat.emoji + " " : ""}{doc.title}</div>
         </div>
@@ -4670,7 +4850,7 @@ function AcademyReader({ doc, onClose }) {
           <div style={{ maxWidth: 520, marginTop: 30, background: C.card, border: `1px solid ${C.line}`, borderRadius: 16, padding: "22px 24px", textAlign: "center", height: "fit-content" }}>
             <div style={{ fontSize: 34, marginBottom: 10 }}>📄</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: C.text, marginBottom: 8 }}>Document indisponible</div>
-            <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5 }}>Le fichier <b>{doc.file}</b> n'a pas été trouvé. Déposez-le dans le dossier <b>public{ACADEMY_CONFIG.base}</b> de StackBlitz.</div>
+            <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5 }}>Le fichier <b>{doc.file || doc.title}</b> n'a pas pu être chargé. Vérifiez qu'il est bien présent au bon emplacement (dossier <b>public/</b>).</div>
             <div style={{ fontSize: 11, color: C.dim, marginTop: 10 }}>{errMsg}</div>
           </div>
         )}
@@ -4682,6 +4862,11 @@ function AcademyReader({ doc, onClose }) {
         {status === "docx" && (
           <div style={{ maxWidth: 820, width: "100%", background: "#fff", border: `1px solid ${C.line}`, borderRadius: 12, padding: "46px 54px", alignSelf: "flex-start", boxShadow: "0 12px 40px rgba(0,0,0,.10)" }}>
             <div style={{ font: `15px/1.65 ${F.ui}`, color: C.text }} dangerouslySetInnerHTML={{ __html: docHtml }} />
+          </div>
+        )}
+        {status === "image" && (
+          <div style={{ alignSelf: "flex-start", background: "#fff", border: `1px solid ${C.line}`, borderRadius: 12, padding: 12, boxShadow: "0 12px 40px rgba(0,0,0,.10)" }}>
+            <img src={url} alt={doc.title} style={{ display: "block", maxWidth: "100%", borderRadius: 6 }} />
           </div>
         )}
       </div>
@@ -4982,10 +5167,13 @@ function TicketsModule({ db, appId, user, onOpenAdmin, initialType }) {
 /* ═══════════ MODULE « DEMANDES REÇUES » (admin) ═══════════ */
 function TicketsAdminInbox({ db, appId, user, onBack }) {
   const [tickets, setTickets] = useState([]);
-  const [filter, setFilter] = useState("tous");
+  const [filter, setFilter] = useState("actives");
+  const [typeFilter, setTypeFilter] = useState("tous");
+  const [q, setQ] = useState("");
   const [openId, setOpenId] = useState(null);
   const [noteDraft, setNoteDraft] = useState({});
   const [replyDraft, setReplyDraft] = useState({});
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!db) return;
@@ -4998,21 +5186,22 @@ function TicketsAdminInbox({ db, appId, user, onBack }) {
     return () => unsub();
   }, [db, appId]);
 
-  const setStatus = async (t, status) => {
-    try { await updateDoc(doc(db, "artifacts", appId, "public", "data", "tickets", t._id), { status }); }
-    catch (e) { console.error("[Tickets] statut:", e); }
+  const patch = async (t, data) => {
+    try { await updateDoc(doc(db, "artifacts", appId, "public", "data", "tickets", t._id), data); }
+    catch (e) { console.error("[Tickets] maj:", e); }
   };
-  const saveNote = async (t) => {
-    try { await updateDoc(doc(db, "artifacts", appId, "public", "data", "tickets", t._id), { adminNote: noteDraft[t._id] ?? (t.adminNote || "") }); }
-    catch (e) { console.error("[Tickets] note:", e); }
+  const setStatus = (t, status) => patch(t, { status });
+  const saveNote = (t) => patch(t, { adminNote: noteDraft[t._id] ?? (t.adminNote || "") });
+  const saveReply = (t) => patch(t, { reponse: (replyDraft[t._id] ?? (t.reponse || "")), reponseAt: Date.now() });
+  const archive = (t) => patch(t, { archived: true, archivedAt: Date.now() });
+  const unarchive = (t) => patch(t, { archived: false });
+  const archiveAllDone = async () => {
+    const done = tickets.filter((t) => !t.archived && (t.status === "traite" || t.status === "refuse"));
+    if (!done.length) return;
+    setBusy(true);
+    for (const t of done) { await patch(t, { archived: true, archivedAt: Date.now() }); }
+    setBusy(false);
   };
-  const saveReply = async (t) => {
-    try { await updateDoc(doc(db, "artifacts", appId, "public", "data", "tickets", t._id), { reponse: (replyDraft[t._id] ?? (t.reponse || "")), reponseAt: Date.now() }); }
-    catch (e) { console.error("[Tickets] réponse:", e); }
-  };
-
-  const counts = tickets.reduce((a, t) => { a[t.status] = (a[t.status] || 0) + 1; return a; }, {});
-  const shown = filter === "tous" ? tickets : tickets.filter((t) => t.status === filter);
 
   if (!isTicketAdmin(user)) {
     return (
@@ -5025,36 +5214,105 @@ function TicketsAdminInbox({ db, appId, user, onBack }) {
     );
   }
 
-  const filterChips = [["tous", `Toutes (${tickets.length})`], ["nouveau", `Nouveau (${counts.nouveau || 0})`], ["en_cours", `En cours (${counts.en_cours || 0})`], ["traite", `Traité (${counts.traite || 0})`], ["refuse", `Refusé (${counts.refuse || 0})`]];
+  const active = tickets.filter((t) => !t.archived);
+  const archivedList = tickets.filter((t) => t.archived);
+  const cnt = (arr, s) => arr.filter((t) => t.status === s).length;
+  const aTraiter = active.filter((t) => t.status === "nouveau" || t.status === "en_cours").length;
+  const doneCount = active.filter((t) => t.status === "traite" || t.status === "refuse").length;
+  const weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
+  const cetteSemaine = tickets.filter((t) => (t.createdAt || 0) >= weekAgo).length;
+  const delays = tickets.filter((t) => t.reponseAt && t.createdAt).map((t) => t.reponseAt - t.createdAt);
+  const avgDelay = delays.length ? delays.reduce((a, b) => a + b, 0) / delays.length : null;
+  const fmtDur = (ms) => { if (ms == null) return "—"; const h = ms / 3600000; if (h < 1) return Math.max(1, Math.round(ms / 60000)) + " min"; if (h < 48) return Math.round(h) + " h"; return Math.round(h / 24) + " j"; };
+  const parType = TICKET_TYPES.map((tt) => ({ id: tt.id, label: tt.label, n: active.filter((t) => t.type === tt.id).length })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n);
+  const maxType = Math.max(1, ...parType.map((x) => x.n));
+  const kpis = [
+    { key: "actives", label: "Actives", value: active.length, color: C.accent },
+    { key: "atraiter", label: "À traiter", value: aTraiter, color: "#2563EB" },
+    { key: "en_cours", label: "En traitement", value: cnt(active, "en_cours"), color: "#B45309" },
+    { key: "traite", label: "Validées", value: cnt(active, "traite"), color: "#047857" },
+    { key: "refuse", label: "Refusées", value: cnt(active, "refuse"), color: "#B91C1C" },
+    { key: "archive", label: "Archivées", value: archivedList.length, color: C.dim },
+  ];
+  const ql = q.trim().toLowerCase();
+  const matchQ = (t) => !ql || ((t.title || "") + " " + (t.authorName || "") + " " + (t.authorEmail || "") + " " + (t.message || "")).toLowerCase().includes(ql);
+  const matchType = (t) => typeFilter === "tous" || t.type === typeFilter;
+  let base;
+  if (filter === "archive") base = archivedList;
+  else if (filter === "actives") base = active;
+  else if (filter === "atraiter") base = active.filter((t) => t.status === "nouveau" || t.status === "en_cours");
+  else base = active.filter((t) => t.status === filter);
+  const shown = base.filter(matchQ).filter(matchType);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.bgSoft, overflow: "hidden" }}>
       <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.line}`, position: "sticky", top: 0, zIndex: 60, flexShrink: 0 }}>
-        <div style={{ padding: "16px 32px", display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ padding: "16px 32px 0", display: "flex", alignItems: "center", gap: 14 }}>
           <button onClick={onBack} title="Retour" style={{ width: 38, height: 38, borderRadius: 980, border: `1px solid ${C.line2}`, background: C.card, color: C.muted, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>{TkI.back(16, C.muted)}</button>
           <div style={{ width: 40, height: 40, borderRadius: 12, background: C.accentSoft, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>{TkI.inbox(20, C.accent)}</div>
-          <div>
+          <div style={{ flex: 1 }}>
             <div style={{ color: C.dim, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Administration</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: C.text }}>Demandes reçues</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: C.text }}>Gestion des demandes</div>
           </div>
         </div>
-        <div style={{ padding: "0 32px 14px", display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {filterChips.map(([k, lbl]) => {
-            const on = filter === k;
-            return (<button key={k} onClick={() => setFilter(k)} style={{ padding: "7px 13px", borderRadius: 980, cursor: "pointer", font: `600 12.5px ${F.ui}`, border: `1px solid ${on ? C.accent : C.line2}`, background: on ? C.accentSoft : C.card, color: on ? C.accent : C.muted }}>{lbl}</button>);
-          })}
+
+        {/* KPI cliquables (servent aussi de filtres) */}
+        <div style={{ padding: "14px 32px 0", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(116px, 1fr))", gap: 10 }}>
+          {kpis.map((k) => { const on = filter === k.key; return (
+            <button key={k.key} onClick={() => setFilter(k.key)} style={{ textAlign: "left", padding: "11px 13px", borderRadius: 14, cursor: "pointer", border: `1px solid ${on ? k.color : C.line}`, background: on ? `${k.color}12` : C.card, transition: "all .15s" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}><span style={{ width: 8, height: 8, borderRadius: 3, background: k.color, flexShrink: 0 }} /><span style={{ font: `600 11px ${F.ui}`, color: C.muted }}>{k.label}</span></div>
+              <div style={{ font: `800 22px ${F.ui}`, color: on ? k.color : C.text, lineHeight: 1 }}>{k.value}</div>
+            </button>); })}
+        </div>
+
+        {/* Stats secondaires + répartition par type */}
+        <div style={{ padding: "12px 32px 0", display: "flex", gap: 10, flexWrap: "wrap", alignItems: "stretch" }}>
+          <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: "9px 14px" }}>
+            <div style={{ font: `600 10px ${F.ui}`, color: C.dim, textTransform: "uppercase", letterSpacing: ".05em" }}>Cette semaine</div>
+            <div style={{ font: `800 16px ${F.ui}`, color: C.text }}>{cetteSemaine} <span style={{ font: `500 11px ${F.ui}`, color: C.dim }}>reçues</span></div>
+          </div>
+          <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: "9px 14px" }}>
+            <div style={{ font: `600 10px ${F.ui}`, color: C.dim, textTransform: "uppercase", letterSpacing: ".05em" }}>Délai moyen de réponse</div>
+            <div style={{ font: `800 16px ${F.ui}`, color: C.text }}>{fmtDur(avgDelay)}</div>
+          </div>
+          {parType.length > 0 && (
+            <div style={{ flex: 1, minWidth: 240, background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: "9px 14px" }}>
+              <div style={{ font: `600 10px ${F.ui}`, color: C.dim, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>Répartition par type · demandes actives</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {parType.map((x) => (
+                  <div key={x.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ font: `500 11.5px ${F.ui}`, color: C.muted, width: 132, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{x.label}</span>
+                    <div style={{ flex: 1, height: 8, background: C.bgSoft, borderRadius: 980, overflow: "hidden" }}><div style={{ width: `${(x.n / maxType) * 100}%`, height: "100%", background: C.accent, borderRadius: 980 }} /></div>
+                    <span style={{ font: `700 11.5px ${F.ui}`, color: C.text, width: 22, textAlign: "right" }}>{x.n}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Barre d'outils : recherche + type + archivage groupé */}
+        <div style={{ padding: "12px 32px 14px", display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher (nom, email, objet, message…)" style={{ flex: 1, minWidth: 200, padding: "9px 13px", borderRadius: 10, border: `1px solid ${C.line2}`, background: C.card, color: C.text, font: `500 13px ${F.ui}`, outline: "none", boxSizing: "border-box" }} />
+          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={{ padding: "9px 12px", borderRadius: 10, border: `1px solid ${C.line2}`, background: C.card, color: C.text, font: `600 12.5px ${F.ui}`, cursor: "pointer" }}>
+            <option value="tous">Tous les types</option>
+            {TICKET_TYPES.map((tt) => <option key={tt.id} value={tt.id}>{tt.label}</option>)}
+          </select>
+          {filter !== "archive" && doneCount > 0 && (
+            <button onClick={archiveAllDone} disabled={busy} style={{ padding: "9px 15px", borderRadius: 10, border: `1px solid ${C.line2}`, background: C.bgSoft, color: C.text, font: `700 12.5px ${F.ui}`, cursor: busy ? "wait" : "pointer" }}>{busy ? "Archivage…" : `Archiver les traitées (${doneCount})`}</button>
+          )}
         </div>
       </header>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "20px 32px 60px" }}>
         <div style={{ maxWidth: 980, margin: "0 auto", display: "flex", flexDirection: "column", gap: 12 }}>
           {shown.length === 0 ? (
-            <div style={{ padding: 40, textAlign: "center", color: C.dim, font: `500 14px ${F.ui}`, background: C.card, border: `1px dashed ${C.line2}`, borderRadius: 16 }}>Aucune demande dans cette catégorie.</div>
+            <div style={{ padding: 40, textAlign: "center", color: C.dim, font: `500 14px ${F.ui}`, background: C.card, border: `1px dashed ${C.line2}`, borderRadius: 16 }}>{filter === "archive" ? "Aucune demande archivée pour le moment." : ((q || typeFilter !== "tous") ? "Aucune demande ne correspond à ces filtres." : "Aucune demande active — tout est traité 🎉")}</div>
           ) : shown.map((t) => {
             const open = openId === t._id;
             const type = TICKET_TYPES.find((x) => x.id === t.type);
             return (
-              <div key={t._id} style={{ background: C.card, border: `1px solid ${open ? C.accent : C.line}`, borderRadius: 16, overflow: "hidden", transition: "border-color .15s" }}>
+              <div key={t._id} style={{ background: C.card, border: `1px solid ${open ? C.accent : C.line}`, borderRadius: 16, overflow: "hidden", transition: "border-color .15s", opacity: t.archived ? 0.82 : 1 }}>
                 <div onClick={() => setOpenId(open ? null : t._id)} style={{ padding: "15px 18px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}>
                   <div style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .15s", color: C.dim, flexShrink: 0 }}>{TkI.chevron(16, C.dim)}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -5062,6 +5320,7 @@ function TicketsAdminInbox({ db, appId, user, onBack }) {
                       <span style={{ font: `700 14.5px ${F.ui}`, color: C.text }}>{t.title}</span>
                       <span style={{ font: `600 11px ${F.ui}`, color: C.accent, background: C.accentSoft, padding: "2px 8px", borderRadius: 980 }}>{t.typeLabel}</span>
                       {t.priority === "haute" && <span style={{ font: `600 11px ${F.ui}`, color: "#B91C1C", background: "rgba(185,28,28,.10)", padding: "2px 8px", borderRadius: 980 }}>Priorité haute</span>}
+                      {t.archived && <span style={{ font: `600 11px ${F.ui}`, color: C.dim, background: C.bgSoft, padding: "2px 8px", borderRadius: 980 }}>📦 Archivée</span>}
                     </div>
                     <div style={{ font: `500 12px ${F.ui}`, color: C.dim }}>{t.authorName} · {t.authorEmail} · {wsTicketFmtDate(t.createdAt)}</div>
                   </div>
@@ -5086,6 +5345,10 @@ function TicketsAdminInbox({ db, appId, user, onBack }) {
                       {[["en_cours", "En traitement", "#B45309"], ["traite", "Validé", "#047857"], ["refuse", "Refusé", "#B91C1C"], ["nouveau", "Nouveau", "#2563EB"]].map(([k, lbl, col]) => (
                         <button key={k} onClick={() => setStatus(t, k)} style={{ padding: "6px 12px", borderRadius: 980, cursor: "pointer", font: `600 12px ${F.ui}`, border: `1px solid ${t.status === k ? col : C.line2}`, background: t.status === k ? col : C.card, color: t.status === k ? "#fff" : C.muted }}>{lbl}</button>
                       ))}
+                      <div style={{ flex: 1, minWidth: 8 }} />
+                      {t.archived
+                        ? <button onClick={() => unarchive(t)} style={{ padding: "6px 12px", borderRadius: 980, cursor: "pointer", font: `700 12px ${F.ui}`, border: `1px solid ${C.line2}`, background: C.card, color: C.accent }}>↩︎ Désarchiver</button>
+                        : <button onClick={() => archive(t)} style={{ padding: "6px 12px", borderRadius: 980, cursor: "pointer", font: `700 12px ${F.ui}`, border: `1px solid ${C.line2}`, background: C.bgSoft, color: C.muted }}>📦 Archiver</button>}
                     </div>
 
                     {/* Réponse à l'employé (visible par le demandeur dans « Mes demandes ») */}
@@ -5118,6 +5381,14 @@ function TicketsAdminInbox({ db, appId, user, onBack }) {
   );
 }
 
+
+function ressTypeOf(f) {
+  f = f || "";
+  if (/\.pdf$/i.test(f)) return "pdf";
+  if (/\.docx?$/i.test(f)) return "docx";
+  if (/\.(png|jpe?g|webp|gif|svg)$/i.test(f)) return "image";
+  return "pdf";
+}
 
 function WallSwissAppMain() {
   const initialTexts = {
@@ -5170,6 +5441,7 @@ function WallSwissAppMain() {
 
   const [activeModule, setActiveModule] = useState("hub");
   const [moduleArg, setModuleArg] = useState(null); // args de navigation (ex. doc Académie à ouvrir)
+  const [resDoc, setResDoc] = useState(null); // document ouvert dans la liseuse (module Ressources)
   // ── SOMMAIRE : navigation via le hub (onglets/sous-onglets) → page placeholder ──
   const [activePage, setActivePage] = useState(null);
   const handleSommaireNav = (node, path) => {
@@ -7390,7 +7662,10 @@ const [lppForm, setLppForm] = useState({
         )}
 
         {/* VUE MODULE RESSOURCES */}
-        {activeModule === "ressources" && (
+        {activeModule === "ressources" && resDoc && (
+          <AcademyReader doc={{ id: "res:" + resDoc.fichier, title: resDoc.nom, type: ressTypeOf(resDoc.fichier), src: encodeURI(resDoc.fichier), file: (resDoc.fichier || "").split("/").pop(), backLabel: "Documents" }} onClose={() => setResDoc(null)} />
+        )}
+        {activeModule === "ressources" && !resDoc && (
           <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
             <header className="no-print" style={{ background: C.white, borderBottom: `1px solid ${C.mediumGray}`, position: "sticky", top: 0, zIndex: 100 }}>
               <div style={{ padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -7405,7 +7680,7 @@ const [lppForm, setLppForm] = useState({
               <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
                 <div style={{ marginBottom: 32 }}>
                   <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 28, fontWeight: 700, color: C.accent, margin: 0 }}>Documents & Formulaires</h2>
-                  <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Téléchargez directement les documents officiels dont vous avez besoin pour vos rendez-vous.</p>
+                  <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Visualisez les documents directement dans l'application (PDF & Word) ou téléchargez-les pour vos rendez-vous.</p>
                 </div>
 
                 {[
@@ -7456,22 +7731,21 @@ const [lppForm, setLppForm] = useState({
                               <div style={{ fontSize: 13, color: C.gray }}>{doc.desc}</div>
                             </div>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              const link = document.createElement('a');
-                              link.href = doc.fichier;
-                              link.download = doc.fichier.split('/').pop();
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                            }}
-                            style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.accentDark, padding: "10px 24px", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 10, borderRadius: "999px" }}
-                            onMouseEnter={(e)=> { e.currentTarget.style.background = C.accent; e.currentTarget.style.color = C.white; e.currentTarget.style.borderColor = C.accent; }}
-                            onMouseLeave={(e)=> { e.currentTarget.style.background = C.white; e.currentTarget.style.color = C.accentDark; e.currentTarget.style.borderColor = C.mediumGray; }}
-                          >
-                            Télécharger / Ouvrir <span style={{ fontSize: 14 }}>&rarr;</span>
-                          </button>
+                          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                            <button
+                              onClick={() => setResDoc(doc)}
+                              style={{ background: C.accent, border: "none", color: C.white, padding: "10px 22px", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", transition: "all 0.2s", borderRadius: "999px" }}
+                              onMouseEnter={(e)=> { e.currentTarget.style.background = C.accentDark; }}
+                              onMouseLeave={(e)=> { e.currentTarget.style.background = C.accent; }}
+                            >Voir</button>
+                            <a
+                              href={encodeURI(doc.fichier)}
+                              download={(doc.fichier || "").split('/').pop()}
+                              style={{ background: C.white, border: `1px solid ${C.mediumGray}`, color: C.accentDark, padding: "10px 20px", cursor: "pointer", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", transition: "all 0.2s", borderRadius: "999px", textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+                              onMouseEnter={(e)=> { e.currentTarget.style.background = C.lightGray; }}
+                              onMouseLeave={(e)=> { e.currentTarget.style.background = C.white; }}
+                            >Télécharger</a>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -7512,7 +7786,7 @@ const [lppForm, setLppForm] = useState({
 
                 {/* Filtres par catégorie */}
                 <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 16, marginBottom: 16 }}>
-                  {["Toutes", "Rendez-vous", "CMU / Fiscalité", "Prévoyance", "LPP", "Suivi", "Investissements", "Événements", "Divers"].map(cat => (
+                  {["Toutes", "Rendez-vous", "LPP", "Relances", "Suivi", "CMU / Fiscalité", "Prévoyance", "Investissements", "Événements", "Divers"].map(cat => (
                     <button
                       key={cat}
                       onClick={() => setMailCat(cat)}

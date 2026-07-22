@@ -53,6 +53,7 @@ const WS_MENU = [
     { id: "1.6", num: "1.6", title: "Simulateur d'intérêts composés" },
     { id: "1.7", num: "1.7", title: "Générateur de factures" },
     { id: "1.9", num: "1.9", title: "Recherche & Mandats LPP", action: { type: "module", module: "rechercheLpp" } },
+    { id: "1.10", num: "1.10", title: "Tous mes logiciels & accès" },
     { id: "1.8", num: "1.8", title: "Signaler un incident", children: [
       { id: "1.8.1", num: "1.8.1", title: "Cyber-incident" },
       { id: "1.8.2", num: "1.8.2", title: "Conflits d'intérêts" },
@@ -114,6 +115,7 @@ const WS_MENU = [
         { id: "3.7.2.2", num: "3.7.2.2", title: "Frontalier – QR" },
       ]},
     ]},
+    { id: "3.8", num: "3.8", title: "Taxe annuelle FINMA (AFA)" },
   ]},
   { id: "4", num: "4", title: "Base documentaire", icon: "FileText", children: [
     { id: "4.1", num: "4.1", title: "Mails types", action: { type: "module", module: "mails" } },
@@ -155,6 +157,7 @@ const WS_MENU = [
     { id: "7.6", num: "7.6", title: "Présentation des services" },
     { id: "7.7", num: "7.7", title: "Organisation LinkedIn Business" },
     { id: "7.8", num: "7.8", title: "Des publications pour mes réseaux" },
+    { id: "7.9", num: "7.9", title: "Distribution des leads & statuts" },
   ]},
 ];
 
@@ -4481,8 +4484,430 @@ const WS_MENU = [
 ];
 
 // Page générique (placeholder « en construction ») pour les onglets neufs du sommaire.
+/* ═══════════════════════════════════════════════════════════════════════════
+   WS_CONTENT — Contenu transféré depuis Notion (2 hubs : « Ma page d'accueil »
+   + « Company Home »). Chaque clé correspond à l'id d'un nœud du sommaire
+   (WS_MENU). DocPageView affiche ce contenu à la place du placeholder.
+   ▸ Sécurité : AUCUN mot de passe n'est stocké ici (voir gestionnaire dédié).
+   ═══════════════════════════════════════════════════════════════════════════ */
+const WS_CONTENT = {
+  // ── 2.2 · Rémunération / commissions ──
+  "2.2": { tag: "Rémunération", blocks: [
+    ["p", "La rémunération WallSwiss combine un fixe (CDI) et une part variable selon un barème par produit. Deux simulateurs Excel officiels permettent de projeter la commission avant chaque souscription."],
+    ["docs", ["Simulateur commissions INVESTISSEMENT - WS.xlsx", "Simulateur commissions ASSURANCE - WS.xlsx"]],
+    ["h", "Catégories de commissionnement"],
+    ["kv", [["Assurance", "3ᵉ pilier · PER · Assurance vie France · Libre passage"], ["Investissement", "Cryptomonnaie · Compte-titres"]]],
+    ["h", "SwissLife — Assurance vie & capitalisation (France)"],
+    ["li", ["Gamme dédiée (barème avancé) : SwissLife Strategic Premium (assurance vie) et SwissLife Capi Strategic Premium (capitalisation).", "Surcommission de +2,25 % sur la part investie en unités de compte (UC), qui s'ajoute aux frais d'entrée appliqués.", "Exemple : souscription 100 % UC avec 3,50 % de frais → le cabinet perçoit 3,50 % + 2,25 % = 5,75 %."]],
+    ["h", "PER individuel — versements programmés"],
+    ["p", "À la mise en place de versements périodiques, WallSwiss avance l'équivalent de 4 ans de commissions sur versement."],
+    ["li", ["Part UC : (7,75 % + frais sur versements) × 4 ans.", "Exemple : 500 €/mois en 100 % UC → 6 000 €/an → 41 % × 6 000 € = 2 460 € perçus par le cabinet."]],
+    ["warn", "Reprises : si les versements périodiques s'arrêtent, la rémunération est revue à la baisse pendant 4 ans."],
+    ["h", "Note de frais"],
+    ["p", "La politique de dépenses fixe des limites avec validations obligatoires selon le montant."],
+  ]},
+  // ── 2.4 · Règlement interne ──
+  "2.4": { tag: "Règlement interne", blocks: [
+    ["p", "Espace évolutif qui reflète la culture WallSwiss : un environnement de travail organisé, respectueux et collaboratif."],
+    ["h", "Relations sociales"],
+    ["p", "Chacun contribue à un cadre respectueux. Toute discrimination (âge, orientation sexuelle, sexe, origine, religion, handicap) est interdite. Bon sens de rigueur."],
+    ["docs", ["seco_personlichkeit_f_web.pdf (lecture obligatoire)"]],
+    ["h", "Bureaux & concentration"],
+    ["p", "Espace semi-flexible ; les équipes sont regroupées pour mieux collaborer. La concentration prime : casque sur les oreilles = ne pas déranger."],
+    ["h", "Règles de fonctionnement & sanctions"],
+    ["docs", ["WS - Règles de fonctionnement et sanctions.pdf", "WS - Charte d'entreprise.docx", "WS - Règlement Intérieur.docx", "WS - Conditions pour le versement d'une commission.pdf"]],
+    ["h", "Horaires & télétravail"],
+    ["li", ["4 jours de présentiel + 1 jour de télétravail (en option).", "Jour de télétravail à faire approuver par le manager ou le directeur.", "Plage horaire : 10h00 – 18h00."]],
+    ["h", "Repas du soir"],
+    ["p", "Dîner offert à celles et ceux qui restent au bureau après 20h00 (n'importe quel service de livraison). Contraintes : ne pas dépasser 20 CHF et conserver le reçu."],
+    ["h", "Nettoyage & environnement"],
+    ["li", ["Rincer sa vaisselle et la ranger ; jeter ses déchets.", "Nettoyer la machine à café si on est le dernier le matin.", "Rendre les salles de conférence propres.", "Éteindre les lumières en partant ; chauffage/clim uniquement si nécessaire ; privilégier le recyclage."]],
+    ["h", "Parking"],
+    ["p", "Des places WallSwiss sont à disposition au Parking Seujet."],
+    ["info", "Toute question, idée ou remarque : contact@wallswiss.ch"],
+  ]},
+  // ── 2.8 · Onboarding ──
+  "2.8": { tag: "Onboarding", blocks: [
+    ["p", "Bienvenue chez WallSwiss. Voici les étapes pour bien démarrer."],
+    ["h", "1. Mon admin — documents à fournir"],
+    ["li", ["Fiche employé(e) conseiller à remplir et retourner à contact@wallswiss.ch.", "Pièce d'identité.", "Extrait de casier judiciaire (< 3 mois, pays de résidence).", "Copie des diplômes.", "Extrait du registre des poursuites.", "Numéro de téléphone suisse (+41) et IBAN CH."]],
+    ["h", "2. Documents à signer"],
+    ["li", ["Contrat CDI.", "Charte d'entreprise.", "Règlement intérieur.", "Tableau des commissions + conditions de versement conseiller.", "Engagement impôt à la source ; déclaration AVS (si pas de n° AVS) ; prélèvement selon situation familiale."]],
+    ["h", "3. Mes accès outils"],
+    ["li", ["Notion, Salesforce, Calendly, Canva, Outlook.", "WhatsApp Business, LinkedIn Business.", "Cartes de visite : communiquer le n° suisse à contact@wallswiss.ch (objet « Commande de carte de visite »)."]],
+    ["h", "4. Mon parcours de formation"],
+    ["li", ["Prospection : création de leads, trames de prospection.", "Maîtrise de l'entretien commercial.", "3P (phases 1 & 2), LPP (phases 1 & 2).", "Fiscalité : RS · TOU · QR, comparateur.", "Private Equity, Assurance vie, Gestion de fortune.", "Logiciels : Salesforce, Notion, outils de souscription (3P, Private, LPP, PARfinance)."]],
+  ]},
+  // ── 3.1 · Reprise de gestion ──
+  "3.1": { tag: "Procédure · Conformité", blocks: [
+    ["p", "Protocole interne de reprise de gestion, aligné avec les exigences FINMA (partenaire Liechtenstein Life notamment)."],
+    ["ok", "Reprise ACCEPTÉE uniquement en cas d'action concrète sur la police :"],
+    ["li", ["Suppression d'une garantie Select ou changement de la stratégie de fonds.", "Augmentation des primes versées.", "Travail avec le client sur l'investissement ou la fiscalité."]],
+    ["warn", "Toute reprise sans modification stratégique ni action concrète n'est plus acceptée."],
+  ]},
+  // ── 3.4.1 · Liechtenstein Life ──
+  "3.4.1": { tag: "Fiche partenaire · Prévoyance", blocks: [
+    ["p", "Partenaire prévoyance individuelle (3ᵉ pilier). Ressources et process de souscription."],
+    ["li", ["Conditions générales + souscription papier vierge + flyers.", "Courrier type.", "Tutoriel vidéo — process de signature.", "Fonds de placement.", "Documents utiles (modification de fonds, augmentation…).", "Guide de paiement."]],
+    ["warn", "Protocole de reprise (FINMA) : reprise acceptée uniquement en cas de suppression de garantie Select, changement de stratégie de fonds, augmentation des primes, ou travail investissement/fiscalité. Pas de reprise sans action concrète."],
+  ]},
+  // ── 3.5.1 · Swissquote ──
+  "3.5.1": { tag: "Fiche partenaire · Banque", blocks: [
+    ["p", "Banque / dépôt-titres partenaire. Suivi des portefeuilles et protocole de trading."],
+    ["info", "Consulter les références de portefeuilles au moins 1×/semaine et les mettre en favoris."],
+    ["docs", ["Nouveau Protocole de trading 13.10.2025.pdf"]],
+    ["h", "Portefeuilles modèles"],
+    ["li", ["PARfinance : Dynamique · Équilibre · Conservateur.", "NS Partners : Swiss Excellence DPM (CHF) · DGC Stock Selection A EUR · DGC Energy DPM EUR (écologique)."]],
+  ]},
+  // ── 3.6.1 / 3.6.2 / 3.6.3 · Libre passage LPP ──
+  "3.6.1": { tag: "Fiche partenaire · Libre passage", blocks: [
+    ["p", "Fondation de libre passage LPP partenaire — Lemania."],
+    ["li", ["Solutions de 2ᵉ pilier / libre passage.", "Stratégies suivies : NS Golden Age Balanced, LPFX Mirabaud, Mirabaud Prévention."]],
+  ]},
+  "3.6.2": { tag: "Fiche partenaire · Libre passage", blocks: [
+    ["p", "Fondation de libre passage LPP partenaire — Liberty."],
+    ["li", ["Solutions de 2ᵉ pilier / libre passage."]],
+  ]},
+  "3.6.3": { tag: "Fiche partenaire · Libre passage", blocks: [
+    ["p", "Fondation de prévoyance / libre passage LPP partenaire — Pictet."],
+    ["li", ["Stratégies LPP suivies : Pictet LPP 40, Pictet LPP 60."]],
+  ]},
+  // ── 3.7.1.1 · Check-list + mail ──
+  "3.7.1.1": { tag: "Fiscalité · Outils", blocks: [
+    ["p", "Check-lists documentaires et e-mails types pour les déclarations fiscales."],
+    ["docs", ["CLIENT - Check List 2026 RS.WS.pdf", "CLIENT - Déclarations fiscales QR.pdf", "Tarifs déclarations fiscales WS - Permis G, B, L.pdf"]],
+    ["h", "E-mail post-rendez-vous (principe)"],
+    ["p", "Demander systématiquement : IBAN suisse (CH…), copie du permis de travail ou pièce d'identité. Toujours une action claire demandée, formulation cordiale, relances cadrées."],
+  ]},
+  // ── 3.7.1.2 · Rectification Simple (RS) ──
+  "3.7.1.2": { tag: "Procédure · Rectification Simple", blocks: [
+    ["p", "Deux voies : Option 1 — Rectification Simple par le cabinet WallSwiss ; Option 2 — via Allo-Déclaration (à noter dans Salesforce si Allo-Déclaration)."],
+    ["steps", ["Prendre la liste des documents — « CLIENT - Check List 2026 RS.WS » (PDF ou site WallSwiss).", "Vérifier que le dossier est complet selon le cas client (voir ci-dessous).", "Comprendre l'utilité de chaque document demandé.", "Informations complémentaires : soumis à l'IS à Genève en 2025 ? La TOU serait-elle plus avantageuse ?", "Déposer le dossier dans la bannette FISCALITÉ (aucun envoi sans double vérification).", "Appliquer les bonnes pratiques (voir encadré).", "Tarification : 100 CHF (espèces ou facture)."]],
+    ["sub", "Cas clients — documents requis", [
+      ["li", ["A0 – Célibataire : formulaire original ou e-démarche, certificat de salaire + attestation-quittance 2025, permis de travail, IBAN CHF.", "C/B – Marié avec enfants : formulaire DRIS TOU, certificat de salaire + quittance 2025, livret de famille + montant des allocations perçues en Suisse.", "H – Célibataire avec enfants à charge : formulaire original ou e-démarche, certificat de salaire + quittance 2025, permis de travail, IBAN CHF, livret de famille + allocations."]],
+    ]],
+    ["warn", "Depuis le 01.01.2024 : les enfants en garde alternée paritaire sans pension ne peuvent plus être rattachés via une rectification à Genève → déclaration de quasi-résident obligatoire."],
+    ["warn", "Délai légal strict : demande de rectification avant le 31 mars 2026 (même s'il manque des justificatifs — préciser qu'ils suivront)."],
+    ["sub", "Bonnes pratiques", [
+      ["li", ["Rectifications au stylo noir.", "Ne jamais s'engager sur un montant de retour d'impôt devant le client.", "Pas de dépôt sans dossier complet ET paiement reçu.", "Prévenir d'un délai long : retours entre octobre 2026 et février 2027.", "Privilégier l'e-démarche (le papier / la création d'accès prend jusqu'à 4 semaines).", "Utiliser le simulateur avec les bons chiffres (revenus suisses, français, allocations)."]],
+    ]],
+  ]},
+  // ── 3.7.1.3 · Déclaration transfrontalière + LMNP ──
+  "3.7.1.3": { tag: "Procédure · Déclaration transfrontalière", blocks: [
+    ["p", "Déclaration d'impôt transfrontalier 2026. Périmètre WallSwiss : Genève, Vaud, Valais uniquement. Document de référence : l'avis d'imposition français N-1 (solde d'impôt, plafond PER, composition du foyer)."],
+    ["h", "Distinction par canton"],
+    ["kv", [["Genève (GE)", "Déclaration FR (2042 + 2047 + 2047-Suisse + 3916). Double dossier possible FR + TOU (tarif premium). Pas de 2041-AS."], ["Vaud (VD)", "Régime des 8 cantons (accord 11.04.1983) : 2047 + 2047-Suisse + 2041-AS. Retour au domicile FR ≥ 1×/semaine. Télétravail 40 % max."], ["Valais (VS)", "Même régime des 8 cantons que VD : 2041-AS, contrôle annuel du seuil de télétravail (40 %)."]]],
+    ["h", "Règle de traitement"],
+    ["li", ["Option 1 — Le cabinet traite en interne (point d'entrée d'une relation patrimoniale durable).", "Option 2 — Redirection : LMNP → Questionnaire fiscal dédié ; dossier simple → Allo-Déclaration."]],
+    ["h", "Process WallSwiss — 6 étapes"],
+    ["steps", ["Prise de rendez-vous en ligne (calendrier WallSwiss) + email de confirmation.", "Questionnaire fiscal de pré-entretien + check-list personnalisée par canton.", "Dépôt des documents par le client (espace client, email chiffré ou bannette FISCALITÉ) ; relance à J+3 si incomplet.", "Entretien fiscal (1h) + validation du traitement, signature du mandat et encaissement.", "Finalisation : contrôle croisé obligatoire par Pierrick, validation client, télétransmission via impots.gouv.fr, copie PDF + archivage 10 ans.", "Suivi post-dépôt + déclenchement PER (relances FR, questionnaire annuel en mars)."]],
+    ["h", "Cross-sell PER"],
+    ["p", "Le PER est un complément naturel (TMI frontalière souvent élevée → gain fiscal 30–45 %). À réception de l'avis FR : calcul du plafond PER puis proposition d'audit patrimonial (30 min)."],
+  ]},
+  // ── 3.7.2.1 · Quasi-Résident (TOU) ──
+  "3.7.2.1": { tag: "Procédure · Quasi-Résident (TOU)", blocks: [
+    ["p", "Le quasi-résident (TOU) permet une déclaration complète, avec accès aux déductions effectives — logique identique à un résident, sans devenir résident fiscal suisse."],
+    ["h", "Distinction IS / DRIS / TOU"],
+    ["kv", [["Impôt à la source", "Calcul automatique, barèmes standards, déductions forfaitaires, aucune personnalisation."], ["DRIS (rectification)", "Correction très limitée depuis 2021 (barème, enfants, erreurs techniques)."], ["TOU (quasi-résident)", "Déclaration complète, déductions effectives, imposition réelle (donc variable)."]]],
+    ["h", "La règle des 90 %"],
+    ["p", "Éligibilité : au moins 90 % des revenus mondiaux du foyer imposables en Suisse. Sont comptés hors Suisse : salaires FR, revenus fonciers France, valeur locative, dividendes/intérêts, pensions alimentaires perçues."],
+    ["warn", "Le quasi-résident n'est PAS automatiquement favorable : sans charges déductibles suffisantes, il peut être défavorable. Interdiction interne WallSwiss de déposer sans analyse."],
+    ["h", "Déductions accessibles uniquement via la TOU"],
+    ["li", ["Rachats LPP, frais de garde, pensions alimentaires, frais de formation.", "Intérêts d'emprunt, travaux d'entretien, frais médicaux importants."]],
+    ["warn", "Choix irréversible pour l'année, coût fiduciaire, dossier lourd. Règle d'or : pas de TOU sans compréhension complète du client."],
+    ["h", "Process WallSwiss"],
+    ["steps", ["Qualification : découverte client + schéma fiscalité (obligatoire en rendez-vous).", "Simulation : simulateur QR → audit QR ; expliquer les 3 options (IS / DRIS / TOU).", "Validation écrite de la compréhension du client — aucune promesse de remboursement.", "Collecte documentaire (check-list unique WallSwiss) + dossier tracé dans le CRM avec opportunité.", "Dépôt et suivi des relances de l'administration."]],
+  ]},
+  // ── 3.7.2.2 · Frontalier (QR) ──
+  "3.7.2.2": { tag: "Procédure · Frontalier", blocks: [
+    ["p", "Traitement fiscal du frontalier selon le canton de travail (voir aussi la déclaration transfrontalière)."],
+    ["kv", [["Frontalier GE", "Déclaration FR obligatoire (2042 + 2047 + 2047-Suisse + 3916). Double dossier possible FR + TOU (le plus complet)."], ["Frontalier VD & VS", "Pas de DRIS/TOU côté suisse en standard. Attestation 2041-AS signée par l'employeur CH. Contrôle du seuil de télétravail (40 % max)."]]],
+    ["info", "Cas de mobilité en cours d'année (GE→VD…) : traitement au prorata."],
+    ["h", "Documents clés"],
+    ["li", ["Avis d'imposition N-1 (indispensable), certificat de salaire CH 2025.", "Formulaires 2042 / 2047 / 2047-Suisse / 3916 ; 2041-AS pour VD & VS.", "Justificatif de domicile FR, pièce d'identité, livret de famille (enfants 18–25)."]],
+  ]},
+  // ── 1.10 · Logiciels & accès ──
+  "1.10": { tag: "Logiciels & accès", blocks: [
+    ["p", "Accès rapides aux outils WallSwiss. Les identifiants ne sont jamais stockés dans l'application : utilisez le gestionnaire de mots de passe de l'équipe."],
+    ["li", ["CRM — Salesforce.", "Agenda — Calendly.", "Messagerie — Outlook.", "Design — Canva.", "IA — ChatGPT+ · Fathom (comptes-rendus de réunion).", "Création — Adobe.", "Simulateurs — Impôt à la source · Intérêts composés."]],
+    ["docs", ["WS - Comment optimiser son Outlook.docx", "WS - PROCESS CALENDLY.docx"]],
+    ["warn", "Sécurité : ne jamais partager de mot de passe en clair (chat, e-mail, document). Passer par un gestionnaire (1Password / Bitwarden)."],
+  ]},
+  // ── 3.8 · Taxe annuelle FINMA (AFA) ──
+  "3.8": { tag: "Conformité · Process", blocks: [
+    ["p", "Taxe annuelle de recertification (AFA) pour les collaborateurs inscrits comme intermédiaires d'assurance dans myAFA (art. 43 LSA)."],
+    ["warn", "Sans paiement dans les délais, l'inscription au registre sectoriel est supprimée et la participation à l'examen de recertification est bloquée."],
+    ["kv", [["Montant", "100,00 CHF par collaborateur (non soumis à la TVA)"], ["Délai", "30 jours dès réception du mail AFA"]]],
+    ["h", "Process étape par étape"],
+    ["steps", ["Réception du mail AFA (individuel) → transmettre immédiatement la facture à Pierrick pour paiement.", "Paiement électronique via le lien du mail AFA (CembraPay, TWINT, carte de débit/crédit).", "Confirmation : courriel de règlement + facture PDF sous 24h → à transmettre à Pierrick."]],
+    ["h", "Bases légales & contact"],
+    ["li", ["Art. 43 LSA · Art. 190a al. 1 OS · Art. 42 Normes minimales · Barème de frais AFA.", "Contact AFA : vermittler@vbv-afa.ch · 031 328 26 29 · vbv.ch."]],
+  ]},
+  // ── 7.9 · Distribution des leads & statuts ──
+  "7.9": { tag: "Marketing · Process leads", blocks: [
+    ["p", "Les leads sont centralisés dans un fichier MASTER LEADS puis distribués automatiquement aux équipes (managers : Baptiste, Louis, Pierrick) selon des poids définis, avec règle anti-doublons."],
+    ["h", "Statuts obligatoires (nomenclature)"],
+    ["li", ["NEW — nouveau lead entrant (auto).", "À rappeler — contact effectué, relance planifiée.", "NRP 1 à 5 — appels sans réponse (1er au 5e).", "R1 Fixé — 1er rendez-vous fixé ; R1 non honoré — voir Salesforce.", "Devis signé — voir Salesforce.", "Pas intéressé — refus du rendez-vous ; Mauvais numéro — coordonnées invalides."]],
+    ["warn", "Règle d'or : mettre le statut à jour immédiatement après chaque interaction (les statistiques sont calculées en temps réel)."],
+    ["li", ["Réactivité : traiter les leads dès réception.", "Notes : renseigner chaque échange dans la colonne Notes.", "Transferts : toujours la fonction de ré-attribution (jamais de copier-coller manuel)."]],
+  ]},
+
+  /* ═══════════ Contenu métier — tous les autres nœuds du sommaire ═══════════ */
+
+  // ── Section 1 · Logiciels & outils ──
+  "1.4": { tag: "Outil · Agenda", blocks: [
+    ["p", "Calendly gère la prise de rendez-vous en ligne : le prospect choisit un créneau, le RDV se synchronise avec Outlook et une confirmation part automatiquement."],
+    ["h", "Bonnes pratiques"],
+    ["li", ["Un type d'événement par usage (R1 découverte 45 min, R2 conseil 60 min, point fiscal 30 min).", "Prévoir un buffer entre deux rendez-vous et des plages de disponibilité réalistes.", "Synchroniser Calendly avec Outlook pour éviter les doubles réservations.", "Personnaliser le lien et le message de confirmation aux couleurs WallSwiss."]],
+    ["docs", ["WS - PROCESS CALENDLY.docx"]],
+  ]},
+  "1.5": { tag: "Outil · Fiscalité", blocks: [
+    ["p", "Outil Excel pour comparer les trois traitements fiscaux du frontalier (impôt à la source, DRIS, quasi-résident TOU) et vérifier l'éligibilité avant tout dépôt."],
+    ["h", "Quand l'utiliser"],
+    ["li", ["Systématiquement avant de proposer une déclaration TOU.", "Pour vérifier la règle des 90 % (revenus mondiaux imposables en Suisse).", "Pour objectiver le gain ou la perte et ne jamais promettre un remboursement."]],
+    ["info", "Procédure détaillée : Procédures › Fiscalité › Résident – TOU."],
+    ["docs", ["OUTIL - Rectification à la source - WallSwiss.xlsx"]],
+  ]},
+  "1.6": { tag: "Outil · Investissement", blocks: [
+    ["p", "Projette la croissance d'un capital dans le temps, avec versements réguliers, taux de rendement et durée — l'outil pédagogique clé pour illustrer l'effet long terme."],
+    ["h", "Usage commercial"],
+    ["li", ["Montrer l'impact d'un versement mensuel régulier (PER, assurance vie, 3a).", "Comparer plusieurs scénarios de rendement et de durée.", "Matérialiser le coût d'attendre (démarrer tôt plutôt que tard)."]],
+  ]},
+  "1.7": { tag: "Outil · Facturation", blocks: [
+    ["p", "Produit les factures d'honoraires WallSwiss (gestion de fortune, fiscalité, conseil) à la charte du cabinet, avec le bulletin de versement QR suisse intégré."],
+    ["li", ["Sélectionner la prestation et le montant, puis générer le PDF.", "Le bulletin QR reste conforme (IBAN QR, référence).", "Numérotation et archivage selon la procédure comptable."]],
+    ["docs", ["Facture honoraires gestion de fortune - WS", "Guide de paiement des primes 3P"]],
+  ]},
+  "1.8.1": { tag: "Conformité · Incident", blocks: [
+    ["p", "Tout événement touchant la sécurité informatique : phishing, e-mail frauduleux, perte ou vol d'appareil, accès non autorisé, suspicion de fuite de données."],
+    ["ok", "Réflexes immédiats"],
+    ["steps", ["Isoler : déconnecter l'appareil du réseau, ne pas cliquer ni payer, ne rien supprimer.", "Sécuriser : changer les mots de passe concernés depuis un autre appareil.", "Signaler sans délai à contact@wallswiss.ch et à la direction (heure, description, captures).", "Documenter l'incident et suivre les consignes reçues."]],
+    ["warn", "Ne jamais communiquer d'identifiant ou de donnée client en réponse à une sollicitation, même urgente."],
+  ]},
+  "1.8.2": { tag: "Conformité", blocks: [
+    ["p", "Un conflit d'intérêts naît quand un intérêt personnel, une rémunération ou une relation peut influencer le conseil donné au client."],
+    ["h", "Conduite à tenir"],
+    ["steps", ["Identifier et déclarer toute situation potentielle à la direction.", "S'abstenir de décider seul dans la situation concernée.", "Privilégier toujours l'intérêt du client et la transparence sur la rémunération.", "Consigner la situation au registre des conflits d'intérêts."]],
+    ["info", "Cadre : LSFin / obligations FINMA. En cas de doute : contact@wallswiss.ch."],
+  ]},
+  "1.8.3": { tag: "Conformité · LBA", blocks: [
+    ["p", "Opérations inhabituelles, origine des fonds douteuse, personne politiquement exposée (PPE) ou tout soupçon de blanchiment (LBA)."],
+    ["warn", "Ne jamais alerter le client d'un soupçon (interdiction du « tipping-off »)."],
+    ["steps", ["Documenter les faits et les indices objectifs.", "Alerter immédiatement le responsable conformité / la direction.", "Ne pas exécuter d'opération douteuse sans validation.", "La communication au MROS relève de la direction, pas du conseiller."]],
+  ]},
+  "1.8.4": { tag: "RH · Confidentiel", blocks: [
+    ["p", "Difficulté relationnelle, conflit, harcèlement, mal-être ou situation personnelle impactant le travail."],
+    ["li", ["Échange confidentiel possible avec la direction ou le référent RH.", "Aucune situation n'est traitée au détriment de la personne qui signale.", "Contact : contact@wallswiss.ch (objet « RH – confidentiel »)."]],
+  ]},
+
+  // ── Section 2 · Mon espace personnel ──
+  "2.1": { tag: "Développement personnel", blocks: [
+    ["p", "Outils d'auto-analyse pour piloter sa performance et ses habitudes : suivi d'activité commerciale et suivi des habitudes personnelles."],
+    ["h", "Ce qu'on suit"],
+    ["li", ["Activité : appels, prises de RDV, R1/R2, devis, souscriptions (taux de transformation).", "Habitudes : routines quotidiennes via le Habit Tracker.", "Objectifs : revue hebdomadaire de ses chiffres et axes de progrès."]],
+  ]},
+  "2.5.1": { tag: "Vie d'équipe", blocks: [
+    ["p", "Espace des sondages internes : donnez votre avis sur l'organisation, les événements et les outils. Vos retours orientent les décisions de l'équipe."],
+  ]},
+  "2.5.2": { tag: "Vie d'équipe", blocks: [
+    ["p", "La vie WallSwiss en images : séminaires, soirées et temps forts de l'équipe (séminaire Courchevel, événements SwissLife, séminaires partenaires…)."],
+    ["info", "Galerie alimentée après chaque événement."],
+  ]},
+  "2.7": { tag: "Challenges", blocks: [
+    ["p", "Les challenges commerciaux et marketing en cours : objectifs, règles, classement et récompenses."],
+    ["li", ["Challenge marketing : mise en avant des meilleures campagnes et contenus.", "Suivi des performances et du classement de l'équipe.", "Récompenses attribuées selon les résultats."]],
+  ]},
+
+  // ── Section 3 · Procédures (investissement, retraite, partenaires) ──
+  "3.2.1": { tag: "Procédure · Investissement", blocks: [
+    ["p", "Ouverture et gestion d'un compte-titres (dépôt bancaire) chez notre partenaire Swissquote, pour investir en direct ou via mandat."],
+    ["steps", ["Qualification du client : objectifs, horizon, profil de risque (KYC).", "Ouverture Swissquote : formulaires, pièces d'identité, justificatifs.", "Choix de la gestion : libre, conseillée ou sous mandat (portefeuilles modèles).", "Suivi : consulter les références de portefeuilles au moins 1×/semaine."]],
+    ["info", "Fiche partenaire : Procédures › Banques › Swissquote."],
+  ]},
+  "3.2.2": { tag: "Procédure · Investissement", blocks: [
+    ["p", "Investissement en capital-investissement via notre partenaire Altaroc (millésimes annuels) : accès à des fonds de Private Equity historiquement réservés aux institutionnels."],
+    ["h", "Points clés client"],
+    ["li", ["Horizon long (8 à 10 ans) et capital peu liquide.", "Appels de capitaux progressifs (le montant engagé est investi par tranches).", "Réservé à une clientèle avertie disposant déjà d'une épargne diversifiée.", "Objectif de performance supérieure aux marchés cotés, en contrepartie du risque et de l'illiquidité."]],
+    ["warn", "Vérifier l'adéquation (profil, liquidité, compréhension du risque) avant toute souscription."],
+  ]},
+  "3.2.3": { tag: "Procédure · Investissement", blocks: [
+    ["p", "Assurance vie française via SwissLife (gamme Strategic Premium) : enveloppe d'épargne et de transmission souple, en fonds euro et/ou unités de compte."],
+    ["h", "Atouts"],
+    ["li", ["Fiscalité allégée sur les gains après 8 ans de détention (abattement annuel).", "Transmission avantageuse (régime propre à l'assurance vie).", "Arbitrages entre supports sans fiscalité tant qu'il n'y a pas de rachat."]],
+    ["info", "Rémunération : voir Mon espace › Simulateur de commissions."],
+  ]},
+  "3.2.4": { tag: "Procédure · Investissement", blocks: [
+    ["p", "Assurance vie luxembourgeoise pour la clientèle patrimoniale : sécurité renforcée et neutralité fiscale (imposition selon le pays de résidence)."],
+    ["h", "Spécificités"],
+    ["li", ["Triangle de sécurité et super-privilège : protection renforcée de l'épargnant.", "Neutralité fiscale luxembourgeoise (fiscalité appliquée = celle du pays de résidence).", "Supports sur-mesure (fonds internes dédiés FID/FAS) dès un certain encours.", "Adaptée aux clients mobiles ou à patrimoine important."]],
+  ]},
+  "3.2.5": { tag: "Procédure · Investissement", blocks: [
+    ["p", "Plan d'Épargne Retraite individuel (France) : épargne retraite déductible du revenu imposable, cible privilégiée des frontaliers fortement imposés."],
+    ["h", "Mécanique"],
+    ["li", ["Versements déductibles du revenu imposable, dans la limite du plafond épargne retraite.", "Gain fiscal proportionnel à la tranche marginale d'imposition (TMI).", "Sortie en capital et/ou en rente ; cas de déblocage anticipé (dont résidence principale).", "Complément naturel d'une déclaration fiscale : proposer un audit PER à réception de l'avis d'imposition."]],
+  ]},
+  "3.3.1": { tag: "Planification retraite", blocks: [
+    ["p", "Formule d'entrée : un bilan clair de la situation prévoyance d'un client individuel."],
+    ["li", ["Analyse des 3 piliers (AVS, LPP, prévoyance individuelle).", "Estimation des revenus à la retraite et identification des lacunes.", "Première recommandation d'optimisation (3a, rachats LPP).", "Livrable généré via le module « Générateur de planification retraite »."]],
+  ]},
+  "3.3.2": { tag: "Planification retraite", blocks: [
+    ["p", "Planification retraite pour un couple : consolidation des deux situations et optimisation commune."],
+    ["li", ["Analyse croisée des prévoyances des deux partenaires.", "Optimisation fiscale et successorale du couple.", "Coordination des rachats LPP et versements 3a.", "Livrable via le générateur de planification retraite."]],
+  ]},
+  "3.3.3": { tag: "Planification retraite", blocks: [
+    ["p", "Formule complète : planification patrimoniale approfondie intégrant prévoyance, fiscalité, investissement et transmission."],
+    ["li", ["Bilan patrimonial global (prévoyance, immobilier, placements, dettes).", "Stratégie fiscale et de transmission sur mesure.", "Scénarios de retraite chiffrés et plan d'action pluriannuel.", "Suivi dans le temps et revue périodique."]],
+  ]},
+  "3.4.2": { tag: "Fiche · Prévoyance", blocks: [
+    ["p", "La Rente Genevoise (institution genevoise de prévoyance) : solutions de prévoyance individuelle et de rentes viagères, ancrage genevois."],
+    ["li", ["Produits de prévoyance 3e pilier et rentes garanties.", "Alternative aux compagnies pour une clientèle attachée à un acteur local."]],
+    ["info", "Coordonnées et supports : à compléter dans la fiche partenaire."],
+  ]},
+  "3.4.3": { tag: "Prévoyance", blocks: [
+    ["p", "Panorama des autres compagnies de prévoyance individuelle mobilisables selon le besoin client."],
+    ["li", ["Comparer garanties, frais, souplesse des versements et qualité des fonds.", "Choisir selon le profil et l'objectif (épargne, prévoyance décès/invalidité, fiscalité).", "Documenter le comparatif remis au client (devoir de conseil)."]],
+  ]},
+  "3.5.2": { tag: "Fiche · Banque", blocks: [
+    ["p", "Bank zweiplus : banque partenaire de dépôt-titres, alternative à Swissquote selon les besoins du client."],
+    ["info", "Process d'ouverture et coordonnées : à compléter dans la fiche partenaire."],
+  ]},
+  "3.5.3": { tag: "Banque", blocks: [
+    ["p", "Autres banques dépositaires mobilisables selon la situation (résidence, devise, type d'actifs)."],
+    ["li", ["Critères : frais de dépôt, accès aux marchés, service B2B, exigences KYC.", "Documenter le choix de la banque dépositaire dans le dossier client."]],
+  ]},
+  "3.6.4": { tag: "Fiche · Libre passage", blocks: [
+    ["p", "J. Safra Sarasin : fondation de libre passage / prévoyance partenaire pour le placement des avoirs du 2e pilier."],
+    ["li", ["Solutions de libre passage avec stratégies de placement diversifiées.", "Alternative à Lemania, Pictet et Liberty selon le profil de risque."]],
+    ["info", "Coordonnées et supports : à compléter dans la fiche partenaire."],
+  ]},
+
+  // ── Section 5 · Académie (base de connaissances) ──
+  "5.1": { tag: "Académie · Certification", blocks: [
+    ["p", "Formation et certification de l'intermédiaire d'assurance (AFA / examen IAF) : la base réglementaire pour exercer."],
+    ["li", ["Cadre légal (LSA), produits d'assurance, devoirs d'information et de conseil.", "Examen de (re)certification et inscription au registre myAFA.", "Recertification annuelle liée à la taxe AFA (voir Procédures › Taxe annuelle FINMA)."]],
+  ]},
+  "5.2.5": { tag: "Académie", blocks: [
+    ["p", "Bibliothèque vidéo de formation commerciale : entretien, objections, produits."],
+    ["info", "Accéder aux ebooks et supports : Académie › Bibliothèque de formation."],
+  ]},
+  "5.3": { tag: "Académie · France", blocks: [
+    ["p", "Module de formation sur le Plan d'Épargne Retraite (PER) français."],
+    ["li", ["Fonctionnement : déductibilité, plafond, sortie en capital ou en rente.", "Public cible : frontaliers et contribuables à TMI élevée.", "Argumentaire : gain fiscal immédiat + capitalisation long terme.", "Voir la procédure : Procédures › Investissements › PER."]],
+  ]},
+  "5.4": { tag: "Académie · France", blocks: [
+    ["p", "Module de formation sur l'assurance vie française."],
+    ["li", ["Enveloppe d'épargne et de transmission ; fonds euro vs unités de compte.", "Fiscalité des rachats après 8 ans ; avantages successoraux.", "Positionnement WallSwiss : SwissLife Strategic Premium."]],
+  ]},
+  "5.5": { tag: "Académie · Europe", blocks: [
+    ["p", "Module de formation sur l'assurance vie luxembourgeoise (clientèle patrimoniale)."],
+    ["li", ["Triangle de sécurité, super-privilège, neutralité fiscale.", "Fonds internes dédiés (FID/FAS) et mobilité internationale.", "Différences clés avec l'assurance vie française."]],
+  ]},
+  "5.6": { tag: "Académie · France", blocks: [
+    ["p", "Module de formation sur les SCPI (Sociétés Civiles de Placement Immobilier) — la « pierre-papier »."],
+    ["li", ["Principe : investir dans un parc immobilier mutualisé et percevoir des revenus.", "Revenus fonciers réguliers ; fiscalité foncière (ou via l'assurance vie / le démembrement).", "Diversification immobilière sans gestion en direct ; liquidité limitée."]],
+  ]},
+  "5.7": { tag: "Académie · Suisse", blocks: [
+    ["p", "Module de formation sur le 2e pilier et le libre passage (LPP)."],
+    ["li", ["Quand l'avoir LPP passe en libre passage (sortie d'employeur, expatriation).", "Fondations partenaires : Lemania, Pictet, Liberty, J. Safra Sarasin.", "Stratégies de placement et fiscalité au retrait."]],
+  ]},
+  "5.8": { tag: "Académie · Suisse", blocks: [
+    ["p", "Module sur le 3e pilier suisse (3a lié / 3b libre)."],
+    ["li", ["3a : déductible fiscalement dans la limite du plafond annuel en vigueur.", "3b : épargne libre, sans plafond mais sans déduction.", "Usage : combler les lacunes de prévoyance et optimiser l'impôt."]],
+  ]},
+  "5.9": { tag: "Académie · Suisse", blocks: [
+    ["p", "Module sur la création d'entreprise en Suisse et ses enjeux de prévoyance."],
+    ["li", ["Formes juridiques : raison individuelle, Sàrl, SA.", "Prévoyance de l'indépendant : affiliation LPP, 3a « grand pilier ».", "Enjeux fiscaux et sociaux au démarrage."]],
+  ]},
+  "5.10": { tag: "Académie · France", blocks: [
+    ["p", "Module sur la création d'entreprise en France."],
+    ["li", ["Statuts : micro-entreprise, EI, EURL, SASU / SAS.", "Régimes social et fiscal selon le statut.", "Articulation avec l'épargne retraite (PER) et la protection sociale du dirigeant."]],
+  ]},
+  "5.11": { tag: "Académie · Suisse", blocks: [
+    ["p", "Module sur l'AVS, le 1er pilier suisse (prévoyance étatique)."],
+    ["li", ["Financement par cotisations ; couverture vieillesse, survivants, invalidité.", "Rente selon les années de cotisation et le revenu déterminant.", "Lacunes de cotisation : identification et rachats possibles."]],
+  ]},
+  "5.12": { tag: "Académie · France", blocks: [
+    ["p", "Module sur le calcul de la retraite française (utile aux frontaliers ayant cotisé en France)."],
+    ["li", ["Régime général : trimestres, salaire annuel moyen, taux.", "Carrières mixtes France / Suisse : coordination des droits.", "Reconstitution de carrière et relevés à demander."]],
+  ]},
+  "5.14": { tag: "Académie", blocks: [
+    ["p", "Module sur les fondamentaux de l'investissement."],
+    ["li", ["Profils de risque et allocation d'actifs.", "Diversification, horizon et couple rendement / risque.", "Gamme WallSwiss : compte-titres, Private Equity, assurance vie, mandats."]],
+  ]},
+  "5.15": { tag: "Académie · Conformité", blocks: [
+    ["p", "Module « Know Your Customer » : connaître son client et documenter la relation."],
+    ["li", ["Identification et vérification (pièce d'identité, domicile, bénéficiaire effectif).", "Profil de risque et adéquation des produits proposés.", "Origine des fonds et vigilance LBA.", "Tenue et mise à jour du dossier client (Salesforce)."]],
+  ]},
+  "5.16": { tag: "Académie · Conformité", blocks: [
+    ["p", "Module conformité : cadre réglementaire de l'activité (LSFin / LEFin, FINMA)."],
+    ["li", ["Devoirs d'information, de diligence et de documentation.", "Transparence sur les rémunérations et gestion des conflits d'intérêts.", "Protection des données et sécurité de l'information."]],
+  ]},
+  "5.17": { tag: "Académie · Conformité", blocks: [
+    ["p", "Statut d'intermédiaire d'assurance non lié : indépendance et obligations associées."],
+    ["li", ["Inscription au registre et information du client sur le statut.", "Transparence sur les liens et la rémunération.", "Devoir de conseil documenté et comparaison objective des solutions."]],
+  ]},
+
+  // ── Section 7 · Hub Marketing ──
+  "7.1": { tag: "Marketing · Direction artistique", blocks: [
+    ["p", "La direction artistique WallSwiss garantit une image cohérente sur tous les supports."],
+    ["kv", [["Couleurs", "Oxblood #692102 · Champagne #9C8B5C · fond crème"], ["Typographies", "Titres Times New Roman · textes Montserrat"], ["Style", "Angles vifs (radius 0) · emblème lion"]]],
+    ["li", ["Logo disponible en versions couleur, blanc et monochrome.", "Ne pas déformer le logo ni modifier les couleurs de marque."]],
+  ]},
+  "7.2": { tag: "Marketing", blocks: [
+    ["p", "Le carnet de recommandation structure la demande de recommandations auprès des clients satisfaits — première source de leads qualifiés."],
+    ["li", ["Demander la recommandation au bon moment (après une prestation réussie).", "Faciliter la mise en relation (message type, introduction).", "Suivre chaque recommandation dans le CRM."]],
+  ]},
+  "7.3": { tag: "Marketing", blocks: [
+    ["p", "Modèle de lettre officielle à l'en-tête WallSwiss (logo lion, charte oxblood, pied de page légal) pour toute correspondance du cabinet."],
+    ["docs", ["WS - Lettre à en-tête.docx"]],
+  ]},
+  "7.4": { tag: "Marketing", blocks: [
+    ["p", "Gabarits de bannières et visuels aux formats réseaux (post 1080×1080, story 1080×1920, bannière LinkedIn 1200×627)."],
+    ["li", ["Respecter la charte (couleurs, typographies, lion).", "Décliner un même message sur plusieurs formats.", "Kit générable via le module social WallSwiss."]],
+  ]},
+  "7.5": { tag: "Marketing", blocks: [
+    ["p", "Configurer WhatsApp Business pour un usage professionnel propre et efficace."],
+    ["li", ["Profil complet : nom, logo, description, horaires, site.", "Réponses rapides et messages d'accueil / d'absence.", "Catalogue de services ; séparer nettement le pro et le perso."]],
+  ]},
+  "7.6": { tag: "Marketing", blocks: [
+    ["p", "Support de présentation des services WallSwiss (prévoyance, fiscalité, investissement, gestion de fortune) pour les rendez-vous."],
+    ["li", ["Pitch clair de l'offre et de la méthode WallSwiss.", "Adaptable selon le profil du prospect.", "À utiliser en R1 / R2 pour cadrer la relation."]],
+  ]},
+  "7.7": { tag: "Marketing", blocks: [
+    ["p", "Optimiser son profil LinkedIn pour la prospection et la crédibilité."],
+    ["li", ["Profil pro : photo, titre clair, résumé orienté client, bannière WallSwiss.", "Publier régulièrement (expertise, cas clients anonymisés, actualités).", "Prospecter : réseau frontalier, demandes de connexion personnalisées."]],
+  ]},
+  "7.8": { tag: "Marketing", blocks: [
+    ["p", "Kit de publications prêtes à l'emploi pour alimenter vos réseaux sociaux."],
+    ["li", ["Calendrier éditorial et thématiques récurrentes (fiscalité, prévoyance, marchés).", "Visuels à la charte + textes de publication et hashtags.", "Décliner un sujet en post, story et carrousel."]],
+  ]},
+};
+
+/* Rendu des blocs de contenu WS_CONTENT (design Aurora). */
+function WSBlocks({ blocks }) {
+  const co = { warn: "#B45309", ok: "#047857", info: C.accent };
+  const cbg = { warn: "rgba(180,83,9,.07)", ok: "rgba(4,120,87,.07)", info: C.accentSoft };
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14, textAlign: "left" }}>
+      {(blocks || []).map((b, i) => {
+        const k = b[0];
+        if (k === "h") return <h3 key={i} style={{ fontFamily: F.serif, fontSize: 17, fontWeight: 700, color: C.text, margin: "10px 0 0", letterSpacing: "-0.01em" }}>{b[1]}</h3>;
+        if (k === "p") return <p key={i} style={{ fontSize: 14, color: C.muted, lineHeight: 1.7, margin: 0 }}>{b[1]}</p>;
+        if (k === "li") return <ul key={i} style={{ margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 6 }}>{b[1].map((x, j) => <li key={j} style={{ fontSize: 13.5, color: C.muted, lineHeight: 1.6 }}>{x}</li>)}</ul>;
+        if (k === "steps") return <ol key={i} style={{ margin: 0, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>{b[1].map((x, j) => <li key={j} style={{ fontSize: 13.5, color: C.text, lineHeight: 1.6, fontWeight: 500 }}>{x}</li>)}</ol>;
+        if (k === "warn" || k === "ok" || k === "info") return <div key={i} style={{ background: cbg[k], borderLeft: `3px solid ${co[k]}`, padding: "11px 15px", borderRadius: 8, fontSize: 13, color: C.text, lineHeight: 1.6 }}>{b[1]}</div>;
+        if (k === "docs") return <div key={i} style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>{b[1].map((x, j) => <span key={j} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: C.bgSoft, border: `1px solid ${C.line}`, borderRadius: 8, padding: "6px 11px", fontSize: 12, color: C.text, fontWeight: 500 }}>📄 {x}</span>)}</div>;
+        if (k === "kv") return <div key={i} style={{ display: "grid", gridTemplateColumns: "minmax(120px, 200px) 1fr", gap: "8px 16px", alignItems: "start" }}>{b[1].map((r, j) => <React.Fragment key={j}><div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{r[0]}</div><div style={{ fontSize: 13, color: C.muted, lineHeight: 1.55 }}>{r[1]}</div></React.Fragment>)}</div>;
+        if (k === "sub") return <div key={i} style={{ border: `1px solid ${C.line}`, borderRadius: 12, padding: "14px 16px", background: C.bgSoft }}><div style={{ fontWeight: 700, fontSize: 13.5, color: C.accent, marginBottom: 10 }}>{b[1]}</div><WSBlocks blocks={b[2]} /></div>;
+        return null;
+      })}
+    </div>
+  );
+}
+
 function DocPageView({ page, onHome }) {
   if (!page) return null;
+  const wsContent = WS_CONTENT[page.id];
   const path = page.path || [page.title];
   return (
     <div style={{ padding: "48px 40px", boxSizing: "border-box", maxWidth: 1100, margin: "0 auto", width: "100%" }}>
@@ -4504,21 +4929,35 @@ function DocPageView({ page, onHome }) {
         </div>
       </div>
 
-      <div style={{ ...S.card, padding: 0, overflow: "hidden" }}>
-        <div style={{ height: 4, background: C.accent }} />
-        <div style={{ padding: "48px 40px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 16 }}>
-          <div style={{ width: 64, height: 64, borderRadius: 18, background: C.bgSoft, border: `1px solid ${C.line}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.accent }}>
-            <Icons.Layers size={30} />
-          </div>
-          <div style={{ fontFamily: F.serif, fontSize: 22, fontWeight: 700, color: C.text }}>Section en construction</div>
-          <p style={{ fontSize: 14, color: C.muted, lineHeight: 1.7, maxWidth: 520, margin: 0 }}>
-            La page <strong style={{ color: C.text }}>« {page.title} »</strong> est prête à accueillir son contenu. La structure de navigation est en place ; le contenu (procédures, documents, outils ou fiches de connaissances) sera ajouté ici prochainement.
-          </p>
-          <div style={{ display: "flex", gap: 12, marginTop: 8, flexWrap: "wrap", justifyContent: "center" }}>
-            <button onClick={onHome} style={S.btnP}>← Retour au sommaire</button>
+      {wsContent ? (
+        <div style={{ ...S.card, padding: 0, overflow: "hidden" }}>
+          <div style={{ height: 4, background: C.accent }} />
+          <div style={{ padding: "32px 36px" }}>
+            {wsContent.tag && <div style={{ display: "inline-block", fontSize: 10.5, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: C.accent, background: C.accentSoft, padding: "5px 11px", borderRadius: 980, marginBottom: 20 }}>{wsContent.tag}</div>}
+            <WSBlocks blocks={wsContent.blocks} />
+            <div style={{ marginTop: 26, paddingTop: 18, borderTop: `1px solid ${C.line}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+              <span style={{ fontSize: 11.5, color: C.dim }}>Source : base documentaire WallSwiss</span>
+              <button onClick={onHome} style={S.btnS}>← Retour au sommaire</button>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div style={{ ...S.card, padding: 0, overflow: "hidden" }}>
+          <div style={{ height: 4, background: C.accent }} />
+          <div style={{ padding: "48px 40px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 16 }}>
+            <div style={{ width: 64, height: 64, borderRadius: 18, background: C.bgSoft, border: `1px solid ${C.line}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.accent }}>
+              <Icons.Layers size={30} />
+            </div>
+            <div style={{ fontFamily: F.serif, fontSize: 22, fontWeight: 700, color: C.text }}>Section en construction</div>
+            <p style={{ fontSize: 14, color: C.muted, lineHeight: 1.7, maxWidth: 520, margin: 0 }}>
+              La page <strong style={{ color: C.text }}>« {page.title} »</strong> est prête à accueillir son contenu. La structure de navigation est en place ; le contenu (procédures, documents, outils ou fiches de connaissances) sera ajouté ici prochainement.
+            </p>
+            <div style={{ display: "flex", gap: 12, marginTop: 8, flexWrap: "wrap", justifyContent: "center" }}>
+              <button onClick={onHome} style={S.btnP}>← Retour au sommaire</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -4793,6 +5232,23 @@ function AcademyReader({ doc, onClose }) {
           if (cancelled) return;
           pdfRef.current = pdfDoc; setNumPages(pdfDoc.numPages); setStatus("pdf");
         } else if (doc.type === "docx") {
+          // Rendu 100% fidèle : si un PDF du même document existe (converti depuis le Word), on l'affiche.
+          if (doc.pdfAlt) {
+            try {
+              const pr = await fetch(doc.pdfAlt);
+              if (pr.ok) {
+                const pb = await pr.arrayBuffer();
+                const ps = new Uint8Array(pb.slice(0, 5));
+                if (ps[0] === 0x25 && ps[1] === 0x50 && ps[2] === 0x44 && ps[3] === 0x46) { // %PDF
+                  const lib = await academyLoadPdfJs();
+                  const pdfDoc = await lib.getDocument({ data: pb }).promise;
+                  if (cancelled) return;
+                  pdfRef.current = pdfDoc; setNumPages(pdfDoc.numPages); setStatus("pdf");
+                  return;
+                }
+              }
+            } catch (e) {}
+          }
           const resp = await fetch(url);
           if (!resp.ok) throw new Error("Fichier introuvable (HTTP " + resp.status + ")");
           const buf = await resp.arrayBuffer();
@@ -4907,7 +5363,7 @@ function AcademieModule({ initialDoc }) {
   useEffect(() => { setOpenId(initialDoc || null); }, [initialDoc]);
 
   const openDoc = openId ? ACADEMY_LIBRARY.find((d) => d.id === openId) : null;
-  if (openDoc) return <AcademyReader doc={openDoc} onClose={() => setOpenId(null)} />;
+  if (openDoc) return <AcademyReader doc={{ ...openDoc, pdfAlt: openDoc.type === "docx" ? (ACADEMY_CONFIG.base + encodeURIComponent(openDoc.file.replace(/\.docx?$/i, ".pdf"))) : undefined }} onClose={() => setOpenId(null)} />;
 
   const ql = q.trim().toLowerCase();
   const match = (d) => !ql || (d.title + " " + d.desc).toLowerCase().includes(ql);
@@ -7636,17 +8092,21 @@ const [lppForm, setLppForm] = useState({
               <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
                 <div style={{ marginBottom: 32 }}>
                   <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 28, fontWeight: 700, color: C.accent, margin: 0 }}>Contacts & Partenaires</h2>
-                  <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Retrouvez les informations de contact de nos principaux partenaires.</p>
+                  <p style={{ color: C.gray, fontSize: 13, marginTop: 4 }}>Banque · Asset Management · Prévoyance individuelle · Libre passage · Assurance vie France. Responsable des fiches partenaires : Pierrick Pereira.</p>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
                   {[
-                    { nom: "Swissquote", type: "Banque / Dépôt", contact: "Desk B2B", tel: "+41 44 825 89 90", email: "b2b-desk@swissquote.ch", url: "https://trade.swissquote.ch/my.policy" },
-                    { nom: "ParFinance", type: "Asset Manager", contact: "Desk Gestion", tel: "+41 22 989 55 55", email: "info@parfinance.ch", url: "https://www.parfinance.ch/" },
-                    { nom: "NS Partners", type: "Asset Manager", contact: "Relation Partenaires", tel: "+41 22 906 52 50", email: "geneva@nspgroup.com", url: "https://nspartners.com/" },
-                    { nom: "Liechtenstein Life", type: "Prévoyance & Assurance", contact: "Support Courtier", tel: "+423 265 34 40", email: "info@liechtensteinlife.com", url: "https://partner.life.li/fr/my/dashboard" },
-                    { nom: "Pictet", type: "Fondation LPP", contact: "Service LPP", tel: "+41 58 323 23 23", email: "lpp@pictet.com", url: "https://www.am.pictet/" },
-                    { nom: "Lemania", type: "Fondation LPP", contact: "Administration", tel: "+41 21 311 11 11", email: "info@lemania-lpp.ch", url: "https://www.hublemania.ch/" }
+                    { nom: "Swissquote", type: "Banque", contact: "Desk B2B / Trading", tel: "+41 44 825 89 90", email: "b2b-desk@swissquote.ch", url: "https://trade.swissquote.ch/my.policy", note: "Protocole de trading + portefeuilles modèles." },
+                    { nom: "PARfinance", type: "Asset Management", contact: "Desk Gestion", tel: "+41 22 989 55 55", email: "info@parfinance.ch", url: "https://www.parfinance.ch/", note: "Mandats Dynamique · Équilibre · Conservateur." },
+                    { nom: "NS Partners", type: "Asset Management", contact: "Relation Partenaires", tel: "+41 22 906 52 50", email: "geneva@nspgroup.com", url: "https://nspartners.com/", note: "Swiss Excellence DPM · DGC Stock Selection · DGC Energy." },
+                    { nom: "Altaroc", type: "Private Equity", contact: "Relation Partenaires", url: "https://altaroc.com/", note: "Millésimes Private Equity." },
+                    { nom: "Alpin Capital", type: "Crypto-monnaie", contact: "Desk Crypto-actifs" },
+                    { nom: "Liechtenstein Life", type: "Prévoyance individuelle (3P)", contact: "Support Courtier", tel: "+423 265 34 40", email: "info@liechtensteinlife.com", url: "https://partner.life.li/fr/my/dashboard", note: "3ᵉ pilier. Protocole de reprise FINMA (voir Procédures)." },
+                    { nom: "Lemania", type: "Libre passage (LPP)", contact: "Administration", tel: "+41 21 311 11 11", email: "info@lemania-lpp.ch", url: "https://www.hublemania.ch/", note: "NS Golden Age Balanced · LPFX Mirabaud." },
+                    { nom: "Pictet", type: "Libre passage (LPP)", contact: "Service LPP", tel: "+41 58 323 23 23", email: "lpp@pictet.com", url: "https://www.am.pictet/", note: "Pictet LPP 40 · LPP 60." },
+                    { nom: "Liberty", type: "Libre passage (LPP)", contact: "Fondation Liberty", url: "https://www.liberty.ch/" },
+                    { nom: "UAF Life Patrimoine", type: "Assurance vie France", contact: "Courtage assurance vie" }
                   ].map((partenaire, i) => (
                     <div key={i} style={{ ...S.card, padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
                       <div>
@@ -7661,15 +8121,22 @@ const [lppForm, setLppForm] = useState({
                             <span style={{ fontSize: 13, color: C.darkGray, fontWeight: 500 }}>{partenaire.contact}</span>
                           </div>
                         )}
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <div style={{ color: C.gray }}><Icons.Phone size={16} /></div>
-                          <span style={{ fontSize: 13, color: C.darkGray, fontWeight: 500 }}>{partenaire.tel}</span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <div style={{ color: C.gray }}><Icons.Mail size={16} /></div>
-                          <span style={{ fontSize: 13, color: C.accent, fontWeight: 500 }}>{partenaire.email}</span>
-                        </div>
+                        {partenaire.tel && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            <div style={{ color: C.gray }}><Icons.Phone size={16} /></div>
+                            <span style={{ fontSize: 13, color: C.darkGray, fontWeight: 500 }}>{partenaire.tel}</span>
+                          </div>
+                        )}
+                        {partenaire.email && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            <div style={{ color: C.gray }}><Icons.Mail size={16} /></div>
+                            <span style={{ fontSize: 13, color: C.accent, fontWeight: 500 }}>{partenaire.email}</span>
+                          </div>
+                        )}
                       </div>
+                      {partenaire.note && (
+                        <div style={{ fontSize: 12, color: C.gray, lineHeight: 1.5, borderTop: `1px solid ${C.line}`, paddingTop: 10 }}>{partenaire.note}</div>
+                      )}
                       {partenaire.url && (
                         <button
                           onClick={() => window.open(partenaire.url, "_blank")}
@@ -7690,7 +8157,7 @@ const [lppForm, setLppForm] = useState({
 
         {/* VUE MODULE RESSOURCES */}
         {activeModule === "ressources" && resDoc && (
-          <AcademyReader doc={{ id: "res:" + resDoc.fichier, title: resDoc.nom, type: ressTypeOf(resDoc.fichier), src: encodeURI(resDoc.fichier), file: (resDoc.fichier || "").split("/").pop(), backLabel: "Documents" }} onClose={() => setResDoc(null)} />
+          <AcademyReader doc={{ id: "res:" + resDoc.fichier, title: resDoc.nom, type: ressTypeOf(resDoc.fichier), src: encodeURI(resDoc.fichier), pdfAlt: ressTypeOf(resDoc.fichier) === "docx" ? encodeURI(resDoc.fichier.replace(/\.docx?$/i, ".pdf")) : undefined, file: (resDoc.fichier || "").split("/").pop(), backLabel: "Documents" }} onClose={() => setResDoc(null)} />
         )}
         {activeModule === "ressources" && !resDoc && (
           <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>

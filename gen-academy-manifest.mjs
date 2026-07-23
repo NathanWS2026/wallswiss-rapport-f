@@ -16,6 +16,7 @@ try {
   files.sort((a, b) => a.localeCompare(b, 'fr'));
 
   const CATS = [
+    { id:'ebook',        label:'E-book & guides',                   emoji:'📘' },
     { id:'entretien',    label:'Entretien, conseil & présentation', emoji:'🎯' },
     { id:'prospection',  label:'Prospection & RDV',                 emoji:'📞' },
     { id:'objections',   label:'Objections',                        emoji:'🛡️' },
@@ -25,7 +26,7 @@ try {
     { id:'prevoyance',   label:'Prévoyance (AVS / LPP / 2e pilier)', emoji:'🇨🇭' },
     { id:'per',          label:'PER, retraite & assurance vie',     emoji:'🏦' },
     { id:'frontalier',   label:'Frontaliers, CMU & santé',          emoji:'🛂' },
-    { id:'invest',       label:'Investissement',                    emoji:'📊' },
+    { id:'invest',       label:'Investissement & bourse',           emoji:'📊' },
     { id:'productivite', label:'Productivité',                      emoji:'🚀' },
     { id:'clients',      label:'Documents clients & administratif', emoji:'🗂️' },
     { id:'culture',      label:'Culture générale & fiscalité',      emoji:'📚' },
@@ -36,25 +37,26 @@ try {
 
   function categorize(name) {
     const n = noAcc(name.toLowerCase());
+    if (/e-?book|mon ebook/.test(n)) return 'ebook';
     if (/succession|pacte-?success|donation|conference-suisse-impots|cas-pratique/.test(n)) return 'succession';
     if (/objection|coldcall|cold ?call/.test(n)) return 'objections';
-    if (/systeme.*retraite|schema.*systeme|retraite suisse/.test(n)) return 'prevoyance';
+    if (/systeme.*retraite|schema.*systeme|retraite suisse|systeme de prevoyance/.test(n)) return 'prevoyance';
     if (/\biaf\b|moyens-auxiliaires|directives-iaf|bases-objectifs|planification-liquidites|journee-intro|checklist-donnees|slides-planification/.test(n)) return 'iaf';
     if (/examen|qcm/.test(n)) return 'iaf';
     if (/calcul|formules|nominale-reelle|hp10b2|recueil|bases-calcul/.test(n)) return 'calculs';
-    if (/frontalier|helsana|\bcmu\b|lamal|urssaf|droit ?option|droit d.?option|depart suisse|k14|\blsv\b/.test(n)) return 'frontalier';
-    if (/factsheet|investissement|\bisr\b/.test(n)) return 'invest';
+    if (/frontalier|helsana|\bcmu\b|lamal|urssaf|droit ?option|droit d.?option|depart suisse|k14|\blsv\b|permis de sejour|\bpermis\b/.test(n)) return 'frontalier';
+    if (/factsheet|investissement|\bisr\b|compte[ -]?titre|\betf\b|tracker|produit structure|\bscpi\b|titres et bourse|\bbourse\b/.test(n)) return 'invest';
     if (/productivite/.test(n)) return 'productivite';
-    if (/prospection|argumentaire ?call|5 outils|rendez-?vous/.test(n)) return 'prospection';
-    if (/\bper\b|swisslife|slperin|pilotage|transfert.*per|transfert entrant|epargne swisslife|assurance ?vie|souscription|essentiel-produit|plaquette-swisslife|check-?list-transferts|demande.?de.?transfert/.test(n)) return 'per';
+    if (/prospection|argumentaire ?call|5 outils|rendez-?vous|parrainage|recommandation|\btips\b/.test(n)) return 'prospection';
+    if (/\bper\b|swisslife|slperin|pilotage|transfert.*per|transfert entrant|epargne swisslife|assurance[ -]?vie|souscription|essentiel-produit|plaquette-swisslife|check-?list-transferts|demande.?de.?transfert|memo-vente|lux-?vul|premium lux|luxembourg|entonnoir|\b3p\b|predateurs/.test(n)) return 'per';
     if (/\blpp\b|rentes 1er|1er et 2|2eme pilier|assurances de personnes|assurances sociales|\bavs\b/.test(n)) return 'prevoyance';
-    if (/presentation wallswiss|fondamentaux|plan de conseil|accueil client/.test(n)) return 'entretien';
+    if (/presentation wallswiss|fondamentaux|plan de conseil|accueil client|suivi de la relation|relation clientele/.test(n)) return 'entretien';
+    if (/industrie de l|lcb-?ft|ordonnance|deductions|allocations familiales|impots|fiscal/.test(n)) return 'culture';
     if (/client|courrier type|formulaire|bareme|commission/.test(n)) return 'clients';
-    if (/lcb-?ft|ordonnance|deductions|allocations familiales|impots|fiscal/.test(n)) return 'culture';
     return 'autres';
   }
 
-  const TAGS = /\b(academy|info|outil|client|exercices?)\b\s*-?\s*/gi;
+  const TAGS = /\b(academy|info|outil|client|exercices?)\b\s*-\s*/gi;
   function titleOf(name) {
     let t = name.replace(/\.[a-z0-9]+$/i, '');
     t = t.replace(/\s*\(\d+\)\s*$/, '').replace(/\s*\[\d+\]\s*$/, '');

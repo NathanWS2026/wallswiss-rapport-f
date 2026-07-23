@@ -5228,6 +5228,9 @@ function academyLoadDocxPreview() {
   return academyRequire("https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js", "JSZip")
     .then(() => academyRequire("https://cdn.jsdelivr.net/npm/docx-preview@0.3.5/dist/docx-preview.min.js", "docx"));
 }
+function academyLoadXlsx() {
+  return academyRequire("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js", "XLSX");
+}
 
 const acadRdBtn = { width: 32, height: 32, borderRadius: 9, border: "1px solid rgba(0,0,0,0.13)", background: "#fff", color: "#1D1D1F", font: "700 15px sans-serif", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" };
 
@@ -5241,50 +5244,53 @@ function AcademyReader({ doc, onClose }) {
   const pdfRef = React.useRef(null);
   const canvasRef = React.useRef(null);
   const docRef = React.useRef(null);
+  const sheetRef = React.useRef(null);
+  const ext = ((doc.file || doc.src || "").split(".").pop() || "").toLowerCase();
   const url = doc.data ? doc.data : (doc.src ? doc.src : (ACADEMY_CONFIG.base + encodeURIComponent(doc.file)));
+  const absUrl = (typeof window !== "undefined" && !/^https?:/i.test(url)) ? (window.location.origin + url) : url;
+  const officeSrc = "https://view.officeapps.live.com/op/embed.aspx?src=" + encodeURIComponent(absUrl);
+  const isImg = ext === "png" || ext === "jpg" || ext === "jpeg" || ext === "gif" || ext === "webp" || doc.type === "image";
+  const isPdf = ext === "pdf" || (!ext && doc.type === "pdf");
+  const isWord = ext === "docx" || ext === "doc";
+  const isSheet = ext === "xlsx" || ext === "xls" || ext === "csv";
+  const isSlides = ext === "pptx" || ext === "ppt";
 
   useEffect(() => {
     let cancelled = false;
     setStatus("loading"); setErrMsg(""); setDocBuf(null); setPage(1); pdfRef.current = null;
     (async () => {
       try {
-        if (doc.type === "image") {
+        if (isImg) {
           setStatus("image");
-        } else if (doc.type === "pdf") {
+        } else if (isPdf) {
           const lib = await academyLoadPdfJs();
           const pdfDoc = await lib.getDocument(url).promise;
           if (cancelled) return;
           pdfRef.current = pdfDoc; setNumPages(pdfDoc.numPages); setStatus("pdf");
-        } else if (doc.type === "docx") {
-          // Rendu 100% fidèle : si un PDF du même document existe (converti depuis le Word), on l'affiche.
-          if (doc.pdfAlt) {
-            try {
-              const pr = await fetch(doc.pdfAlt);
-              if (pr.ok) {
-                const pb = await pr.arrayBuffer();
-                const ps = new Uint8Array(pb.slice(0, 5));
-                if (ps[0] === 0x25 && ps[1] === 0x50 && ps[2] === 0x44 && ps[3] === 0x46) { // %PDF
-                  const lib = await academyLoadPdfJs();
-                  const pdfDoc = await lib.getDocument({ data: pb }).promise;
-                  if (cancelled) return;
-                  pdfRef.current = pdfDoc; setNumPages(pdfDoc.numPages); setStatus("pdf");
-                  return;
-                }
-              }
-            } catch (e) {}
-          }
+        } else if (isWord) {
           const resp = await fetch(url);
-          if (!resp.ok) throw new Error("Fichier introuvable (HTTP " + resp.status + ")");
+          if (!resp.ok) throw new Error("HTTP " + resp.status);
           const buf = await resp.arrayBuffer();
-          const sig = new Uint8Array(buf.slice(0, 4));
-          if (!(sig[0] === 0x50 && sig[1] === 0x4B)) throw new Error("Le serveur n'a pas renvoyé le .docx (probablement une page HTML). Vérifiez que le fichier est bien dans public/ puis redémarrez le serveur (Ctrl+C, npm run dev).");
+          const sig = new Uint8Array(buf.slice(0, 2));
+          if (!(sig[0] === 0x50 && sig[1] === 0x4B)) throw new Error("bad-docx");
           if (cancelled) return;
           setDocBuf(buf); setStatus("docx");
+        } else if (isSheet) {
+          const resp = await fetch(url);
+          if (!resp.ok) throw new Error("HTTP " + resp.status);
+          const buf = await resp.arrayBuffer();
+          if (cancelled) return;
+          setDocBuf(buf); setStatus("sheet");
+        } else if (isSlides) {
+          setStatus("office"); // PowerPoint via visionneuse Microsoft
         } else {
-          setStatus("other"); // pptx / xlsx / autres : téléchargement (pas d'aperçu inline)
+          setStatus("download");
         }
       } catch (e) {
-        if (!cancelled) { setErrMsg(String((e && e.message) || e)); setStatus("error"); }
+        if (!cancelled) {
+          if (isWord || isSheet || isSlides) { setStatus("office"); }
+          else { setErrMsg(String((e && e.message) || e)); setStatus("download"); }
+        }
       }
     })();
     return () => { cancelled = true; };
@@ -5324,9 +5330,26 @@ function AcademyReader({ doc, onClose }) {
           const out = await mm.convertToHtml({ arrayBuffer: docBuf });
           if (!cancelled && docRef.current) docRef.current.innerHTML = "<div style='max-width:820px;width:100%;margin:0 auto;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:46px 54px;font:15px/1.65 -apple-system,Inter,Segoe UI,sans-serif;color:#1D1D1F'>" + (out.value || "<p>(Document vide)</p>") + "</div>";
         } catch (e2) {
-          if (!cancelled && docRef.current) docRef.current.innerHTML = "<div style='padding:24px;color:#B91C1C;font:600 14px sans-serif'>Aperçu indisponible — utilisez « Télécharger » pour ouvrir le document.</div>";
+          if (!cancelled) setStatus("office");
         }
       }
+    })();
+    return () => { cancelled = true; };
+  }, [status, docBuf]);
+
+  useEffect(() => {
+    if (status !== "sheet" || !docBuf || !sheetRef.current) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        sheetRef.current.innerHTML = "<div style='padding:40px;color:#6E6E73;font:600 14px sans-serif'>Rendu du tableur…</div>";
+        const XLSX = await academyLoadXlsx();
+        if (cancelled || !sheetRef.current) return;
+        const wb = XLSX.read(new Uint8Array(docBuf), { type: "array" });
+        let html = "";
+        wb.SheetNames.forEach((nm) => { html += "<div style='margin-bottom:26px'><div style='font:700 13px sans-serif;color:#692102;margin:0 0 8px'>" + nm + "</div>" + XLSX.utils.sheet_to_html(wb.Sheets[nm]) + "</div>"; });
+        sheetRef.current.innerHTML = "<div class='wsxlsx' style='max-width:1100px;width:100%;margin:0 auto;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:22px 24px;overflow:auto'>" + html + "</div>";
+      } catch (e) { if (!cancelled) setStatus("office"); }
     })();
     return () => { cancelled = true; };
   }, [status, docBuf]);
@@ -5334,6 +5357,7 @@ function AcademyReader({ doc, onClose }) {
   const cat = ACADEMY_CATS.find((c) => c.id === doc.cat);
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 60px)", background: C.bgSoft }}>
+      <style>{".wsxlsx table{border-collapse:collapse;font:12.5px sans-serif}.wsxlsx td,.wsxlsx th{border:1px solid #E3E3E6;padding:4px 9px}.wsxlsx th{background:#F5F0ED;font-weight:700}"}</style>
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", background: C.card, borderBottom: `1px solid ${C.line}`, flexShrink: 0 }}>
         <button onClick={onClose} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 14px", borderRadius: 980, border: `1px solid ${C.line2}`, background: "#fff", color: C.accent, font: `700 13px ${F.ui}`, cursor: "pointer" }}>‹ {doc.backLabel || "Retour"}</button>
         <div style={{ minWidth: 0, flex: 1 }}>
@@ -5371,16 +5395,26 @@ function AcademyReader({ doc, onClose }) {
         {status === "docx" && (
           <div ref={docRef} style={{ width: "100%", display: "flex", justifyContent: "center" }} />
         )}
+        {status === "sheet" && (
+          <div ref={sheetRef} style={{ width: "100%" }} />
+        )}
+        {status === "office" && (
+          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
+            <iframe title={doc.title} src={officeSrc} style={{ width: "100%", flex: 1, minHeight: "72vh", border: "none", background: "#fff", borderRadius: 8, boxShadow: "0 12px 40px rgba(0,0,0,.12)" }} />
+            <div style={{ textAlign: "center", fontSize: 11.5, color: C.dim, marginTop: 8 }}>Aperçu Microsoft Office · si rien ne s'affiche, cliquez « Télécharger » en haut à droite.</div>
+          </div>
+        )}
         {status === "image" && (
           <div style={{ alignSelf: "flex-start", background: "#fff", border: `1px solid ${C.line}`, borderRadius: 12, padding: 12, boxShadow: "0 12px 40px rgba(0,0,0,.10)" }}>
             <img src={url} alt={doc.title} style={{ display: "block", maxWidth: "100%", borderRadius: 6 }} />
           </div>
         )}
-        {status === "other" && (
+        {status === "download" && (
           <div style={{ maxWidth: 520, marginTop: 30, background: C.card, border: `1px solid ${C.line}`, borderRadius: 16, padding: "26px 24px", textAlign: "center", height: "fit-content" }}>
-            <div style={{ fontSize: 34, marginBottom: 10 }}>{/pptx?$/i.test(doc.file || "") ? "📊" : /(xlsx?|csv)$/i.test(doc.file || "") ? "📈" : "📄"}</div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: C.text, marginBottom: 8 }}>Aperçu non disponible pour ce format</div>
-            <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5 }}>Ce document ({((doc.file || "").split(".").pop() || "").toUpperCase()}) s'ouvre dans son application dédiée. Utilisez « Télécharger » en haut à droite pour l'ouvrir.</div>
+            <div style={{ fontSize: 34, marginBottom: 10 }}>📄</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: C.text, marginBottom: 8 }}>Ce document se télécharge</div>
+            <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5, marginBottom: 16 }}>Format {((doc.file || "").split(".").pop() || "").toUpperCase()} — cliquez ci-dessous pour l'ouvrir.</div>
+            <a href={url} download={doc.file} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 18px", borderRadius: 980, background: C.accent, color: "#fff", font: `700 13px ${F.ui}`, textDecoration: "none" }}>Télécharger</a>
           </div>
         )}
       </div>
@@ -5411,7 +5445,7 @@ function AcademieModule({ initialDoc }) {
   }, []);
 
   const openDoc = openId ? lib.find((d) => d.id === openId) : null;
-  if (openDoc) return <AcademyReader doc={{ ...openDoc, pdfAlt: openDoc.type === "docx" ? (ACADEMY_CONFIG.base + encodeURIComponent(openDoc.file.replace(/\.docx?$/i, ".pdf"))) : undefined }} onClose={() => setOpenId(null)} />;
+  if (openDoc) return <AcademyReader doc={openDoc} onClose={() => setOpenId(null)} />;
 
   const ql = q.trim().toLowerCase();
   const match = (d) => !ql || ((d.title || "") + " " + (d.desc || "")).toLowerCase().includes(ql);

@@ -1,7 +1,12 @@
 {
   "generatedAt": "build",
-  "count": 72,
+  "count": 95,
   "cats": [
+    {
+      "id": "ebook",
+      "label": "E-book & guides",
+      "emoji": "📘"
+    },
     {
       "id": "entretien",
       "label": "Entretien, conseil & présentation",
@@ -49,7 +54,7 @@
     },
     {
       "id": "invest",
-      "label": "Investissement",
+      "label": "Investissement & bourse",
       "emoji": "📊"
     },
     {
@@ -97,7 +102,7 @@
       "id": "1-academy-info-droit-option",
       "cat": "frontalier",
       "type": "pdf",
-      "title": "DROIT OPTION",
+      "title": "INFO DROIT OPTION",
       "desc": "",
       "file": "1.ACADEMY - INFO DROIT OPTION.pdf"
     },
@@ -385,7 +390,7 @@
       "id": "2-academy-info-droit-option-schema",
       "cat": "frontalier",
       "type": "pdf",
-      "title": "DROIT OPTION Schéma",
+      "title": "INFO DROIT OPTION Schéma",
       "desc": "",
       "file": "2.ACADEMY - INFO DROIT OPTION - Schéma.pdf"
     },
@@ -393,7 +398,7 @@
       "id": "2-client-courrier-type-correction-cmu-client",
       "cat": "frontalier",
       "type": "docx",
-      "title": "Courrier type Correction CMU",
+      "title": "Courrier type Correction CMU client",
       "desc": "",
       "file": "2.CLIENT - Courrier type - Correction CMU client.docx"
     },
@@ -417,7 +422,7 @@
       "id": "3-academy-info-droit-option-schema-powerpoint",
       "cat": "frontalier",
       "type": "pptx",
-      "title": "DROIT OPTION Schéma Powerpoint",
+      "title": "INFO DROIT OPTION Schéma Powerpoint",
       "desc": "",
       "file": "3.ACADEMY -  INFO DROIT OPTION - Schéma Powerpoint.pptx"
     },
@@ -641,9 +646,193 @@
       "id": "fiche-eclair-accueil-client",
       "cat": "entretien",
       "type": "pdf",
-      "title": "Fiche éclair Accueil",
+      "title": "Fiche éclair Accueil client",
       "desc": "",
       "file": "Fiche éclair - Accueil client.pdf"
+    },
+    {
+      "id": "fiche-eclair-assurance-vie-francaise",
+      "cat": "per",
+      "type": "pdf",
+      "title": "Fiche Eclair Assurance vie Française",
+      "desc": "",
+      "file": "Fiche Eclair - Assurance vie Française.pdf"
+    },
+    {
+      "id": "fiche-eclair-compte-titre",
+      "cat": "invest",
+      "type": "pdf",
+      "title": "Fiche eclair compte titre",
+      "desc": "",
+      "file": "Fiche eclair - compte titre.pdf"
+    },
+    {
+      "id": "fiche-eclair-etf-ou-trackers",
+      "cat": "invest",
+      "type": "pdf",
+      "title": "Fiche éclair ETF ou trackers",
+      "desc": "",
+      "file": "Fiche éclair - ETF ou trackers.pdf"
+    },
+    {
+      "id": "fiche-eclair-produit-structure",
+      "cat": "invest",
+      "type": "pdf",
+      "title": "Fiche éclair PRODUIT STRUCTURE",
+      "desc": "",
+      "file": "Fiche éclair - PRODUIT STRUCTURE.pdf"
+    },
+    {
+      "id": "fiche-eclair-prospection-tips",
+      "cat": "prospection",
+      "type": "pdf",
+      "title": "Fiche éclair Prospection Tips",
+      "desc": "",
+      "file": "Fiche éclair - Prospection Tips.pdf"
+    },
+    {
+      "id": "fiche-eclair-recommandation-parrainage",
+      "cat": "prospection",
+      "type": "pdf",
+      "title": "Fiche éclair Recommandation Parrainage",
+      "desc": "",
+      "file": "Fiche éclair - Recommandation Parrainage.pdf"
+    },
+    {
+      "id": "fiche-eclair-rendez-vous-face-a-face",
+      "cat": "prospection",
+      "type": "pdf",
+      "title": "Fiche éclair Rendez vous face à face",
+      "desc": "",
+      "file": "Fiche éclair - Rendez-vous face à face.pdf"
+    },
+    {
+      "id": "fiche-eclair-scpi",
+      "cat": "invest",
+      "type": "pdf",
+      "title": "Fiche eclair SCPI",
+      "desc": "",
+      "file": "Fiche eclair - SCPI.pdf"
+    },
+    {
+      "id": "fiche-eclair-suivi-de-la-relation-clientele",
+      "cat": "entretien",
+      "type": "pdf",
+      "title": "Fiche éclair Suivi de la relation clientèle",
+      "desc": "",
+      "file": "Fiche éclair - Suivi de la relation clientèle.pdf"
+    },
+    {
+      "id": "fiche-eclair-titres-et-bourse-1",
+      "cat": "invest",
+      "type": "pdf",
+      "title": "Fiche éclair titres et bourse 1",
+      "desc": "",
+      "file": "Fiche éclair - titres et bourse 1.pdf"
+    },
+    {
+      "id": "fiche-eclair-titres-et-bourse-2",
+      "cat": "invest",
+      "type": "pdf",
+      "title": "Fiche éclair titres et bourse 2",
+      "desc": "",
+      "file": "Fiche éclair - titres et bourse 2.pdf"
+    },
+    {
+      "id": "fiche-zoom-sur-le-pilotage-retraite",
+      "cat": "per",
+      "type": "pdf",
+      "title": "Fiche zoom sur le pilotage retraite",
+      "desc": "",
+      "file": "Fiche-zoom-sur-le-pilotage-retraite.pdf"
+    },
+    {
+      "id": "industrie-de-l-assurance",
+      "cat": "culture",
+      "type": "pdf",
+      "title": "Industrie de l'assurance",
+      "desc": "",
+      "file": "industrie de l'assurance.pdf"
+    },
+    {
+      "id": "le-frontalier",
+      "cat": "frontalier",
+      "type": "pdf",
+      "title": "Le frontalier",
+      "desc": "",
+      "file": "Le frontalier.pdf"
+    },
+    {
+      "id": "memo-vente-swisslife-per-individuel",
+      "cat": "per",
+      "type": "pdf",
+      "title": "Memo vente SwissLife PER Individuel",
+      "desc": "",
+      "file": "Memo-vente-SwissLife-PER-Individuel.pdf"
+    },
+    {
+      "id": "memo-vente-swisslife-retraite",
+      "cat": "per",
+      "type": "pdf",
+      "title": "Memo vente SwissLife Retraite",
+      "desc": "",
+      "file": "Memo-vente-SwissLife-Retraite.pdf"
+    },
+    {
+      "id": "mon-e-book",
+      "cat": "ebook",
+      "type": "pdf",
+      "title": "MON E BOOK",
+      "desc": "",
+      "file": "MON E-BOOK.pdf"
+    },
+    {
+      "id": "per-presentation",
+      "cat": "per",
+      "type": "pdf",
+      "title": "PER Présentation",
+      "desc": "",
+      "file": "PER Présentation.pdf"
+    },
+    {
+      "id": "permis-de-sejour",
+      "cat": "frontalier",
+      "type": "pptx",
+      "title": "Permis de séjour",
+      "desc": "",
+      "file": "Permis de séjour.pptx"
+    },
+    {
+      "id": "premium-lux-vul",
+      "cat": "per",
+      "type": "pptx",
+      "title": "Premium LUX VUL",
+      "desc": "",
+      "file": "Premium LUX-VUL.pptx"
+    },
+    {
+      "id": "schema-3p-entonnoir",
+      "cat": "per",
+      "type": "docx",
+      "title": "Schema 3P Entonnoir",
+      "desc": "",
+      "file": "Schema 3P - Entonnoir.docx"
+    },
+    {
+      "id": "swisslife-les-predateurs-de-l-assurance-vie-v2",
+      "cat": "per",
+      "type": "pdf",
+      "title": "SWISSLIFE Les prédateurs de l'assurance vie V2",
+      "desc": "",
+      "file": "SWISSLIFE - Les prédateurs de l'assurance-vie V2.pdf"
+    },
+    {
+      "id": "systeme-de-prevoyance-suisse-culture-general",
+      "cat": "prevoyance",
+      "type": "docx",
+      "title": "Systeme de prévoyance Suisse Culture Général",
+      "desc": "",
+      "file": "Systeme de prévoyance Suisse - Culture Général.docx"
     }
   ]
 }

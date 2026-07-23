@@ -4918,9 +4918,66 @@ function WSBlocks({ blocks }) {
   );
 }
 
-function DocPageView({ page, onHome, onOpenNode }) {
+/* Documents de formation rattachés à chaque sous-menu de l'Académie (node id -> fichiers de public/academy/). */
+const ACADEMY_NODE_DOCS = {
+  "5.1": ["1002-directives-iaf-f.pdf","1004-moyens-auxiliaires-iaf-brevet-f.pdf","1006-formules-conseiller-financier-iaf-2015-f.pdf","1006-formules-iaf-version-2022.pdf","1010-checklist-donnees-documentation.pdf","1013-bases-objectifs.pdf","1014-slides-planification-liquidites.pdf","0901-journee-intro-mendo.pdf","EXAMEN - QCM OctNov.docx","13.EXERCICES - Recueil formules calculs.pdf","14.EXERCICES- Bases-calcul-questions.pdf","15.EXERCICES-calculs-financiers-questions.pdf","1019-nominale-reelle-questions.pdf","12.OUTIL - Notice CALCULATRICE FINANCIERE.docx","calculatrice-hp10b2.pdf"],
+  "5.3": ["13239-Plaquette-SwissLife-PER-Individuel.pdf","13124-Notice-SLPERIN.pdf","Essentiel-Produit-SwissLife-PER-Individuel.pdf","Memo-vente-SwissLife-PER-Individuel.pdf","13213-Demande-de-transfert-vers-PER.pdf","Check-list-transferts-entrants-PER-1.pdf","12247-Plaquette-SwissLife-Retraite.pdf","Essentiel-Produit-SwissLife-Retraite[1].pdf","Memo-vente-SwissLife-Retraite.pdf","Checklist-Souscription-Swisslife Retraite.pdf","Demande transfert entrant.pdf","13691-Fiche-zoom-pilotage-retraite.pdf","Fiche-zoom-sur-le-pilotage-retraite.pdf","12635-Avt-mise-en-place-modif-et-suppression-Pilotage-042025f-1 (003).pdf","Annexe financière Epargne Swisslife.xlsx"],
+  "5.4": ["ASSURANCE vie Fr.pdf","Fiche Eclair - Assurance vie Française.pdf","SWISSLIFE - Les prédateurs de l'assurance-vie V2.pdf"],
+  "5.5": ["Premium LUX-VUL.pptx"],
+  "5.6": ["Fiche eclair - SCPI.pdf"],
+  "5.7": ["Documentation LPP.docx","Documentation - Rentes 1er et 2ème pilier.docx"],
+  "5.8": ["Schema 3P - Entonnoir.docx","Systeme de prévoyance Suisse - Culture Général.docx"],
+  "5.11": ["Assurances de personnes et assurances sociales.pdf","Systeme de prévoyance Suisse - Culture Général.docx"],
+  "5.14": ["6.ACADEMY -Le guide pour mieux comprendre un factsheet de fonds.docx","Fiche éclair -  Investissement ISR.pdf","Fiche éclair - ETF ou trackers.pdf","Fiche éclair - PRODUIT STRUCTURE.pdf","Fiche eclair - compte titre.pdf","Fiche éclair - titres et bourse 1.pdf","Fiche éclair - titres et bourse 2.pdf"],
+  "5.16": ["1 - LCB-FT Guide DISTRIBUTION 2022 (1).pdf","2.INFO - Ordonnance sur les déductions admises fiscalement.pdf"],
+};
+
+function academyDocBadge(t) {
+  const e = (t || "").toLowerCase();
+  if (e === "pdf") return "PDF";
+  if (e === "docx" || e === "doc") return "DOCX";
+  if (e === "pptx" || e === "ppt") return "PPT";
+  if (e === "xlsx" || e === "xls" || e === "csv") return "XLS";
+  if (e === "image") return "IMG";
+  return (e || "DOC").toUpperCase().slice(0, 4);
+}
+
+function AcademyDocsSection({ files, acadMap, onOpenDoc }) {
+  const meta = (f) => {
+    if (acadMap && acadMap[f]) return acadMap[f];
+    if (acadMap) { const t = f.normalize("NFC"); for (const k of Object.keys(acadMap)) if (k.normalize("NFC") === t) return acadMap[k]; }
+    return { title: f.replace(/\.[a-z0-9]+$/i, ""), type: (f.split(".").pop() || "").toLowerCase() };
+  };
+  return (
+    <div style={{ ...S.card, padding: 0, overflow: "hidden", marginTop: 20 }}>
+      <div style={{ height: 4, background: C.accent }} />
+      <div style={{ padding: "26px 30px" }}>
+        <div style={{ fontFamily: F.serif, fontSize: 19, fontWeight: 700, color: C.text, letterSpacing: "-0.01em" }}>Documents de formation</div>
+        <div style={{ fontSize: 13, color: C.muted, marginTop: 3, marginBottom: 18 }}>{files.length} document{files.length > 1 ? "s" : ""} · cliquez pour ouvrir dans la liseuse</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))", gap: 12 }}>
+          {files.map((f, i) => {
+            const m = meta(f);
+            return (
+              <button key={i} onClick={() => onOpenDoc && onOpenDoc(f)}
+                style={{ textAlign: "left", display: "flex", alignItems: "center", gap: 12, background: C.bgSoft, border: `1px solid ${C.line}`, borderRadius: 12, padding: "12px 14px", cursor: "pointer" }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.background = "#fff"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.line; e.currentTarget.style.background = C.bgSoft; }}>
+                <span style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 9, background: C.accentSoft, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9.5, fontWeight: 800, letterSpacing: ".02em" }}>{academyDocBadge(m.type)}</span>
+                <span style={{ minWidth: 0, flex: 1, fontSize: 13.5, fontWeight: 600, color: C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.title}</span>
+                <span style={{ color: C.accent, fontSize: 17, flexShrink: 0 }}>›</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DocPageView({ page, onHome, onOpenNode, onOpenDoc, acadMap }) {
   if (!page) return null;
   const wsContent = WS_CONTENT[page.id];
+  const nodeDocs = ACADEMY_NODE_DOCS[page.id] || null;
   const path = page.path || [page.title];
   const crumbs = Array.isArray(page.crumbs) ? page.crumbs : [];
   const parent = crumbs.length ? crumbs[crumbs.length - 1] : null;
@@ -4947,7 +5004,7 @@ function DocPageView({ page, onHome, onOpenNode }) {
         </div>
       </div>
 
-      {wsContent ? (
+      {wsContent && (
         <div style={{ ...S.card, padding: 0, overflow: "hidden" }}>
           <div style={{ height: 4, background: C.accent }} />
           <div style={{ padding: "32px 36px" }}>
@@ -4959,7 +5016,9 @@ function DocPageView({ page, onHome, onOpenNode }) {
             </div>
           </div>
         </div>
-      ) : (
+      )}
+      {nodeDocs && <AcademyDocsSection files={nodeDocs} acadMap={acadMap} onOpenDoc={onOpenDoc} />}
+      {!wsContent && !nodeDocs && (
         <div style={{ ...S.card, padding: 0, overflow: "hidden" }}>
           <div style={{ height: 4, background: C.accent }} />
           <div style={{ padding: "48px 40px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 16 }}>
@@ -6009,6 +6068,25 @@ function WallSwissAppMain() {
   const [resDoc, setResDoc] = useState(null); // document ouvert dans la liseuse (module Ressources)
   // ── SOMMAIRE : navigation via le hub (onglets/sous-onglets) → page placeholder ──
   const [activePage, setActivePage] = useState(null);
+  const [pageDoc, setPageDoc] = useState(null);   // document ouvert depuis une fiche Académie
+  const [acadMap, setAcadMap] = useState({});      // nom de fichier -> {title,type} (public/academy/library.json)
+  useEffect(() => {
+    let alive = true;
+    fetch(ACADEMY_CONFIG.base + "library.json", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (alive && j && Array.isArray(j.docs)) { const m = {}; j.docs.forEach((d) => { if (d && d.file) m[d.file] = d; }); setAcadMap(m); } })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  const openPageDoc = (file) => {
+    // résoudre le nom exact stocké (tolérant aux accents NFC/NFD)
+    let use = acadMap[file] ? file : null;
+    if (!use) { const t = file.normalize("NFC"); for (const k of Object.keys(acadMap)) { if (k.normalize("NFC") === t) { use = k; break; } } }
+    if (!use) use = file;
+    const d = acadMap[use];
+    const ext = (use.split(".").pop() || "").toLowerCase();
+    setPageDoc({ id: "fiche:" + use, title: (d && d.title) || use.replace(/\.[a-z0-9]+$/i, ""), type: (d && d.type) || ext, file: use, backLabel: "Retour" });
+  };
   const [hubTarget, setHubTarget] = useState(null); // niveau à rouvrir dans le hub (fil d'Ariane)
   const handleSommaireNav = (node, path, crumbs) => {
     if (node.action?.type === "url") { if (typeof window !== "undefined") window.open(node.action.url, "_blank"); return; }
@@ -7330,12 +7408,19 @@ const [lppForm, setLppForm] = useState({
       {/* ▼▼▼ AJOUT : les deux bandeaux live, juste sous le header ▼▼▼ */}
       <LiveDataBars />
 
+      {/* Liseuse ouverte depuis une fiche Académie (par-dessus tout) */}
+      {pageDoc && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 3000, background: C.bg }}>
+          <AcademyReader doc={pageDoc} onClose={() => setPageDoc(null)} />
+        </div>
+      )}
+
       {/* ────────────────── CONTENU PRINCIPAL ────────────────── */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%", overflowY: "auto", position: "relative" }}>
 
         {/* VUE PAGE SOMMAIRE (placeholder « en construction ») */}
         {activeModule === "page" && (
-          <DocPageView page={activePage} onHome={goHubRoot} onOpenNode={openHubAt} />
+          <DocPageView page={activePage} onHome={goHubRoot} onOpenNode={openHubAt} onOpenDoc={openPageDoc} acadMap={acadMap} />
         )}
 
         {/* VUE HUB — Accueil satellite + onglets / sous-onglets */}

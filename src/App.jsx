@@ -5200,6 +5200,11 @@ const TICKET_TYPES = [
     { key: "categorie", label: "Catégorie — sur quoi porte l'idée", type: "select", required: true, options: ["Application / logiciel", "Rapports & documents", "Process & organisation", "Commercial & vente", "Marketing & communication", "Formation", "Outils & IT", "Bien-être", "Autre"] },
   ]},
   { id: "autre", label: "Autre demande", desc: "Toute autre demande", fields: [] },
+  // Type contextuel : créé automatiquement depuis la liseuse (« Signaler obsolète »), masqué du formulaire manuel.
+  { id: "doc_obsolete", label: "Document obsolète", desc: "Signalement d'un document / formulaire à mettre à jour", hidden: true, fields: [
+    { key: "fichier", label: "Fichier", type: "text" },
+    { key: "emplacement", label: "Emplacement", type: "text" },
+  ]},
 ];
 
 const TICKET_STATUS = {
@@ -5317,6 +5322,78 @@ function wsSendToSheet(t) {
     };
     fetch(cfg.webhookUrl, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) }).catch(function () {});
   } catch (e) { console.warn("[Tickets] Sheet webhook:", e); }
+}
+
+/* ── Signalement « document obsolète » depuis la liseuse ──────────────────────
+   Crée une demande (type doc_obsolete) qui remonte en direct dans « Demandes reçues »
+   de l'admin (Firestore) + le Google Sheet. Utilise auth.currentUser (aucun prop à câbler). */
+async function wsReportObsolete(doc, motif) {
+  doc = doc || {};
+  const u = (auth && auth.currentUser) ? auth.currentUser : null;
+  const now = Date.now();
+  const fichier = doc.file || ((doc.src || "").split("/").pop()) || "";
+  let emplacement = doc.ctx || "";
+  if (!emplacement && doc.src) { try { emplacement = decodeURIComponent(doc.src); } catch { emplacement = doc.src; } }
+  if (!emplacement && doc.backLabel && doc.backLabel !== "Retour") emplacement = doc.backLabel;
+  const ticket = {
+    type: "doc_obsolete", typeLabel: "Document obsolète",
+    title: "Document obsolète : " + (doc.title || fichier || "document"),
+    message: String(motif || "").trim(),
+    priority: "normale",
+    fields: { fichier: fichier, emplacement: emplacement },
+    status: "nouveau",
+    createdAt: now, createdAtISO: new Date(now).toISOString(),
+    authorUid: (u && u.uid) || null,
+    authorEmail: (u && u.email) || "",
+    authorName: String((u && u.email) || "").split("@")[0] || "Utilisateur",
+    adminNote: "", source: "liseuse",
+  };
+  let firestoreOk = false, refId = "";
+  try {
+    if (db) { const r = await addDoc(collection(db, "artifacts", appId, "public", "data", "tickets"), ticket); refId = (r && r.id) || ""; firestoreOk = true; }
+  } catch (e) { console.error("[Obsolete] Firestore bloqué :", e); }
+  try { wsSendToSheet({ ...ticket, _id: refId }); await wsSendTicketEmail(ticket); } catch (e) { console.warn("[Obsolete] notification :", e); }
+  return firestoreOk || !!(TICKETS_CONFIG.sheet && TICKETS_CONFIG.sheet.webhookUrl);
+}
+
+/* ── Bouton discret « Signaler obsolète » (utilisé dans la liseuse) ── */
+function AcadObsoleteFlag({ doc }) {
+  const [open, setOpen] = useState(false);
+  const [motif, setMotif] = useState("");
+  const [st, setSt] = useState(""); // "" | "sending" | "done" | "err"
+  const send = async () => {
+    setSt("sending");
+    let ok = false;
+    try { ok = await wsReportObsolete(doc, motif); } catch (e) { ok = false; }
+    setSt(ok ? "done" : "err");
+  };
+  if (st === "done") {
+    return <span title="Signalement transmis au superviseur" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 12px", font: `700 12px ${F.ui}`, color: "#047857", whiteSpace: "nowrap" }}>✓ Signalé</span>;
+  }
+  return (
+    <div style={{ position: "relative", flexShrink: 0 }}>
+      <button onClick={() => setOpen((o) => !o)} title="Signaler ce document comme obsolète"
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 980, border: `1px solid ${open ? C.accent : C.line2}`, background: open ? C.accentSoft : "#fff", color: open ? C.accent : C.muted, font: `600 12px ${F.ui}`, cursor: "pointer", whiteSpace: "nowrap" }}>
+        ⚑ Signaler
+      </button>
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 79 }} />
+          <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, width: 300, background: "#fff", border: `1px solid ${C.line}`, borderRadius: 14, boxShadow: "0 16px 44px rgba(0,0,0,.18)", padding: 16, zIndex: 80 }}>
+            <div style={{ font: `800 13px ${F.ui}`, color: C.text, marginBottom: 4 }}>Signaler un document obsolète</div>
+            <div style={{ font: `500 11.5px ${F.ui}`, color: C.muted, marginBottom: 10, lineHeight: 1.45 }}>Votre signalement remonte au superviseur dans « Demandes reçues ».</div>
+            <textarea value={motif} onChange={(e) => setMotif(e.target.value)} placeholder="Motif (facultatif) : ce qui est périmé, la bonne version attendue…" rows={3}
+              style={{ width: "100%", boxSizing: "border-box", padding: "9px 11px", borderRadius: 10, border: `1px solid ${C.line2}`, background: C.card, font: `500 12.5px ${F.ui}`, color: C.text, resize: "vertical", outline: "none" }} />
+            {st === "err" && <div style={{ font: `600 11.5px ${F.ui}`, color: "#B91C1C", marginTop: 8 }}>Envoi impossible. Vérifiez la connexion et réessayez.</div>}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
+              <button onClick={() => setOpen(false)} style={{ padding: "8px 13px", borderRadius: 980, border: `1px solid ${C.line2}`, background: "#fff", color: C.muted, font: `600 12px ${F.ui}`, cursor: "pointer" }}>Annuler</button>
+              <button onClick={send} disabled={st === "sending"} style={{ padding: "8px 15px", borderRadius: 980, border: "none", background: C.accent, color: "#fff", font: `700 12px ${F.ui}`, cursor: "pointer", opacity: st === "sending" ? 0.6 : 1 }}>{st === "sending" ? "Envoi…" : "Envoyer"}</button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 /* ── Petites icônes inline (aucune dépendance) ── */
@@ -5549,6 +5626,7 @@ function AcademyReader({ doc, onClose }) {
             <button onClick={() => setPage((p) => Math.min(numPages, p + 1))} disabled={page >= numPages} style={{ ...acadRdBtn, opacity: page >= numPages ? 0.4 : 1 }}>›</button>
           </div>
         )}
+        <AcadObsoleteFlag doc={doc} />
         <a href={url} download={doc.file} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 980, border: "none", background: C.accent, color: "#fff", font: `700 12.5px ${F.ui}`, textDecoration: "none", cursor: "pointer" }}>Télécharger</a>
       </div>
 
@@ -5778,7 +5856,7 @@ function TicketsModule({ db, appId, user, onOpenAdmin, initialType }) {
 
             {/* Choix du type */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
-              {TICKET_TYPES.map((t) => {
+              {TICKET_TYPES.filter((t) => !t.hidden).map((t) => {
                 const on = t.id === type;
                 return (
                   <button key={t.id} onClick={() => { setType(t.id); setFields({}); }} style={{ padding: "8px 14px", borderRadius: 980, cursor: "pointer", font: `600 13px ${F.ui}`, border: `1px solid ${on ? C.accent : C.line2}`, background: on ? C.accentSoft : C.card, color: on ? C.accent : C.muted, transition: "all .15s" }}>
@@ -6205,7 +6283,9 @@ function WallSwissAppMain() {
     }
     const d = base === "/academy/" ? acadMap[file] : null;
     const ext = (file.split(".").pop() || "").toLowerCase();
-    setPageDoc({ id: "doc:" + base + file, title: ent.title || (d && d.title) || file.replace(/\.[a-z0-9]+$/i, ""), type: (d && d.type) || ext, src: base + encodeURIComponent(file), file: file, backLabel: "Retour" });
+    // Emplacement (fil d'Ariane du sous-menu courant) → transmis au signalement « obsolète ».
+    const ctx = activePage ? ((Array.isArray(activePage.path) && activePage.path.length) ? activePage.path.join(" › ") : (activePage.title || "")) : "";
+    setPageDoc({ id: "doc:" + base + file, title: ent.title || (d && d.title) || file.replace(/\.[a-z0-9]+$/i, ""), type: (d && d.type) || ext, src: base + encodeURIComponent(file), file: file, backLabel: "Retour", ctx: ctx });
   };
   const [hubTarget, setHubTarget] = useState(null); // niveau à rouvrir dans le hub (fil d'Ariane)
   const handleSommaireNav = (node, path, crumbs) => {

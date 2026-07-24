@@ -4946,7 +4946,100 @@ const ACADEMY_NODE_DOCS = {
     { file: "Comparatif-Forfaits-2026.pdf", base: "/procedures/", title: "Comparatif des forfaits 2026" },
     { file: "Comparatif-Forfaits-2026-cartes.pdf", base: "/procedures/", title: "Comparatif forfaits 2026 (cartes)" },
   ],
+  // Procédures › Prévoyance individuelle
+  "3.4.1": [{ file: "06-Guide-paiement-primes-3P.pdf", base: "/procedures/", title: "Guide de paiement des primes 3e pilier" }],
+  // Procédures › Fiscalité française
+  "3.7.1.1": [{ file: "04-Checklist-Rectification-simple.pdf", base: "/procedures/", title: "Check-list rectification simple" }],
+  "3.7.1.2": [
+    { file: "04-Checklist-Rectification-simple.pdf", base: "/procedures/", title: "Check-list rectification simple" },
+    { file: "07-Facture-Rectification-Simple.pdf", base: "/procedures/", title: "Facture rectification simple (100 CHF)" },
+  ],
+  "3.7.1.3": [{ file: "05-Checklist-Declaration-QR.pdf", base: "/procedures/", title: "Check-list déclaration complète (QR)" }],
+  // Procédures › Fiscalité suisse
+  "3.7.2.1": [
+    { file: "07-Facture-Resident-Celibataire.pdf", base: "/procedures/", title: "Facture résident célibataire (195 CHF)" },
+    { file: "07-Facture-Resident-Couple.pdf", base: "/procedures/", title: "Facture résident couple (230 CHF)" },
+  ],
+  "3.7.2.2": [
+    { file: "05-Checklist-Declaration-QR.pdf", base: "/procedures/", title: "Check-list déclaration complète (QR)" },
+    { file: "07-Facture-QR-Frontalier-Celibataire.pdf", base: "/procedures/", title: "Facture QR frontalier célibataire (290 CHF)" },
+    { file: "07-Facture-QR-Frontalier-Couple.pdf", base: "/procedures/", title: "Facture QR frontalier couple (340 CHF)" },
+  ],
 };
+
+/* Procédures interactives : étapes cochables avec documents rattachés à chaque étape. */
+const PROCEDURE_STEPS = {
+  // 3.5.1 · Swissquote — Ouverture de compte
+  "3.5.1": [
+    { title: "Ouvrir le compte Swissquote", detail: "Suivre le guide d'ouverture pas à pas avec le client : formulaire, pièces justificatives, validation du profil.", docs: [{ file: "08-Swissquote-Ouverture-guide.pdf", base: "/procedures/", title: "Guide d'ouverture de compte" }] },
+    { title: "Signer la procuration de gestion", detail: "Mandat qui autorise le cabinet à piloter le portefeuille du client.", docs: [{ file: "10-Swissquote-Procuration-gestion.pdf", base: "/procedures/", title: "Procuration de gestion" }] },
+    { title: "Signer la procuration LPOA", detail: "Limited Power of Attorney : procuration limitée exigée par Swissquote.", docs: [{ file: "11-Swissquote-LPOA.pdf", base: "/procedures/", title: "Procuration (LPOA)" }] },
+    { title: "Confirmation Cross-Border", detail: "Attestation obligatoire pour les clients résidant hors de Suisse (frontaliers notamment).", docs: [{ file: "12-Swissquote-CrossBorder.pdf", base: "/procedures/", title: "Confirmation Cross-Border" }] },
+    { title: "Identifier le client", detail: "Faire identifier le client, au choix via les CFF ou La Poste.", docs: [{ file: "13-Swissquote-Identification-CFF.pdf", base: "/procedures/", title: "Identification CFF" }, { file: "14-Swissquote-Identification-LaPoste.pdf", base: "/procedures/", title: "Identification La Poste" }] },
+  ],
+  // 3.1 · Reprise de gestion
+  "3.1": [
+    { title: "Faire signer le mandat de gestion", detail: "Document de base qui officialise la reprise du dossier par le cabinet.", docs: [{ file: "00-Mandat-de-gestion.pdf", base: "/procedures/", title: "Mandat de gestion" }] },
+    { title: "Demander la libération des primes", detail: "Lettre type à envoyer à la compagnie pour libérer les primes.", docs: [{ file: "01-Lettre-Liberation-primes.pdf", base: "/procedures/", title: "Lettre libération des primes" }] },
+    { title: "Demander la valeur de rachat", detail: "Lettre type pour obtenir le décompte et la valeur de rachat de la police.", docs: [{ file: "02-Lettre-Valeur-de-rachat.pdf", base: "/procedures/", title: "Lettre valeur de rachat" }] },
+    { title: "Rechercher les avoirs 2e pilier", detail: "Envoi postal à la Centrale du 2e pilier (Berne) pour retrouver d'éventuels avoirs de libre passage oubliés.", docs: [{ file: "03-Lettre-cabinet-Envoi-Berne.pdf", base: "/procedures/", title: "Lettre cabinet (envoi Berne)" }, { file: "09-Centrale-Berne-Recherche-2P.pdf", base: "/procedures/", title: "Centrale de Berne (recherche 2e pilier)" }] },
+  ],
+};
+
+function ProcedureSteps({ steps, onOpenDoc }) {
+  const [done, setDone] = React.useState({});
+  const [open, setOpen] = React.useState(0);
+  const total = steps.length;
+  const doneCount = Object.values(done).filter(Boolean).length;
+  return (
+    <div style={{ ...S.card, padding: 0, overflow: "hidden", marginTop: 20 }}>
+      <div style={{ height: 4, background: C.accent }} />
+      <div style={{ padding: "24px 28px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+          <div>
+            <div style={{ fontFamily: F.serif, fontSize: 19, fontWeight: 700, color: C.text }}>Procédure étape par étape</div>
+            <div style={{ fontSize: 13, color: C.muted, marginTop: 3 }}>{total} étapes · cochez au fur et à mesure</div>
+          </div>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: C.accent, background: C.accentSoft, padding: "6px 12px", borderRadius: 980 }}>{doneCount}/{total} fait</div>
+        </div>
+        <div style={{ marginTop: 18, display: "flex", flexDirection: "column", gap: 10 }}>
+          {steps.map((s, i) => {
+            const isOpen = open === i; const isDone = !!done[i];
+            return (
+              <div key={i} style={{ border: `1px solid ${isDone ? "#bcdcc8" : C.line}`, borderRadius: 12, overflow: "hidden", background: isDone ? "#f3f9f5" : C.card }}>
+                <div onClick={() => setOpen(isOpen ? -1 : i)} style={{ display: "flex", alignItems: "center", gap: 13, padding: "13px 15px", cursor: "pointer" }}>
+                  <button onClick={(e) => { e.stopPropagation(); setDone((d) => ({ ...d, [i]: !d[i] })); }}
+                    style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 9, border: `1.5px solid ${isDone ? "#2f7d55" : C.line2}`, background: isDone ? "#2f7d55" : "#fff", color: isDone ? "#fff" : C.muted, fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {isDone ? "✓" : (i + 1)}
+                  </button>
+                  <div style={{ flex: 1, fontWeight: 700, fontSize: 14.5, color: C.text, textDecoration: isDone ? "line-through" : "none", opacity: isDone ? 0.6 : 1 }}>{s.title}</div>
+                  <span style={{ color: C.dim, fontSize: 11 }}>{isOpen ? "▲" : "▼"}</span>
+                </div>
+                {isOpen && (
+                  <div style={{ padding: "0 16px 16px 58px" }}>
+                    {s.detail && <p style={{ fontSize: 13.5, color: C.muted, lineHeight: 1.65, margin: "0 0 12px" }}>{s.detail}</p>}
+                    {s.docs && s.docs.length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {s.docs.map((e, j) => (
+                          <button key={j} onClick={() => onOpenDoc && onOpenDoc(e)}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 7, background: C.bgSoft, border: `1px solid ${C.line}`, borderRadius: 9, padding: "8px 12px", cursor: "pointer", fontSize: 12.5, fontWeight: 600, color: C.text }}
+                            onMouseEnter={(ev) => { ev.currentTarget.style.borderColor = C.accent; }} onMouseLeave={(ev) => { ev.currentTarget.style.borderColor = C.line; }}>
+                            <span style={{ fontSize: 8.5, fontWeight: 800, color: C.accent, background: C.accentSoft, borderRadius: 5, padding: "2px 5px" }}>{academyDocBadge((e.file || "").split(".").pop())}</span>
+                            {e.title || e.file}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function academyDocBadge(t) {
   const e = (t || "").toLowerCase();
@@ -4999,6 +5092,7 @@ function DocPageView({ page, onHome, onOpenNode, onOpenDoc, acadMap }) {
   if (!page) return null;
   const wsContent = WS_CONTENT[page.id];
   const nodeDocs = ACADEMY_NODE_DOCS[page.id] || null;
+  const nodeSteps = PROCEDURE_STEPS[page.id] || null;
   const path = page.path || [page.title];
   const crumbs = Array.isArray(page.crumbs) ? page.crumbs : [];
   const parent = crumbs.length ? crumbs[crumbs.length - 1] : null;
@@ -5038,8 +5132,9 @@ function DocPageView({ page, onHome, onOpenNode, onOpenDoc, acadMap }) {
           </div>
         </div>
       )}
-      {nodeDocs && <AcademyDocsSection files={nodeDocs} acadMap={acadMap} onOpenDoc={onOpenDoc} />}
-      {!wsContent && !nodeDocs && (
+      {nodeSteps && <ProcedureSteps steps={nodeSteps} onOpenDoc={onOpenDoc} />}
+      {!nodeSteps && nodeDocs && <AcademyDocsSection files={nodeDocs} acadMap={acadMap} onOpenDoc={onOpenDoc} />}
+      {!wsContent && !nodeDocs && !nodeSteps && (
         <div style={{ ...S.card, padding: 0, overflow: "hidden" }}>
           <div style={{ height: 4, background: C.accent }} />
           <div style={{ padding: "48px 40px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 16 }}>

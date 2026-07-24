@@ -14,6 +14,11 @@ try {
     try { return fs.statSync(path.join(DIR, f)).isFile(); } catch { return false; }
   });
   files.sort((a, b) => a.localeCompare(b, 'fr'));
+  // dédoublonnage des accents NFC/NFD (même contenu importé deux fois) : on garde une seule version
+  const seenNorm = new Set();
+  const uniqueFiles = [];
+  for (const f of files) { const n = f.normalize('NFC'); if (seenNorm.has(n)) continue; seenNorm.add(n); uniqueFiles.push(f); }
+  files.length = 0; files.push(...uniqueFiles);
 
   const CATS = [
     { id:'ebook',        label:'E-book & guides',                   emoji:'📘' },

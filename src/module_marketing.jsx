@@ -2,6 +2,8 @@ import React, { useState } from "react";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    HUB MARKETING LEADS (module autonome : module_marketing.jsx)
+   VERSION 2 : ajout de la campagne 3P FRONTALIER (vidéo Sophie, 4'800 CHF).
+   Pour vérifier que vous avez la bonne version : Ctrl+F "3p-frontalier-meta".
    Extrait de App.jsx : campagnes, scripts d'appel, guides de traitement.
    Connexion au parent via props :
      - user            : utilisateur Firebase (pour le chemin d'upload)
@@ -84,6 +86,17 @@ const CAMPAIGNS_DATA = {
           intro: "« Bonjour [Prénom], c'est [Votre Prénom], je suis partenaire de Aide Suisse. Je vous contacte car nous avons bien reçu votre demande effectuée sur Facebook et/ou Instagram par rapport à la simulation pour la récupération des 4'800 CHF d'impôts sur Genève. Je vous appelle simplement pour vous communiquer les résultats de votre test d'éligibilité. Vous avez 2 minutes ? »",
           transition: "« Bonne nouvelle, votre profil montre un potentiel d'économie intéressant. Afin de mieux comprendre votre situation, j'aurais besoin de valider quelques points avec vous sur votre contexte professionnel et personnel actuel (Imposé à la source ? 3ème pilier ? Famille ?). »",
           closing: "« C'est très clair. Pour vous donner un chiffre final et surtout voir s'il y a des leviers intéressants pour optimiser votre situation, il est nécessaire de fixer un rendez-vous téléphonique pour une évaluation complète. On bloque un créneau ensemble pour ce rendez-vous demain soir ou jeudi midi ? »"
+      }
+  },
+  '3p-frontalier-meta': {
+      id: '3p-frontalier-meta',
+      name: '3P FRONTALIER',
+      title: 'Leads 3P Frontaliers (Sophie)',
+      subtitle: 'Campagne : "Aide Suisse - Frontaliers Genève 4’800 CHF (Vidéo Sophie)"',
+      scripts: {
+          intro: "« Bonjour [Prénom], c’est [Votre Prénom], je suis partenaire de Aide Suisse. Je vous contacte car nous avons bien reçu votre demande effectuée sur Facebook et/ou Instagram, suite à la vidéo de Sophie, cette frontalière qui a récupéré 4’800 CHF d’impôts grâce à son 3ème pilier. Vous avez rempli le test d’éligibilité gratuit et je vous appelle simplement pour vous communiquer vos résultats. Vous avez 2 minutes ? »",
+          transition: "« Bonne nouvelle : comme Sophie, votre profil montre un potentiel de récupération intéressant. Beaucoup de frontaliers pensent que l’impôt à la source est définitif, alors qu’une grande partie peut être récupérée chaque année. Afin d’affiner votre montant, j’aurais besoin de valider quelques points sur votre situation : vous travaillez bien sur le canton de Genève ? Vous êtes imposé à la source ? Vous avez déjà un 3ème pilier ? Une famille ? »",
+          closing: "« C’est très clair. Pour vous donner un chiffre final, comme les 4’800 CHF de Sophie, et surtout voir quels leviers s’appliquent à votre situation, il est nécessaire de fixer un rendez-vous téléphonique pour une évaluation complète. On bloque un créneau ensemble pour ce rendez-vous demain soir ou jeudi midi ? »"
       }
   },
   'meta-lpp': {
@@ -341,6 +354,89 @@ export default function ModuleMarketing({ user, appSettings = {}, onSaveSettings
                                           <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>L'entendre dire "Vous avez demandé un devis". <em>(Attention: il a fait un test pour impôts)</em>.</span></div>
                                           <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Subir une tentative de <strong>vente forcée</strong> dès les premières minutes.</span></div>
                                           <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Devoir répéter des informations auxquelles il a déjà répondu dans le formulaire.</span></div>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                      )}
+                  </div>
+              )}
+              {marketingCampaign === '3p-frontalier-meta' && (
+                  <div style={{ animation: "fadeIn 0.6s ease-in-out forwards" }}>
+                      {marketingTab === 'context' && (
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 48 }}>
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
+                                  <div style={{ position: "relative", width: "100%", maxWidth: 280, border: "6px solid #1c1917", borderRadius: 32, background: "#1c1917", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", padding: 6, overflow: "hidden" }}>
+                                      <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 128, height: 24, background: "#1c1917", borderBottomLeftRadius: 12, borderBottomRightRadius: 12, zIndex: 20 }}></div>
+                                      <div style={{ background: "#1c1917", borderRadius: 24, overflow: "hidden", position: "relative", width: "100%", aspectRatio: "9/19", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                          <EditableMedia mediaKey="3p-frontalier-meta_vid" defaultUrl="https://wallswiss.ch/wp-content/uploads/2026/07/Frontaliers-a-Geneve-recupere-jusqua-4800-CHF-grace-au-3e-pilier-test-gratuit.mp4" isVideo={true} posterUrl={appSettings.marketingMedia?.['3p-frontalier-meta_img']} />
+                                      </div>
+                                  </div>
+                                  <div style={{ textAlign: "center", fontSize: 12, color: C.gray, fontStyle: "italic", maxWidth: 280 }}>
+                                      Vidéo témoignage « Sophie » diffusée sur Facebook et Instagram (ciblage frontaliers, canton de Genève).
+                                  </div>
+                              </div>
+                              <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+                                  <div style={{ borderBottom: `1px solid rgba(105,33,2,0.1)`, paddingBottom: 24 }}>
+                                      <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, color: C.black, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>Ce que votre prospect a vu</h3>
+                                      <p style={{ color: C.darkGray, lineHeight: 1.6, textAlign: "justify", margin: 0 }}>Le prospect a visionné le témoignage de <strong>Sophie</strong>, une frontalière qui a récupéré <strong>4’800 CHF</strong> grâce à l’optimisation de son 3ème pilier. Il a ensuite rempli le <strong>test d’éligibilité gratuit</strong> d’Aide Suisse pour savoir ce qu’il peut toucher lui aussi.</p>
+                                  </div>
+                                  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                                      <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
+                                          <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.Crosshair size={24} /></div>
+                                          <div>
+                                              <h4 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>L’Accroche Frontalier + Preuve Sociale</h4>
+                                              <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>« Tu es frontalier et tu travailles dans le canton de Genève ? ». Le prospect est interpellé directement, puis <strong>Sophie incarne le résultat</strong> : une personne comme lui a déjà touché 4’800 CHF sur son compte. Ce n’est plus une promesse abstraite, c’est un témoignage.</p>
+                                          </div>
+                                      </div>
+                                      <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
+                                          <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.TrendUp size={24} /></div>
+                                          <div>
+                                              <h4 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>La Croyance Brisée</h4>
+                                              <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>Comme Sophie avant sa découverte, le prospect pensait que <strong>l’impôt à la source était définitif</strong>. La vidéo lui révèle qu’il laisse peut-être filer des milliers de francs chaque année, récupérables jusqu’à <strong style={{ color: C.accent }}>4’800 CHF</strong> grâce au 3ème pilier.</p>
+                                          </div>
+                                      </div>
+                                      <div style={{ background: C.white, padding: 24, border: `1px solid ${C.mediumGray}`, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", gap: 20 }}>
+                                          <div style={{ padding: 12, background: "#fafaf9", border: `1px solid ${C.lightGray}`, color: C.gray, flexShrink: 0 }}><Icons.CheckSquare size={24} /></div>
+                                          <div>
+                                              <h4 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 18, color: C.black, fontWeight: 700, marginBottom: 8, marginTop: 0 }}>L’Engagement par le Test</h4>
+                                              <p style={{ fontSize: 14, color: C.darkGray, lineHeight: 1.6, margin: 0 }}>Le prospect a rempli un <strong>test d’éligibilité gratuit et sans engagement</strong>, en moins de 60 secondes. L’approche idéale est donc de l’aborder sous l’angle du <strong>résultat de ce test</strong>, jamais comme une prise de contact commerciale.</p>
+                                          </div>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                      )}
+
+                      {marketingTab === 'mindset' && (
+                          <div style={{ maxWidth: 896, margin: "0 auto" }}>
+                              <div style={{ textAlign: "center", marginBottom: 48 }}>
+                                  <h2 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 36, color: C.accent, marginBottom: 16, marginTop: 0 }}>Dans la tête de votre prospect</h2>
+                                  <p style={{ color: C.gray, fontSize: 18, margin: 0 }}>Il a vu Sophie toucher 4’800 CHF : il veut le même résultat, sans mauvaise surprise.</p>
+                              </div>
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 32 }}>
+                                  <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, boxShadow: "0 1px 3px rgba(0,0,0,0.05)", position: "relative" }}>
+                                      <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#059669" }}></div>
+                                      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
+                                          <div style={{ width: 48, height: 48, background: "#ecfdf5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Smile size={24} /></div>
+                                          <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu’il attend</h3>
+                                      </div>
+                                      <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
+                                          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Connaître le <strong>résultat concret et chiffré</strong> de son test d’éligibilité, idéalement proche des <strong>4’800 CHF de Sophie</strong>.</span></div>
+                                          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Une démarche <strong>gratuite, rapide et sans engagement</strong>, dans la continuité du test de 60 secondes promis par la vidéo.</span></div>
+                                          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Récupérer « l’argent qui lui appartient » : il se sent <strong>légitime</strong>, il ne vient pas acheter un produit.</span></div>
+                                      </div>
+                                  </div>
+                                  <div style={{ background: C.white, border: `1px solid ${C.mediumGray}`, padding: 32, boxShadow: "0 1px 3px rgba(0,0,0,0.05)", position: "relative" }}>
+                                      <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 4, background: "#dc2626" }}></div>
+                                      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32, paddingBottom: 24, borderBottom: `1px solid ${C.lightGray}` }}>
+                                          <div style={{ width: 48, height: 48, background: "#fef2f2", color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.Frown size={24} /></div>
+                                          <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif", fontSize: 24, fontWeight: 700, color: C.black, margin: 0 }}>Ce qu’il redoute</h3>
+                                      </div>
+                                      <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 14, color: C.darkGray }}>
+                                          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Que les 4’800 CHF soient <strong>« trop beaux pour être vrais »</strong> et que Sophie ne soit qu’un argument publicitaire.</span></div>
+                                          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Qu’on cherche à lui <strong>vendre un produit</strong> au lieu de lui communiquer le résultat de son test.</span></div>
+                                          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><Icons.XCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} /> <span>Découvrir des <strong>conditions cachées</strong> ou de la paperasse compliquée, alors que le test ne prenait que 60 secondes.</span></div>
                                       </div>
                                   </div>
                               </div>

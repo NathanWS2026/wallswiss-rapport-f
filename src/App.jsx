@@ -7,6 +7,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import RetraiteR1Module from "./RetraiteR1Module";
 import { genererSFF5Bytes, combinerPDFs, telechargerPDF, bytesToBlobUrl } from "./FormulaireLPP";
+import { ANNUAIRE_PARTENAIRES, AFFICHER_CONTACTS_CONSEILLERS } from "./annuairePartenaires";
 /* ═══════════════════════════════════════════════════════════════════════════
    NAVIGATION ORBITALE + BANDEAUX LIVE — fusionné ici (ex-fichier WallSwissNav).
    Portée isolée : les C/F/Icons/WS_MENU internes n'affectent PAS ceux de l'app.
@@ -8466,18 +8467,7 @@ const [lppForm, setLppForm] = useState({
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
-                  {[
-                    { nom: "Swissquote", type: "Banque", contact: "Desk B2B / Trading", tel: "+41 44 825 89 90", email: "b2b-desk@swissquote.ch", url: "https://trade.swissquote.ch/my.policy", note: "Protocole de trading + portefeuilles modèles." },
-                    { nom: "PARfinance", type: "Asset Management", contact: "Desk Gestion", tel: "+41 22 989 55 55", email: "info@parfinance.ch", url: "https://www.parfinance.ch/", note: "Mandats Dynamique · Équilibre · Conservateur." },
-                    { nom: "NS Partners", type: "Asset Management", contact: "Relation Partenaires", tel: "+41 22 906 52 50", email: "geneva@nspgroup.com", url: "https://nspartners.com/", note: "Swiss Excellence DPM · DGC Stock Selection · DGC Energy." },
-                    { nom: "Altaroc", type: "Private Equity", contact: "Relation Partenaires", url: "https://altaroc.com/", note: "Millésimes Private Equity." },
-                    { nom: "Alpin Capital", type: "Crypto-monnaie", contact: "Desk Crypto-actifs" },
-                    { nom: "Liechtenstein Life", type: "Prévoyance individuelle (3P)", contact: "Support Courtier", tel: "+423 265 34 40", email: "info@liechtensteinlife.com", url: "https://partner.life.li/fr/my/dashboard", note: "3ᵉ pilier. Protocole de reprise FINMA (voir Procédures)." },
-                    { nom: "Lemania", type: "Libre passage (LPP)", contact: "Administration", tel: "+41 21 311 11 11", email: "info@lemania-lpp.ch", url: "https://www.hublemania.ch/", note: "NS Golden Age Balanced · LPFX Mirabaud." },
-                    { nom: "Pictet", type: "Libre passage (LPP)", contact: "Service LPP", tel: "+41 58 323 23 23", email: "lpp@pictet.com", url: "https://www.am.pictet/", note: "Pictet LPP 40 · LPP 60." },
-                    { nom: "Liberty", type: "Libre passage (LPP)", contact: "Fondation Liberty", url: "https://www.liberty.ch/" },
-                    { nom: "UAF Life Patrimoine", type: "Assurance vie France", contact: "Courtage assurance vie" }
-                  ].map((partenaire, i) => (
+                  {ANNUAIRE_PARTENAIRES.map((partenaire, i) => (
                     <div key={i} style={{ ...S.card, padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
                       <div>
                         <span style={{ background: "rgba(165,149,104,0.1)", color: C.goldDeep, fontSize: 10, fontWeight: 700, padding: "4px 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{partenaire.type}</span>
@@ -8503,6 +8493,16 @@ const [lppForm, setLppForm] = useState({
                             <span style={{ fontSize: 13, color: C.accent, fontWeight: 500 }}>{partenaire.email}</span>
                           </div>
                         )}
+                        {AFFICHER_CONTACTS_CONSEILLERS && partenaire.conseillers && partenaire.conseillers.map((conseiller, j) => (
+                          <div key={j} style={{ display: "flex", alignItems: "flex-start", gap: 12, borderTop: `1px solid ${C.line}`, paddingTop: 10 }}>
+                            <div style={{ color: C.gray }}><Icons.User size={16} /></div>
+                            <div style={{ fontSize: 13, color: C.darkGray, fontWeight: 500 }}>
+                              <div>{conseiller.nom}</div>
+                              {conseiller.tel && <div style={{ color: C.gray }}>{conseiller.tel}</div>}
+                              {conseiller.email && <div style={{ color: C.accent }}>{conseiller.email}</div>}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                       {partenaire.note && (
                         <div style={{ fontSize: 12, color: C.gray, lineHeight: 1.5, borderTop: `1px solid ${C.line}`, paddingTop: 10 }}>{partenaire.note}</div>

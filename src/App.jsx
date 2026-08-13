@@ -6,6 +6,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 // Module Planification Retraite R1
 
 import RetraiteR1Module from "./RetraiteR1Module";
+import ProtocolesModule from "./ProtocolesModule";
 import { genererSFF5Bytes, combinerPDFs, telechargerPDF, bytesToBlobUrl } from "./FormulaireLPP";
 import { ANNUAIRE_PARTENAIRES, AFFICHER_CONTACTS_CONSEILLERS } from "./annuairePartenaires";
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -117,6 +118,7 @@ const WS_MENU = [
       ]},
     ]},
     { id: "3.8", num: "3.8", title: "Taxe annuelle FINMA (AFA)" },
+    { id: "3.9", num: "3.9", title: "Protocoles de souscription (pas à pas)", action: { type: "module", module: "protocoles" } },
   ]},
   { id: "4", num: "4", title: "Base documentaire", icon: "FileText", children: [
     { id: "4.1", num: "4.1", title: "Mails types", action: { type: "module", module: "mails" } },
@@ -7641,6 +7643,8 @@ const [lppForm, setLppForm] = useState({
           <TicketsAdminInbox db={db} appId={appId} user={user} onBack={() => setActiveModule("tickets")} />
         )}
 
+        {/* VUE MODULE — PROTOCOLES DE SOUSCRIPTION */}
+        {activeModule === "protocoles" && <ProtocolesModule />}
         {activeModule === "academie" && (
           <AcademieModule key={"acad-" + (moduleArg?._n || 0)} initialDoc={moduleArg?.doc || null} />
         )}

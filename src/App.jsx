@@ -7,6 +7,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import RetraiteR1Module from "./RetraiteR1Module";
 import ProtocolesModule from "./ProtocolesModule";
+import HeaderSearch from "./HeaderSearch";
 import { genererSFF5Bytes, combinerPDFs, telechargerPDF, bytesToBlobUrl } from "./FormulaireLPP";
 import { ANNUAIRE_PARTENAIRES, AFFICHER_CONTACTS_CONSEILLERS } from "./annuairePartenaires";
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -15,7 +16,7 @@ import { ANNUAIRE_PARTENAIRES, AFFICHER_CONTACTS_CONSEILLERS } from "./annuaireP
    ▸ Bourse temps réel : renseignez twelveDataKey dans MARKET_CONFIG (plus bas dans ce bloc).
    ▸ Actus : NEWS_CONFIG.rssFeed / gnewsKey (plus bas dans ce bloc).
    ═══════════════════════════════════════════════════════════════════════════ */
-const { LiveDataBars, HubSommaire } = (() => {
+const { LiveDataBars, HubSommaire, WS_MENU_HUB } = (() => {
 /* ── Tokens (copie de la charte coquille « Aurora ») ── */
 const C = {
   white: "#FFFFFF", black: "#1A1A1A", gray: "#6B7280",
@@ -555,7 +556,7 @@ function HubSommaire({ onNavigate, onOpenModule, logoUrl, openTo }) {
   );
 }
 
-  return { LiveDataBars, HubSommaire };
+  return { LiveDataBars, HubSommaire, WS_MENU_HUB: WS_MENU };
 })();
 
 // ────────────────────── FIREBASE SETUP ──────────────────────
@@ -7568,7 +7569,7 @@ const [lppForm, setLppForm] = useState({
           </button>
         )}
 
-        <div style={{ flex: 1 }} />
+        <HeaderSearch menu={WS_MENU_HUB} onNavigate={handleSommaireNav} onOpenHub={openHubAt} onHome={goHubRoot} />
 
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <button onClick={() => setActiveModule("tickets")} title="Mes demandes / suggestions"

@@ -1,13 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   MODULE PROTOCOLES DE SOUSCRIPTION — WallSwiss (fichier autonome)
-   ▸ PDF attendus dans  public/procedures/  (noms d'origine conservés) :
-       protocole bankzweiplus.pdf
-       protocole2epilier LIBERTY.pdf
-       protocole2epilier PICTET.pdf
-       protocole3epilier PICTET.pdf
-       Accord-transfert-avoirs-prevoyance.docx
+   MODULE PROTOCOLES & DOCUMENTS — WallSwiss (fichier autonome)
+   ▸ Tous les fichiers sont attendus dans  public/procedures/
+     (noms d'origine conservés, cf. le champ "file" de chaque entrée).
    ▸ Aucune dépendance : liseuse PDF intégrée (pdf.js chargé via CDN).
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -23,43 +19,155 @@ const F = {
   serif: "'Times New Roman', Times, serif",
 };
 
-/* ── Les 4 protocoles + le document à faire signer ── */
+/* ── Catalogue complet des documents (public/procedures/) ── */
 const PROTOCOLES_LIST = [
-  {
-    id: "zweiplus", emoji: "🏦", cat: "Banque", kind: "pdf",
-    title: "Compte Investment Depot — bank zweiplus",
-    partenaire: "bank zweiplus sa",
-    file: "protocole bankzweiplus.pdf", etapes: 10,
-    desc: "Ouverture complète du compte : courrier de bienvenue, demande d'ouverture (données personnelles, ayant droit économique, origine des fonds, statut fiscal US/PPE), e-banking, plan de versement, stratégie d'investissement et signatures.",
-  },
-  {
-    id: "2p-pictet", emoji: "🏛️", cat: "Libre passage · 2e pilier", kind: "pdf",
-    title: "Libre passage 2e pilier — Fondation Pictet",
-    partenaire: "Fondation Pictet de libre passage",
+  /* ══ Mandat et lettres client ══ */
+  { id: "mandat", emoji: "📜", cat: "Mandat & lettres client", kind: "pdf",
+    title: "Mandat de gestion", partenaire: "WS - The WallSwiss Partner's SA",
+    file: "00-Mandat-de-gestion.pdf", etapes: null,
+    desc: "Mandat signé par le client au démarrage de la relation. Document de référence de la charte graphique du cabinet." },
+  { id: "l-liberation", emoji: "✉️", cat: "Mandat & lettres client", kind: "pdf",
+    title: "Lettre de libération des primes", partenaire: "Assureur · prévoyance individuelle",
+    file: "01-Lettre-Liberation-primes.pdf", etapes: null,
+    desc: "Courrier type à adresser à l'assureur pour demander la libération du paiement des primes." },
+  { id: "l-rachat", emoji: "✉️", cat: "Mandat & lettres client", kind: "pdf",
+    title: "Demande de valeur de rachat", partenaire: "Assureur · prévoyance individuelle",
+    file: "02-Lettre-Valeur-de-rachat.pdf", etapes: null,
+    desc: "Courrier type pour obtenir la valeur de rachat d'une police avant toute décision de résiliation ou de transfert." },
+  { id: "l-berne", emoji: "✉️", cat: "Mandat & lettres client", kind: "pdf",
+    title: "Lettre cabinet, envoi à la Centrale du 2e pilier", partenaire: "Centrale du 2e pilier, Berne",
+    file: "03-Lettre-cabinet-Envoi-Berne.pdf", etapes: null,
+    desc: "Lettre d'accompagnement du cabinet pour l'envoi d'un dossier à la Centrale du 2e pilier." },
+
+  /* ══ Fiscalité ══ */
+  { id: "chk-rs", emoji: "✅", cat: "Fiscalité", kind: "pdf",
+    title: "Check-list rectification simple (RS)", partenaire: "Administration fiscale cantonale",
+    file: "04-Checklist-Rectification-simple.pdf", etapes: null,
+    desc: "Pièces à réunir pour une demande de rectification simple de l'impôt à la source." },
+  { id: "chk-qr", emoji: "✅", cat: "Fiscalité", kind: "pdf",
+    title: "Check-list déclaration QR", partenaire: "Administration fiscale cantonale",
+    file: "05-Checklist-Declaration-QR.pdf", etapes: null,
+    desc: "Pièces à réunir pour une déclaration ordinaire ultérieure (quasi-résident)." },
+  { id: "g-primes3p", emoji: "📘", cat: "Fiscalité", kind: "pdf",
+    title: "Guide de paiement des primes 3e pilier", partenaire: "Prévoyance individuelle liée",
+    file: "06-Guide-paiement-primes-3P.pdf", etapes: null,
+    desc: "Marche à suivre pour le versement des primes du 3e pilier et la remise de l'attestation fiscale." },
+
+  /* ══ Facturation ══ */
+  { id: "f-res-cel", emoji: "🧾", cat: "Facturation", kind: "pdf",
+    title: "Facture résident, célibataire", partenaire: "Honoraires de déclaration",
+    file: "07-Facture-Resident-Celibataire.pdf", etapes: null,
+    desc: "Modèle de facture d'honoraires avec bulletin QR, profil résident célibataire." },
+  { id: "f-res-cou", emoji: "🧾", cat: "Facturation", kind: "pdf",
+    title: "Facture résident, couple", partenaire: "Honoraires de déclaration",
+    file: "07-Facture-Resident-Couple.pdf", etapes: null,
+    desc: "Modèle de facture d'honoraires avec bulletin QR, profil résident marié ou en partenariat." },
+  { id: "f-qr-cel", emoji: "🧾", cat: "Facturation", kind: "pdf",
+    title: "Facture frontalier QR, célibataire", partenaire: "Honoraires de déclaration",
+    file: "07-Facture-QR-Frontalier-Celibataire.pdf", etapes: null,
+    desc: "Modèle de facture d'honoraires avec bulletin QR, profil frontalier célibataire." },
+  { id: "f-qr-cou", emoji: "🧾", cat: "Facturation", kind: "pdf",
+    title: "Facture frontalier QR, couple", partenaire: "Honoraires de déclaration",
+    file: "07-Facture-QR-Frontalier-Couple.pdf", etapes: null,
+    desc: "Modèle de facture d'honoraires avec bulletin QR, profil frontalier marié ou en partenariat." },
+  { id: "f-rs", emoji: "🧾", cat: "Facturation", kind: "pdf",
+    title: "Facture rectification simple", partenaire: "Honoraires de rectification",
+    file: "07-Facture-Rectification-Simple.pdf", etapes: null,
+    desc: "Modèle de facture d'honoraires avec bulletin QR pour une rectification simple." },
+
+  /* ══ Libre passage, 2e pilier ══ */
+  { id: "2p-pictet", emoji: "🏛️", cat: "Libre passage · 2e pilier", kind: "pdf",
+    title: "Libre passage 2e pilier — Fondation Pictet", partenaire: "Fondation Pictet de libre passage",
     file: "protocole2epilier PICTET.pdf", etapes: 8,
-    desc: "Éligibilité, profil de risque en 8 questions, sélection du portefeuille, informations du preneur, pièce d'identité, informations conseiller (contact + commission d'entrée) et soumission signée du dossier.",
-  },
-  {
-    id: "2p-liberty", emoji: "🏛️", cat: "Libre passage · 2e pilier", kind: "pdf",
-    title: "Libre passage 2e pilier — Liberty",
-    partenaire: "Liberty Fondation de libre passage · BSR Black Swan Resilience SA",
+    desc: "Éligibilité, profil de risque en 8 questions, sélection du portefeuille, informations du preneur, pièce d'identité, informations conseiller (contact et commission d'entrée) et soumission signée du dossier." },
+  { id: "2p-liberty", emoji: "🏛️", cat: "Libre passage · 2e pilier", kind: "pdf",
+    title: "Libre passage 2e pilier — Liberty", partenaire: "Liberty Fondation de libre passage · BSR Black Swan Resilience SA",
     file: "protocole2epilier LIBERTY.pdf", etapes: 7,
-    desc: "Profil d'investissement, contrôle du risque en 10 points, ouverture du compte (origine des avoirs, décision d'investissement, produit et frais, ordre de transfert), services Liberty Connect, données personnelles et confirmation d'identité.",
-  },
-  {
-    id: "3p-pictet", emoji: "🛡️", cat: "Prévoyance · 3e pilier A", kind: "pdf",
-    title: "Prévoyance individuelle 3e pilier A — Fondation Pictet",
-    partenaire: "Fondation Pictet en faveur de la prévoyance individuelle",
+    desc: "Profil d'investissement, contrôle du risque en 10 points, ouverture du compte (origine des avoirs, décision d'investissement, produit et frais, ordre de transfert), services Liberty Connect, données personnelles et confirmation d'identité." },
+  { id: "fllp-retrait", emoji: "🏦", cat: "Libre passage · 2e pilier", kind: "pdf",
+    title: "Demande de retrait du capital de libre passage", partenaire: "Fondation Lemania de libre passage · GCP Gestion de Caisses de Pensions SA",
+    file: "15-FLLP-Demande-retrait-capital.pdf", etapes: 10,
+    desc: "Page de garde WallSwiss (sept motifs de retrait admis et marche à suivre en 10 points) suivie du formulaire officiel FLLP intact. Retraits couverts : âge LPP, versement anticipé, invalidité, transfert, montant insignifiant, départ de Suisse, activité indépendante." },
+  { id: "berne-2p", emoji: "🔎", cat: "Libre passage · 2e pilier", kind: "pdf",
+    title: "Recherche d'avoirs, Centrale du 2e pilier", partenaire: "Fonds de garantie LPP, Berne",
+    file: "09-Centrale-Berne-Recherche-2P.pdf", etapes: null,
+    desc: "Formulaire de recherche des avoirs de libre passage oubliés auprès de la Centrale du 2e pilier." },
+
+  /* ══ Prévoyance, 3e pilier A ══ */
+  { id: "3p-pictet", emoji: "🛡️", cat: "Prévoyance · 3e pilier A", kind: "pdf",
+    title: "Prévoyance individuelle 3e pilier A — Fondation Pictet", partenaire: "Fondation Pictet en faveur de la prévoyance individuelle",
     file: "protocole3epilier PICTET.pdf", etapes: 7,
-    desc: "Éligibilité, profil de risque en 7 questions, tolérance au risque et sélection du portefeuille, informations du preneur de prévoyance, pièce d'identité, informations conseiller et soumission signée.",
-  },
-  {
-    id: "accord-transfert", emoji: "✍️", cat: "Document à faire signer", kind: "letter",
-    title: "Accord pour le transfert des avoirs de prévoyance",
-    partenaire: "Toutes institutions · LPP et libre passage",
+    desc: "Éligibilité, profil de risque en 7 questions, tolérance au risque et sélection du portefeuille, informations du preneur de prévoyance, pièce d'identité, informations conseiller et soumission signée." },
+
+  /* ══ Banque et titres ══ */
+  { id: "zweiplus", emoji: "🏦", cat: "Banque & titres", kind: "pdf",
+    title: "Compte Investment Depot — bank zweiplus", partenaire: "bank zweiplus sa",
+    file: "protocole bankzweiplus.pdf", etapes: 10,
+    desc: "Ouverture complète du compte : courrier de bienvenue, demande d'ouverture (données personnelles, ayant droit économique, origine des fonds, statut fiscal US et PPE), e-banking, plan de versement, stratégie d'investissement et signatures." },
+  { id: "sq-ouverture", emoji: "📈", cat: "Banque & titres", kind: "pdf",
+    title: "Swissquote — guide d'ouverture de compte", partenaire: "Swissquote Bank SA",
+    file: "08-Swissquote-Ouverture-guide.pdf", etapes: null,
+    desc: "Guide illustré pas à pas de l'ouverture d'un compte titres Swissquote." },
+  { id: "sq-procuration", emoji: "📈", cat: "Banque & titres", kind: "pdf",
+    title: "Swissquote — procuration de gestion", partenaire: "Swissquote Bank SA",
+    file: "10-Swissquote-Procuration-gestion.pdf", etapes: null,
+    desc: "Procuration donnant au cabinet le droit de gérer le compte pour le compte du client." },
+  { id: "sq-lpoa", emoji: "📈", cat: "Banque & titres", kind: "pdf",
+    title: "Swissquote — LPOA", partenaire: "Swissquote Bank SA",
+    file: "11-Swissquote-LPOA.pdf", etapes: null,
+    desc: "Limited Power of Attorney : procuration limitée, sans droit de retrait des fonds." },
+  { id: "sq-cross", emoji: "📈", cat: "Banque & titres", kind: "pdf",
+    title: "Swissquote — CrossBorder", partenaire: "Swissquote Bank SA",
+    file: "12-Swissquote-CrossBorder.pdf", etapes: null,
+    desc: "Déclaration transfrontalière à joindre au dossier lorsque le client est domicilié hors de Suisse." },
+  { id: "sq-cff", emoji: "🪪", cat: "Banque & titres", kind: "pdf",
+    title: "Swissquote — identification aux guichets CFF", partenaire: "Swissquote Bank SA · CFF",
+    file: "13-Swissquote-Identification-CFF.pdf", etapes: null,
+    desc: "Marche à suivre pour faire authentifier son identité à un guichet CFF." },
+  { id: "sq-poste", emoji: "🪪", cat: "Banque & titres", kind: "pdf",
+    title: "Swissquote — identification à La Poste", partenaire: "Swissquote Bank SA · La Poste Suisse",
+    file: "14-Swissquote-Identification-LaPoste.pdf", etapes: null,
+    desc: "Marche à suivre pour faire authentifier son identité dans un office postal." },
+
+  /* ══ Tarification 2026 ══ */
+  { id: "t-comparatif", emoji: "💠", cat: "Tarification 2026", kind: "pdf",
+    title: "Comparatif des forfaits 2026", partenaire: "Offre WallSwiss",
+    file: "Comparatif-Forfaits-2026.pdf", etapes: null,
+    desc: "Tableau comparatif des trois forfaits, à présenter en rendez-vous client." },
+  { id: "t-cartes", emoji: "💠", cat: "Tarification 2026", kind: "pdf",
+    title: "Comparatif des forfaits 2026, version cartes", partenaire: "Offre WallSwiss",
+    file: "Comparatif-Forfaits-2026-cartes.pdf", etapes: null,
+    desc: "Même comparatif en format cartes, plus lisible à l'écran et en visioconférence." },
+  { id: "t-essentiel", emoji: "🟤", cat: "Tarification 2026", kind: "pdf",
+    title: "Forfait Essentiel 2026", partenaire: "Offre WallSwiss",
+    file: "Forfait-Essentiel-2026.pdf", etapes: null,
+    desc: "Fiche détaillée du forfait Essentiel : prestations incluses et tarif." },
+  { id: "t-duo", emoji: "🟤", cat: "Tarification 2026", kind: "pdf",
+    title: "Forfait Duo 2026", partenaire: "Offre WallSwiss",
+    file: "Forfait-Duo-2026.pdf", etapes: null,
+    desc: "Fiche détaillée du forfait Duo : prestations incluses et tarif." },
+  { id: "t-premium", emoji: "🟤", cat: "Tarification 2026", kind: "pdf",
+    title: "Forfait Premium 2026", partenaire: "Offre WallSwiss",
+    file: "Forfait-Premium-2026.pdf", etapes: null,
+    desc: "Fiche détaillée du forfait Premium : prestations incluses et tarif." },
+
+  /* ══ Document à faire signer ══ */
+  { id: "accord-transfert", emoji: "✍️", cat: "Document à faire signer", kind: "letter",
+    title: "Accord pour le transfert des avoirs de prévoyance", partenaire: "Toutes institutions · LPP et libre passage",
     file: "Accord-transfert-avoirs-prevoyance.docx", etapes: null,
-    desc: "Lettre type à faire signer au client avant toute demande de transfert d'avoirs entre institutions. À utiliser systématiquement : sans cet accord écrit, les institutions renvoient le dossier et le traitement est retardé.",
-  },
+    desc: "Lettre type à faire signer au client avant toute demande de transfert d'avoirs entre institutions. À utiliser systématiquement : sans cet accord écrit, les institutions renvoient le dossier et le traitement est retardé." },
+];
+
+/* Ordre d'affichage des catégories */
+const CAT_ORDER = [
+  "Mandat & lettres client",
+  "Libre passage · 2e pilier",
+  "Prévoyance · 3e pilier A",
+  "Banque & titres",
+  "Fiscalité",
+  "Facturation",
+  "Tarification 2026",
+  "Document à faire signer",
 ];
 
 /* ── Raisons d'utilisation du document d'accord ── */
@@ -271,16 +379,31 @@ function AccordView({ proto, onClose }) {
 }
 
 /* ── Galerie ── */
+const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
 export default function ProtocolesModule() {
   const [open, setOpen] = useState(null);
   const [q, setQ] = useState("");
+  const [catSel, setCatSel] = useState("Tous");
 
   if (open && open.kind === "letter") return <AccordView proto={open} onClose={() => setOpen(null)} />;
   if (open) return <ProtocoleReader proto={open} onClose={() => setOpen(null)} />;
 
-  const ql = q.trim().toLowerCase();
-  const shown = PROTOCOLES_LIST.filter((p) => !ql || (p.title + " " + p.partenaire + " " + p.cat + " " + p.desc).toLowerCase().includes(ql));
-  const cats = [...new Set(shown.map((p) => p.cat))];
+  const ql = norm(q.trim());
+  const shown = PROTOCOLES_LIST.filter((p) => {
+    if (catSel !== "Tous" && p.cat !== catSel) return false;
+    if (!ql) return true;
+    return norm(p.title + " " + p.partenaire + " " + p.cat + " " + p.desc + " " + p.file).includes(ql);
+  });
+  const cats = CAT_ORDER.filter((c) => shown.some((p) => p.cat === c));
+  const chips = ["Tous"].concat(CAT_ORDER);
+  const chipStyle = (on) => ({
+    padding: "7px 14px", borderRadius: 980, cursor: "pointer", whiteSpace: "nowrap",
+    font: `700 12.5px ${F.ui}`,
+    border: `1px solid ${on ? C.accent : C.line2}`,
+    background: on ? C.accent : "#fff",
+    color: on ? "#fff" : C.muted,
+  });
 
   return (
     <div style={{ flex: 1, minHeight: "calc(100vh - 60px)", overflowY: "auto", padding: "26px 40px 60px", boxSizing: "border-box", background: "radial-gradient(1100px 700px at 50% -6%, #FFFFFF, #EEF0F3)", fontFamily: F.ui }}>
@@ -288,12 +411,20 @@ export default function ProtocolesModule() {
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 8 }}>
           <div style={{ width: 58, height: 58, borderRadius: 18, background: `linear-gradient(135deg, ${C.accent}, ${C.accentDark})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, boxShadow: "0 12px 28px rgba(105,33,2,.28)", flexShrink: 0 }}>📋</div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: C.text }}>Protocoles de souscription</div>
-            <div style={{ fontSize: 13, color: C.muted, marginTop: 3 }}>Guides pas-à-pas illustrés et documents à faire signer · liseuse intégrée</div>
+            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: C.text }}>Protocoles &amp; documents</div>
+            <div style={{ fontSize: 13, color: C.muted, marginTop: 3 }}>{PROTOCOLES_LIST.length} documents : protocoles de souscription, lettres client, fiscalité, facturation et tarification · liseuse intégrée</div>
           </div>
         </div>
-        <div style={{ margin: "18px 0 26px", maxWidth: 420 }}>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher (Pictet, Liberty, zweiplus, accord…)" style={{ width: "100%", padding: "11px 15px", borderRadius: 12, border: `1px solid ${C.line2}`, font: `14px ${F.ui}`, color: C.text, outline: "none", boxSizing: "border-box", background: "#fff" }} />
+        <div style={{ margin: "18px 0 14px", maxWidth: 460 }}>
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher (Pictet, Swissquote, facture, forfait, FLLP…)" style={{ width: "100%", padding: "11px 15px", borderRadius: 12, border: `1px solid ${C.line2}`, font: `14px ${F.ui}`, color: C.text, outline: "none", boxSizing: "border-box", background: "#fff" }} />
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 26 }}>
+          {chips.map((c) => (
+            <button key={c} onClick={() => setCatSel(c)} style={chipStyle(catSel === c)}>
+              {c}
+              <span style={{ marginLeft: 7, opacity: .75 }}>{c === "Tous" ? PROTOCOLES_LIST.length : PROTOCOLES_LIST.filter((p) => p.cat === c).length}</span>
+            </button>
+          ))}
         </div>
 
         {cats.map((cat) => (
@@ -315,7 +446,7 @@ export default function ProtocolesModule() {
                     <div style={{ fontSize: 12.5, color: C.muted, lineHeight: 1.55, marginBottom: 10 }}>{p.desc}</div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       {p.etapes ? <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: ".05em", textTransform: "uppercase", color: "#fff", background: C.accent, padding: "3px 9px", borderRadius: 980 }}>{p.etapes} étapes</span> : null}
-                      <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: ".05em", textTransform: "uppercase", color: p.kind === "letter" ? "#fff" : C.muted, background: p.kind === "letter" ? C.gold : C.bgSoft, border: p.kind === "letter" ? "none" : `1px solid ${C.line}`, padding: "3px 9px", borderRadius: 980 }}>{p.kind === "letter" ? "Modèle Word" : "PDF illustré"}</span>
+                      <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: ".05em", textTransform: "uppercase", color: p.kind === "letter" ? "#fff" : C.muted, background: p.kind === "letter" ? C.gold : C.bgSoft, border: p.kind === "letter" ? "none" : `1px solid ${C.line}`, padding: "3px 9px", borderRadius: 980 }}>{p.kind === "letter" ? "Modèle Word" : "PDF"}</span>
                       <span style={{ marginLeft: "auto", color: C.accent, fontSize: 12.5, fontWeight: 700 }}>Ouvrir →</span>
                     </div>
                   </div>
@@ -324,7 +455,7 @@ export default function ProtocolesModule() {
             </div>
           </div>
         ))}
-        {shown.length === 0 && <div style={{ padding: 40, textAlign: "center", color: C.dim, fontSize: 13 }}>Aucun résultat pour « {q} ».</div>}
+        {shown.length === 0 && <div style={{ padding: 40, textAlign: "center", color: C.dim, fontSize: 13 }}>Aucun résultat{q ? ` pour « ${q} »` : ""}.</div>}
       </div>
     </div>
   );

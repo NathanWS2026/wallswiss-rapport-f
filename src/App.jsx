@@ -7,6 +7,9 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import RetraiteR1Module from "./RetraiteR1Module";
 import ProtocolesModule from "./ProtocolesModule";
+import Quasi_Resident_Module from "./Quasi_Resident_Module";
+import Interets_Composes_Module from "./Interets_Composes_Module";
+import Logiciels_Acces_Module from "./Logiciels_Acces_Module";
 import HeaderSearch from "./HeaderSearch";
 import { genererSFF5Bytes, combinerPDFs, telechargerPDF, bytesToBlobUrl } from "./FormulaireLPP";
 import { ANNUAIRE_PARTENAIRES, AFFICHER_CONTACTS_CONSEILLERS } from "./annuairePartenaires";
@@ -52,11 +55,11 @@ const WS_MENU = [
     { id: "1.2", num: "1.2", title: "Générateur de rapport financier", action: { type: "module", module: "rapport" } },
     { id: "1.3", num: "1.3", title: "Générateur de planification retraite", action: { type: "module", module: "retraiteR1" } },
     { id: "1.4", num: "1.4", title: "Mon agenda – Calendly" },
-    { id: "1.5", num: "1.5", title: "Simulateur Quasi-Résident / TOU" },
-    { id: "1.6", num: "1.6", title: "Simulateur d'intérêts composés" },
+    { id: "1.5", num: "1.5", title: "Simulateur Quasi-Résident / TOU", action: { type: "module", module: "quasiResident" } },
+    { id: "1.6", num: "1.6", title: "Simulateur d'intérêts composés", action: { type: "module", module: "interetsComposes" } },
     { id: "1.7", num: "1.7", title: "Générateur de factures" },
     { id: "1.9", num: "1.9", title: "Recherche & Mandats LPP", action: { type: "module", module: "rechercheLpp" } },
-    { id: "1.10", num: "1.10", title: "Tous mes logiciels & accès" },
+    { id: "1.10", num: "1.10", title: "Tous mes logiciels & accès", action: { type: "module", module: "logiciels" } },
     { id: "1.8", num: "1.8", title: "Signaler un incident", children: [
       { id: "1.8.1", num: "1.8.1", title: "Cyber-incident" },
       { id: "1.8.2", num: "1.8.2", title: "Conflits d'intérêts" },
@@ -365,6 +368,7 @@ const WS_EMOJI_MAP = [
   [/assurance/i, "📜"],
   [/banque|swissquote|zweiplus|compte[- ]?titre|\btitres?\b|sarasin|pictet|lombard/i, "🏦"],
   [/investiss|private equity|\bscpi\b|bourse|march[eé]/i, "📈"],
+  [/tous mes logiciels|logiciels? & acc[eè]s/i, "🗝️"],
   [/crm|salesforce|annuaire|contact/i, "📇"],
   [/\bmails?\b|e-?mail|courriel/i, "✉️"],
   [/document|administratif|base documentaire/i, "📁"],
@@ -4347,8 +4351,8 @@ const WS_MENU = [
       { id: "1.2", num: "1.2", title: "Générateur de rapport financier", action: { type: "module", module: "rapport" } },
       { id: "1.3", num: "1.3", title: "Générateur de planification retraite", action: { type: "module", module: "retraiteR1" } },
       { id: "1.4", num: "1.4", title: "Mon agenda – Calendly" },
-      { id: "1.5", num: "1.5", title: "Simulateur Quasi-Résident / TOU" },
-      { id: "1.6", num: "1.6", title: "Simulateur d'intérêts composés" },
+      { id: "1.5", num: "1.5", title: "Simulateur Quasi-Résident / TOU", action: { type: "module", module: "quasiResident" } },
+      { id: "1.6", num: "1.6", title: "Simulateur d'intérêts composés", action: { type: "module", module: "interetsComposes" } },
       { id: "1.7", num: "1.7", title: "Générateur de factures" },
       {
         id: "1.8", num: "1.8", title: "Signaler un incident",
@@ -7646,6 +7650,19 @@ const [lppForm, setLppForm] = useState({
 
         {/* VUE MODULE — PROTOCOLES DE SOUSCRIPTION */}
         {activeModule === "protocoles" && <ProtocolesModule />}
+
+        {/* VUE MODULE — SIMULATEUR QUASI-RÉSIDENT / TOU */}
+        {activeModule === "quasiResident" && <Quasi_Resident_Module />}
+
+        {/* VUE MODULE — SIMULATEUR D'INTÉRÊTS COMPOSÉS */}
+        {activeModule === "interetsComposes" && (
+          <Interets_Composes_Module appSettings={appSettings} logoUrl={appSettings.defaultLogo || LOGO_URL} />
+        )}
+
+        {/* VUE MODULE — TOUS MES LOGICIELS & ACCÈS */}
+        {activeModule === "logiciels" && (
+          <Logiciels_Acces_Module onOpenModule={(m) => setActiveModule(m)} />
+        )}
         {activeModule === "academie" && (
           <AcademieModule key={"acad-" + (moduleArg?._n || 0)} initialDoc={moduleArg?.doc || null} />
         )}

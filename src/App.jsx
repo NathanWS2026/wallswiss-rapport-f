@@ -10,6 +10,8 @@ import ProtocolesModule from "./ProtocolesModule";
 import Quasi_Resident_Module from "./Quasi_Resident_Module";
 import Interets_Composes_Module from "./Interets_Composes_Module";
 import Logiciels_Acces_Module from "./Logiciels_Acces_Module";
+import Sondages_Module from "./Sondages_Module";
+import Challenges_Module from "./Challenges_Module";
 import HeaderSearch from "./HeaderSearch";
 import { genererSFF5Bytes, combinerPDFs, telechargerPDF, bytesToBlobUrl } from "./FormulaireLPP";
 import { ANNUAIRE_PARTENAIRES, AFFICHER_CONTACTS_CONSEILLERS } from "./annuairePartenaires";
@@ -51,10 +53,10 @@ const Icons = {
 /* ── Arborescence du sommaire (avec Marketing & Recherche LPP accessibles) ── */
 const WS_MENU = [
   { id: "1", num: "1", title: "Logiciels WallSwiss", icon: "Layers", children: [
-    { id: "1.1", num: "1.1", title: "CRM – Salesforce", action: { type: "url", url: "https://wallswiss.my.salesforce.com/" } },
+    { id: "1.1", num: "1.1", title: "CRM – Salesforce", action: { type: "url", url: "https://wallswiss.my.salesforce.com/?ec=302&startURL=%2Fvisualforce%2Fsession%3Furl%3Dhttps%253A%252F%252Fwallswiss.lightning.force.com%252Flightning%252Fpage%252Fchatter" } },
     { id: "1.2", num: "1.2", title: "Générateur de rapport financier", action: { type: "module", module: "rapport" } },
     { id: "1.3", num: "1.3", title: "Générateur de planification retraite", action: { type: "module", module: "retraiteR1" } },
-    { id: "1.4", num: "1.4", title: "Mon agenda – Calendly" },
+    { id: "1.4", num: "1.4", title: "Mon agenda – Calendly", action: { type: "url", url: "https://calendly.com/" } },
     { id: "1.5", num: "1.5", title: "Simulateur Quasi-Résident / TOU", action: { type: "module", module: "quasiResident" } },
     { id: "1.6", num: "1.6", title: "Simulateur d'intérêts composés", action: { type: "module", module: "interetsComposes" } },
     { id: "1.7", num: "1.7", title: "Générateur de factures" },
@@ -73,11 +75,11 @@ const WS_MENU = [
     { id: "2.3", num: "2.3", title: "Mes demandes (congés, frais, matériel…)", action: { type: "module", module: "tickets" } },
     { id: "2.4", num: "2.4", title: "Les règles en entreprise" },
     { id: "2.5", num: "2.5", title: "Événements", children: [
-      { id: "2.5.1", num: "2.5.1", title: "Sondages" },
+      { id: "2.5.1", num: "2.5.1", title: "Sondages", action: { type: "module", module: "sondages" } },
       { id: "2.5.2", num: "2.5.2", title: "Photos : événements WallSwiss" },
     ]},
     { id: "2.6", num: "2.6", title: "Boîte à idées : ensemble, nous allons plus loin !", action: { type: "module", module: "idees" } },
-    { id: "2.7", num: "2.7", title: "Challenges en cours" },
+    { id: "2.7", num: "2.7", title: "Challenges en cours", action: { type: "module", module: "challenges" } },
     { id: "2.8", num: "2.8", title: "Mes débuts chez WallSwiss" },
   ]},
   { id: "3", num: "3", title: "Procédures", icon: "CheckSquare", children: [
@@ -152,6 +154,9 @@ const WS_MENU = [
     { id: "5.15", num: "5.15", title: "Formation KYC" },
     { id: "5.16", num: "5.16", title: "Formation Compliance" },
     { id: "5.17", num: "5.17", title: "Intermédiaire non lié – Guide des obligations" },
+    { id: "5.18", num: "5.18", title: "Frontaliers – CMU / LAMal & droit d'option" },
+    { id: "5.19", num: "5.19", title: "Succession & donation" },
+    { id: "5.20", num: "5.20", title: "Prospection & prise de rendez-vous" },
   ]},
   { id: "6", num: "6", title: "Annuaires", icon: "BookContacts", action: { type: "module", module: "annuaire" } },
   { id: "7", num: "7", title: "Hub Marketing", icon: "Target", children: [
@@ -4347,10 +4352,10 @@ const WS_MENU = [
   {
     id: "1", num: "1", title: "Logiciels WallSwiss", icon: "Layers",
     children: [
-      { id: "1.1", num: "1.1", title: "CRM – Salesforce", action: { type: "url", url: "https://wallswiss.my.salesforce.com/" } },
+      { id: "1.1", num: "1.1", title: "CRM – Salesforce", action: { type: "url", url: "https://wallswiss.my.salesforce.com/?ec=302&startURL=%2Fvisualforce%2Fsession%3Furl%3Dhttps%253A%252F%252Fwallswiss.lightning.force.com%252Flightning%252Fpage%252Fchatter" } },
       { id: "1.2", num: "1.2", title: "Générateur de rapport financier", action: { type: "module", module: "rapport" } },
       { id: "1.3", num: "1.3", title: "Générateur de planification retraite", action: { type: "module", module: "retraiteR1" } },
-      { id: "1.4", num: "1.4", title: "Mon agenda – Calendly" },
+      { id: "1.4", num: "1.4", title: "Mon agenda – Calendly", action: { type: "url", url: "https://calendly.com/" } },
       { id: "1.5", num: "1.5", title: "Simulateur Quasi-Résident / TOU", action: { type: "module", module: "quasiResident" } },
       { id: "1.6", num: "1.6", title: "Simulateur d'intérêts composés", action: { type: "module", module: "interetsComposes" } },
       { id: "1.7", num: "1.7", title: "Générateur de factures" },
@@ -4375,12 +4380,12 @@ const WS_MENU = [
       {
         id: "2.5", num: "2.5", title: "Événements",
         children: [
-          { id: "2.5.1", num: "2.5.1", title: "Sondages" },
+          { id: "2.5.1", num: "2.5.1", title: "Sondages", action: { type: "module", module: "sondages" } },
           { id: "2.5.2", num: "2.5.2", title: "Photos : événements WallSwiss" },
         ]
       },
       { id: "2.6", num: "2.6", title: "Boîte à idées : ensemble, nous allons plus loin !", action: { type: "module", module: "idees" } },
-      { id: "2.7", num: "2.7", title: "Challenges en cours" },
+      { id: "2.7", num: "2.7", title: "Challenges en cours", action: { type: "module", module: "challenges" } },
       { id: "2.8", num: "2.8", title: "Mes débuts chez WallSwiss" },
     ]
   },
@@ -4486,6 +4491,9 @@ const WS_MENU = [
       { id: "5.15", num: "5.15", title: "Formation KYC" },
       { id: "5.16", num: "5.16", title: "Formation Compliance" },
       { id: "5.17", num: "5.17", title: "Intermédiaire non lié – Guide des obligations" },
+      { id: "5.18", num: "5.18", title: "Frontaliers – CMU / LAMal & droit d'option" },
+      { id: "5.19", num: "5.19", title: "Succession & donation" },
+      { id: "5.20", num: "5.20", title: "Prospection & prise de rendez-vous" },
     ]
   },
   { id: "6", num: "6", title: "Annuaires", icon: "BookContacts", action: { type: "module", module: "annuaire" } },
@@ -4512,10 +4520,42 @@ const WS_MENU = [
    ▸ Sécurité : AUCUN mot de passe n'est stocké ici (voir gestionnaire dédié).
    ═══════════════════════════════════════════════════════════════════════════ */
 const WS_CONTENT = {
+  // ── 5.18 · Frontaliers — CMU / LAMal & droit d'option ──
+  "5.18": { tag: "Académie · Frontaliers", blocks: [
+    ["p", "Le travailleur frontalier est en principe soumis à l'assurance maladie suisse (LAMal). Le droit d'option lui permet de choisir, une seule fois, d'être couvert par le régime français à la place. C'est l'un des tout premiers sujets d'un rendez-vous frontalier, et le choix engage le client pour la durée de son activité en Suisse."],
+    ["h", "Le droit d'option en pratique"],
+    ["li", ["Le choix s'exerce dans les trois mois qui suivent la prise d'emploi en Suisse, auprès de l'autorité cantonale compétente.", "Il est en principe irrévocable : on ne repasse pas librement d'un régime à l'autre.", "Certains changements de situation peuvent rouvrir le droit (nouvelle prise d'emploi, changement de statut, situation familiale) : à vérifier au cas par cas.", "Sans démarche dans le délai, l'affiliation à la LAMal s'applique d'office."]],
+    ["h", "Les régimes en présence"],
+    ["kv", [["LAMal (Suisse)", "Prime individuelle par personne, indépendante du revenu, avec franchise et quote-part. Chaque membre du foyer paie sa prime."], ["CMU frontalière (France)", "Cotisation assise sur le revenu fiscal de référence après abattement, qui couvre le foyer. Complémentaire santé à souscrire séparément."], ["Assurance privée", "Régime résiduel, très restreint pour les nouveaux frontaliers. À n'envisager qu'après vérification de l'éligibilité."]]],
+    ["warn", "Les taux, abattements et primes évoluent chaque année. Utiliser l'outil de calcul ci-dessous plutôt qu'un chiffre mémorisé, et dater toute simulation remise au client."],
+    ["h", "Le réflexe conseil"],
+    ["li", ["Comparer le coût réel pour le foyer complet, pas seulement pour le frontalier : c'est là que l'écart se creuse.", "Intégrer le conjoint et les enfants dans la comparaison.", "Rappeler que la CMU ne couvre pas tout et que la complémentaire reste à prévoir.", "Documenter le conseil et le régime retenu dans Salesforce."]],
+    ["h", "Erreurs les plus fréquentes"],
+    ["li", ["Laisser passer le délai et subir l'affiliation d'office.", "Comparer une prime LAMal individuelle à une cotisation CMU qui couvre déjà tout le foyer.", "Omettre de déclarer les revenus suisses à l'URSSAF, ce qui déclenche une régularisation.", "Ne pas anticiper l'attestation de départ de Suisse en fin de mission."]],
+    ["info", "Une erreur de cotisation CMU se corrige par courrier type : le modèle est dans les documents ci-dessous, avec le formulaire de choix et le calculateur de cotisations."],
+  ]},
+  // ── 5.19 · Succession & donation ──
+  "5.19": { tag: "Académie · Succession", blocks: [
+    ["p", "Module complet sur la transmission : dévolution légale, réserve héréditaire et quotité disponible, pacte successoral, donation, et fiscalité de la transmission. C'est le sujet qui ouvre le plus naturellement sur l'assurance vie et la prévoyance."],
+    ["h", "Le parcours conseillé"],
+    ["steps", ["Poser les objectifs du client (protéger le conjoint, avantager un enfant, transmettre une entreprise).", "Dérouler la présentation succession pour poser le cadre juridique.", "Travailler les cas 2 et 3, puis le cas pratique, avec les corrigés fournis.", "Utiliser le script d'entretien comme trame en rendez-vous réel."]],
+    ["h", "Points de vigilance"],
+    ["li", ["Distinguer clairement ce qui relève du droit suisse et du droit français.", "Vérifier la loi applicable pour un client franco-suisse avant toute recommandation.", "Une donation peut être rapportable : le modèle d'acte est fourni.", "Le pacte successoral suisse n'a pas d'équivalent direct en droit français."]],
+    ["warn", "Rien de ce module ne remplace l'avis d'un notaire. Le rôle du conseiller est de détecter le besoin, de cadrer et d'orienter, pas de rédiger l'acte."],
+  ]},
+  // ── 5.20 · Prospection & prise de rendez-vous ──
+  "5.20": { tag: "Académie · Prospection", blocks: [
+    ["p", "Tout ce qui se passe avant l'entretien : constituer sa liste, décrocher, passer l'objection de barrage, fixer le rendez-vous et le sécuriser jusqu'à ce qu'il ait lieu."],
+    ["h", "La séquence"],
+    ["steps", ["Construire et qualifier la liste d'appels avant de décrocher le téléphone.", "Dérouler l'accroche : qui je suis, pourquoi j'appelle, ce que je propose, en moins de trente secondes.", "Traiter l'objection sans argumenter le produit : l'objectif de l'appel est le rendez-vous, rien d'autre.", "Proposer deux créneaux fermés plutôt qu'une disponibilité ouverte.", "Confirmer immédiatement par écrit, puis rappeler la veille."]],
+    ["h", "Les repères"],
+    ["li", ["Un volume d'appels régulier bat un pic d'activité ponctuel.", "Le taux de transformation se suit dans les trackers d'activité (Mon espace › 2.1).", "La recommandation client reste la source de rendez-vous la mieux transformée : voir Hub Marketing › 7.2.", "Les objections récurrentes sont listées dans Académie › 5.2.4."]],
+    ["info", "Les fiches éclair ci-dessous sont volontairement courtes : à relire avant une session d'appels."],
+  ]},
   // ── 2.2 · Rémunération / commissions ──
   "2.2": { tag: "Rémunération", blocks: [
     ["p", "La rémunération WallSwiss combine un fixe (CDI) et une part variable selon un barème par produit. Deux simulateurs Excel officiels permettent de projeter la commission avant chaque souscription."],
-    ["docs", ["Simulateur commissions INVESTISSEMENT - WS.xlsx", "Simulateur commissions ASSURANCE - WS.xlsx"]],
+    ["info", "Documents de référence pas encore déposés dans l'application : Simulateur commissions INVESTISSEMENT - WS.xlsx, Simulateur commissions ASSURANCE - WS.xlsx. À demander à la direction."],
     ["h", "Catégories de commissionnement"],
     ["kv", [["Assurance", "3ᵉ pilier · PER · Assurance vie France · Libre passage"], ["Investissement", "Cryptomonnaie · Compte-titres"]]],
     ["h", "SwissLife — Assurance vie & capitalisation (France)"],
@@ -4532,11 +4572,11 @@ const WS_CONTENT = {
     ["p", "Espace évolutif qui reflète la culture WallSwiss : un environnement de travail organisé, respectueux et collaboratif."],
     ["h", "Relations sociales"],
     ["p", "Chacun contribue à un cadre respectueux. Toute discrimination (âge, orientation sexuelle, sexe, origine, religion, handicap) est interdite. Bon sens de rigueur."],
-    ["docs", ["seco_personlichkeit_f_web.pdf (lecture obligatoire)"]],
+    ["info", "Documents de référence pas encore déposés dans l'application : seco_personlichkeit_f_web.pdf. À demander à la direction."],
     ["h", "Bureaux & concentration"],
     ["p", "Espace semi-flexible ; les équipes sont regroupées pour mieux collaborer. La concentration prime : casque sur les oreilles = ne pas déranger."],
     ["h", "Règles de fonctionnement & sanctions"],
-    ["docs", ["WS - Règles de fonctionnement et sanctions.pdf", "WS - Charte d'entreprise.docx", "WS - Règlement Intérieur.docx", "WS - Conditions pour le versement d'une commission.pdf"]],
+    ["info", "Documents de référence pas encore déposés dans l'application : WS - Règles de fonctionnement et sanctions.pdf, WS - Charte d'entreprise.docx, WS - Règlement Intérieur.docx, WS - Conditions pour le versement d'une commission.pdf. À demander à la direction."],
     ["h", "Horaires & télétravail"],
     ["li", ["4 jours de présentiel + 1 jour de télétravail (en option).", "Jour de télétravail à faire approuver par le manager ou le directeur.", "Plage horaire : 10h00 – 18h00."]],
     ["h", "Repas du soir"],
@@ -4576,27 +4616,43 @@ const WS_CONTENT = {
   "3.5.1": { tag: "Fiche partenaire · Banque", blocks: [
     ["p", "Banque / dépôt-titres partenaire. Suivi des portefeuilles et protocole de trading."],
     ["info", "Consulter les références de portefeuilles au moins 1×/semaine et les mettre en favoris."],
-    ["docs", ["Nouveau Protocole de trading 13.10.2025.pdf"]],
+    ["info", "Documents de référence pas encore déposés dans l'application : Nouveau Protocole de trading 13.10.2025.pdf. À demander à la direction."],
     ["h", "Portefeuilles modèles"],
     ["li", ["PARfinance : Dynamique · Équilibre · Conservateur.", "NS Partners : Swiss Excellence DPM (CHF) · DGC Stock Selection A EUR · DGC Energy DPM EUR (écologique)."]],
   ]},
   // ── 3.6.1 / 3.6.2 / 3.6.3 · Libre passage LPP ──
   "3.6.1": { tag: "Fiche partenaire · Libre passage", blocks: [
-    ["p", "Fondation de libre passage LPP partenaire — Lemania."],
-    ["li", ["Solutions de 2ᵉ pilier / libre passage.", "Stratégies suivies : NS Golden Age Balanced, LPFX Mirabaud, Mirabaud Prévention."]],
+    ["p", "Lemania est notre fondation de libre passage de référence pour le placement des avoirs du 2e pilier après une sortie de caisse : fin de contrat, départ à l'étranger, passage à l'indépendance."],
+    ["h", "Quand l'utiliser"],
+    ["li", ["Le client quitte son employeur sans reprise immédiate d'activité en Suisse.", "Il souhaite investir ses avoirs plutôt que de les laisser sur un compte non rémunéré.", "Il prépare un départ définitif de Suisse et un déblocage à terme."]],
+    ["h", "Stratégies suivies"],
+    ["li", ["NS Golden Age Balanced.", "LPFX Mirabaud.", "Mirabaud Prévention."]],
+    ["h", "Ouverture et transfert"],
+    ["steps", ["Obtenir le décompte de sortie de la caisse de pension actuelle.", "Ouvrir le compte de libre passage et choisir la stratégie selon l'horizon et le profil de risque.", "Faire signer l'ordre de transfert et le transmettre à l'ancienne caisse.", "Suivre l'arrivée des fonds et confirmer au client, puis enregistrer l'opération dans Salesforce."]],
+    ["info", "Le formulaire de déblocage Lemania est rattaché à cette fiche, pour les cas de départ définitif de Suisse ou d'accession à la propriété."],
   ]},
   "3.6.2": { tag: "Fiche partenaire · Libre passage", blocks: [
-    ["p", "Fondation de libre passage LPP partenaire — Liberty."],
-    ["li", ["Solutions de 2ᵉ pilier / libre passage."]],
+    ["p", "Liberty est une fondation de libre passage et de prévoyance partenaire, utilisée en alternative à Lemania selon la stratégie de placement recherchée et les frais applicables."],
+    ["h", "Quand l'utiliser"],
+    ["li", ["Recherche d'une gamme de stratégies différente de celle de Lemania.", "Client déjà titulaire d'un compte Liberty, pour regrouper ses avoirs.", "Solution de 3e pilier lié adossée à la même fondation."]],
+    ["h", "Ouverture et transfert"],
+    ["steps", ["Obtenir le décompte de sortie de la caisse de pension.", "Suivre le protocole 2e pilier rattaché ci-dessous, formulaire par formulaire.", "Faire signer l'accord de transfert des avoirs de prévoyance.", "Transmettre à l'ancienne caisse et suivre l'arrivée des fonds."]],
+    ["info", "Le protocole 2e pilier et l'accord de transfert sont rattachés à cette fiche."],
   ]},
   "3.6.3": { tag: "Fiche partenaire · Libre passage", blocks: [
-    ["p", "Fondation de prévoyance / libre passage LPP partenaire — Pictet."],
-    ["li", ["Stratégies LPP suivies : Pictet LPP 40, Pictet LPP 60."]],
+    ["p", "Pictet couvre à la fois le 2e pilier en libre passage et le 3e pilier lié, avec des stratégies de placement institutionnelles et une signature bancaire reconnue."],
+    ["h", "Stratégies LPP suivies"],
+    ["li", ["Pictet LPP 40, pour un profil équilibré.", "Pictet LPP 60, pour un horizon long et une tolérance au risque plus élevée."]],
+    ["h", "Quand l'utiliser"],
+    ["li", ["Client attaché à une marque bancaire établie.", "Encours significatif justifiant une gestion institutionnelle.", "Besoin de couvrir 2e et 3e pilier auprès du même établissement."]],
+    ["h", "Ouverture et transfert"],
+    ["steps", ["Déterminer le pilier concerné, 2e ou 3e, et la stratégie retenue.", "Dérouler le protocole correspondant, rattaché ci-dessous.", "Réunir les pièces et le décompte de sortie s'il s'agit d'un libre passage.", "Confirmer l'arrivée des fonds au client et enregistrer l'opération."]],
+    ["info", "Les deux protocoles Pictet, 2e et 3e pilier, sont rattachés à cette fiche."],
   ]},
   // ── 3.7.1.1 · Check-list + mail ──
   "3.7.1.1": { tag: "Fiscalité · Outils", blocks: [
     ["p", "Check-lists documentaires et e-mails types pour les déclarations fiscales."],
-    ["docs", ["CLIENT - Check List 2026 RS.WS.pdf", "CLIENT - Déclarations fiscales QR.pdf", "Tarifs déclarations fiscales WS - Permis G, B, L.pdf"]],
+    ["info", "Documents de référence pas encore déposés dans l'application : CLIENT - Check List 2026 RS.WS.pdf, CLIENT - Déclarations fiscales QR.pdf, Tarifs déclarations fiscales WS - Permis G, B, L.pdf. À demander à la direction."],
     ["h", "E-mail post-rendez-vous (principe)"],
     ["p", "Demander systématiquement : IBAN suisse (CH…), copie du permis de travail ou pièce d'identité. Toujours une action claire demandée, formulation cordiale, relances cadrées."],
   ]},
@@ -4651,7 +4707,7 @@ const WS_CONTENT = {
   "1.10": { tag: "Logiciels & accès", blocks: [
     ["p", "Accès rapides aux outils WallSwiss. Les identifiants ne sont jamais stockés dans l'application : utilisez le gestionnaire de mots de passe de l'équipe."],
     ["li", ["CRM — Salesforce.", "Agenda — Calendly.", "Messagerie — Outlook.", "Design — Canva.", "IA — ChatGPT+ · Fathom (comptes-rendus de réunion).", "Création — Adobe.", "Simulateurs — Impôt à la source · Intérêts composés."]],
-    ["docs", ["WS - Comment optimiser son Outlook.docx", "WS - PROCESS CALENDLY.docx"]],
+    ["info", "Documents de référence pas encore déposés dans l'application : WS - Comment optimiser son Outlook.docx, WS - PROCESS CALENDLY.docx. À demander à la direction."],
     ["warn", "Sécurité : ne jamais partager de mot de passe en clair (chat, e-mail, document). Passer par un gestionnaire (1Password / Bitwarden)."],
   ]},
   // ── 3.8 · Taxe annuelle FINMA (AFA) ──
@@ -4680,14 +4736,14 @@ const WS_CONTENT = {
     ["p", "Calendly gère la prise de rendez-vous en ligne : le prospect choisit un créneau, le RDV se synchronise avec Outlook et une confirmation part automatiquement."],
     ["h", "Bonnes pratiques"],
     ["li", ["Un type d'événement par usage (R1 découverte 45 min, R2 conseil 60 min, point fiscal 30 min).", "Prévoir un buffer entre deux rendez-vous et des plages de disponibilité réalistes.", "Synchroniser Calendly avec Outlook pour éviter les doubles réservations.", "Personnaliser le lien et le message de confirmation aux couleurs WallSwiss."]],
-    ["docs", ["WS - PROCESS CALENDLY.docx"]],
+    ["info", "Documents de référence pas encore déposés dans l'application : WS - PROCESS CALENDLY.docx. À demander à la direction."],
   ]},
   "1.5": { tag: "Outil · Fiscalité", blocks: [
     ["p", "Outil Excel pour comparer les trois traitements fiscaux du frontalier (impôt à la source, DRIS, quasi-résident TOU) et vérifier l'éligibilité avant tout dépôt."],
     ["h", "Quand l'utiliser"],
     ["li", ["Systématiquement avant de proposer une déclaration TOU.", "Pour vérifier la règle des 90 % (revenus mondiaux imposables en Suisse).", "Pour objectiver le gain ou la perte et ne jamais promettre un remboursement."]],
     ["info", "Procédure détaillée : Procédures › Fiscalité › Résident – TOU."],
-    ["docs", ["OUTIL - Rectification à la source - WallSwiss.xlsx"]],
+    ["info", "Documents de référence pas encore déposés dans l'application : OUTIL - Rectification à la source - WallSwiss.xlsx. À demander à la direction."],
   ]},
   "1.6": { tag: "Outil · Investissement", blocks: [
     ["p", "Projette la croissance d'un capital dans le temps, avec versements réguliers, taux de rendement et durée — l'outil pédagogique clé pour illustrer l'effet long terme."],
@@ -4697,7 +4753,7 @@ const WS_CONTENT = {
   "1.7": { tag: "Outil · Facturation", blocks: [
     ["p", "Produit les factures d'honoraires WallSwiss (gestion de fortune, fiscalité, conseil) à la charte du cabinet, avec le bulletin de versement QR suisse intégré."],
     ["li", ["Sélectionner la prestation et le montant, puis générer le PDF.", "Le bulletin QR reste conforme (IBAN QR, référence).", "Numérotation et archivage selon la procédure comptable."]],
-    ["docs", ["Facture honoraires gestion de fortune - WS", "Guide de paiement des primes 3P"]],
+    ["info", "Documents de référence pas encore déposés dans l'application : Facture honoraires gestion de fortune - WS, Guide de paiement des primes 3P. À demander à la direction."],
   ]},
   "1.8.1": { tag: "Conformité · Incident", blocks: [
     ["p", "Tout événement touchant la sécurité informatique : phishing, e-mail frauduleux, perte ou vol d'appareil, accès non autorisé, suspicion de fuite de données."],
@@ -4716,9 +4772,14 @@ const WS_CONTENT = {
     ["warn", "Ne jamais alerter le client d'un soupçon (interdiction du « tipping-off »)."],
     ["steps", ["Documenter les faits et les indices objectifs.", "Alerter immédiatement le responsable conformité / la direction.", "Ne pas exécuter d'opération douteuse sans validation.", "La communication au MROS relève de la direction, pas du conseiller."]],
   ]},
-  "1.8.4": { tag: "RH · Confidentiel", blocks: [
-    ["p", "Difficulté relationnelle, conflit, harcèlement, mal-être ou situation personnelle impactant le travail."],
-    ["li", ["Échange confidentiel possible avec la direction ou le référent RH.", "Aucune situation n'est traitée au détriment de la personne qui signale.", "Contact : contact@wallswiss.ch (objet « RH – confidentiel »)."]],
+  "1.8.4": { tag: "Signalement · RH", blocks: [
+    ["p", "Toute difficulté liée aux conditions de travail, aux relations dans l'équipe ou au contrat se signale par ce canal. Le signalement est traité par la direction, en dehors de la ligne hiérarchique directe si celle-ci est concernée."],
+    ["h", "Ce qui relève de ce canal"],
+    ["li", ["Conditions de travail : charge, horaires, matériel, poste de travail.", "Relations dans l'équipe : comportement inapproprié, propos déplacés, harcèlement.", "Contrat : rémunération, congés, absences prolongées, arrêt maladie.", "Difficulté personnelle ayant un impact sur le travail."]],
+    ["h", "Comment signaler"],
+    ["steps", ["Ouvrir Mon espace personnel › Mes demandes et choisir la catégorie RH.", "Décrire les faits, les dates et les personnes concernées, sans interprétation.", "Joindre les éléments écrits utiles : échanges, plannings, documents.", "Envoyer. La demande est enregistrée et notifiée immédiatement à la direction."]],
+    ["info", "Un accusé de réception est adressé. Si la situation est urgente ou si la personne à qui vous vous adressez habituellement est elle-même concernée, écrivez directement à un associé."],
+    ["warn", "Un signalement fait de bonne foi ne peut en aucun cas être retenu contre son auteur."],
   ]},
 
   // ── Section 2 · Mon espace personnel ──
@@ -4728,15 +4789,27 @@ const WS_CONTENT = {
     ["li", ["Activité : appels, prises de RDV, R1/R2, devis, souscriptions (taux de transformation).", "Habitudes : routines quotidiennes via le Habit Tracker.", "Objectifs : revue hebdomadaire de ses chiffres et axes de progrès."]],
   ]},
   "2.5.1": { tag: "Vie d'équipe", blocks: [
-    ["p", "Espace des sondages internes : donnez votre avis sur l'organisation, les événements et les outils. Vos retours orientent les décisions de l'équipe."],
+    ["p", "Les sondages internes servent à trancher rapidement les sujets qui concernent tout le monde : organisation, outils, événements, formats de réunion. Un sondage ouvert vaut mieux qu'une décision prise sans consultation."],
+    ["h", "Ce qu'on met au vote"],
+    ["li", ["Choix d'un outil ou d'un fournisseur qui impacte le quotidien de l'équipe.", "Dates et formats des événements internes.", "Organisation du bureau, horaires, jours de présence.", "Priorités de formation pour le trimestre."]],
+    ["h", "Les règles"],
+    ["li", ["Un sondage à la fois, avec une date de clôture annoncée.", "Réponse anonyme, un vote par personne.", "Les résultats sont publiés à tous, y compris quand ils ne vont pas dans le sens proposé.", "Une décision contraire au résultat doit être expliquée."]],
+    ["info", "Le module de vote en direct est en cours d'intégration, sur le même principe que la Boîte à idées. En attendant, les sondages sont diffusés par e-mail et les résultats partagés en réunion d'équipe."],
   ]},
   "2.5.2": { tag: "Vie d'équipe", blocks: [
-    ["p", "La vie WallSwiss en images : séminaires, soirées et temps forts de l'équipe (séminaire Courchevel, événements SwissLife, séminaires partenaires…)."],
-    ["info", "Galerie alimentée après chaque événement."],
+    ["p", "Les photos des événements WallSwiss : séminaires, formations, soirées d'équipe, remises de challenge. Elles servent aussi de matière pour les publications LinkedIn du cabinet."],
+    ["h", "Ce qu'on archive"],
+    ["li", ["Séminaires et journées de formation.", "Événements d'équipe et célébrations.", "Remises de challenge et moments forts de l'année.", "Photos de bureau utilisables en communication."]],
+    ["warn", "Droit à l'image : ne publier que des photos où les personnes présentes acceptent d'apparaître. Vérifier systématiquement qu'aucun document client, écran ou dossier nominatif n'est visible en arrière-plan."],
+    ["info", "La galerie est en cours d'intégration. En attendant, transmettez vos photos à la direction pour archivage et publication."],
   ]},
   "2.7": { tag: "Challenges", blocks: [
-    ["p", "Les challenges commerciaux et marketing en cours : objectifs, règles, classement et récompenses."],
-    ["li", ["Challenge marketing : mise en avant des meilleures campagnes et contenus.", "Suivi des performances et du classement de l'équipe.", "Récompenses attribuées selon les résultats."]],
+    ["p", "Les challenges rythment le trimestre et récompensent l'activité réelle, pas seulement le chiffre signé. Chaque challenge annonce sa période, sa règle de comptage et sa récompense avant de démarrer."],
+    ["h", "Le format"],
+    ["li", ["Une période annoncée à l'avance, avec date de début et de fin.", "Une règle de comptage unique et vérifiable, connue de tous dès le lancement.", "Un classement publié à intervalle régulier, sans exception.", "Une récompense annoncée avant le départ, jamais décidée après coup."]],
+    ["h", "Ce qui est compté"],
+    ["li", ["Activité amont : appels, rendez-vous fixés, rendez-vous tenus.", "Transformation : R1 vers R2, R2 vers souscription.", "Production : primes et encours selon le challenge.", "Contribution collective : recommandations apportées, contenus produits."]],
+    ["info", "Le classement en direct sera alimenté par les trackers d'activité de Mon espace personnel › 2.1. En attendant, il est publié chaque début de semaine."],
   ]},
 
   // ── Section 3 · Procédures (investissement, retraite, partenaires) ──
@@ -4784,17 +4857,28 @@ const WS_CONTENT = {
     ["li", ["Produits de prévoyance 3e pilier et rentes garanties.", "Alternative aux compagnies pour une clientèle attachée à un acteur local."]],
     ["info", "Coordonnées et supports : à compléter dans la fiche partenaire."],
   ]},
-  "3.4.3": { tag: "Prévoyance", blocks: [
-    ["p", "Panorama des autres compagnies de prévoyance individuelle mobilisables selon le besoin client."],
-    ["li", ["Comparer garanties, frais, souplesse des versements et qualité des fonds.", "Choisir selon le profil et l'objectif (épargne, prévoyance décès/invalidité, fiscalité).", "Documenter le comparatif remis au client (devoir de conseil)."]],
+  "3.4.3": { tag: "Prévoyance individuelle", blocks: [
+    ["p", "Au-delà de Liechtenstein Life et de la Rente Genevoise, d'autres compagnies peuvent être mobilisées quand la situation du client ne rentre pas dans les solutions habituelles : profil médical, montant, exigence de garantie particulière."],
+    ["h", "Grille de sélection"],
+    ["kv", [["Type de contrat", "3a lié ou 3b libre, mixte, épargne pure ou pur risque"], ["Frais", "Frais d'entrée, frais sur versement, frais de gestion annuels"], ["Garanties", "Décès, incapacité de gain, libération du paiement des primes"], ["Souplesse", "Suspension des versements, modification, rachat partiel, mise en réduction"], ["Traitement", "Délai d'acceptation, exigences médicales, qualité du service courtage"]]],
+    ["h", "La règle interne"],
+    ["li", ["Toujours comparer au moins deux solutions et conserver la comparaison au dossier.", "Documenter dans Salesforce la raison du choix, pas seulement le choix.", "Vérifier que la compagnie accepte le profil du client avant de présenter une offre."]],
+    ["warn", "Toute compagnie hors partenaires référencés doit être validée par la direction avant la remise d'une offre au client."],
   ]},
   "3.5.2": { tag: "Fiche · Banque", blocks: [
-    ["p", "Bank zweiplus : banque partenaire de dépôt-titres, alternative à Swissquote selon les besoins du client."],
-    ["info", "Process d'ouverture et coordonnées : à compléter dans la fiche partenaire."],
+    ["p", "Bank zweiplus est la banque dépositaire alternative à Swissquote. Elle est privilégiée quand le dossier demande un traitement plus encadré ou quand le profil du client ne passe pas le processus Swissquote."],
+    ["h", "Quand la choisir plutôt que Swissquote"],
+    ["li", ["Dossier avec une composante cross-border sensible.", "Client peu à l'aise avec une relation entièrement en ligne.", "Besoin d'un interlocuteur de back-office identifié.", "Contraintes de nationalité ou de résidence qui bloquent ailleurs."]],
+    ["h", "Ouverture"],
+    ["steps", ["Qualifier le client et son profil de risque avant toute démarche.", "Suivre le protocole d'ouverture pas à pas, disponible ci-dessous.", "Réunir les pièces d'identité, justificatifs de domicile et documentation d'origine des fonds.", "Contrôler le dossier avant envoi : un dossier incomplet rallonge le délai de plusieurs semaines.", "Enregistrer l'ouverture et la banque retenue dans Salesforce."]],
+    ["info", "Le protocole complet est rattaché à cette fiche : il détaille chaque formulaire et l'ordre d'envoi."],
   ]},
   "3.5.3": { tag: "Banque", blocks: [
-    ["p", "Autres banques dépositaires mobilisables selon la situation (résidence, devise, type d'actifs)."],
-    ["li", ["Critères : frais de dépôt, accès aux marchés, service B2B, exigences KYC.", "Documenter le choix de la banque dépositaire dans le dossier client."]],
+    ["p", "Le choix de la banque dépositaire n'est pas neutre : il détermine les frais supportés par le client, les marchés accessibles et la lourdeur administrative du dossier. Il doit être argumenté, pas subi."],
+    ["h", "Critères de choix"],
+    ["kv", [["Frais", "Droits de garde, frais de transaction, frais de change, frais de tenue de compte"], ["Marchés", "Places accessibles, univers de fonds, produits structurés, ETF"], ["Devises", "Comptes multidevises, coût du change, rapatriement"], ["Cross-border", "Acceptation du pays de résidence, contraintes de nationalité, reporting fiscal"], ["Entrée", "Ticket minimum, exigences KYC, délai d'ouverture"]]],
+    ["h", "La règle interne"],
+    ["li", ["Comparer au moins deux dépositaires dès que l'encours dépasse un montant significatif.", "Documenter le choix de la banque dans le dossier client, avec le critère décisif.", "Revoir le choix si la situation du client change : déménagement, changement de nationalité, forte hausse de l'encours."]],
   ]},
   "3.6.4": { tag: "Fiche · Libre passage", blocks: [
     ["p", "J. Safra Sarasin : fondation de libre passage / prévoyance partenaire pour le placement des avoirs du 2e pilier."],
@@ -4808,8 +4892,10 @@ const WS_CONTENT = {
     ["li", ["Cadre légal (LSA), produits d'assurance, devoirs d'information et de conseil.", "Examen de (re)certification et inscription au registre myAFA.", "Recertification annuelle liée à la taxe AFA (voir Procédures › Taxe annuelle FINMA)."]],
   ]},
   "5.2.5": { tag: "Académie", blocks: [
-    ["p", "Bibliothèque vidéo de formation commerciale : entretien, objections, produits."],
-    ["info", "Accéder aux ebooks et supports : Académie › Bibliothèque de formation."],
+    ["p", "Espace destiné aux vidéos de formation commerciale et produit : entretien, traitement des objections, présentation des solutions, cas clients commentés."],
+    ["h", "Ce qui est prévu"],
+    ["li", ["Entretien commercial : R1 découverte, R2 conseil, closing.", "Objections : les plus fréquentes, traitées en situation.", "Produits : 3e pilier, PER, assurance vie, libre passage.", "Cas clients anonymisés et débriefs d'équipe."]],
+    ["info", "Aucune vidéo n'est encore publiée. En attendant, l'équivalent écrit est disponible dans Académie › Bibliothèque de formation, avec les fiches éclair et les argumentaires."],
   ]},
   "5.3": { tag: "Académie · France", blocks: [
     ["p", "Module de formation sur le Plan d'Épargne Retraite (PER) français."],
@@ -4836,36 +4922,66 @@ const WS_CONTENT = {
     ["li", ["3a : déductible fiscalement dans la limite du plafond annuel en vigueur.", "3b : épargne libre, sans plafond mais sans déduction.", "Usage : combler les lacunes de prévoyance et optimiser l'impôt."]],
   ]},
   "5.9": { tag: "Académie · Suisse", blocks: [
-    ["p", "Module sur la création d'entreprise en Suisse et ses enjeux de prévoyance."],
-    ["li", ["Formes juridiques : raison individuelle, Sàrl, SA.", "Prévoyance de l'indépendant : affiliation LPP, 3a « grand pilier ».", "Enjeux fiscaux et sociaux au démarrage."]],
+    ["p", "La création d'entreprise en Suisse change en profondeur la situation de prévoyance du client : il sort du salariat, donc du 2e pilier obligatoire, et ses possibilités de 3e pilier changent. C'est un moment charnière à ne pas manquer."],
+    ["h", "Les formes juridiques"],
+    ["kv", [["Raison individuelle", "Pas de capital minimum, responsabilité illimitée sur le patrimoine privé, formalités légères"], ["Sàrl", "Capital minimum requis, responsabilité limitée, associés inscrits au registre du commerce"], ["SA", "Capital minimum plus élevé, actionnariat non public, structure privilégiée au-delà d'une certaine taille"]]],
+    ["h", "L'impact prévoyance"],
+    ["li", ["L'indépendant en raison individuelle n'est pas soumis au 2e pilier obligatoire : il peut s'affilier volontairement.", "Sans 2e pilier, il accède au 3e pilier dit grand pilier, avec un plafond de déduction nettement supérieur au plafond salarié.", "Le dirigeant de Sàrl ou de SA est salarié de sa propre société : il reste soumis au 2e pilier et au plafond 3a salarié.", "Le choix de la forme juridique a donc un effet fiscal direct via la prévoyance."]],
+    ["h", "Le réflexe conseil"],
+    ["li", ["Poser la question de la forme juridique avant de parler produit.", "Chiffrer l'économie d'impôt du grand pilier pour un indépendant.", "Anticiper la perte de couverture décès et invalidité liée à la sortie du 2e pilier obligatoire.", "Prévoir la perte de gain maladie, souvent oubliée par les nouveaux indépendants."]],
+    ["warn", "Les plafonds de déduction, les seuils d'entrée LPP et les capitaux minimums sont révisés régulièrement. Vérifier les montants de l'année en cours avant toute simulation remise au client, et dater le document."],
   ]},
   "5.10": { tag: "Académie · France", blocks: [
-    ["p", "Module sur la création d'entreprise en France."],
-    ["li", ["Statuts : micro-entreprise, EI, EURL, SASU / SAS.", "Régimes social et fiscal selon le statut.", "Articulation avec l'épargne retraite (PER) et la protection sociale du dirigeant."]],
+    ["p", "Créer une structure en France concerne beaucoup de frontaliers : activité accessoire, transition professionnelle, ou projet du conjoint resté salarié en France. Le sujet ouvre naturellement sur le PER et la protection du dirigeant."],
+    ["h", "Les statuts"],
+    ["kv", [["Micro-entreprise", "Formalités minimales, plafond de chiffre d'affaires, charges calculées sur le chiffre d'affaires, pas de déduction de frais réels"], ["Entreprise individuelle", "Régime réel, frais déductibles, responsabilité désormais limitée au patrimoine professionnel"], ["EURL", "Structure unipersonnelle, gérant travailleur non salarié, arbitrage entre rémunération et dividendes"], ["SASU", "Président assimilé salarié, protection sociale plus proche du régime général, coût de charges plus élevé"]]],
+    ["h", "L'articulation avec l'épargne retraite"],
+    ["li", ["Le PER individuel reste déductible du revenu imposable dans la limite du plafond épargne retraite.", "Le statut de travailleur non salarié ouvre un plafond de déduction spécifique, plus favorable que le plafond salarié.", "L'intérêt fiscal est proportionnel à la tranche marginale d'imposition : sans TMI élevée, l'argument perd sa force.", "Vérifier la protection sociale du dirigeant : prévoyance et perte de gain sont rarement suffisantes par défaut."]],
+    ["h", "Le cas du frontalier"],
+    ["li", ["Un frontalier qui crée une activité en France cumule des affiliations dans deux pays : vérifier la législation applicable avant tout conseil.", "Une activité accessoire en France peut modifier le régime d'assurance maladie et remettre en cause le droit d'option.", "Toujours croiser ce sujet avec la fiche Frontaliers, CMU et droit d'option."]],
+    ["warn", "Plafonds, seuils de chiffre d'affaires et taux de charges sont révisés chaque année. Sourcer et dater tout chiffre remis au client."],
   ]},
   "5.11": { tag: "Académie · Suisse", blocks: [
     ["p", "Module sur l'AVS, le 1er pilier suisse (prévoyance étatique)."],
     ["li", ["Financement par cotisations ; couverture vieillesse, survivants, invalidité.", "Rente selon les années de cotisation et le revenu déterminant.", "Lacunes de cotisation : identification et rachats possibles."]],
   ]},
   "5.12": { tag: "Académie · France", blocks: [
-    ["p", "Module sur le calcul de la retraite française (utile aux frontaliers ayant cotisé en France)."],
-    ["li", ["Régime général : trimestres, salaire annuel moyen, taux.", "Carrières mixtes France / Suisse : coordination des droits.", "Reconstitution de carrière et relevés à demander."]],
+    ["p", "La plupart des frontaliers ont commencé leur carrière en France. Leur retraite sera donc mixte, avec des droits dans les deux pays. Savoir lire un relevé de carrière français est indispensable pour construire une planification crédible."],
+    ["h", "Comment se calcule la retraite de base"],
+    ["li", ["Les trimestres validés déterminent le taux : c'est la durée d'assurance, tous régimes confondus.", "Le salaire annuel moyen est calculé sur les meilleures années de la carrière.", "Le taux plein s'obtient par la durée requise pour la génération concernée, ou par l'âge du taux plein automatique.", "La retraite complémentaire fonctionne en points, indépendamment de la retraite de base."]],
+    ["h", "Carrière mixte France et Suisse"],
+    ["li", ["Les périodes travaillées en Suisse sont prises en compte pour l'ouverture du droit français, sans donner de trimestres cotisés français.", "Chaque pays verse sa propre pension, calculée selon ses propres règles.", "Le 2e pilier suisse n'a pas d'équivalent français : il se lit à part, en capital ou en rente.", "L'âge de départ peut différer entre les deux pays : le décalage se planifie, il ne se subit pas."]],
+    ["h", "Ce qu'il faut demander au client"],
+    ["li", ["Le relevé de carrière français complet, disponible sur le portail officiel info-retraite.", "L'estimation indicative globale, si le client a l'âge d'y avoir droit.", "Le certificat de prévoyance de sa caisse de pension suisse.", "Le décompte AVS suisse, à demander à la caisse de compensation."]],
+    ["warn", "La durée requise pour le taux plein et l'âge légal varient selon l'année de naissance. Vérifier les paramètres applicables au client avant toute projection."],
   ]},
   "5.14": { tag: "Académie", blocks: [
     ["p", "Module sur les fondamentaux de l'investissement."],
     ["li", ["Profils de risque et allocation d'actifs.", "Diversification, horizon et couple rendement / risque.", "Gamme WallSwiss : compte-titres, Private Equity, assurance vie, mandats."]],
   ]},
   "5.15": { tag: "Académie · Conformité", blocks: [
-    ["p", "Module « Know Your Customer » : connaître son client et documenter la relation."],
-    ["li", ["Identification et vérification (pièce d'identité, domicile, bénéficiaire effectif).", "Profil de risque et adéquation des produits proposés.", "Origine des fonds et vigilance LBA.", "Tenue et mise à jour du dossier client (Salesforce)."]],
+    ["p", "Connaître son client n'est pas une formalité administrative : c'est ce qui rend le conseil défendable. Un dossier KYC complet protège le client, le conseiller et le cabinet."],
+    ["h", "Les cinq blocs du dossier"],
+    ["steps", ["Identité : pièce d'identité en cours de validité, justificatif de domicile récent, situation familiale.", "Statut : nationalité, résidence fiscale, permis de séjour ou de travail, activité professionnelle.", "Situation financière : revenus, patrimoine, charges, capacité d'épargne réelle.", "Origine des fonds : d'où vient l'argent investi, avec la pièce justificative correspondante.", "Objectifs et profil de risque : horizon, tolérance aux pertes, expérience des marchés, besoin de liquidité."]],
+    ["h", "Ce qui déclenche une vigilance renforcée"],
+    ["li", ["Origine des fonds imprécise, ou sans lien avec la situation professionnelle déclarée.", "Montants sans rapport avec les revenus connus.", "Client politiquement exposé, ou bénéficiaire effectif différent du souscripteur.", "Résidence ou nationalité dans un pays à risque, ou montage à plusieurs niveaux."]],
+    ["h", "Mise à jour"],
+    ["li", ["À chaque changement de situation signalé par le client.", "À chaque opération significative, entrée ou sortie.", "Périodiquement, selon le niveau de risque attribué au dossier.", "Tout dans Salesforce : un dossier à jour hors du CRM n'existe pas."]],
+    ["warn", "L'adéquation du produit au profil doit être documentée au moment de la recommandation, pas reconstituée après coup."],
   ]},
   "5.16": { tag: "Académie · Conformité", blocks: [
     ["p", "Module conformité : cadre réglementaire de l'activité (LSFin / LEFin, FINMA)."],
     ["li", ["Devoirs d'information, de diligence et de documentation.", "Transparence sur les rémunérations et gestion des conflits d'intérêts.", "Protection des données et sécurité de l'information."]],
   ]},
   "5.17": { tag: "Académie · Conformité", blocks: [
-    ["p", "Statut d'intermédiaire d'assurance non lié : indépendance et obligations associées."],
-    ["li", ["Inscription au registre et information du client sur le statut.", "Transparence sur les liens et la rémunération.", "Devoir de conseil documenté et comparaison objective des solutions."]],
+    ["p", "WallSwiss agit comme intermédiaire non lié : le cabinet n'est pas rattaché à une compagnie et conseille dans l'intérêt du client. Ce statut ouvre une liberté de recommandation, et impose en contrepartie des obligations précises."],
+    ["h", "Ce que le statut implique"],
+    ["li", ["Inscription au registre des intermédiaires et maintien des conditions d'inscription.", "Information du client sur le statut, avant la conclusion du contrat et par écrit.", "Transparence sur les liens économiques avec les compagnies et sur la rémunération perçue.", "Formation continue et couverture en responsabilité civile professionnelle."]],
+    ["h", "Ce qu'il faut pouvoir prouver"],
+    ["li", ["Que le besoin du client a été identifié avant la recommandation.", "Que plusieurs solutions ont été comparées, avec un critère de choix explicite.", "Que le client a reçu l'information précontractuelle et l'a comprise.", "Que le conseil et sa justification sont conservés au dossier."]],
+    ["h", "Le réflexe quotidien"],
+    ["li", ["Remettre l'information sur le statut dès le premier rendez-vous, pas à la signature.", "Consigner la comparaison des solutions, même quand le choix paraît évident.", "Ne jamais présenter une recommandation comme une obligation réglementaire."]],
+    ["info", "La taxe annuelle de surveillance et les échéances associées sont détaillées dans Procédures › 3.8 Taxe annuelle FINMA."],
   ]},
 
   // ── Section 7 · Hub Marketing ──
@@ -4875,32 +4991,62 @@ const WS_CONTENT = {
     ["li", ["Logo disponible en versions couleur, blanc et monochrome.", "Ne pas déformer le logo ni modifier les couleurs de marque."]],
   ]},
   "7.2": { tag: "Marketing", blocks: [
-    ["p", "Le carnet de recommandation structure la demande de recommandations auprès des clients satisfaits — première source de leads qualifiés."],
-    ["li", ["Demander la recommandation au bon moment (après une prestation réussie).", "Faciliter la mise en relation (message type, introduction).", "Suivre chaque recommandation dans le CRM."]],
+    ["p", "La recommandation est la source de rendez-vous la mieux transformée, et la moins coûteuse. Elle ne se demande pas au hasard : elle se demande au bon moment, avec les bons mots, et elle se suit."],
+    ["h", "Le bon moment"],
+    ["li", ["Juste après une prestation réussie : remise d'un rapport, économie d'impôt obtenue, dossier débloqué.", "Au moment où le client exprime spontanément sa satisfaction.", "Jamais lors du premier rendez-vous, jamais dans le même échange qu'une signature."]],
+    ["h", "La formulation"],
+    ["steps", ["Ancrer : rappeler concrètement ce qui a été fait pour lui.", "Demander : qui, dans son entourage, est dans la même situation qu'il était avant de vous rencontrer.", "Préciser : donner un profil concret plutôt qu'une question ouverte, par exemple un collègue frontalier récemment installé.", "Faciliter : proposer un message d'introduction déjà rédigé, qu'il n'a plus qu'à transférer.", "Remercier et tenir informé : dire au client ce qu'est devenue sa recommandation."]],
+    ["h", "Le suivi"],
+    ["li", ["Chaque recommandation est créée dans Salesforce avec le nom du recommandant.", "Relancer une recommandation non contactée sous une semaine.", "Mesurer le taux de transformation des recommandations séparément des autres sources."]],
+    ["warn", "Ne jamais contacter une personne recommandée sans avoir vérifié que le client l'a prévenue."],
   ]},
   "7.3": { tag: "Marketing", blocks: [
     ["p", "Modèle de lettre officielle à l'en-tête WallSwiss (logo lion, charte oxblood, pied de page légal) pour toute correspondance du cabinet."],
-    ["docs", ["WS - Lettre à en-tête.docx"]],
+    ["info", "Documents de référence pas encore déposés dans l'application : WS - Lettre à en-tête.docx. À demander à la direction."],
   ]},
   "7.4": { tag: "Marketing", blocks: [
-    ["p", "Gabarits de bannières et visuels aux formats réseaux (post 1080×1080, story 1080×1920, bannière LinkedIn 1200×627)."],
-    ["li", ["Respecter la charte (couleurs, typographies, lion).", "Décliner un même message sur plusieurs formats.", "Kit générable via le module social WallSwiss."]],
+    ["p", "Gabarits de bannières et de visuels à la charte WallSwiss, déclinés aux formats des réseaux sociaux. L'objectif est qu'un même message se retrouve à l'identique sur tous les supports."],
+    ["h", "Les formats"],
+    ["kv", [["Post carré", "1080 x 1080 px, pour Instagram et LinkedIn"], ["Story", "1080 x 1920 px, avec la zone de sécurité en haut et en bas"], ["Bannière LinkedIn", "1200 x 627 px pour la publication, format dédié pour la couverture de profil"], ["Carrousel", "1080 x 1080 px par volet, cinq à sept volets"]]],
+    ["h", "Les règles de charte"],
+    ["li", ["Oxblood et champagne en couleurs principales, fond crème ou photo assombrie.", "Titres en Times New Roman, textes en Montserrat.", "Angles vifs, aucun arrondi.", "Emblème lion en signature, jamais déformé ni recoloré."]],
+    ["h", "Comment produire"],
+    ["li", ["Partir d'un sujet unique et le décliner sur les quatre formats plutôt que de créer quatre messages.", "Un visuel, une idée : si le texte ne tient pas, le sujet est trop large.", "Toujours relire les chiffres avant publication : un visuel se partage et ne se corrige plus."]],
+    ["info", "Les gabarits exportés seront déposés dans l'application. En attendant, le kit se génère à la demande auprès du pôle marketing."],
   ]},
   "7.5": { tag: "Marketing", blocks: [
-    ["p", "Configurer WhatsApp Business pour un usage professionnel propre et efficace."],
-    ["li", ["Profil complet : nom, logo, description, horaires, site.", "Réponses rapides et messages d'accueil / d'absence.", "Catalogue de services ; séparer nettement le pro et le perso."]],
+    ["p", "WhatsApp est souvent le canal le plus utilisé par les clients frontaliers. Autant qu'il soit configuré proprement, séparé du personnel, et qu'il donne la même image que le reste du cabinet."],
+    ["h", "Configuration du profil"],
+    ["steps", ["Installer WhatsApp Business sur un numéro dédié, jamais sur le numéro personnel.", "Renseigner le nom professionnel, le logo, la description de l'activité et l'adresse du site.", "Définir les horaires d'ouverture : ils s'affichent au client et cadrent les attentes.", "Créer le message d'accueil, envoyé au premier contact.", "Créer le message d'absence, actif en dehors des horaires."]],
+    ["h", "Les réponses rapides à préparer"],
+    ["li", ["Confirmation de rendez-vous avec adresse et documents à apporter.", "Liste des pièces à fournir pour un dossier fiscal.", "Lien Calendly pour laisser le client choisir son créneau.", "Message de relance après un rendez-vous sans suite."]],
+    ["warn", "Ne jamais échanger de données sensibles ni de documents d'identité par messagerie. Renvoyer vers le canal sécurisé prévu à cet effet."],
   ]},
   "7.6": { tag: "Marketing", blocks: [
-    ["p", "Support de présentation des services WallSwiss (prévoyance, fiscalité, investissement, gestion de fortune) pour les rendez-vous."],
-    ["li", ["Pitch clair de l'offre et de la méthode WallSwiss.", "Adaptable selon le profil du prospect.", "À utiliser en R1 / R2 pour cadrer la relation."]],
+    ["p", "Le support de présentation des services sert à cadrer la relation dès le premier rendez-vous : qui est WallSwiss, ce que le cabinet fait, comment il travaille et comment il est rémunéré."],
+    ["h", "Ce que le support doit faire passer"],
+    ["li", ["Le positionnement du cabinet et son statut d'intermédiaire non lié.", "Les quatre domaines d'intervention : prévoyance, fiscalité, investissement, gestion de fortune.", "La méthode : audit, recommandation écrite, mise en place, suivi.", "La transparence sur la rémunération, abordée par le conseiller et non par le client."]],
+    ["h", "Comment l'utiliser"],
+    ["li", ["En R1, pour poser le cadre avant de découvrir la situation du client.", "Adapter la profondeur au profil : un frontalier salarié et un chef d'entreprise n'ont pas les mêmes attentes.", "Ne jamais dérouler le support de bout en bout : c'est un appui, pas un script.", "Laisser le support au client à la fin du rendez-vous."]],
+    ["info", "La présentation WallSwiss, le plan de conseil et les fondamentaux de l'entretien commercial sont rattachés à cette fiche."],
   ]},
   "7.7": { tag: "Marketing", blocks: [
-    ["p", "Optimiser son profil LinkedIn pour la prospection et la crédibilité."],
-    ["li", ["Profil pro : photo, titre clair, résumé orienté client, bannière WallSwiss.", "Publier régulièrement (expertise, cas clients anonymisés, actualités).", "Prospecter : réseau frontalier, demandes de connexion personnalisées."]],
+    ["p", "LinkedIn sert deux objectifs distincts : crédibiliser le conseiller quand un prospect le cherche avant un rendez-vous, et générer des contacts. Les deux demandent un profil soigné, pas seulement des publications."],
+    ["h", "Le profil"],
+    ["steps", ["Photo professionnelle, cadrage serré, fond neutre.", "Titre orienté client : ce que vous résolvez, pas votre intitulé de poste.", "Résumé en quelques lignes, écrit pour un frontalier qui vous découvre.", "Bannière aux couleurs WallSwiss.", "Coordonnées et lien de prise de rendez-vous visibles."]],
+    ["h", "Publier"],
+    ["li", ["Un rythme tenable et régulier bat une série de publications suivie d'un silence de trois mois.", "Alterner expertise, actualité réglementaire et cas clients anonymisés.", "Répondre à tous les commentaires : c'est là que se créent les conversations.", "Ne jamais publier de situation client identifiable, même sans le nom."]],
+    ["h", "Prospecter"],
+    ["li", ["Cibler par entreprise et par lieu plutôt que par titre de poste.", "Personnaliser chaque demande de connexion en une phrase.", "Ne pas vendre dans le premier message : proposer un échange, pas un produit."]],
   ]},
   "7.8": { tag: "Marketing", blocks: [
-    ["p", "Kit de publications prêtes à l'emploi pour alimenter vos réseaux sociaux."],
-    ["li", ["Calendrier éditorial et thématiques récurrentes (fiscalité, prévoyance, marchés).", "Visuels à la charte + textes de publication et hashtags.", "Décliner un sujet en post, story et carrousel."]],
+    ["p", "Une bibliothèque de publications prêtes à l'emploi, pour que chaque conseiller alimente ses réseaux sans repartir d'une page blanche."],
+    ["h", "Les thématiques récurrentes"],
+    ["li", ["Prévoyance : 3e pilier, libre passage, échéances de fin d'année.", "Fiscalité : déclaration, quasi-résident, rectification à la source, calendrier fiscal.", "Frontalier : droit d'option, CMU et LAMal, permis, changements de situation.", "Marchés et investissement : lecture d'actualité, pédagogie sur le long terme."]],
+    ["h", "Le rythme"],
+    ["li", ["Caler les sujets sur le calendrier réel : déclaration fiscale au printemps, versement 3a en fin d'année.", "Préparer un mois d'avance plutôt que de publier dans l'urgence.", "Décliner un même sujet en post, story et carrousel pour couvrir tous les formats."]],
+    ["h", "Ce qu'on ne publie jamais"],
+    ["li", ["Une situation client identifiable, même anonymisée approximativement.", "Un chiffre de rendement présenté comme une promesse.", "Un montant fiscal sans date ni source.", "Un visuel modifiant la charte, le logo ou les couleurs du cabinet."]],
   ]},
 };
 
@@ -4928,15 +5074,92 @@ function WSBlocks({ blocks }) {
 
 /* Documents de formation rattachés à chaque sous-menu de l'Académie (node id -> fichiers de public/academy/). */
 const ACADEMY_NODE_DOCS = {
-  "5.1": ["1002-directives-iaf-f.pdf","1004-moyens-auxiliaires-iaf-brevet-f.pdf","1006-formules-conseiller-financier-iaf-2015-f.pdf","1006-formules-iaf-version-2022.pdf","1010-checklist-donnees-documentation.pdf","1013-bases-objectifs.pdf","1014-slides-planification-liquidites.pdf","0901-journee-intro-mendo.pdf","EXAMEN - QCM OctNov.docx","13.EXERCICES - Recueil formules calculs.pdf","14.EXERCICES- Bases-calcul-questions.pdf","15.EXERCICES-calculs-financiers-questions.pdf","1019-nominale-reelle-questions.pdf","12.OUTIL - Notice CALCULATRICE FINANCIERE.docx","calculatrice-hp10b2.pdf"],
+  "1.7": [
+    { file: "07-Facture-Resident-Celibataire.pdf", base: "/procedures/", title: "Modèle — facture résident célibataire" },
+    { file: "07-Facture-Resident-Couple.pdf", base: "/procedures/", title: "Modèle — facture résident couple" },
+    { file: "07-Facture-QR-Frontalier-Celibataire.pdf", base: "/procedures/", title: "Modèle — facture QR frontalier célibataire" },
+    { file: "07-Facture-QR-Frontalier-Couple.pdf", base: "/procedures/", title: "Modèle — facture QR frontalier couple" },
+    { file: "07-Facture-Rectification-Simple.pdf", base: "/procedures/", title: "Modèle — facture rectification simple" },
+    { file: "06-Guide-paiement-primes-3P.pdf", base: "/procedures/", title: "Guide de paiement des primes 3e pilier" },
+  ],
+  // ── Académie › Frontaliers (5.18) ──
+  "5.18": [
+    { file: "1.ACADEMY - INFO DROIT OPTION.pdf", title: "Droit d'option — la note de référence" },
+    { file: "2.ACADEMY - INFO DROIT OPTION - Schéma.pdf", title: "Droit d'option — schéma de décision" },
+    { file: "3.ACADEMY -  INFO DROIT OPTION - Schéma Powerpoint.pptx", title: "Droit d'option — schéma (PowerPoint)" },
+    { file: "Le frontalier.pdf", title: "Le frontalier — vue d'ensemble" },
+    { file: "Permis de séjour.pptx", title: "Permis de séjour (G, B, L)" },
+    { file: "4.CLIENT - Formulaire Choix système assurance maladie CMU LAMal.pdf", title: "Formulaire client — choix CMU / LAMal" },
+    { file: "1.OUTIL - Calcul cotisations CMU - Excel.xlsx", title: "Outil — calcul des cotisations CMU" },
+    { file: "2.CLIENT - Courrier type - Correction CMU client.docx", title: "Courrier type — correction de cotisation CMU" },
+    { file: "5.INFO - Comment déclarer ses revenus sur le site de l'URSSAF.pdf", title: "Déclarer ses revenus sur l'URSSAF" },
+    { file: "1.Offre frontalier - HELSANA.pdf", title: "Helsana — offre frontalier" },
+    { file: "2.Procès-verbal Helsana.pdf", title: "Helsana — procès-verbal de conseil" },
+    { file: "3.helsana -Formulaire LSV a remplir.pdf", title: "Helsana — formulaire LSV" },
+    { file: "4.HELSANA - Attestation départ Suisse  - Formulaire K14.pdf", title: "Helsana — attestation de départ (K14)" },
+  ],
+  // ── Académie › Succession & donation (5.19) ──
+  "5.19": [
+    { file: "1110-succession-f-objectifs.pdf", title: "Succession — objectifs du module" },
+    { file: "1111-presentation-succession (1).pdf", title: "Succession — présentation" },
+    { file: "1100-script-succession-21.pdf", title: "Script d'entretien succession" },
+    { file: "1123-pacte-successoral.pdf", title: "Le pacte successoral" },
+    { file: "1125-modele-donation-rapportable (2).pdf", title: "Modèle — donation rapportable" },
+    { file: "1124-conference-suisse-impots.pdf", title: "Conférence — fiscalité suisse et transmission" },
+    { file: "1114-successions-cas2-questions.pdf", title: "Cas 2 — questions" },
+    { file: "1116-successions-cas3-questions.pdf", title: "Cas 3 — questions" },
+    { file: "1117-successions-cas3-solutions.pdf", title: "Cas 3 — corrigé" },
+    { file: "1118-cas-pratique-questions.pdf", title: "Cas pratique — questions" },
+    { file: "1119-cas-pratique-solutions.pdf", title: "Cas pratique — corrigé" },
+  ],
+  // ── Académie › Prospection & prise de rendez-vous (5.20) ──
+  "5.20": [
+    { file: "4.ACADEMY - Argumentaire Call débutant.docx", title: "Argumentaire d'appel — débutant" },
+    { file: "7.ACADEMY - Les 5 outils obligatoires pour avoir un maximum de rendez-vous .docx", title: "Les 5 outils pour maximiser ses rendez-vous" },
+    { file: "Fiche éclair - Prospection Tips.pdf", title: "Fiche éclair — tips de prospection" },
+    { file: "Fiche éclair - Rendez-vous face à face.pdf", title: "Fiche éclair — rendez-vous en face à face" },
+    { file: "Fiche éclair - Recommandation Parrainage.pdf", title: "Fiche éclair — recommandation et parrainage" },
+    { file: "Fiche éclair - Suivi de la relation clientèle.pdf", title: "Fiche éclair — suivi de la relation client" },
+    { file: "5.ACADEMY - SOLUTIONS POUR AMELIORER SA PRODUCTIVITE Cf atelier Pierrick.pdf", title: "Atelier productivité" },
+  ],
+  // ── Rattachements complémentaires ──
+  "2.1": [
+    { file: "5.ACADEMY - SOLUTIONS POUR AMELIORER SA PRODUCTIVITE Cf atelier Pierrick.pdf", title: "Atelier productivité — solutions concrètes" },
+  ],
+  "2.2": [
+    { file: "BAREME ET COMMISSIONS VIE 2025 VF.pdf", title: "Barème et commissions vie 2025" },
+  ],
+  "3.2.5": [
+    { file: "PER Présentation.pdf", title: "PER — présentation client" },
+  ],
+  "3.5.2": [
+    { file: "protocole bankzweiplus.pdf", base: "/procedures/", title: "Protocole d'ouverture Bank zweiplus" },
+  ],
+  "3.6.1": [
+    { file: "Formulaire de déblocage LPP LEMANIA.pdf", base: "/", title: "Lemania — formulaire de déblocage LPP" },
+  ],
+  "3.6.2": [
+    { file: "protocole2epilier LIBERTY.pdf", base: "/procedures/", title: "Liberty — protocole 2e pilier" },
+    { file: "Accord-transfert-avoirs-prevoyance.docx", base: "/procedures/", title: "Accord de transfert des avoirs de prévoyance" },
+  ],
+  "3.6.3": [
+    { file: "protocole2epilier PICTET.pdf", base: "/procedures/", title: "Pictet — protocole 2e pilier" },
+    { file: "protocole3epilier PICTET.pdf", base: "/procedures/", title: "Pictet — protocole 3e pilier" },
+  ],
+  "7.6": [
+    { file: "1.ACADEMY - Présentation WallSwiss.docx", title: "Présentation WallSwiss" },
+    { file: "3.ACADEMY - Plan de conseil.docx", title: "Plan de conseil" },
+    { file: "2.ACADEMY -  Les fondamentaux de l'entretien commercial.docx", title: "Les fondamentaux de l'entretien commercial" },
+  ],
+  "5.1": ["1002-directives-iaf-f.pdf","1004-moyens-auxiliaires-iaf-brevet-f.pdf","1006-formules-conseiller-financier-iaf-2015-f.pdf","1006-formules-iaf-version-2022.pdf","1010-checklist-donnees-documentation.pdf","1013-bases-objectifs.pdf","1014-slides-planification-liquidites.pdf","0901-journee-intro-mendo.pdf","13.EXERCICES - Recueil formules calculs.pdf","14.EXERCICES- Bases-calcul-questions.pdf","15.EXERCICES-calculs-financiers-questions.pdf","1019-nominale-reelle-questions.pdf","12.OUTIL - Notice CALCULATRICE FINANCIERE.docx","calculatrice-hp10b2.pdf"],
   "5.3": ["13239-Plaquette-SwissLife-PER-Individuel.pdf","13124-Notice-SLPERIN.pdf","Essentiel-Produit-SwissLife-PER-Individuel.pdf","Memo-vente-SwissLife-PER-Individuel.pdf","13213-Demande-de-transfert-vers-PER.pdf","Check-list-transferts-entrants-PER-1.pdf","12247-Plaquette-SwissLife-Retraite.pdf","Essentiel-Produit-SwissLife-Retraite[1].pdf","Memo-vente-SwissLife-Retraite.pdf","Checklist-Souscription-Swisslife Retraite.pdf","Demande transfert entrant.pdf","13691-Fiche-zoom-pilotage-retraite.pdf","Fiche-zoom-sur-le-pilotage-retraite.pdf","12635-Avt-mise-en-place-modif-et-suppression-Pilotage-042025f-1 (003).pdf","Annexe financière Epargne Swisslife.xlsx"],
   "5.4": ["ASSURANCE vie Fr.pdf","Fiche Eclair - Assurance vie Française.pdf","SWISSLIFE - Les prédateurs de l'assurance-vie V2.pdf"],
   "5.5": ["Premium LUX-VUL.pptx"],
   "5.6": ["Fiche eclair - SCPI.pdf"],
   "5.7": ["Documentation LPP.docx","Documentation - Rentes 1er et 2ème pilier.docx"],
-  "5.8": ["Schema 3P - Entonnoir.docx","Systeme de prévoyance Suisse - Culture Général.docx"],
-  "5.11": ["Assurances de personnes et assurances sociales.pdf","Systeme de prévoyance Suisse - Culture Général.docx"],
-  "5.14": ["6.ACADEMY -Le guide pour mieux comprendre un factsheet de fonds.docx","Fiche éclair -  Investissement ISR.pdf","Fiche éclair - ETF ou trackers.pdf","Fiche éclair - PRODUIT STRUCTURE.pdf","Fiche eclair - compte titre.pdf","Fiche éclair - titres et bourse 1.pdf","Fiche éclair - titres et bourse 2.pdf"],
+  "5.8": ["Schema 3P - Entonnoir.docx","Systeme de prévoyance Suisse - Culture Général.docx","1. Schéma Système de retraite suisse.pptx"],
+  "5.11": ["Assurances de personnes et assurances sociales.pdf","Systeme de prévoyance Suisse - Culture Général.docx","5.INFO - Allocations familiales CH montant par canton_2023.pdf"],
+  "5.14": ["6.ACADEMY -Le guide pour mieux comprendre un factsheet de fonds.docx","Fiche éclair - ETF ou trackers.pdf","Fiche éclair - PRODUIT STRUCTURE.pdf","Fiche eclair - compte titre.pdf","Fiche éclair - titres et bourse 1.pdf","Fiche éclair - titres et bourse 2.pdf","industrie de l'assurance.pdf"],
   "5.16": ["1 - LCB-FT Guide DISTRIBUTION 2022 (1).pdf","2.INFO - Ordonnance sur les déductions admises fiscalement.pdf"],
   // Procédures › Planification retraite (fichiers dans public/procedures/)
   "3.3.1": [
@@ -7646,6 +7869,16 @@ const [lppForm, setLppForm] = useState({
         {/* VUE MODULE — DEMANDES REÇUES (admin) */}
         {activeModule === "ticketsAdmin" && (
           <TicketsAdminInbox db={db} appId={appId} user={user} onBack={() => setActiveModule("tickets")} />
+        )}
+
+        {/* VUE MODULE — SONDAGES INTERNES */}
+        {activeModule === "sondages" && (
+          <Sondages_Module db={db} appId={appId} user={user} />
+        )}
+
+        {/* VUE MODULE — CHALLENGES */}
+        {activeModule === "challenges" && (
+          <Challenges_Module db={db} appId={appId} user={user} />
         )}
 
         {/* VUE MODULE — PROTOCOLES DE SOUSCRIPTION */}

@@ -36,6 +36,27 @@ const S = {
   btnS: { background: C.card, color: C.accent, border: `1px solid ${C.line2}`, padding: "10px 20px", cursor: "pointer", fontFamily: F.ui, fontSize: 13.5, fontWeight: 600, borderRadius: 980 },
 };
 
+const PDF_W = 900;
+const PDF_H = 1272;
+
+const pdfPage = {
+  width: PDF_W, height: PDF_H, boxSizing: "border-box", background: "#fff",
+  display: "flex", flexDirection: "column", overflow: "hidden", position: "relative",
+};
+const pdfBandeau = {
+  background: C.primary, padding: "26px 48px", display: "flex",
+  alignItems: "center", justifyContent: "space-between", flexShrink: 0, boxSizing: "border-box",
+};
+const pdfCorps = { flex: 1, padding: "30px 48px 26px", boxSizing: "border-box", overflow: "hidden", display: "flex", flexDirection: "column" };
+const pdfPied = {
+  background: C.primary, height: 34, display: "flex", alignItems: "center",
+  justifyContent: "space-between", padding: "0 48px", flexShrink: 0, boxSizing: "border-box",
+};
+const pdfEtiquette = {
+  fontSize: 10, color: C.gold, fontWeight: 700, textTransform: "uppercase",
+  letterSpacing: ".1em", marginBottom: 10,
+};
+
 const fmt = (n) => Math.round(Number(n) || 0).toLocaleString("fr-CH");
 const num = (v, d = 0) => { const n = parseFloat(String(v).replace(",", ".")); return isNaN(n) ? d : n; };
 
@@ -100,7 +121,7 @@ function Champ({ label, value, onChange, suffixe, step, aide }) {
   );
 }
 
-function Graphique({ series, hauteur = 300 }) {
+function Graphique({ series, hauteur = 300, fixe = false }) {
   const W = 720, H = hauteur;
   const padL = 74, padR = 22, padT = 18, padB = 34;
   const w = W - padL - padR, h = H - padT - padB;
@@ -122,7 +143,7 @@ function Graphique({ series, hauteur = 300 }) {
   if (xLabels[xLabels.length - 1] !== lastIdx) xLabels.push(lastIdx);
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }}>
+    <svg viewBox={`0 0 ${W} ${H}`} width={fixe ? W : undefined} height={fixe ? H : undefined} style={fixe ? { display: "block", width: W, height: H } : { width: "100%", height: "auto", display: "block", overflow: "visible" }}>
       {[0, 0.25, 0.5, 0.75, 1].map((p) => {
         const y = padT + h - p * h;
         return (
@@ -143,15 +164,25 @@ function Graphique({ series, hauteur = 300 }) {
   );
 }
 
-function requireHtml2Pdf() {
-  if (typeof window !== "undefined" && window.html2pdf) return Promise.resolve(window.html2pdf);
+function chargerScript(src) {
   return new Promise((resolve, reject) => {
+    const existant = document.querySelector(`script[data-ws-pdf="${src}"]`);
+    if (existant) { existant.addEventListener("load", () => resolve()); existant.addEventListener("error", () => reject(new Error("Script indisponible"))); return; }
     const s = document.createElement("script");
-    s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-    s.onload = () => resolve(window.html2pdf);
-    s.onerror = () => reject(new Error("html2pdf indisponible"));
+    s.src = src;
+    s.setAttribute("data-ws-pdf", src);
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("Script indisponible : " + src));
     document.body.appendChild(s);
   });
+}
+
+async function requirePdfLibs() {
+  if (!window.html2canvas) await chargerScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+  if (!(window.jspdf && window.jspdf.jsPDF)) await chargerScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+  const jsPDF = window.jspdf && window.jspdf.jsPDF;
+  if (!window.html2canvas || !jsPDF) throw new Error("Librairies PDF indisponibles");
+  return { html2canvas: window.html2canvas, jsPDF };
 }
 
 export default function Interets_Composes_Module({ appSettings, logoUrl }) {
@@ -184,6 +215,9 @@ export default function Interets_Composes_Module({ appSettings, logoUrl }) {
     return out;
   }, [series, nbAns]);
 
+  const partInterets = capitalCible > 0 ? Math.round((gainCible / capitalCible) * 100) : 0;
+  const dateJour = useMemo(() => new Date().toLocaleDateString("fr-CH", { year: "numeric", month: "long", day: "numeric" }), []);
+
   const reset = () => setF({ client: "", devise: "CHF", initial: "50000", mensuel: "500", annees: "20", indexation: "0", fraisEntree: "3", fraisGestion: "0", tauxA: "3", tauxB: "6", tauxC: "9" });
 
   const exportPdf = async () => {
@@ -191,15 +225,20 @@ export default function Interets_Composes_Module({ appSettings, logoUrl }) {
     if (!el) return;
     setPdfBusy(true);
     try {
-      const html2pdf = await requireHtml2Pdf();
-      const nom = (f.client || "Client").trim().replace(/\s+/g, "_");
-      await html2pdf().set({
-        margin: 0, filename: `Simulation_Interets_Composes_${nom}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, scrollY: 0, scrollX: 0, windowWidth: 900, logging: false },
-        pagebreak: { mode: ["css", "legacy"] },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      }).from(el).save();
+      const { html2canvas, jsPDF } = await requirePdfLibs();
+      const nom = (f.client || "Client").trim().replace(/\s+/g, "_") || "Client";
+      const pages = Array.from(el.querySelectorAll("[data-pdf-page]"));
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true });
+      for (let i = 0; i < pages.length; i++) {
+        const canvas = await html2canvas(pages[i], {
+          scale: 2, useCORS: true, backgroundColor: "#FFFFFF", logging: false,
+          width: PDF_W, height: PDF_H, windowWidth: PDF_W, windowHeight: PDF_H,
+          scrollX: 0, scrollY: 0,
+        });
+        if (i > 0) pdf.addPage();
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, 210, 297, undefined, "FAST");
+      }
+      pdf.save(`Simulation_Interets_Composes_${nom}.pdf`);
     } catch (e) { console.error("Export PDF:", e); } finally { setPdfBusy(false); }
   };
 
@@ -316,82 +355,143 @@ export default function Interets_Composes_Module({ appSettings, logoUrl }) {
         </div>
       </main>
 
-      {/* Gabarit PDF hors écran */}
-      <div style={{ position: "fixed", top: 0, left: 0, zIndex: -1000, opacity: 0.001, pointerEvents: "none" }}>
-        <div ref={printRef} style={{ width: 900, background: "#fff", boxSizing: "border-box", fontFamily: "'Montserrat', sans-serif", color: C.black }}>
-          <div style={{ background: C.primary, padding: "26px 48px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div>
-              <div style={{ color: C.gold, fontSize: 10, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", marginBottom: 6 }}>Simulation financière</div>
-              <div style={{ fontFamily: "'Times New Roman', Times, serif", color: "#fff", fontSize: 30, fontWeight: 700, lineHeight: 1.1 }}>Intérêts composés</div>
-            </div>
-            {logoUrl && <img src={logoUrl} alt="" className="pdf-image" style={{ height: 42, objectFit: "contain", filter: "brightness(0) invert(1)" }} />}
-          </div>
+      {/* Gabarit PDF hors écran, pages A4 fixes */}
+      <div style={{ position: "fixed", top: 0, left: 0, zIndex: -1000, pointerEvents: "none", overflow: "hidden" }} aria-hidden="true">
+        <div ref={printRef} style={{ width: PDF_W, background: "#fff", boxSizing: "border-box", fontFamily: F.ui, color: C.black }}>
 
-          <div style={{ padding: "30px 48px 40px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `2px solid ${C.gold}`, paddingBottom: 14, marginBottom: 24 }}>
+          {/* ── PAGE 1 ── */}
+          <div data-pdf-page="1" style={{ ...pdfPage }}>
+            <div style={pdfBandeau}>
               <div>
-                <div style={{ fontSize: 10, color: C.gray, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 700 }}>À l'attention de</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: C.primary, marginTop: 4 }}>{f.client || "Client"}</div>
+                <div style={{ color: C.gold, fontSize: 10, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", marginBottom: 6 }}>Simulation financière</div>
+                <div style={{ fontFamily: "'Times New Roman', Times, serif", color: "#fff", fontSize: 30, fontWeight: 700, lineHeight: 1.1 }}>Intérêts composés</div>
               </div>
-              <div style={{ textAlign: "right", fontSize: 11, color: C.gray }}>
-                <div>{new Date().toLocaleDateString("fr-CH", { year: "numeric", month: "long", day: "numeric" })}</div>
-                {appSettings && (appSettings.agentFirstName || appSettings.agentLastName) && <div style={{ marginTop: 4, color: C.darkGray, fontWeight: 600 }}>{appSettings.agentFirstName} {appSettings.agentLastName}</div>}
-              </div>
+              {logoUrl && <img src={logoUrl} alt="" className="pdf-image" style={{ height: 42, objectFit: "contain", filter: "brightness(0) invert(1)" }} />}
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 26 }}>
-              <div style={{ border: `1px solid ${C.mediumGray}`, padding: "14px 18px" }}>
-                <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 10 }}>Hypothèses</div>
-                {[["Capital initial", `${dev} ${fmt(f.initial)}`], ["Versement mensuel", `${dev} ${fmt(f.mensuel)}`], ["Durée", `${nbAns} ans`], ["Indexation annuelle", `${num(f.indexation)} %`], ["Droits d'entrée", `${num(f.fraisEntree)} %`], ["Frais de gestion", `${num(f.fraisGestion)} % / an`]].map(([k, v], i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 12, borderBottom: i < 5 ? `1px solid ${C.lightGray}` : "none" }}>
-                    <span style={{ color: C.gray }}>{k}</span><span style={{ fontWeight: 700, color: C.primary }}>{v}</span>
+            <div style={pdfCorps}>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `2px solid ${C.gold}`, paddingBottom: 14, marginBottom: 26 }}>
+                <div>
+                  <div style={{ fontSize: 10, color: C.gray, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 700 }}>À l&apos;attention de</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.primary, marginTop: 4 }}>{f.client || "Client"}</div>
+                </div>
+                <div style={{ textAlign: "right", fontSize: 11, color: C.gray }}>
+                  <div>{dateJour}</div>
+                  {appSettings && (appSettings.agentFirstName || appSettings.agentLastName) && <div style={{ marginTop: 4, color: C.darkGray, fontWeight: 600 }}>{appSettings.agentFirstName} {appSettings.agentLastName}</div>}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 20, marginBottom: 28 }}>
+                <div style={{ flex: 1, border: `1px solid ${C.mediumGray}`, padding: "14px 18px", boxSizing: "border-box" }}>
+                  <div style={pdfEtiquette}>Hypothèses</div>
+                  {[["Capital initial", `${dev} ${fmt(f.initial)}`], ["Versement mensuel", `${dev} ${fmt(f.mensuel)}`], ["Durée", `${nbAns} ans`], ["Indexation annuelle", `${num(f.indexation)} %`], ["Droits d'entrée", `${num(f.fraisEntree)} %`], ["Frais de gestion", `${num(f.fraisGestion)} % / an`]].map(([k, v], i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: 12, borderBottom: i < 5 ? `1px solid ${C.lightGray}` : "none" }}>
+                      <span style={{ color: C.gray }}>{k}</span><span style={{ fontWeight: 700, color: C.primary }}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ flex: 1, border: `1px solid ${C.mediumGray}`, padding: "14px 18px", boxSizing: "border-box" }}>
+                  <div style={pdfEtiquette}>Résultat scénario réaliste</div>
+                  {[["Total versé", `${dev} ${fmt(totalVerse)}`], ["Capital estimé", `${dev} ${fmt(capitalCible)}`], ["Intérêts générés", `${dev} ${fmt(gainCible)}`], ["Multiplicateur", `x ${multiple.toFixed(2)}`]].map(([k, v], i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "9px 0", fontSize: 12, borderBottom: i < 3 ? `1px solid ${C.lightGray}` : "none" }}>
+                      <span style={{ color: C.gray }}>{k}</span><span style={{ fontWeight: 700, color: C.primary }}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={pdfEtiquette}>Évolution du capital</div>
+              <div style={{ border: `1px solid ${C.mediumGray}`, padding: 14, marginBottom: 26, boxSizing: "border-box" }}>
+                <Graphique series={series} hauteur={340} fixe />
+              </div>
+
+              <div style={{ display: "flex", gap: 26, fontSize: 11, color: C.darkGray, marginBottom: 26 }}>
+                {series.map((s) => (
+                  <div key={s.nom} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ width: 22, height: 3, background: s.couleur, display: "inline-block" }} />
+                    <span><strong style={{ color: C.primary }}>{s.nom}</strong> {s.taux} % : {dev} {fmt(s.rows[s.rows.length - 1].capital)}</span>
                   </div>
                 ))}
               </div>
-              <div style={{ border: `1px solid ${C.mediumGray}`, padding: "14px 18px" }}>
-                <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 10 }}>Résultat scénario réaliste</div>
-                {[["Total versé", `${dev} ${fmt(totalVerse)}`], ["Capital estimé", `${dev} ${fmt(capitalCible)}`], ["Intérêts générés", `${dev} ${fmt(gainCible)}`], ["Multiplicateur", `x ${multiple.toFixed(2)}`]].map(([k, v], i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", fontSize: 12, borderBottom: i < 3 ? `1px solid ${C.lightGray}` : "none" }}>
-                    <span style={{ color: C.gray }}>{k}</span><span style={{ fontWeight: 700, color: C.primary }}>{v}</span>
+
+              <div style={{ marginTop: "auto" }}>
+              <div style={pdfEtiquette}>Lecture de la simulation</div>
+              <div style={{ display: "flex", gap: 20 }}>
+                {[
+                  ["Effort d'épargne", `${dev} ${fmt(totalVerse)}`, `${fmt(num(f.mensuel))} par mois pendant ${nbAns} ans`],
+                  ["Intérêts générés", `${dev} ${fmt(gainCible)}`, "Scénario réaliste, net de frais"],
+                  ["Part des intérêts", `${partInterets} %`, "du capital final estimé"],
+                ].map(([t, v, sub], i) => (
+                  <div key={i} style={{ flex: 1, borderLeft: `3px solid ${C.gold}`, padding: "6px 0 6px 14px", boxSizing: "border-box" }}>
+                    <div style={{ fontSize: 9.5, color: C.gray, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 700 }}>{t}</div>
+                    <div style={{ fontSize: 19, fontWeight: 700, color: C.primary, margin: "6px 0 4px" }}>{v}</div>
+                    <div style={{ fontSize: 10, color: C.gray, lineHeight: 1.4 }}>{sub}</div>
                   </div>
                 ))}
               </div>
+              </div>
             </div>
 
-            <div style={{ marginBottom: 26 }}>
-              <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 10 }}>Évolution du capital</div>
-              <div style={{ border: `1px solid ${C.mediumGray}`, padding: "12px 8px" }}><Graphique series={series} hauteur={280} /></div>
+            <div style={pdfPied}>
+              <span style={{ color: "#fff", fontSize: 9.5, fontWeight: 700, letterSpacing: ".08em" }}>WALLSWISS · RUE KLEBERG 14 · 1201 GENÈVE</span>
+              <span style={{ color: C.gold, fontSize: 9.5, fontWeight: 700 }}>PAGE 1 / 2</span>
+            </div>
+          </div>
+
+          {/* ── PAGE 2 ── */}
+          <div data-pdf-page="2" style={{ ...pdfPage }}>
+            <div style={{ ...pdfBandeau, paddingTop: 20, paddingBottom: 20 }}>
+              <div style={{ fontFamily: "'Times New Roman', Times, serif", color: "#fff", fontSize: 22, fontWeight: 700 }}>Projection annuelle</div>
+              <div style={{ color: C.gold, fontSize: 10.5, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase" }}>{f.client || "Client"}</div>
             </div>
 
-            <div style={{ fontSize: 10, color: C.gold, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 10 }}>Projection annuelle</div>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
-              <thead>
-                <tr style={{ background: C.primary, color: "#fff" }}>
-                  <th style={{ padding: "8px 10px", textAlign: "left" }}>Année</th>
-                  <th style={{ padding: "8px 10px", textAlign: "right" }}>Versé</th>
-                  {series.map((s) => <th key={s.nom} style={{ padding: "8px 10px", textAlign: "right" }}>{s.nom} {s.taux}%</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {lignes.map((r, i) => (
-                  <tr key={r.annee} style={{ background: i % 2 === 0 ? C.lightGray : "#fff" }}>
-                    <td style={{ padding: "7px 10px", fontWeight: 700, color: C.primary, borderBottom: `1px solid ${C.mediumGray}` }}>{r.annee === 0 ? "Départ" : `N+${r.annee}`}</td>
-                    <td style={{ padding: "7px 10px", textAlign: "right", color: C.gray, borderBottom: `1px solid ${C.mediumGray}` }}>{fmt(r.verse)}</td>
-                    {series.map((s) => <td key={s.nom} style={{ padding: "7px 10px", textAlign: "right", fontWeight: s.nom === "Réaliste" ? 700 : 400, color: s.nom === "Réaliste" ? C.primary : C.darkGray, borderBottom: `1px solid ${C.mediumGray}` }}>{fmt(s.rows[r.annee].capital)}</td>)}
+            <div style={pdfCorps}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, tableLayout: "fixed" }}>
+                <thead>
+                  <tr style={{ background: C.primary, color: "#fff" }}>
+                    <th style={{ padding: "9px 10px", textAlign: "left", width: "16%" }}>Année</th>
+                    <th style={{ padding: "9px 10px", textAlign: "right", width: "21%" }}>Versé</th>
+                    {series.map((s) => <th key={s.nom} style={{ padding: "9px 10px", textAlign: "right", width: "21%" }}>{s.nom} {s.taux}%</th>)}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {lignes.map((r, i) => (
+                    <tr key={r.annee} style={{ background: i % 2 === 0 ? C.lightGray : "#fff" }}>
+                      <td style={{ padding: "11px 10px", fontWeight: 700, color: C.primary, borderBottom: `1px solid ${C.mediumGray}` }}>{r.annee === 0 ? "Départ" : `N+${r.annee}`}</td>
+                      <td style={{ padding: "11px 10px", textAlign: "right", color: C.gray, borderBottom: `1px solid ${C.mediumGray}` }}>{fmt(r.verse)}</td>
+                      {series.map((s) => <td key={s.nom} style={{ padding: "11px 10px", textAlign: "right", fontWeight: s.nom === "Réaliste" ? 700 : 400, color: s.nom === "Réaliste" ? C.primary : C.darkGray, borderBottom: `1px solid ${C.mediumGray}` }}>{fmt(s.rows[r.annee].capital)}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
 
-            <p style={{ fontSize: 9, color: C.gray, marginTop: 16, lineHeight: 1.5, fontStyle: "italic" }}>
-              Cette simulation est fournie à titre purement illustratif et ne constitue ni un conseil en investissement, ni une garantie de rendement. Les performances passées ne préjugent pas des performances futures. Les montants présentés ne tiennent pas compte de la fiscalité applicable à la situation personnelle du client.
-            </p>
+              <p style={{ fontSize: 9.5, color: C.gray, marginTop: 22, lineHeight: 1.6, fontStyle: "italic" }}>
+                Cette simulation est fournie à titre purement illustratif et ne constitue ni un conseil en investissement, ni une garantie de rendement. Les performances passées ne préjugent pas des performances futures. Les montants présentés ne tiennent pas compte de la fiscalité applicable à la situation personnelle du client. Les droits d&apos;entrée sont prélevés sur chaque versement, les frais de gestion sont déduits du rendement annuel brut.
+              </p>
+
+              <div style={{ marginTop: "auto", paddingTop: 18, borderTop: `2px solid ${C.gold}`, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                <div>
+                  <div style={{ fontSize: 9.5, color: C.gray, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 700, marginBottom: 6 }}>Votre conseiller</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: C.primary }}>
+                    {appSettings && (appSettings.agentFirstName || appSettings.agentLastName) ? `${appSettings.agentFirstName || ""} ${appSettings.agentLastName || ""}`.trim() : "WS - The WallSwiss Partner's SA"}
+                  </div>
+                  {appSettings && appSettings.agentEmail && <div style={{ fontSize: 11, color: C.gray, marginTop: 3 }}>{appSettings.agentEmail}</div>}
+                  {appSettings && appSettings.agentPhone && <div style={{ fontSize: 11, color: C.gray, marginTop: 2 }}>{appSettings.agentPhone}</div>}
+                </div>
+                <div style={{ textAlign: "right", fontSize: 10.5, color: C.gray, lineHeight: 1.6 }}>
+                  <div>Document établi le {dateJour}</div>
+                  <div>WS - The WallSwiss Partner&apos;s SA</div>
+                  <div>Rue Kléberg 14, 1201 Genève</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={pdfPied}>
+              <span style={{ color: "#fff", fontSize: 9.5, fontWeight: 700, letterSpacing: ".08em" }}>WALLSWISS · RUE KLEBERG 14 · 1201 GENÈVE</span>
+              <span style={{ color: C.gold, fontSize: 9.5, fontWeight: 700 }}>PAGE 2 / 2</span>
+            </div>
           </div>
 
-          <div style={{ background: C.primary, height: 34, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 48px" }}>
-            <span style={{ color: "#fff", fontSize: 9.5, fontWeight: 700, letterSpacing: ".08em" }}>WALLSWISS · RUE KLEBERG 14 · 1201 GENÈVE</span>
-            <span style={{ color: C.gold, fontSize: 9.5, fontWeight: 700 }}>{(f.client || "Client").toUpperCase()}</span>
-          </div>
         </div>
       </div>
     </div>

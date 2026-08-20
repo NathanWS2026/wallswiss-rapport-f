@@ -6488,7 +6488,7 @@ function WallSwissAppMain() {
     avSolutionsP2: "L'assurance vie présente de nombreux avantages après 8 ans. Succession, exonération et abattements fiscaux sur les plus-values."
   };
 
-  const [activeModule, setActiveModule] = useState("hub");
+  const [activeModule, setActiveModuleState] = useState("hub");
   const [moduleArg, setModuleArg] = useState(null); // args de navigation (ex. doc Académie à ouvrir)
   const [resDoc, setResDoc] = useState(null); // document ouvert dans la liseuse (module Ressources)
   // ── SOMMAIRE : navigation via le hub (onglets/sous-onglets) → page placeholder ──
@@ -6519,13 +6519,64 @@ function WallSwissAppMain() {
     setPageDoc({ id: "doc:" + base + file, title: ent.title || (d && d.title) || file.replace(/\.[a-z0-9]+$/i, ""), type: (d && d.type) || ext, src: base + encodeURIComponent(file), file: file, backLabel: "Retour", ctx: ctx });
   };
   const [hubTarget, setHubTarget] = useState(null); // niveau à rouvrir dans le hub (fil d'Ariane)
+
+  /* ═══ HISTORIQUE DE NAVIGATION ═══════════════════════════════════════════
+     Le bouton « Retour » recule d'un seul cran : depuis un module on revient
+     au niveau exact du sommaire d'où l'on venait, pas à l'orbite d'accueil.
+     · navSnapRef : photo de l'écran courant, rafraîchie à chaque rendu.
+     · navStack   : pile des écrans précédents (40 max).
+     · navSkipRef : évite d'empiler deux fois le même écran quand un handler
+                    a déjà poussé sa propre photo avant d'appeler setActiveModule.
+     ═════════════════════════════════════════════════════════════════════════ */
+  const navSnapRef = React.useRef({ module: "hub", hub: null, page: null });
+  const navSkipRef = React.useRef(false);
+  const [navStack, setNavStack] = useState([]);
+  useEffect(() => { navSnapRef.current = { module: activeModule, hub: hubTarget, page: activePage }; });
+  const navKey = (x) => x ? `${x.module}|${(x.hub && x.hub.id) || ""}|${(x.page && x.page.id) || ""}` : "";
+  const pushNavSnap = (snap) => setNavStack((st) => {
+    const cur = snap || navSnapRef.current;
+    const last = st[st.length - 1];
+    if (last && navKey(last) === navKey(cur)) return st;
+    return [...st.slice(-39), cur];
+  });
+  const setActiveModule = (m) => {
+    if (navSkipRef.current) navSkipRef.current = false;
+    else if (m !== navSnapRef.current.module) pushNavSnap();
+    if (m !== "page") setActivePage(null);   // la fiche courante n'a plus lieu d'être hors du mode « page »
+    setActiveModuleState(m);
+  };
+  const goBack = () => {
+    if (!navStack.length) return;
+    const prev = navStack[navStack.length - 1];
+    setNavStack(navStack.slice(0, -1));
+    setActivePage(prev.page || null);
+    setHubTarget(prev.hub && prev.hub.id ? { id: prev.hub.id, _n: Date.now() } : null);
+    setActiveModuleState(prev.module || "hub");
+  };
+
   const handleSommaireNav = (node, path, crumbs) => {
     if (node.action?.type === "url") { if (typeof window !== "undefined") window.open(node.action.url, "_blank"); return; }
+    // Depuis le sommaire, l'écran précédent est le NIVEAU du sommaire où l'on se trouvait.
+    const cur = navSnapRef.current;
+    const lvl = (Array.isArray(crumbs) && crumbs.length) ? crumbs[crumbs.length - 1] : null;
+    pushNavSnap(cur.module === "hub" ? { module: "hub", hub: lvl ? { id: lvl.id, _n: Date.now() } : null, page: null } : cur);
+    navSkipRef.current = true;
     if (node.action?.type === "module") { setModuleArg({ doc: node.action.doc || null, _n: Date.now() }); setActiveModule(node.action.module); return; }
     setActivePage({ ...node, path, crumbs: crumbs || [] }); setActiveModule("page");
   };
-  const openHubAt = (id) => { setHubTarget(id ? { id, _n: Date.now() } : null); setActiveModule("hub"); };
-  const goHubRoot = () => { setHubTarget(null); setActiveModule("hub"); };
+  const openHubAt = (id) => {
+    const cur = navSnapRef.current;
+    if (cur.module !== "hub" || ((cur.hub && cur.hub.id) || null) !== (id || null)) pushNavSnap(cur);
+    navSkipRef.current = true;
+    setHubTarget(id ? { id, _n: Date.now() } : null); setActiveModule("hub");
+  };
+  const goHubRoot = () => {
+    const cur = navSnapRef.current;
+    if (cur.module !== "hub" || cur.hub) pushNavSnap(cur);
+    navSkipRef.current = true;
+    setNavStack([]);
+    setHubTarget(null); setActiveModule("hub");
+  };
   const [rapportPage, setRapportPage] = useState("dashboard");
   const [step, setStep] = useState(0);
 
@@ -7787,12 +7838,21 @@ const [lppForm, setLppForm] = useState({
           <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.02em", color: C.text }}>WallSwiss</div>
         </div>
 
-        {activeModule !== "hub" && (
-          <button onClick={goHubRoot}
-            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 13px", borderRadius: 980, border: `1px solid ${C.line2}`, background: C.card, color: C.muted, font: `600 13px ${F.ui}`, cursor: "pointer" }}
+        {navStack.length > 0 && (
+          <button onClick={goBack} title="Revenir à l'écran précédent"
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 13px", borderRadius: 980, border: `1px solid ${C.accent}`, background: C.accentSoft, color: C.accent, font: `700 13px ${F.ui}`, cursor: "pointer", flexShrink: 0 }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = C.accent; e.currentTarget.style.color = "#fff"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = C.accentSoft; e.currentTarget.style.color = C.accent; }}>
+            ‹ Retour
+          </button>
+        )}
+
+        {(activeModule !== "hub" || hubTarget) && (
+          <button onClick={goHubRoot} title="Revenir au sommaire"
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 13px", borderRadius: 980, border: `1px solid ${C.line2}`, background: C.card, color: C.muted, font: `600 13px ${F.ui}`, cursor: "pointer", flexShrink: 0 }}
             onMouseEnter={(e) => { e.currentTarget.style.background = C.bgSoft; e.currentTarget.style.color = C.text; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = C.card; e.currentTarget.style.color = C.muted; }}>
-            ‹ Accueil
+            Accueil
           </button>
         )}
 
